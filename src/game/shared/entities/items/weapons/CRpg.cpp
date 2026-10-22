@@ -94,6 +94,8 @@ void CRpg::Precache()
 	PrecacheModel("models/p_rpg.mdl");
 
 	PrecacheSound("items/9mmclip1.wav");
+	PrecacheSound("weapons/desert_eagle_sight.wav");
+	PrecacheSound("weapons/desert_eagle_sight2.wav");
 
 	UTIL_PrecacheOther("laser_spot");
 	UTIL_PrecacheOther("rpg_rocket");
@@ -217,6 +219,9 @@ void CRpg::SecondaryAttack()
 		UTIL_Remove(m_pSpot);
 		m_pSpot = nullptr;
 	}
+
+	// The Desert Eagle's laser on/off sounds, played from the server like CEagle does.
+	m_pPlayer->EmitSound(CHAN_ITEM, m_fSpotActive ? "weapons/desert_eagle_sight.wav" : "weapons/desert_eagle_sight2.wav", VOL_NORM, ATTN_NORM);
 #endif
 
 	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.2;

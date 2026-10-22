@@ -1377,6 +1377,14 @@ void EV_FireRpg(event_args_t* args)
 		if (!EV_WeaponRecoil(RecoilRpg))
 			V_PunchAxis(0, -5.0);
 	}
+
+	Vector forward, right, up;
+	AngleVectors(args->angles, forward, right, up);
+
+	Vector eyePosition;
+	EV_GetGunPosition(args, eyePosition, origin);
+
+	EV_RpgFireEffects(EV_IsLocal(idx), eyePosition, forward, right, up);
 }
 //======================
 //	     RPG END

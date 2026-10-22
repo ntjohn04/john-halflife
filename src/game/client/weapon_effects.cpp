@@ -29,6 +29,7 @@
 
 static cvar_t* g_cl_bulletimpacts = nullptr;
 static cvar_t* g_cl_muzzleflash = nullptr;
+static cvar_t* g_cl_rpg_muzzle = nullptr; // Temporary, for tuning the RPG's muzzle position.
 
 static bool MuzzleEffectsEnabled()
 {
@@ -41,7 +42,7 @@ static bool IsZoomed()
 	return gHUD.m_iFOV != 0 && gHUD.m_iFOV < static_cast<int>(CVAR_GET_FLOAT("default_fov"));
 }
 
-static void MuzzleEffectsAt(const Vector& position, float wispChance);
+static void MuzzleEffectsAt(const Vector& position, float wispChance, float wispScale = 1, float wispAlpha = 0.1f);
 
 void EV_GunMuzzleEffects()
 {
@@ -90,7 +91,64 @@ void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, co
 	MuzzleEffectsAt(eyePosition + forward * Forward + right * Right + up * Up, IsZoomed() ? 0 : 0.6f);
 }
 
-static void MuzzleEffectsAt(const Vector& position, float wispChance)
+void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& forward, const Vector& right, const Vector& up)
+{
+	if (0 == g_cl_muzzleflash->value)
+	{
+		return;
+	}
+
+	// The RPG view model has no attachments, so place the front of the tube relative to the view (see EV_SniperMuzzleEffects).
+	if (isLocal && MuzzleEffectsEnabled())
+	{
+		Vector offset{36, 8, -6};
+		sscanf(g_cl_rpg_muzzle->string, "%f %f %f", &offset.x, &offset.y, &offset.z);
+
+		// Always a wisp, twice the size and opacity of a gun's.
+		MuzzleEffectsAt(eyePosition + forward * offset.x + right * offset.y + up * offset.z, 1, 2, 0.2f);
+	}
+
+	// Backblast out of the rear of the tube, over the right shoulder. Placed from the player rather than the view
+	// model, so other players and third person see it too.
+	const Vector rear = eyePosition - forward * 24 + right * 8 - up * 4;
+
+	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)
+	{
+		light->origin = rear;
+		light->radius = gEngfuncs.pfnRandomFloat(160, 200);
+		light->color.r = 255;
+		light->color.g = 170;
+		light->color.b = 90;
+		light->die = gEngfuncs.GetClientTime() + 0.1f;
+		light->decay = light->radius * 8;
+	}
+
+	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
+
+	if (modelIndex == 0)
+	{
+		return;
+	}
+
+	for (int i = 0; i < 6; ++i)
+	{
+		Vector origin = rear - forward * gEngfuncs.pfnRandomFloat(0, 12);
+		Vector velocity = forward * -gEngfuncs.pfnRandomFloat(90, 160) + right * gEngfuncs.pfnRandomFloat(-40, 40) + up * gEngfuncs.pfnRandomFloat(-10, 25);
+
+		// Plays once and is removed on its last frame (see DustImpact); a slower frame rate lets the plume linger.
+		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, gEngfuncs.pfnRandomFloat(0.5f, 0.8f),
+			modelIndex, kRenderTransAlpha, kRenderFxNone, 0.3f, 3.0f, FTENT_SPRANIMATE);
+
+		if (puff)
+		{
+			puff->entity.curstate.rendercolor = {170, 170, 170};
+			puff->entity.curstate.framerate = 14;
+			puff->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+		}
+	}
+}
+
+static void MuzzleEffectsAt(const Vector& position, float wispChance, float wispScale, float wispAlpha)
 {
 	Vector muzzle = position;
 
@@ -122,8 +180,8 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance)
 	Vector velocity{gEngfuncs.pfnRandomFloat(-4, 4), gEngfuncs.pfnRandomFloat(-4, 4), gEngfuncs.pfnRandomFloat(12, 20)};
 
 	// Plays once and is removed on its last frame (see DustImpact).
-	TEMPENTITY* wisp = gEngfuncs.pEfxAPI->R_TempSprite(muzzle, velocity, gEngfuncs.pfnRandomFloat(0.08f, 0.12f),
-		modelIndex, kRenderTransAlpha, kRenderFxNone, 0.1f, 2.0f, FTENT_SPRANIMATE);
+	TEMPENTITY* wisp = gEngfuncs.pEfxAPI->R_TempSprite(muzzle, velocity, gEngfuncs.pfnRandomFloat(0.08f, 0.12f) * wispScale,
+		modelIndex, kRenderTransAlpha, kRenderFxNone, wispAlpha, 2.0f, FTENT_SPRANIMATE);
 
 	if (wisp)
 	{
@@ -321,6 +379,7 @@ void WeaponEffects_Initialize()
 {
 	g_cl_bulletimpacts = gEngfuncs.pfnRegisterVariable("jhl_fx_bulletimpacts", "1", FCVAR_ARCHIVE);
 	g_cl_muzzleflash = gEngfuncs.pfnRegisterVariable("jhl_fx_muzzleflash", "1", FCVAR_ARCHIVE);
+	g_cl_rpg_muzzle = gEngfuncs.pfnRegisterVariable("jhl_fx_rpg_muzzle", "36 8 -6", 0);
 
 	g_ClientUserMessages.RegisterHandler("BulletHit", &MsgFunc_BulletImpact);
 	g_ClientUserMessages.RegisterHandler("WaterSplash", &MsgFunc_WaterSplash);

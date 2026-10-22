@@ -36,6 +36,12 @@ void EV_GunMuzzleEffects();
 void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, const Vector& right, const Vector& up);
 
 /**
+ *	@brief RPG launch: a wisp and light at the front of the tube (local player only) and a backblast of smoke and
+ *	light behind the shooter's shoulder (everyone).
+ */
+void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& forward, const Vector& right, const Vector& up);
+
+/**
  *	@brief Subtle extra feedback where a bullet hits a surface, on top of the usual decal, specks and ricochet:
  *	sparks and a brief flash on metal, a small dust puff on stone, dirt and wood. Uses only stock sprites.
  *	@param textureType Material of the surface hit (CHAR_TEX_*).
