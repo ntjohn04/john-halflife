@@ -11,6 +11,10 @@ The files in this directory and subdirectories contain documentation for the Uni
 ></br>
 > Maps made for the original games need to be upgraded using the MapUpgrader tool before they can be played in this mod.</span>
 
+## johnhalflife
+
+* [What this mod changes](johnhalflife/README.md)
+
 ## Developer Resources
 
 * [SDK Source Code](https://github.com/twhl-community/halflife-unified-sdk) (Source code for mods and original SDK tools)
