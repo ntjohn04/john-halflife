@@ -25,7 +25,7 @@
 #include "pm_materials.h"
 #include "parsemsg.h"
 #include "networking/ClientUserMessages.h"
-#include "sound/ISoundSystem.h"
+
 
 static cvar_t* g_cl_bulletimpacts = nullptr;
 
@@ -188,20 +188,12 @@ void BulletWaterSplash(const Vector& surfacePosition)
 	Vector spray = up * gEngfuncs.pfnRandomFloat(60, 90);
 	gEngfuncs.pEfxAPI->R_StreakSplash(origin, spray, LightGreyPaletteIndex, gEngfuncs.pfnRandomLong(6, 10), 1, -30, 30);
 
-	// Stock droplet spray.
-	SplashSprite("sprites/wsplash3.spr", surfacePosition + up * 4, gEngfuncs.pfnRandomFloat(0.25f, 0.35f), 0.5f, kRenderTransAdd, 20);
-
 	// Ripple ring lying flat on the surface (MMod's sprite, see mmod_port; skipped if it isn't installed).
 	if (TEMPENTITY* ring = SplashSprite("sprites/water_splash_ring.spr", surfacePosition + up, gEngfuncs.pfnRandomFloat(0.35f, 0.5f), 0.3f, kRenderTransAdd, 18); ring)
 	{
 		ring->entity.angles = {90, 0, 0};
 		ring->entity.curstate.rendercolor = {200, 210, 220};
 	}
-
-	static const char* const SplashSounds[] = {"player/pl_slosh1.wav", "player/pl_slosh2.wav", "player/pl_slosh3.wav", "player/pl_slosh4.wav"};
-
-	EV_PlaySound(0, surfacePosition, CHAN_STATIC, SplashSounds[gEngfuncs.pfnRandomLong(0, std::size(SplashSounds) - 1)],
-		0.6f, ATTN_NORM, 0, gEngfuncs.pfnRandomLong(95, 110));
 }
 
 static void MsgFunc_WaterSplash(const char* pszName, BufferReader& reader)
