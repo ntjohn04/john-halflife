@@ -85,9 +85,9 @@ void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, co
 	constexpr float Right = 5;
 	constexpr float Up = -5;
 
-	// A slow, heavy rifle shot: always leaves a wisp, except when scoped, where it would drift across the
+	// A slow, heavy rifle shot: more often leaves a wisp, except when scoped, where it would drift across the
 	// magnified view.
-	MuzzleEffectsAt(eyePosition + forward * Forward + right * Right + up * Up, IsZoomed() ? 0 : 1);
+	MuzzleEffectsAt(eyePosition + forward * Forward + right * Right + up * Up, IsZoomed() ? 0 : 0.6f);
 }
 
 static void MuzzleEffectsAt(const Vector& position, float wispChance)
