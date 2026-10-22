@@ -32,21 +32,22 @@ static cvar_t* g_cl_muzzleflash = nullptr;
 
 static bool MuzzleEffectsEnabled()
 {
-	if (0 == g_cl_muzzleflash->value)
-	{
-		return false;
-	}
+	// In third person the effects would be placed relative to a first person view that isn't there.
+	return 0 != g_cl_muzzleflash->value && 0 == CL_IsThirdPerson();
+}
 
-	// In third person or zoomed in, the view model isn't drawn, so its attachment is stale and the effects would
-	// appear where the muzzle last was.
-	return 0 == CL_IsThirdPerson() && (gHUD.m_iFOV == 0 || gHUD.m_iFOV >= static_cast<int>(CVAR_GET_FLOAT("default_fov")));
+static bool IsZoomed()
+{
+	return gHUD.m_iFOV != 0 && gHUD.m_iFOV < static_cast<int>(CVAR_GET_FLOAT("default_fov"));
 }
 
 static void MuzzleEffectsAt(const Vector& position, float wispChance);
 
 void EV_GunMuzzleEffects()
 {
-	if (!MuzzleEffectsEnabled())
+	// Zoomed in, the view model isn't drawn, so its attachment is stale and the effects would appear where the
+	// muzzle last was.
+	if (!MuzzleEffectsEnabled() || IsZoomed())
 	{
 		return;
 	}
@@ -84,8 +85,9 @@ void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, co
 	constexpr float Right = 5;
 	constexpr float Up = -5;
 
-	// A slow, heavy rifle shot: always leaves a wisp.
-	MuzzleEffectsAt(eyePosition + forward * Forward + right * Right + up * Up, 1);
+	// A slow, heavy rifle shot: always leaves a wisp, except when scoped, where it would drift across the
+	// magnified view.
+	MuzzleEffectsAt(eyePosition + forward * Forward + right * Right + up * Up, IsZoomed() ? 0 : 1);
 }
 
 static void MuzzleEffectsAt(const Vector& position, float wispChance)
