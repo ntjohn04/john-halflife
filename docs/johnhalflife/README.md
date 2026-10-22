@@ -111,6 +111,10 @@ a copy of the game code.
   menu background, logo and icon are copied from the player's own Valve install (`gearbox`) at install time
   and never committed.
 * Settings and saves are per folder, as with the real games.
+* The engine adds the `fallback_dir` folder under the search path ID `GAME_FALLBACK`. The Unified SDK reads its
+  config files (model/sound replacement, skill, server config, map cycle) from `GAMECONFIG`, the mod's own folder
+  only, to keep downloaded content out, so `FileSystem_LoadFileIntoBuffer` also tries `GAME_FALLBACK` when a
+  `GAMECONFIG` read finds nothing. Without it, the expansions' view models stayed Half-Life's.
 * Status: Opposing Force is a prototype; Blue Shift follows once it's confirmed.
 
 ## MMod assets
