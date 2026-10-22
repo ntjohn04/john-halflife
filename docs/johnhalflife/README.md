@@ -93,6 +93,26 @@ The sprite HUD is laid out on a virtual screen (real size divided by the scale) 
 text keeps its size; VGUI and the spectator HUD stay in real pixels. Crosshair size stays on
 `crosshair_scale`. The crosshair itself is vanilla.
 
+## Expansions
+
+Each game is its own mod folder with its own name, main menu, New Game / Hazard Course and saves, the way Valve
+ships Opposing Force and Blue Shift on top of Half-Life. The expansion folders are thin: a `liblist.gam` with
+`fallback_dir "johnhalflife"` (all maps, models, sounds and settings come from the base folder), the menu, and
+a copy of the game code.
+
+| Folder | Name | Start / training map | Source |
+|---|---|---|---|
+| `johnhalflife` | John Half-Life | `c0a0` / `t0a0` | `config/liblist.gam.in`, `config/mod/` |
+| `johnhalflife_op4` | John Half-Life: Opposing Force | `of0a0` / `ofboot0` | `config/expansions/op4/` |
+
+* The base menu keeps the Unified SDK's Campaign Select (for Uplink and quick switching) and has New Game back;
+  the expansions' menus have New Game without Campaign Select.
+* The build installs the game code, `delta.lst` and the settings files into each folder. Each expansion's
+  menu background, logo and icon are copied from the player's own Valve install (`gearbox`) at install time
+  and never committed.
+* Settings and saves are per folder, as with the real games.
+* Status: Opposing Force is a prototype; Blue Shift follows once it's confirmed.
+
 ## MMod assets
 
 `mmod_port/` tracks every MMod file the mod uses (28 files): `assets.json` lists them with SHA-256 hashes,

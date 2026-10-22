@@ -243,6 +243,42 @@ install(DIRECTORY config/mod/ DESTINATION .)
 #	RUNTIME DESTINATION cl_dlls)
 install(FILES $<TARGET_FILE:OpenAL::OpenAL> DESTINATION cl_dlls)
 
+# John Half-Life: Opposing Force: a thin mod folder next to the base one that borrows all its content through
+# fallback_dir, with its own name, main menu and saves (docs/johnhalflife/README.md#expansions).
+set(JHL_OP4_DIR ../johnhalflife_op4)
+
+install(TARGETS client
+	RUNTIME DESTINATION ${JHL_OP4_DIR}/cl_dlls
+	LIBRARY DESTINATION ${JHL_OP4_DIR}/cl_dlls
+)
+
+install(TARGETS server
+	RUNTIME DESTINATION ${JHL_OP4_DIR}/dlls
+	LIBRARY DESTINATION ${JHL_OP4_DIR}/dlls
+)
+
+install(FILES $<TARGET_FILE:OpenAL::OpenAL> DESTINATION ${JHL_OP4_DIR}/cl_dlls)
+install(FILES config/network/delta.lst DESTINATION ${JHL_OP4_DIR})
+# The base main menu has Campaign Select; the expansion has its own without it.
+install(DIRECTORY config/mod/ DESTINATION ${JHL_OP4_DIR} PATTERN "GameMenu.res" EXCLUDE)
+install(DIRECTORY config/expansions/op4/ DESTINATION ${JHL_OP4_DIR})
+
+# Opposing Force's menu background, logo and icon, copied from the player's own install, never committed.
+install(CODE [[
+	set(gearbox "${CMAKE_INSTALL_PREFIX}/../gearbox")
+	set(op4 "${CMAKE_INSTALL_PREFIX}/../johnhalflife_op4")
+
+	if (EXISTS "${gearbox}/resource/background")
+		file(GLOB background "${gearbox}/resource/background/*")
+		file(COPY ${background} DESTINATION "${op4}/resource/background")
+		file(GLOB menuArt "${gearbox}/resource/game_menu*" "${gearbox}/resource/menu_*")
+		file(COPY ${menuArt} DESTINATION "${op4}/resource")
+		file(COPY "${gearbox}/game.ico" "${gearbox}/game.tga" DESTINATION "${op4}")
+	else()
+		message(WARNING "Opposing Force not found next to the mod; John Half-Life: Opposing Force will use Half-Life's menu")
+	endif()
+]])
+
 if (UNIX)
 	# Create a symbolic link to the OpenAL library so the dependency can be located at runtime.
 	INSTALL(CODE "execute_process( \
