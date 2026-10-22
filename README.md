@@ -1,4 +1,21 @@
-# Half-Life Unified SDK
+# johnhalflife
+
+An MMod-inspired mod for Half-Life, Opposing Force and Blue Shift, built on the
+[Half-Life Unified SDK](https://github.com/twhl-community/halflife-unified-sdk). It keeps Valve's look and
+models and adds reserved takes on MMod's camera, movement and weapon feel; every feature can be switched
+off in the console to compare with vanilla.
+
+**[What this mod changes](docs/johnhalflife/README.md)**: [camera and movement](docs/johnhalflife/camera_movement.md),
+[weapons](docs/johnhalflife/weapons.md), settings, and the MMod assets it uses.
+
+Status: in development, not released. MMod's files are not included in this repository; a few features use
+them when installed (see [MMod assets](docs/johnhalflife/README.md#mmod-assets)), and work without them.
+
+The rest of this README is the Unified SDK's own.
+
+---
+
+## Half-Life Unified SDK
 
 The [Half-Life Unified SDK](docs/README.md#developer-resources) is a project that provides an updated version of the Half-Life SDK, with full support for the expansion packs Opposing Force and Blue Shift as well as new features.
 
