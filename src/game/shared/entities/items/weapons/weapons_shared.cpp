@@ -211,10 +211,14 @@ bool CBasePlayerWeapon::DefaultDeploy(const char* szViewModel, const char* szWea
 
 	SendWeaponAnim(iAnim);
 
+#ifndef CLIENT_DLL
+	// Weapon switches happen on the server (selectweapon), not in client prediction,
+	// so this is a regular sound: a predicted one would skip the local player.
 	if (const char* deploySound = GetWeaponDeploySound(szViewModel); deploySound)
 	{
-		EMIT_SOUND_PREDICTED(m_pPlayer, CHAN_ITEM, deploySound, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
+		m_pPlayer->EmitSound(CHAN_ITEM, deploySound, VOL_NORM, ATTN_NORM);
 	}
+#endif
 
 	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5;
 	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 1.0;
