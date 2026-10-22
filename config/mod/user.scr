@@ -143,21 +143,21 @@ DESCRIPTION INFO_OPTIONS
 	{
 		"Vanilla | Field of view"
 		{ NUMBER 1.000000 179.000000 }
-		{ "90.000000" }
+		{ "105.000000" }
 	}
 
 	"fps_override"
 	{
 		"Vanilla | Allow frame rates above 100"
 		{ BOOL }
-		{ "0" }
+		{ "1" }
 	}
 
 	"fps_max"
 	{
 		"Vanilla | Maximum frame rate"
 		{ NUMBER 30.000000 1000.000000 }
-		{ "100.000000" }
+		{ "240.000000" }
 	}
 
 	"gl_vsync"

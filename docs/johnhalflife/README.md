@@ -67,7 +67,9 @@ possible with client VGUI2 (see BugfixedHL-Rebased) but was judged not worth the
   used). Applied once, a few frames after start so the saved config has loaded, then remembered in
   `jhl_recommended_version`. Raising `RecommendedSettingsVersion` applies a changed list once more.
 * **Reset:** the `jhl_recommended` command, or the "Reset all to recommended settings" box in the dialog,
-  applies the first launch values and sets every johnhalflife setting back to its default.
+  sets every setting listed in the dialog, and only those, to its recommended value (`DialogSettings`,
+  matching the defaults in `user.scr`). Notable values: `crosshair_scale 2`, `default_fov 105`,
+  `fps_override 1` with `fps_max 240`, `m_rawinput 1`.
 
 ## HUD
 

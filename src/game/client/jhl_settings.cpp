@@ -41,10 +41,13 @@ constexpr RecommendedSetting FirstLaunchSettings[] = {
 	{"violence_hgibs", "1"},
 };
 
-// Also applied by a reset: johnhalflife's own settings back to their defaults.
-constexpr RecommendedSetting ResetSettings[] = {
+// Applied by a reset: every setting listed in the John Settings dialog (config/mod/user.scr), and only those.
+// Keep in sync with that file, whose defaults should match.
+constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_camera_bob", "1"},
 	{"jhl_camera_viewroll", "1"},
+	{"cl_rollangle", "0.65"},
+	{"cl_rollspeed", "300"},
 	{"jhl_camera_verticallag", "1"},
 	{"jhl_camera_jumplandjolt", "1"},
 	{"jhl_visuals_weaponlag", "1"},
@@ -53,8 +56,16 @@ constexpr RecommendedSetting ResetSettings[] = {
 	{"jhl_fx_bulletimpacts", "1"},
 	{"jhl_fx_muzzleflash", "1"},
 	{"jhl_hud_scale", "1"},
-	{"cl_rollangle", "0.65"},
-	{"cl_rollspeed", "300"},
+	{"crosshair_scale", "2"},
+	{"default_fov", "105"},
+	{"fps_override", "1"},
+	{"fps_max", "240"},
+	{"gl_vsync", "0"},
+	{"m_rawinput", "1"},
+	{"mp_decals", "300"},
+	{"cl_bobtilt", "0"},
+	{"cl_snd_hrtf_enabled", "0"},
+	{"cl_snd_hrtf_implementation", ""},
 };
 
 // The engine runs config.cfg from the command buffer before the client's first frames; wait a few to be safe.
@@ -74,8 +85,7 @@ void Apply(std::span<const RecommendedSetting> settings)
 
 void ApplyAllRecommended()
 {
-	Apply(FirstLaunchSettings);
-	Apply(ResetSettings);
+	Apply(DialogSettings);
 	gEngfuncs.Con_Printf("johnhalflife: recommended settings applied\n");
 }
 }
