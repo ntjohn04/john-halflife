@@ -29,7 +29,6 @@
 
 static cvar_t* g_cl_bulletimpacts = nullptr;
 static cvar_t* g_cl_muzzleflash = nullptr;
-static cvar_t* g_cl_rpg_muzzle = nullptr; // Temporary, for tuning the RPG's muzzle position.
 
 static bool MuzzleEffectsEnabled()
 {
@@ -101,11 +100,13 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 	// The RPG view model has no attachments, so place the front of the tube relative to the view (see EV_SniperMuzzleEffects).
 	if (isLocal && MuzzleEffectsEnabled())
 	{
-		Vector offset{36, 8, -6};
-		sscanf(g_cl_rpg_muzzle->string, "%f %f %f", &offset.x, &offset.y, &offset.z);
+		// Offset from the eyes, checked in game.
+		constexpr float Forward = 36;
+		constexpr float Right = 8;
+		constexpr float Up = -6;
 
 		// Always a wisp, much larger than a gun's and twice as opaque.
-		MuzzleEffectsAt(eyePosition + forward * offset.x + right * offset.y + up * offset.z, 1, 3.5f, 0.2f);
+		MuzzleEffectsAt(eyePosition + forward * Forward + right * Right + up * Up, 1, 3.5f, 0.2f);
 	}
 
 	// Backblast out of the rear of the tube, over the right shoulder. Placed from the player rather than the view
@@ -149,17 +150,24 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 	}
 
 	// Smoke billowing back around the shooter: large, slow puffs that start behind on either side and roll forward
-	// past the shoulders, into view.
+	// past the shoulders, into view. Two per side, one of the four left out at random.
+	const int skipped = gEngfuncs.pfnRandomLong(0, 3);
+
 	for (int i = 0; i < 4; ++i)
 	{
+		if (i == skipped)
+		{
+			continue;
+		}
+
 		const float side = (i % 2) == 0 ? 1.f : -1.f;
 
 		Vector origin = rear + right * side * gEngfuncs.pfnRandomFloat(12, 22) - up * gEngfuncs.pfnRandomFloat(0, 12);
-		Vector velocity = forward * gEngfuncs.pfnRandomFloat(50, 80) + right * side * gEngfuncs.pfnRandomFloat(15, 30) + up * gEngfuncs.pfnRandomFloat(0, 12);
+		Vector velocity = forward * gEngfuncs.pfnRandomFloat(35, 55) + right * side * gEngfuncs.pfnRandomFloat(15, 30) + up * gEngfuncs.pfnRandomFloat(0, 12);
 
 		// 16 frames at 8 per second: about two seconds.
 		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, gEngfuncs.pfnRandomFloat(1.0f, 1.5f),
-			modelIndex, kRenderTransAlpha, kRenderFxNone, 0.22f, 3.0f, FTENT_SPRANIMATE);
+			modelIndex, kRenderTransAlpha, kRenderFxNone, 0.19f, 3.0f, FTENT_SPRANIMATE);
 
 		if (puff)
 		{
@@ -401,7 +409,6 @@ void WeaponEffects_Initialize()
 {
 	g_cl_bulletimpacts = gEngfuncs.pfnRegisterVariable("jhl_fx_bulletimpacts", "1", FCVAR_ARCHIVE);
 	g_cl_muzzleflash = gEngfuncs.pfnRegisterVariable("jhl_fx_muzzleflash", "1", FCVAR_ARCHIVE);
-	g_cl_rpg_muzzle = gEngfuncs.pfnRegisterVariable("jhl_fx_rpg_muzzle", "36 8 -6", 0);
 
 	g_ClientUserMessages.RegisterHandler("BulletHit", &MsgFunc_BulletImpact);
 	g_ClientUserMessages.RegisterHandler("WaterSplash", &MsgFunc_WaterSplash);
