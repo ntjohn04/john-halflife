@@ -467,6 +467,8 @@ void EV_HLDM_FireBullets(int idx,
 
 		EV_HLDM_CheckTracer(idx, vecSrc, tr.endpos, forward, right, iBulletType, iTracerFreq, tracerCount);
 
+		BulletWaterSplashAlongPath(vecSrc, tr.endpos);
+
 		// do damage, paint decals
 		if (tr.fraction != 1.0)
 		{

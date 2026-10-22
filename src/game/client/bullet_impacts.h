@@ -28,3 +28,13 @@ void BulletImpacts_Initialize();
  *	@param textureType Material of the surface hit (CHAR_TEX_*).
  */
 void BulletImpactEffects(const Vector& position, const Vector& normal, char textureType);
+
+/**
+ *	@brief Adds a splash where a bullet travelling from @p start to @p end enters water or slime, if it does.
+ */
+void BulletWaterSplashAlongPath(const Vector& start, const Vector& end);
+
+/**
+ *	@brief A small splash at a point on a water surface: spray, droplets, a ripple ring and a splash sound.
+ */
+void BulletWaterSplash(const Vector& surfacePosition);

@@ -8,7 +8,7 @@ Before publishing, each of these must be replaced, removed, or cleared with its 
 
 Source: Half-Life: MMod (Steam), HL1MMod directory
 
-**27 files** in 4 folders.
+**28 files** in 5 folders.
 
 | Location | Type | Files |
 |---|---|---|
@@ -16,6 +16,7 @@ Source: Half-Life: MMod (Steam), HL1MMod directory
 | `sound/items/` | wav | 1 |
 | `sound/player/` | wav | 10 |
 | `sound/weapons/` | wav | 15 |
+| `sprites/` | spr | 1 |
 
 ## `sound/`
 
@@ -71,3 +72,11 @@ Source: Half-Life: MMod (Steam), HL1MMod directory
 | `sound/weapons/weapon_draw_rpg.wav` | same path | weapon-switch |  |
 | `sound/weapons/weapon_draw_shotgun.wav` | same path | weapon-switch |  |
 | `sound/weapons/weapon_draw_tripmine.wav` | same path | weapon-switch |  |
+
+## `sprites/`
+
+### spr
+
+| File | Installed as | Used by | Notes |
+|---|---|---|---|
+| `sprites/water_splash_ring.spr` | same path | water-splash | Ripple ring on the water surface for bullet splashes; optional (skipped if missing) |

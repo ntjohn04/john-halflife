@@ -168,6 +168,13 @@
 			"Action": "copy",
 			"Feature": "weapon-switch",
 			"Sha256": "87cdde62dc5222308bde6a653f72ce6c2755be15baeb334c9276ee759a86e98e"
+		},
+		{
+			"Path": "sprites/water_splash_ring.spr",
+			"Action": "copy",
+			"Feature": "water-splash",
+			"Sha256": "01a9ed4b64aaa6e0ead1471f071ee4d05101bc0b9609eb09a8592137c7dac546",
+			"Notes": "Ripple ring on the water surface for bullet splashes; optional (skipped if missing)"
 		}
 	]
 }

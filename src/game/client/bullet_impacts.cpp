@@ -25,6 +25,7 @@
 #include "pm_materials.h"
 #include "parsemsg.h"
 #include "networking/ClientUserMessages.h"
+#include "sound/ISoundSystem.h"
 
 static cvar_t* g_cl_bulletimpacts = nullptr;
 
@@ -51,17 +52,11 @@ static void MetalImpact(const Vector& position, const Vector& normal)
 
 static void DustImpact(const Vector& position, const Vector& normal, const color24& color)
 {
-	// Our own copy of the stock steam sprite, trimmed to a single short puff (source in assetsrc/sprites).
-	int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/jhl_impact_puff.spr");
+	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
 
 	if (modelIndex == 0)
 	{
-		modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
-
-		if (modelIndex == 0)
-		{
-			return;
-		}
+		return;
 	}
 
 	Vector origin = position + normal * 4;
@@ -123,6 +118,97 @@ void BulletImpactEffects(const Vector& position, const Vector& normal, char text
 	}
 }
 
+static bool IsLiquid(Vector position)
+{
+	const int contents = gEngfuncs.PM_PointContents(position, nullptr);
+	return contents == CONTENTS_WATER || contents == CONTENTS_SLIME;
+}
+
+void BulletWaterSplashAlongPath(const Vector& start, const Vector& end)
+{
+	// Bullet traces pass through water, so a bullet entered it if it ended in liquid but started outside.
+	if (!IsLiquid(end) || IsLiquid(start))
+	{
+		return;
+	}
+
+	// Narrow down the surface between the last point outside and the first point inside.
+	Vector outside = start;
+	Vector inside = end;
+
+	for (int i = 0; i < 12; ++i)
+	{
+		const Vector middle = (outside + inside) * 0.5f;
+
+		if (IsLiquid(middle))
+		{
+			inside = middle;
+		}
+		else
+		{
+			outside = middle;
+		}
+	}
+
+	BulletWaterSplash(inside);
+}
+
+static TEMPENTITY* SplashSprite(const char* spriteName, Vector origin, float scale, float alpha, int renderMode, float frameRate)
+{
+	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex(spriteName);
+
+	if (modelIndex == 0)
+	{
+		return nullptr;
+	}
+
+	// Plays once and is removed on its last frame (see DustImpact).
+	TEMPENTITY* sprite = gEngfuncs.pEfxAPI->R_TempSprite(origin, vec3_origin, scale, modelIndex, renderMode, kRenderFxNone, alpha, 2.0f, FTENT_SPRANIMATE);
+
+	if (sprite)
+	{
+		sprite->entity.curstate.framerate = frameRate;
+	}
+
+	return sprite;
+}
+
+void BulletWaterSplash(const Vector& surfacePosition)
+{
+	if (0 == g_cl_bulletimpacts->value)
+	{
+		return;
+	}
+
+	constexpr int LightGreyPaletteIndex = 12;
+	const Vector up{0, 0, 1};
+
+	// Spray thrown up out of the water.
+	Vector origin = surfacePosition;
+	Vector spray = up * gEngfuncs.pfnRandomFloat(60, 90);
+	gEngfuncs.pEfxAPI->R_StreakSplash(origin, spray, LightGreyPaletteIndex, gEngfuncs.pfnRandomLong(6, 10), 1, -30, 30);
+
+	// Stock droplet spray.
+	SplashSprite("sprites/wsplash3.spr", surfacePosition + up * 4, gEngfuncs.pfnRandomFloat(0.25f, 0.35f), 0.5f, kRenderTransAdd, 20);
+
+	// Ripple ring lying flat on the surface (MMod's sprite, see mmod_port; skipped if it isn't installed).
+	if (TEMPENTITY* ring = SplashSprite("sprites/water_splash_ring.spr", surfacePosition + up, gEngfuncs.pfnRandomFloat(0.35f, 0.5f), 0.3f, kRenderTransAdd, 18); ring)
+	{
+		ring->entity.angles = {90, 0, 0};
+		ring->entity.curstate.rendercolor = {200, 210, 220};
+	}
+
+	static const char* const SplashSounds[] = {"player/pl_slosh1.wav", "player/pl_slosh2.wav", "player/pl_slosh3.wav", "player/pl_slosh4.wav"};
+
+	EV_PlaySound(0, surfacePosition, CHAN_STATIC, SplashSounds[gEngfuncs.pfnRandomLong(0, std::size(SplashSounds) - 1)],
+		0.6f, ATTN_NORM, 0, gEngfuncs.pfnRandomLong(95, 110));
+}
+
+static void MsgFunc_WaterSplash(const char* pszName, BufferReader& reader)
+{
+	BulletWaterSplash(reader.ReadCoordVector());
+}
+
 static void MsgFunc_BulletImpact(const char* pszName, BufferReader& reader)
 {
 	const Vector position = reader.ReadCoordVector();
@@ -142,4 +228,5 @@ void BulletImpacts_Initialize()
 	g_cl_bulletimpacts = gEngfuncs.pfnRegisterVariable("jhl_fx_bulletimpacts", "1", FCVAR_ARCHIVE);
 
 	g_ClientUserMessages.RegisterHandler("BulletHit", &MsgFunc_BulletImpact);
+	g_ClientUserMessages.RegisterHandler("WaterSplash", &MsgFunc_WaterSplash);
 }

@@ -99,6 +99,43 @@ static void SendBulletImpact(TraceResult* pTrace, CBaseEntity* pEntity)
 	MESSAGE_END();
 }
 
+static bool IsLiquid(const Vector& position)
+{
+	const int contents = UTIL_PointContents(position);
+	return contents == CONTENTS_WATER || contents == CONTENTS_SLIME;
+}
+
+void SendBulletWaterSplash(const Vector& start, const Vector& end)
+{
+	// Bullet traces pass through water, so a bullet entered it if it ended in liquid but started outside.
+	if (0 == gmsgWaterSplash || !IsLiquid(end) || IsLiquid(start))
+	{
+		return;
+	}
+
+	// Narrow down the surface between the last point outside and the first point inside.
+	Vector outside = start;
+	Vector inside = end;
+
+	for (int i = 0; i < 12; ++i)
+	{
+		const Vector middle = (outside + inside) * 0.5f;
+
+		if (IsLiquid(middle))
+		{
+			inside = middle;
+		}
+		else
+		{
+			outside = middle;
+		}
+	}
+
+	MESSAGE_BEGIN(MSG_PVS, gmsgWaterSplash, inside);
+	WRITE_COORD_VECTOR(inside);
+	MESSAGE_END();
+}
+
 void DecalGunshot(TraceResult* pTrace, int iBulletType)
 {
 	// Is the entity valid
@@ -283,10 +320,12 @@ void W_Precache()
 	g_sModelIndexWExplosion = UTIL_PrecacheModel("sprites/WXplo1.spr");		// underwater fireball
 	g_sModelIndexSmoke = UTIL_PrecacheModel("sprites/steam1.spr");			// smoke
 
-	// Bullet impact dust (client bullet_impacts.cpp); it falls back to steam1.spr if this isn't installed.
-	if (g_pFileSystem->FileExists("sprites/jhl_impact_puff.spr"))
+	// Bullet water splashes (client bullet_impacts.cpp). The ring is MMod's (mmod_port) and optional.
+	UTIL_PrecacheModel("sprites/wsplash3.spr");
+
+	if (g_pFileSystem->FileExists("sprites/water_splash_ring.spr"))
 	{
-		UTIL_PrecacheModel("sprites/jhl_impact_puff.spr");
+		UTIL_PrecacheModel("sprites/water_splash_ring.spr");
 	}
 	g_sModelIndexBubbles = UTIL_PrecacheModel("sprites/bubble.spr");		// bubbles
 	g_sModelIndexBloodSpray = UTIL_PrecacheModel("sprites/bloodspray.spr"); // initial blood

@@ -597,6 +597,11 @@ void ApplyMultiDamage(CBaseEntity* inflictor, CBaseEntity* attacker);
 void AddMultiDamage(CBaseEntity* inflictor, CBaseEntity* pEntity, float flDamage, int bitsDamageType);
 
 void DecalGunshot(TraceResult* pTrace, int iBulletType);
+
+/**
+ *	@brief Server only: tells nearby clients to draw a splash if a bullet fired from @p start to @p end entered water.
+ */
+void SendBulletWaterSplash(const Vector& start, const Vector& end);
 void SpawnBlood(Vector vecSpot, int bloodColor, float flDamage);
 int DamageDecal(CBaseEntity* pEntity, int bitsDamageType);
 

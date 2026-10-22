@@ -1437,6 +1437,8 @@ void CBaseEntity::FireBullets(unsigned int cShots, Vector vecSrc, Vector vecDirS
 					break;
 				}
 		}
+		SendBulletWaterSplash(vecSrc, tr.vecEndPos);
+
 		// make bullet trails
 		UTIL_BubbleTrail(vecSrc, tr.vecEndPos, (flDistance * tr.flFraction) / 64.0);
 	}

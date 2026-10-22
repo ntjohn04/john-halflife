@@ -97,4 +97,7 @@ void LinkUserMessages()
 
 	// Position (3 coords), surface normal (3 chars), material type. Message names are limited to 11 characters.
 	gmsgBulletImpact = REG_USER_MSG("BulletHit", 10);
+
+	// Point on the water surface (3 coords).
+	gmsgWaterSplash = REG_USER_MSG("WaterSplash", 6);
 }
