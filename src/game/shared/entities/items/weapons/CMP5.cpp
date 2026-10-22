@@ -95,14 +95,14 @@ bool CMP5::Deploy()
 	return DefaultDeploy("models/v_9mmAR.mdl", "models/p_9mmAR.mdl", MP5_DEPLOY, "mp5");
 }
 
-// 4 degrees blooming to 6 over about six shots, recovering within a fraction of a second.
+// Bursts start slightly tighter and bloom back to the classic spread within three shots, recovering in about 0.15 seconds.
+// Single player: 2.5 to 3 degrees.
 static constexpr CBasePlayerWeapon::SpreadSettings MP5Spread{
-	.Min = VECTOR_CONE_4DEGREES.x, .Max = VECTOR_CONE_6DEGREES.x, .PerShot = 0.003f, .RecoveryRate = 0.3f};
+	.Min = 0.02182f, .Max = VECTOR_CONE_3DEGREES.x, .PerShot = 0.0015f, .RecoveryRate = 0.03f};
 
-float CMP5::GetCrosshairSpread() const
-{
-	return GetCurrentSpread(MP5Spread);
-}
+// smg_wide_spread (the multiplayer default): 5 to 6 degrees.
+static constexpr CBasePlayerWeapon::SpreadSettings MP5WideSpread{
+	.Min = VECTOR_CONE_5DEGREES.x, .Max = VECTOR_CONE_6DEGREES.x, .PerShot = 0.003f, .RecoveryRate = 0.06f};
 
 void CMP5::PrimaryAttack()
 {
@@ -134,8 +134,7 @@ void CMP5::PrimaryAttack()
 	Vector vecSrc = m_pPlayer->GetGunPosition();
 	Vector vecAiming = m_pPlayer->GetAutoaimVector(AUTOAIM_5DEGREES);
 
-	// Replaces the smg_wide_spread choice between 6 and 3 degrees: bursts start tighter and bloom to the classic 6.
-	const float flSpread = FireSpread(MP5Spread);
+	const float flSpread = FireSpread(g_Skill.GetValue("smg_wide_spread") != 0 ? MP5WideSpread : MP5Spread);
 
 	const Vector vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, Vector(flSpread, flSpread, flSpread), 8192, BULLET_PLAYER_MP5, 2, 0, m_pPlayer, m_pPlayer->random_seed);
 

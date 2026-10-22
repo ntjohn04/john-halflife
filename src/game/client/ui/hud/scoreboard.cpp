@@ -109,7 +109,7 @@ int SCOREBOARD_WIDTH = 320;
 // Y positions
 #define ROW_GAP 13
 #define ROW_RANGE_MIN 15
-#define ROW_RANGE_MAX (ScreenHeight - 50)
+#define ROW_RANGE_MAX (HudHeight - 50)
 
 bool CHudScoreboard::Draw(float fTime)
 {
@@ -134,7 +134,7 @@ bool CHudScoreboard::Draw(float fTime)
 	GetAllPlayersInfo();
 
 	//  Packetloss removed on Kelly 'shipping nazi' Bailey's orders
-	if (cl_showpacketloss && 0 != cl_showpacketloss->value && (ScreenWidth >= 400))
+	if (cl_showpacketloss && 0 != cl_showpacketloss->value && (HudWidth >= 400))
 	{
 		can_show_packetloss = true;
 		SCOREBOARD_WIDTH = 400;
@@ -147,7 +147,7 @@ bool CHudScoreboard::Draw(float fTime)
 	// just sort the list on the fly
 	// list is sorted first by frags, then by deaths
 	float list_slot = 0;
-	int xpos_rel = (ScreenWidth - SCOREBOARD_WIDTH) / 2;
+	int xpos_rel = (HudWidth - SCOREBOARD_WIDTH) / 2;
 
 	// print the heading line
 	int ypos = ROW_RANGE_MIN + (list_slot * ROW_GAP);
@@ -161,30 +161,30 @@ bool CHudScoreboard::Draw(float fTime)
 		gHUD.DrawHudString(xpos, ypos, NAME_RANGE_MAX + xpos_rel, "Teams", color);
 
 	gHUD.DrawHudStringReverse(KILLS_RANGE_MAX + xpos_rel, ypos, 0, "kills", color);
-	gHUD.DrawHudString(DIVIDER_POS + xpos_rel, ypos, ScreenWidth, "/", color);
+	gHUD.DrawHudString(DIVIDER_POS + xpos_rel, ypos, HudWidth, "/", color);
 
 	if (gHUD.m_Teamplay == 2)
 	{
-		gHUD.DrawHudString(xpos_rel + 190, ypos, ScreenWidth, "deaths", color);
-		gHUD.DrawHudString(xpos_rel + 240, ypos, ScreenWidth, "/", color);
-		gHUD.DrawHudString(xpos_rel + 255, ypos, ScreenWidth, "scores", color);
-		gHUD.DrawHudString(xpos_rel + 310, ypos, ScreenWidth, "latency", color);
+		gHUD.DrawHudString(xpos_rel + 190, ypos, HudWidth, "deaths", color);
+		gHUD.DrawHudString(xpos_rel + 240, ypos, HudWidth, "/", color);
+		gHUD.DrawHudString(xpos_rel + 255, ypos, HudWidth, "scores", color);
+		gHUD.DrawHudString(xpos_rel + 310, ypos, HudWidth, "latency", color);
 
 		if (can_show_packetloss)
 		{
-			gHUD.DrawHudString(xpos_rel + 355, ypos, ScreenWidth, "pkt loss", color);
+			gHUD.DrawHudString(xpos_rel + 355, ypos, HudWidth, "pkt loss", color);
 		}
 
 		FAR_RIGHT = can_show_packetloss ? 390 : 345;
 	}
 	else
 	{
-		gHUD.DrawHudString(xpos_rel + 190, ypos, ScreenWidth, "deaths", color);
-		gHUD.DrawHudString(xpos_rel + PING_RANGE_MAX - 35, ypos, ScreenWidth, "latency", color);
+		gHUD.DrawHudString(xpos_rel + 190, ypos, HudWidth, "deaths", color);
+		gHUD.DrawHudString(xpos_rel + PING_RANGE_MAX - 35, ypos, HudWidth, "latency", color);
 
 		if (can_show_packetloss)
 		{
-			gHUD.DrawHudString(xpos_rel + PL_RANGE_MAX - 35, ypos, ScreenWidth, "pkt loss", color);
+			gHUD.DrawHudString(xpos_rel + PL_RANGE_MAX - 35, ypos, HudWidth, "pkt loss", color);
 		}
 
 		FAR_RIGHT = can_show_packetloss ? PL_RANGE_MAX : PING_RANGE_MAX;
@@ -376,7 +376,7 @@ int CHudScoreboard::DrawPlayers(int xpos_rel, float list_slot, int nameoffset, c
 	int FAR_RIGHT;
 
 	//  Packetloss removed on Kelly 'shipping nazi' Bailey's orders
-	if (cl_showpacketloss && 0 != cl_showpacketloss->value && (ScreenWidth >= 400))
+	if (cl_showpacketloss && 0 != cl_showpacketloss->value && (HudWidth >= 400))
 	{
 		can_show_packetloss = true;
 		SCOREBOARD_WIDTH = 400;
@@ -443,7 +443,7 @@ int CHudScoreboard::DrawPlayers(int xpos_rel, float list_slot, int nameoffset, c
 			if (0 != sprite.spr)
 			{
 				SPR_Set(sprite.spr, sprite.color);
-				gEngfuncs.pfnSPR_DrawAdditive(0, xpos_icon, ypos, &sprite.rc);
+				SPR_DrawAdditive(0, xpos_icon, ypos, &sprite.rc);
 				xpos_icon += sprite.rc.left - sprite.rc.right - 5;
 			}
 		}

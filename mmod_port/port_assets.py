@@ -9,6 +9,7 @@ Commands:
     verify   Show the state of each listed asset in the mod directory.
     remove   Delete installed assets that are unchanged since installation.
     add      Add files from the MMod installation to the manifest.
+    drop     Remove files from the manifest and uninstall them.
     report   Regenerate ASSETS.md from the manifest.
 
 Run with --help on any command for its options. Requires Python 3.9+, standard library only.
@@ -258,6 +259,39 @@ def command_add(args):
     return 0
 
 
+def command_drop(args):
+    manifest = load_manifest()
+    mod_dir = Path(args.mod_dir)
+    record = load_install_record(mod_dir)
+
+    for path in args.paths:
+        relative = Path(path).as_posix()
+        asset = next((a for a in manifest["Assets"] if a["Path"].lower() == relative.lower()), None)
+        if asset is None:
+            print(f"error: {relative} is not in the manifest")
+            return 1
+
+        manifest["Assets"].remove(asset)
+        print(f"dropped  {relative} from the manifest")
+
+        # Uninstall it too, unless it was changed after installation.
+        relative_output = output_path(asset)
+        destination = mod_dir / relative_output
+        if relative_output in record:
+            if destination.exists() and sha256_of(destination) != record[relative_output]:
+                print(f"kept     {relative_output}: modified since installation, delete it yourself if unwanted")
+            else:
+                if destination.exists():
+                    destination.unlink()
+                    print(f"removed  {relative_output}")
+                del record[relative_output]
+
+    save_install_record(mod_dir, record)
+    save_manifest(manifest)
+    write_report(manifest)
+    return 0
+
+
 def write_report(manifest):
     assets = manifest["Assets"]
 
@@ -334,6 +368,11 @@ def main():
     add.add_argument("--notes", help="free-form notes, e.g. what vanilla file it replaces")
     add.add_argument("--mmod-dir", default=DEFAULT_MMOD_DIR)
     add.set_defaults(func=command_add)
+
+    drop = commands.add_parser("drop", help="remove files from the manifest and uninstall them")
+    drop.add_argument("paths", nargs="+", help="paths relative to the MMod directory")
+    drop.add_argument("--mod-dir", default=DEFAULT_MOD_DIR)
+    drop.set_defaults(func=command_drop)
 
     report = commands.add_parser("report", help="regenerate ASSETS.md")
     report.set_defaults(func=command_report)

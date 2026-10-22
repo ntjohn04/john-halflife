@@ -77,13 +77,6 @@
 			"Action": "copy",
 			"Feature": "movement",
 			"Sha256": "006e77b955a42736cd8269c38515c2d57c13420970ab9a2b7d87c7668155419c"
-		},
-		{
-			"Path": "sprites/hud_crosshairs.spr",
-			"Action": "copy",
-			"Feature": "crosshair",
-			"Sha256": "818f75fe1c26ba1e0995bb69c2427511772b9cd97c40050c5374609c6a20ba77",
-			"Notes": "Dynamic crosshair pieces (29 frames; frames 4-11 and 17 used). Additive, tinted by the crosshair colour"
 		}
 	]
 }

@@ -288,7 +288,7 @@ int CHudHealth::DrawHealth()
 	const int HealthWidth = gHUD.GetSpriteRect(gHUD.m_HUD_number_0).right - gHUD.GetSpriteRect(gHUD.m_HUD_number_0).left;
 	int CrossWidth = gHUD.GetSpriteRect(m_HUD_cross).right - gHUD.GetSpriteRect(m_HUD_cross).left;
 
-	int y = ScreenHeight - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
+	int y = HudHeight - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
 	int x = CrossWidth / 2;
 
 	SPR_Set(gHUD.GetSprite(m_HUD_cross), painColor);
@@ -337,8 +337,8 @@ void CHudHealth::DrawArmor(int startX)
 
 	const int iOffset = (m_ArmorSprite1Rect->bottom - m_ArmorSprite1Rect->top) / 6;
 
-	int y = ScreenHeight - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
-	int x = startX; // ScreenWidth / 4;
+	int y = HudHeight - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
+	int x = startX; // HudWidth / 4;
 
 	SPR_Set(m_ArmorSprite1, color);
 	SPR_DrawAdditive(0, x, y - iOffset, m_ArmorSprite1Rect);
@@ -379,8 +379,8 @@ bool CHudHealth::DrawPain(float flTime)
 		const auto painColor = gHUD.GetHudItemColor(GetPainColor()).Scale(shade);
 		SPR_Set(m_DamageDirectionsSprite, painColor);
 
-		x = ScreenWidth / 2 - SPR_Width(m_DamageDirectionsSprite, 0) / 2;
-		y = ScreenHeight / 2 - SPR_Height(m_DamageDirectionsSprite, 0) * 3;
+		x = HudWidth / 2 - SPR_Width(m_DamageDirectionsSprite, 0) / 2;
+		y = HudHeight / 2 - SPR_Height(m_DamageDirectionsSprite, 0) * 3;
 		SPR_DrawAdditive(0, x, y, nullptr);
 		m_fAttackFront = std::max(0.f, m_fAttackFront - fFade);
 	}
@@ -393,8 +393,8 @@ bool CHudHealth::DrawPain(float flTime)
 		const auto painColor = gHUD.GetHudItemColor(GetPainColor()).Scale(shade);
 		SPR_Set(m_DamageDirectionsSprite, painColor);
 
-		x = ScreenWidth / 2 + SPR_Width(m_DamageDirectionsSprite, 1) * 2;
-		y = ScreenHeight / 2 - SPR_Height(m_DamageDirectionsSprite, 1) / 2;
+		x = HudWidth / 2 + SPR_Width(m_DamageDirectionsSprite, 1) * 2;
+		y = HudHeight / 2 - SPR_Height(m_DamageDirectionsSprite, 1) / 2;
 		SPR_DrawAdditive(1, x, y, nullptr);
 		m_fAttackRight = std::max(0.f, m_fAttackRight - fFade);
 	}
@@ -407,8 +407,8 @@ bool CHudHealth::DrawPain(float flTime)
 		const auto painColor = gHUD.GetHudItemColor(GetPainColor()).Scale(shade);
 		SPR_Set(m_DamageDirectionsSprite, painColor);
 
-		x = ScreenWidth / 2 - SPR_Width(m_DamageDirectionsSprite, 2) / 2;
-		y = ScreenHeight / 2 + SPR_Height(m_DamageDirectionsSprite, 2) * 2;
+		x = HudWidth / 2 - SPR_Width(m_DamageDirectionsSprite, 2) / 2;
+		y = HudHeight / 2 + SPR_Height(m_DamageDirectionsSprite, 2) * 2;
 		SPR_DrawAdditive(2, x, y, nullptr);
 		m_fAttackRear = std::max(0.f, m_fAttackRear - fFade);
 	}
@@ -421,8 +421,8 @@ bool CHudHealth::DrawPain(float flTime)
 		const auto painColor = gHUD.GetHudItemColor(GetPainColor()).Scale(shade);
 		SPR_Set(m_DamageDirectionsSprite, painColor);
 
-		x = ScreenWidth / 2 - SPR_Width(m_DamageDirectionsSprite, 3) * 3;
-		y = ScreenHeight / 2 - SPR_Height(m_DamageDirectionsSprite, 3) / 2;
+		x = HudWidth / 2 - SPR_Width(m_DamageDirectionsSprite, 3) * 3;
+		y = HudHeight / 2 - SPR_Height(m_DamageDirectionsSprite, 3) / 2;
 		SPR_DrawAdditive(3, x, y, nullptr);
 
 		m_fAttackLeft = std::max(0.f, m_fAttackLeft - fFade);
@@ -511,7 +511,7 @@ void CHudHealth::UpdateTiles(float flTime, long bitsDamage)
 		{
 			// put this one at the bottom
 			pdmg->x = giDmgWidth / 8;
-			pdmg->y = ScreenHeight - giDmgHeight * 2;
+			pdmg->y = HudHeight - giDmgHeight * 2;
 			pdmg->fExpire = flTime + DMG_IMAGE_LIFE;
 
 			// move everyone else up

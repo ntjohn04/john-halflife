@@ -123,11 +123,6 @@ void CPython::SecondaryAttack()
 static constexpr CBasePlayerWeapon::SpreadSettings PythonSpread{
 	.Min = 0.0065f, .Max = VECTOR_CONE_1DEGREES.x, .PerShot = 0.003f, .RecoveryRate = 0.1f};
 
-float CPython::GetCrosshairSpread() const
-{
-	return GetCurrentSpread(PythonSpread);
-}
-
 void CPython::PrimaryAttack()
 {
 	// don't fire underwater

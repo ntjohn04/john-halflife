@@ -573,6 +573,9 @@ bool CHudSpectator::Draw(float flTime)
 	if (0 == g_iUser1)
 		return false;
 
+	// The spectator HUD and overview are laid out in real pixels.
+	const UnscaledHudScope unscaled;
+
 	// if user pressed zoom, aplly changes
 	if ((m_zoomDelta != 0.0f) && (g_iUser1 == OBS_MAP_FREE))
 	{

@@ -18,6 +18,7 @@ python mmod_port\port_assets.py install            :: copy/convert everything in
 python mmod_port\port_assets.py install --feature movement
 python mmod_port\port_assets.py verify             :: state of each listed file in the mod directory
 python mmod_port\port_assets.py remove             :: delete installed files that are unchanged
+python mmod_port\port_assets.py drop <path>        :: stop using an asset: drops it from the manifest and uninstalls it
 ```
 
 ## Porting a new asset

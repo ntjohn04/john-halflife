@@ -26,8 +26,11 @@
 #include "demo_api.h"
 #include "vgui_ScorePanel.h"
 #include "HudSpriteConfigSystem.h"
+#include "r_studioint.h"
 
 #include "ui/hud/HudReplacementSystem.h"
+
+extern engine_studio_api_t IEngineStudio;
 
 class CHLVoiceStatusHelper : public IVoiceStatusHelper
 {
@@ -60,7 +63,7 @@ public:
 
 	int GetAckIconHeight() override
 	{
-		return ScreenHeight - gHUD.m_iFontHeight * 3 - 6;
+		return HudHeight - gHUD.m_iFontHeight * 3 - 6;
 	}
 
 	bool CanShowSpeakerLabels() override
@@ -111,6 +114,7 @@ void CHud::Init()
 	CVAR_CREATE("zoom_sensitivity_ratio", "1.2", 0);
 	CVAR_CREATE("cl_autowepswitch", "1", FCVAR_ARCHIVE | FCVAR_USERINFO);
 	default_fov = CVAR_CREATE("default_fov", "90", FCVAR_ARCHIVE);
+	m_pCvarHudScale = CVAR_CREATE("jhl_hud_scale", "1", FCVAR_ARCHIVE);
 	m_pCvarStealMouse = CVAR_CREATE("hud_capturemouse", "1", FCVAR_ARCHIVE);
 	m_pCvarDraw = CVAR_CREATE("hud_draw", "1", FCVAR_ARCHIVE);
 	m_pCvarCrosshair = gEngfuncs.pfnGetCvarPointer("crosshair");
@@ -168,6 +172,38 @@ void CHud::UpdateScreenInfo()
 {
 	m_scrinfo.iSize = sizeof(m_scrinfo);
 	GetScreenInfo(&m_scrinfo);
+
+	// Scaling draws sprites through the triangle API, so software rendering stays at native size.
+	float scale = 1;
+
+	if (m_pCvarHudScale && IEngineStudio.IsHardware && 0 != IEngineStudio.IsHardware())
+	{
+		scale = m_pCvarHudScale->value;
+
+		// 0 picks a whole-number scale from the screen height: 1 up to 1439 pixels, 2 at 1440, 3 at 2160.
+		if (scale <= 0)
+		{
+			scale = std::floor(m_scrinfo.iHeight / 720.f);
+		}
+
+		// Keep at least the 640x480 space the HUD is designed for.
+		scale = std::min(scale, std::min(m_scrinfo.iWidth / 640.f, m_scrinfo.iHeight / 480.f));
+		scale = std::max(1.f, scale);
+	}
+
+	m_flHudScale = scale;
+
+	m_HudScreenInfo = m_scrinfo;
+	m_HudScreenInfo.iWidth = static_cast<int>(m_scrinfo.iWidth / scale);
+	m_HudScreenInfo.iHeight = static_cast<int>(m_scrinfo.iHeight / scale);
+
+	// Text is drawn at its real size, so round its size up in HUD units to keep characters from overlapping.
+	m_HudScreenInfo.iCharHeight = static_cast<int>(std::ceil(m_scrinfo.iCharHeight / scale));
+
+	for (std::size_t i = 0; i < std::size(m_HudScreenInfo.charWidths); ++i)
+	{
+		m_HudScreenInfo.charWidths[i] = static_cast<short>(std::ceil(m_scrinfo.charWidths[i] / scale));
+	}
 }
 
 void CHud::VidInit()

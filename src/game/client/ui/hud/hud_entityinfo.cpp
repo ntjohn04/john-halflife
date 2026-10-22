@@ -53,8 +53,8 @@ bool CHudEntityInfo::Draw(float flTime)
 	const int lineHeight = 20;
 
 	// Start drawing under the crosshair.
-	const int labelXPos = static_cast<int>(ScreenWidth * 0.45);
-	const int startingYPos = static_cast<int>(ScreenHeight * 0.55);
+	const int labelXPos = static_cast<int>(HudWidth * 0.45);
+	const int startingYPos = static_cast<int>(HudHeight * 0.55);
 
 	const auto healthString = UTIL_ToString(m_EntityInfo.Health);
 
@@ -72,7 +72,7 @@ bool CHudEntityInfo::Draw(float flTime)
 
 	for (const auto& info : infos)
 	{
-		maximumWidth = std::max(maximumWidth, gHUD.DrawHudString(labelXPos, yPos, ScreenWidth - labelXPos, std::get<0>(info), RGB_WHITE));
+		maximumWidth = std::max(maximumWidth, gHUD.DrawHudString(labelXPos, yPos, HudWidth - labelXPos, std::get<0>(info), RGB_WHITE));
 		yPos += lineHeight;
 	}
 
@@ -81,7 +81,7 @@ bool CHudEntityInfo::Draw(float flTime)
 
 	for (const auto& info : infos)
 	{
-		gHUD.DrawHudString(maximumWidth, yPos, ScreenWidth - maximumWidth, std::get<1>(info), m_EntityInfo.Color);
+		gHUD.DrawHudString(maximumWidth, yPos, HudWidth - maximumWidth, std::get<1>(info), m_EntityInfo.Color);
 		yPos += lineHeight;
 	}
 

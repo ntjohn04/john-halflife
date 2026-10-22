@@ -115,7 +115,7 @@ bool CHudFlashlight::Draw(float flTime)
 	auto data = GetLightData();
 
 	y = (data->m_prc1->bottom - data->m_prc2->top) / 2;
-	x = ScreenWidth - data->m_iWidth - data->m_iWidth / 2;
+	x = HudWidth - data->m_iWidth - data->m_iWidth / 2;
 
 	// Draw the flashlight casing
 	SPR_Set(data->m_hSprite1, color);
@@ -123,7 +123,7 @@ bool CHudFlashlight::Draw(float flTime)
 
 	if (m_fOn)
 	{ // draw the flashlight beam
-		x = ScreenWidth - data->m_iWidth / 2;
+		x = HudWidth - data->m_iWidth / 2;
 
 		if (data->m_hBeam != 0)
 		{
@@ -138,7 +138,7 @@ bool CHudFlashlight::Draw(float flTime)
 	}
 
 	// draw the flashlight energy level
-	x = ScreenWidth - data->m_iWidth - data->m_iWidth / 2;
+	x = HudWidth - data->m_iWidth - data->m_iWidth / 2;
 	int iOffset = data->m_iWidth * (1.0 - m_flBat);
 	if (iOffset < data->m_iWidth)
 	{
@@ -169,21 +169,21 @@ void CHudFlashlight::DrawNightVision()
 		const auto width = gEngfuncs.pfnSPR_Width(m_nvSprite, 0);
 		const auto height = gEngfuncs.pfnSPR_Height(m_nvSprite, 0);
 
-		gEngfuncs.pfnSPR_Set(m_nvSprite, 0, 170, 0);
+		SPR_Set(m_nvSprite, RGB24{0, 170, 0});
 
 		Rect drawingRect;
 
-		for (auto x = 0; x < gHUD.m_scrinfo.iWidth; x += width)
+		for (auto x = 0; x < gHUD.m_HudScreenInfo.iWidth; x += width)
 		{
 			drawingRect.left = 0;
-			drawingRect.right = x + width >= gHUD.m_scrinfo.iWidth ? gHUD.m_scrinfo.iWidth - x : width;
+			drawingRect.right = x + width >= gHUD.m_HudScreenInfo.iWidth ? gHUD.m_HudScreenInfo.iWidth - x : width;
 
-			for (auto y = 0; y < gHUD.m_scrinfo.iHeight; y += height)
+			for (auto y = 0; y < gHUD.m_HudScreenInfo.iHeight; y += height)
 			{
 				drawingRect.top = 0;
-				drawingRect.bottom = y + height >= gHUD.m_scrinfo.iHeight ? gHUD.m_scrinfo.iHeight - y : height;
+				drawingRect.bottom = y + height >= gHUD.m_HudScreenInfo.iHeight ? gHUD.m_HudScreenInfo.iHeight - y : height;
 
-				gEngfuncs.pfnSPR_DrawAdditive(frameIndex, x, y, &drawingRect);
+				SPR_DrawAdditive(frameIndex, x, y, &drawingRect);
 			}
 		}
 	}

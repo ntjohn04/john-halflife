@@ -121,7 +121,7 @@ bool CHudDeathNotice::Draw(float flTime)
 			y = DEATHNOTICE_TOP + 2 + (20 * i); //!!!
 
 			int id = (rgDeathNoticeList[i].iId == -1) ? m_HUD_d_skull : rgDeathNoticeList[i].iId;
-			x = ScreenWidth - ConsoleStringLen(rgDeathNoticeList[i].szVictim) - (gHUD.GetSpriteRect(id).right - gHUD.GetSpriteRect(id).left);
+			x = HudWidth - ConsoleStringLen(rgDeathNoticeList[i].szVictim) - (gHUD.GetSpriteRect(id).right - gHUD.GetSpriteRect(id).left);
 
 			if (!rgDeathNoticeList[i].iSuicide)
 			{

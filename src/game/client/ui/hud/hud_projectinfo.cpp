@@ -48,11 +48,11 @@ bool CHudProjectInfo::Draw(float flTime)
 		// Shrink line height a bit.
 		lineHeight = static_cast<int>(lineHeight * 0.9f);
 
-		int yPos = static_cast<int>(ScreenHeight * 0.05);
+		int yPos = static_cast<int>(HudHeight * 0.05);
 
 		const auto lineDrawer = [&](const char* text, const RGB24& color = {255, 255, 255})
 		{
-			gHUD.DrawHudString(xPos, yPos, ScreenWidth - xPos, text, color);
+			gHUD.DrawHudString(xPos, yPos, HudWidth - xPos, text, color);
 			yPos += lineHeight;
 		};
 

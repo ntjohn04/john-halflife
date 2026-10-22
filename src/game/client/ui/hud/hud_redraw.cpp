@@ -38,8 +38,7 @@ extern cvar_t* sensitivity;
 // Think
 void CHud::Think()
 {
-	m_scrinfo.iSize = sizeof(m_scrinfo);
-	GetScreenInfo(&m_scrinfo);
+	UpdateScreenInfo();
 
 	int newfov;
 
@@ -173,7 +172,7 @@ bool CHud::Redraw(float flTime, bool intermission)
 		SPR_Set(m_hsprLogo, {250, 250, 250});
 
 		x = SPR_Width(m_hsprLogo, 0);
-		x = ScreenWidth - x;
+		x = HudWidth - x;
 		y = SPR_Height(m_hsprLogo, 0) / 2;
 
 		// Draw the logo at 20 fps
@@ -250,7 +249,7 @@ int CHud::DrawHudStringReverse(int xpos, int ypos, int iMinX, const char* szStri
 
 	--i;
 
-	int x = xpos - gHUD.m_scrinfo.charWidths[*i];
+	int x = xpos - gHUD.m_HudScreenInfo.charWidths[*i];
 
 	if (iMinX > x)
 	{
@@ -259,14 +258,14 @@ int CHud::DrawHudStringReverse(int xpos, int ypos, int iMinX, const char* szStri
 
 	while (true)
 	{
-		gEngfuncs.pfnDrawCharacter(x, ypos, *i, color.Red, color.Green, color.Blue);
+		TextMessageDrawChar(x, ypos, *i, color.Red, color.Green, color.Blue);
 
 		if (i == szString)
 			break;
 
 		--i;
 
-		const int width = gHUD.m_scrinfo.charWidths[*i];
+		const int width = gHUD.m_HudScreenInfo.charWidths[*i];
 
 		if (x - width < iMinX)
 			break;

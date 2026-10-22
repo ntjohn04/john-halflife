@@ -53,7 +53,7 @@ bool CHudFlagIcons::Draw(float flTime)
 	// TODO: can this ever return 2?
 	if (gEngfuncs.IsSpectateOnly() != 2)
 	{
-		int y = ScreenHeight - 64;
+		int y = HudHeight - 64;
 
 		for (int i = 0; i < MAX_FLAGSPRITES; ++i)
 		{
@@ -63,8 +63,8 @@ bool CHudFlagIcons::Draw(float flTime)
 			{
 				y += flag.rc.top - flag.rc.bottom - 5;
 
-				gEngfuncs.pfnSPR_Set(flag.spr, flag.r, flag.g, flag.b);
-				gEngfuncs.pfnSPR_DrawAdditive(0, 5, y, &flag.rc);
+				SPR_Set(flag.spr, RGB24{static_cast<std::uint8_t>(flag.r), static_cast<std::uint8_t>(flag.g), static_cast<std::uint8_t>(flag.b)});
+				SPR_DrawAdditive(0, 5, y, &flag.rc);
 				gHUD.DrawHudNumber(
 					flag.rc.right - flag.rc.left + 10,
 					y + ((flag.rc.bottom - flag.rc.top) / 2) - 5,
@@ -89,7 +89,7 @@ bool CHudFlagIcons::Draw(float flTime)
 			// TODO: this buffer is static in vanilla Op4
 			char szBuf[40];
 			sprintf(szBuf, "%s %d:%02d", CHudTextMessage::BufferedLocaliseTextString("#CTFTimeRemain"), minutesLeft, secondsLeft);
-			gHUD.DrawHudString(5, ScreenHeight - 60, 200, szBuf, gHUD.m_HudColor);
+			gHUD.DrawHudString(5, HudHeight - 60, 200, szBuf, gHUD.m_HudColor);
 		}
 	}
 

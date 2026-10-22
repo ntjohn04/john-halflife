@@ -219,16 +219,6 @@ enum class WeaponState
 	OnTarget
 };
 
-/**
- *	@brief Shape of the dynamic crosshair drawn for a weapon.
- */
-enum class CrosshairStyle
-{
-	Ticks, //!< Four lines around the aim point, pushed out by spread
-	Arcs,  //!< Four arcs forming a circle, pushed out by spread
-	Dot	   //!< A dot, for weapons without bullet spread
-};
-
 void Weapon_RegisterWeaponData();
 
 constexpr int RefillAllAmmoAmount = -1;
@@ -448,13 +438,6 @@ public:
 	 *	Must be called before the next attack time is updated for this shot.
 	 */
 	float FireSpread(const SpreadSettings& settings);
-
-	/**
-	 *	@brief Spread shown by the dynamic crosshair.
-	 */
-	virtual float GetCrosshairSpread() const { return 0; }
-
-	virtual CrosshairStyle GetCrosshairStyle() const;
 
 	void SetWeaponModels(const char* viewModel, const char* weaponModel);
 

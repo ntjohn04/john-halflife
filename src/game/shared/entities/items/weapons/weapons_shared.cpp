@@ -273,22 +273,6 @@ float CBasePlayerWeapon::FireSpread(const SpreadSettings& settings)
 	return spread;
 }
 
-CrosshairStyle CBasePlayerWeapon::GetCrosshairStyle() const
-{
-	if (!m_WeaponInfo)
-	{
-		return CrosshairStyle::Ticks;
-	}
-
-	// Melee weapons use no ammo and thrown weapons are used up; neither has a bullet spread to show.
-	if (m_WeaponInfo->AttackModeInfo[0].AmmoType.empty() || (m_WeaponInfo->Flags & ITEM_FLAG_EXHAUSTIBLE) != 0)
-	{
-		return CrosshairStyle::Dot;
-	}
-
-	return CrosshairStyle::Ticks;
-}
-
 void CBasePlayerWeapon::ResetEmptySound()
 {
 	m_iPlayEmptySound = true;

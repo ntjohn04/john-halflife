@@ -29,7 +29,7 @@ Vector* GetClientColor(int clientIndex);
 // allow 20 pixels on either side of the text
 int CHudSayText::GetMaxLineWidth()
 {
-	return ScreenWidth - 40;
+	return HudWidth - 40;
 }
 
 bool CHudSayText::Init()
@@ -64,7 +64,7 @@ bool CHudSayText::VidInit()
 	GetConsoleStringSize("", &lineWidth, &m_LineHeight);
 
 	// Calculate text area starting position now so chat input can position itself correctly.
-	m_YStart = ScreenHeight - 60 - (m_LineHeight * (MAX_LINES + 2));
+	m_YStart = HudHeight - 60 - (m_LineHeight * (MAX_LINES + 2));
 
 	return true;
 }

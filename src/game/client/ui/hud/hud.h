@@ -142,17 +142,6 @@ public:
 private:
 	void DrawCrosshair(int x, int y);
 
-	/**
-	 *	@brief Draws the current weapon's dynamic crosshair, whose gap follows the weapon's spread.
-	 *	@return false if the regular crosshair should be drawn instead
-	 */
-	bool DrawDynamicCrosshair(int x, int y);
-
-	/**
-	 *	@brief Draws one frame of the dynamic crosshair sprite, centered on (x, y).
-	 */
-	void DrawCrosshairPiece(int frame, float x, float y, float scale);
-
 private:
 	struct Crosshair
 	{
@@ -173,12 +162,6 @@ private:
 	Crosshair m_AutoaimCrosshair;
 
 	cvar_t* m_pCvarCrosshairScale = nullptr;
-
-	cvar_t* m_pCvarDynamicCrosshair = nullptr;
-	cvar_t* m_pCvarDynamicCrosshairScale = nullptr;
-	HSPRITE m_DynamicCrosshairSprite = 0;
-	float m_DynamicCrosshairGap = 0;		  //!< Smoothed gap in pixels
-	float m_DynamicCrosshairLastDrawTime = 0; //!< Client time of the last draw, for smoothing
 };
 
 
@@ -863,6 +846,18 @@ public:
 	// Screen information
 	SCREENINFO m_scrinfo;
 
+	/**
+	 *	@brief Screen information in HUD units: m_scrinfo divided by m_flHudScale (see cl_util.h).
+	 */
+	SCREENINFO m_HudScreenInfo;
+
+	/**
+	 *	@brief Current HUD scale; 1 draws the HUD at native sprite size.
+	 */
+	float m_flHudScale = 1;
+
+	cvar_t* m_pCvarHudScale = nullptr;
+
 	std::uint64_t m_iWeaponBits = 0;
 	std::uint32_t m_HudFlags = 0;
 	bool m_fPlayerDead = false;
@@ -896,6 +891,33 @@ public:
 };
 
 inline CHud gHUD;
+
+/**
+ *	@brief Turns the HUD scale off while in scope, for HUD code that lays itself out in real pixels.
+ */
+class UnscaledHudScope
+{
+public:
+	UnscaledHudScope()
+		: m_Scale(gHUD.m_flHudScale), m_HudScreenInfo(gHUD.m_HudScreenInfo)
+	{
+		gHUD.m_flHudScale = 1;
+		gHUD.m_HudScreenInfo = gHUD.m_scrinfo;
+	}
+
+	~UnscaledHudScope()
+	{
+		gHUD.m_flHudScale = m_Scale;
+		gHUD.m_HudScreenInfo = m_HudScreenInfo;
+	}
+
+	UnscaledHudScope(const UnscaledHudScope&) = delete;
+	UnscaledHudScope& operator=(const UnscaledHudScope&) = delete;
+
+private:
+	const float m_Scale;
+	const SCREENINFO m_HudScreenInfo;
+};
 
 extern int g_iPlayerClass;
 extern int g_iTeamNumber;

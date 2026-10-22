@@ -91,16 +91,6 @@ bool CShotgun::Deploy()
 static constexpr CBasePlayerWeapon::SpreadSettings ShotgunSpread{
 	.Min = 0.0741f, .Max = VECTOR_CONE_10DEGREES.x, .PerShot = 0.004f, .RecoveryRate = 0.1f};
 
-float CShotgun::GetCrosshairSpread() const
-{
-	if (g_Skill.GetValue("shotgun_single_tight_spread") != 0)
-	{
-		return VECTOR_CONE_DM_SHOTGUN.x;
-	}
-
-	return GetCurrentSpread(ShotgunSpread);
-}
-
 void CShotgun::PrimaryAttack()
 {
 	// don't fire underwater

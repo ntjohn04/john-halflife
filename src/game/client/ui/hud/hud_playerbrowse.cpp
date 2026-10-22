@@ -93,14 +93,14 @@ bool CHudPlayerBrowse::Draw(float flTime)
 			}
 
 			SPR_Set(m_PowerupSprite.spr, m_PowerupSprite.color);
-			gEngfuncs.pfnSPR_DrawAdditive(
+			SPR_DrawAdditive(
 				0,
-				ScreenWidth / 2 + (m_PowerupSprite.rc.left - m_PowerupSprite.rc.right - 105),
-				ScreenHeight * 0.75,
+				HudWidth / 2 + (m_PowerupSprite.rc.left - m_PowerupSprite.rc.right - 105),
+				HudHeight * 0.75,
 				&m_PowerupSprite.rc);
 		}
 
-		gHUD.DrawHudString(ScreenWidth / 2 - 100, ScreenHeight * 0.75, ScreenWidth, m_szLineBuffer, color);
+		gHUD.DrawHudString(HudWidth / 2 - 100, HudHeight * 0.75, HudWidth, m_szLineBuffer, color);
 	}
 
 	return true;

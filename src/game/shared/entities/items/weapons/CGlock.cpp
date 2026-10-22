@@ -73,8 +73,8 @@ bool CGlock::Deploy()
 	return DefaultDeploy("models/v_9mmhandgun.mdl", "models/p_9mmhandgun.mdl", GLOCK_DRAW, "onehanded");
 }
 
-// Aimed fire stays at the classic accuracy but inherits any bloom left over from rapid fire.
-static constexpr CBasePlayerWeapon::SpreadSettings GlockPrimarySpread{.Min = 0.01f, .Max = 0.1f, .PerShot = 0, .RecoveryRate = 0.1f};
+// Aimed fire keeps the classic accuracy.
+static constexpr CBasePlayerWeapon::SpreadSettings GlockPrimarySpread{.Min = 0.01f, .Max = 0.01f, .PerShot = 0, .RecoveryRate = 0};
 
 // Rapid fire starts tighter than the classic 0.1 and blooms back up to it.
 static constexpr CBasePlayerWeapon::SpreadSettings GlockSecondarySpread{.Min = 0.06f, .Max = 0.1f, .PerShot = 0.03f, .RecoveryRate = 0.1f};
@@ -87,11 +87,6 @@ void CGlock::SecondaryAttack()
 void CGlock::PrimaryAttack()
 {
 	GlockFire(GlockPrimarySpread, 0.3, true);
-}
-
-float CGlock::GetCrosshairSpread() const
-{
-	return GetCurrentSpread(GlockPrimarySpread);
 }
 
 void CGlock::GlockFire(const SpreadSettings& spread, float flCycleTime, bool fUseAutoAim)

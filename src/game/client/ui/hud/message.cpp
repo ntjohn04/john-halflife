@@ -104,18 +104,18 @@ int CHudMessage::XPosition(float x, int width, int totalWidth)
 
 	if (x == -1)
 	{
-		xPos = (ScreenWidth - width) / 2;
+		xPos = (HudWidth - width) / 2;
 	}
 	else
 	{
 		if (x < 0)
-			xPos = (1.0 + x) * ScreenWidth - totalWidth; // Alight right
+			xPos = (1.0 + x) * HudWidth - totalWidth; // Alight right
 		else
-			xPos = x * ScreenWidth;
+			xPos = x * HudWidth;
 	}
 
-	if (xPos + width > ScreenWidth)
-		xPos = ScreenWidth - width;
+	if (xPos + width > HudWidth)
+		xPos = HudWidth - width;
 	else if (xPos < 0)
 		xPos = 0;
 
@@ -128,18 +128,18 @@ int CHudMessage::YPosition(float y, int height)
 	int yPos;
 
 	if (y == -1) // Centered?
-		yPos = (ScreenHeight - height) * 0.5;
+		yPos = (HudHeight - height) * 0.5;
 	else
 	{
 		// Alight bottom?
 		if (y < 0)
-			yPos = (1.0 + y) * ScreenHeight - height; // Alight bottom
+			yPos = (1.0 + y) * HudHeight - height; // Alight bottom
 		else										  // align top
-			yPos = y * ScreenHeight;
+			yPos = y * HudHeight;
 	}
 
-	if (yPos + height > ScreenHeight)
-		yPos = ScreenHeight - height;
+	if (yPos + height > HudHeight)
+		yPos = HudHeight - height;
 	else if (yPos < 0)
 		yPos = 0;
 
@@ -204,7 +204,7 @@ void CHudMessage::MessageScanNextChar()
 
 	if (m_parms.pMessage->effect == 1 && m_parms.charTime != 0)
 	{
-		if (m_parms.x >= 0 && m_parms.y >= 0 && (m_parms.x + gHUD.m_scrinfo.charWidths[m_parms.text]) <= ScreenWidth)
+		if (m_parms.x >= 0 && m_parms.y >= 0 && (m_parms.x + gHUD.m_HudScreenInfo.charWidths[m_parms.text]) <= HudWidth)
 			TextMessageDrawChar(m_parms.x, m_parms.y, m_parms.text, m_parms.pMessage->r2, m_parms.pMessage->g2, m_parms.pMessage->b2);
 	}
 }
@@ -275,12 +275,12 @@ void CHudMessage::MessageDrawScan(client_textmessage_t* pMessage, float time)
 			width = 0;
 		}
 		else
-			width += gHUD.m_scrinfo.charWidths[*pText];
+			width += gHUD.m_HudScreenInfo.charWidths[*pText];
 		pText++;
 		length++;
 	}
 	m_parms.length = length;
-	m_parms.totalHeight = (m_parms.lines * gHUD.m_scrinfo.iCharHeight);
+	m_parms.totalHeight = (m_parms.lines * gHUD.m_HudScreenInfo.iCharHeight);
 
 
 	m_parms.y = YPosition(pMessage->y, m_parms.totalHeight);
@@ -298,7 +298,7 @@ void CHudMessage::MessageDrawScan(client_textmessage_t* pMessage, float time)
 		{
 			unsigned char c = *pText;
 			line.push_back(c);
-			m_parms.width += gHUD.m_scrinfo.charWidths[c];
+			m_parms.width += gHUD.m_HudScreenInfo.charWidths[c];
 			pText++;
 		}
 		pText++; // Skip LF
@@ -308,15 +308,15 @@ void CHudMessage::MessageDrawScan(client_textmessage_t* pMessage, float time)
 		for (std::size_t j = 0; j < line.size(); j++)
 		{
 			m_parms.text = line[j];
-			int next = m_parms.x + gHUD.m_scrinfo.charWidths[m_parms.text];
+			int next = m_parms.x + gHUD.m_HudScreenInfo.charWidths[m_parms.text];
 			MessageScanNextChar();
 
-			if (m_parms.x >= 0 && m_parms.y >= 0 && next <= ScreenWidth)
+			if (m_parms.x >= 0 && m_parms.y >= 0 && next <= HudWidth)
 				TextMessageDrawChar(m_parms.x, m_parms.y, m_parms.text, m_parms.r, m_parms.g, m_parms.b);
 			m_parms.x = next;
 		}
 
-		m_parms.y += gHUD.m_scrinfo.iCharHeight;
+		m_parms.y += gHUD.m_HudScreenInfo.iCharHeight;
 	}
 }
 

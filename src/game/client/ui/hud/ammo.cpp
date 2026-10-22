@@ -30,9 +30,6 @@
 #include "vgui_TeamFortressViewport.h"
 #include "view.h"
 #include "WeaponDataSystem.h"
-#include "prediction/ClientPredictionSystem.h"
-
-#include <numbers>
 
 #include "sound/ISoundSystem.h"
 
@@ -374,8 +371,6 @@ bool CHudAmmo::Init()
 	CVAR_CREATE("hud_drawhistory_time", HISTORY_DRAW_TIME, 0);
 	CVAR_CREATE("hud_fastswitch", "0", FCVAR_ARCHIVE); // controls whether or not weapons can be selected in one keypress
 	m_pCvarCrosshairScale = CVAR_CREATE("crosshair_scale", "4", FCVAR_ARCHIVE);
-	m_pCvarDynamicCrosshair = CVAR_CREATE("jhl_hud_dynamiccrosshair", "1", FCVAR_ARCHIVE);
-	m_pCvarDynamicCrosshairScale = CVAR_CREATE("jhl_hud_dynamiccrosshair_scale", "1", FCVAR_ARCHIVE);
 
 	m_iFlags |= HUD_ACTIVE; //!!!
 
@@ -413,10 +408,6 @@ bool CHudAmmo::VidInit()
 
 	// Get weapon and ammo info from server info, load weapon sprites.
 	gWR.InitializeWeapons();
-
-	// Optional: without this sprite the regular weapon crosshairs are used.
-	m_DynamicCrosshairSprite = g_pFileSystem->FileExists("sprites/hud_crosshairs.spr") ? SPR_Load("sprites/hud_crosshairs.spr") : 0;
-	m_DynamicCrosshairGap = 0;
 
 	return true;
 }
@@ -917,130 +908,8 @@ void AdjustSubRect(const int iWidth, const int iHeight, float& left, float& righ
 	bottom = (iBottom - 0.5) * flHeight;
 }
 
-// Frames used from sprites/hud_crosshairs.spr. Each is drawn centered on its position.
-namespace DynamicCrosshairFrame
-{
-constexpr int TickBottom = 4;
-constexpr int TickLeft = 5;
-constexpr int TickRight = 6;
-constexpr int TickTop = 7;
-constexpr int ArcBottom = 8;
-constexpr int ArcLeft = 9;
-constexpr int ArcRight = 10;
-constexpr int ArcTop = 11;
-constexpr int Dot = 17;
-}
-
-void CHudAmmo::DrawCrosshairPiece(int frame, float x, float y, float scale)
-{
-	const RGB24 color = gHUD.m_CrosshairColor;
-
-	const float width = gEngfuncs.pfnSPR_Width(m_DynamicCrosshairSprite, frame) * scale;
-	const float height = gEngfuncs.pfnSPR_Height(m_DynamicCrosshairSprite, frame) * scale;
-
-	x -= width / 2;
-	y -= height / 2;
-
-	if (0 == IEngineStudio.IsHardware())
-	{
-		// Software can't scale sprites.
-		SPR_Set(m_DynamicCrosshairSprite, color);
-		SPR_DrawAdditive(frame, static_cast<int>(x), static_cast<int>(y), nullptr);
-		return;
-	}
-
-	auto TriAPI = gEngfuncs.pTriAPI;
-
-	TriAPI->SpriteTexture(const_cast<model_t*>(gEngfuncs.GetSpritePointer(m_DynamicCrosshairSprite)), frame);
-	TriAPI->RenderMode(kRenderTransAdd);
-	TriAPI->Color4f(color.Red / 255.0f, color.Green / 255.0f, color.Blue / 255.0f, 1.0f);
-
-	TriAPI->Begin(TRI_QUADS);
-
-	TriAPI->TexCoord2f(0, 0);
-	TriAPI->Vertex3f(x, y, 0);
-
-	TriAPI->TexCoord2f(1, 0);
-	TriAPI->Vertex3f(x + width, y, 0);
-
-	TriAPI->TexCoord2f(1, 1);
-	TriAPI->Vertex3f(x + width, y + height, 0);
-
-	TriAPI->TexCoord2f(0, 1);
-	TriAPI->Vertex3f(x, y + height, 0);
-
-	TriAPI->End();
-
-	TriAPI->RenderMode(kRenderNormal);
-}
-
-bool CHudAmmo::DrawDynamicCrosshair(int x, int y)
-{
-	if (0 == m_pCvarDynamicCrosshair->value || 0 == m_DynamicCrosshairSprite || !m_pWeapon || !m_pWeapon->Info)
-		return false;
-
-	// Zoomed views keep their own crosshairs, and spectators see someone else's weapon.
-	if (gHUD.m_iFOV < 90 || 0 != g_iUser1)
-		return false;
-
-	const int id = m_pWeapon->Info->Id;
-	CBasePlayerWeapon* weapon = (id > 0 && id < MAX_WEAPONS) ? g_ClientPrediction.GetLocalWeapon(id) : nullptr;
-
-	if (!weapon)
-		return false;
-
-	// Gap that matches the actual bullet cone on screen at the current field of view.
-	const float halfFov = gHUD.m_iFOV * 0.5f * std::numbers::pi_v<float> / 180.0f;
-	const float targetGap = weapon->GetCrosshairSpread() / std::tan(halfFov) * ScreenWidth * 0.5f;
-
-	// Ease towards the target so bloom and recovery read as movement rather than jumps.
-	const float time = gEngfuncs.GetClientTime();
-	const float frameTime = std::clamp(time - m_DynamicCrosshairLastDrawTime, 0.f, 0.1f);
-	m_DynamicCrosshairLastDrawTime = time;
-	m_DynamicCrosshairGap += (targetGap - m_DynamicCrosshairGap) * std::min(1.f, frameTime * 15);
-
-	const float scale = std::max(1.f, m_pCvarDynamicCrosshairScale->value);
-
-	// A small minimum gap keeps the pieces apart for very accurate weapons.
-	const float gap = m_DynamicCrosshairGap + 2 * scale;
-
-	// Places each piece so its inner edge sits at the gap, whatever size its frame is.
-	const auto drawRing = [&](int bottom, int left, int right, int top)
-	{
-		const auto halfWidth = [&](int frame)
-		{ return gEngfuncs.pfnSPR_Width(m_DynamicCrosshairSprite, frame) * scale / 2; };
-		const auto halfHeight = [&](int frame)
-		{ return gEngfuncs.pfnSPR_Height(m_DynamicCrosshairSprite, frame) * scale / 2; };
-
-		DrawCrosshairPiece(bottom, x, y + gap + halfHeight(bottom), scale);
-		DrawCrosshairPiece(left, x - gap - halfWidth(left), y, scale);
-		DrawCrosshairPiece(right, x + gap + halfWidth(right), y, scale);
-		DrawCrosshairPiece(top, x, y - gap - halfHeight(top), scale);
-	};
-
-	switch (weapon->GetCrosshairStyle())
-	{
-	case CrosshairStyle::Ticks:
-		drawRing(DynamicCrosshairFrame::TickBottom, DynamicCrosshairFrame::TickLeft, DynamicCrosshairFrame::TickRight, DynamicCrosshairFrame::TickTop);
-		break;
-
-	case CrosshairStyle::Arcs:
-		drawRing(DynamicCrosshairFrame::ArcBottom, DynamicCrosshairFrame::ArcLeft, DynamicCrosshairFrame::ArcRight, DynamicCrosshairFrame::ArcTop);
-		break;
-
-	case CrosshairStyle::Dot:
-		DrawCrosshairPiece(DynamicCrosshairFrame::Dot, x, y, scale);
-		break;
-	}
-
-	return true;
-}
-
 void CHudAmmo::DrawCrosshair(int x, int y)
 {
-	if (DrawDynamicCrosshair(x, y))
-		return;
-
 	auto renderer = [this](int x, int y, const Crosshair& crosshair, RGB24 color)
 	{
 		if (0 != crosshair.sprite)
@@ -1055,6 +924,10 @@ void CHudAmmo::DrawCrosshair(int x, int y)
 				gEngfuncs.pfnSPR_DrawHoles(0, x, y, &crosshair.rect);
 				return;
 			}
+
+			// The position is in HUD units; the size is set by crosshair_scale alone, independent of the HUD scale.
+			x = static_cast<int>(std::lround(x * gHUD.m_flHudScale));
+			y = static_cast<int>(std::lround(y * gHUD.m_flHudScale));
 
 			const int iOrigWidth = gEngfuncs.pfnSPR_Width(crosshair.sprite, 0);
 			const int iOrigHeight = gEngfuncs.pfnSPR_Height(crosshair.sprite, 0);
@@ -1160,8 +1033,8 @@ bool CHudAmmo::Draw(float flTime)
 
 			screen = screen / 1000;
 
-			const int adjustedX = XPROJECT(screen[0]);
-			const int adjustedY = YPROJECT(screen[1]);
+			const int adjustedX = HUD_XPROJECT(screen[0]);
+			const int adjustedY = HUD_YPROJECT(screen[1]);
 
 			DrawCrosshair(adjustedX, adjustedY);
 		}
@@ -1190,7 +1063,7 @@ bool CHudAmmo::Draw(float flTime)
 	const auto color = gHUD.GetHudItemColor(gHUD.m_HudItemColor.Scale(a));
 
 	// Does this weapon have a clip?
-	y = ScreenHeight - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
+	y = HudHeight - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
 
 	// Does weapon have any ammo at all?
 	if (m_pWeapon->AmmoTypes[0])
@@ -1201,7 +1074,7 @@ bool CHudAmmo::Draw(float flTime)
 		{
 			// room for the number and the '|' and the current ammo
 
-			x = ScreenWidth - (8 * AmmoWidth) - iIconWidth;
+			x = HudWidth - (8 * AmmoWidth) - iIconWidth;
 			x = gHUD.DrawHudNumber(x, y, iFlags | DHN_3DIGITS, m_pWeapon->AmmoInMagazine, color);
 
 			Rect rc;
@@ -1225,7 +1098,7 @@ bool CHudAmmo::Draw(float flTime)
 		else
 		{
 			// SPR_Draw a bullets only line
-			x = ScreenWidth - 4 * AmmoWidth - iIconWidth;
+			x = HudWidth - 4 * AmmoWidth - iIconWidth;
 			x = gHUD.DrawHudNumber(x, y, iFlags | DHN_3DIGITS, gWR.CountAmmo(m_pWeapon->AmmoTypes[0]), color);
 		}
 
@@ -1244,7 +1117,7 @@ bool CHudAmmo::Draw(float flTime)
 		if (gWR.CountAmmo(m_pWeapon->AmmoTypes[1]) > 0)
 		{
 			y -= gHUD.m_iFontHeight + gHUD.m_iFontHeight / 4;
-			x = ScreenWidth - 4 * AmmoWidth - iIconWidth;
+			x = HudWidth - 4 * AmmoWidth - iIconWidth;
 			x = gHUD.DrawHudNumber(x, y, iFlags | DHN_3DIGITS, gWR.CountAmmo(m_pWeapon->AmmoTypes[1]), color);
 
 			// Draw the ammo Icon

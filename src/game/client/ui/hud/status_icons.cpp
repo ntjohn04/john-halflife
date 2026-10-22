@@ -55,7 +55,7 @@ bool CHudStatusIcons::Draw(float flTime)
 	{
 		// find starting position to draw from, along right-hand side of screen
 		int x = 5;
-		int y = ScreenHeight / 2;
+		int y = HudHeight / 2;
 
 		// loop through icon list, and draw any valid icons drawing up from the middle of screen
 		for (int i = 0; i < MAX_ICONSPRITES; i++)
@@ -71,23 +71,23 @@ bool CHudStatusIcons::Draw(float flTime)
 	}
 
 	{
-		int y = ScreenHeight / 2;
+		int y = HudHeight / 2;
 
 		for (int i = 0; i < MAX_CUSTOMSPRITES; ++i)
 		{
 			if (i == (MAX_CUSTOMSPRITES / 2))
 			{
-				y = ScreenHeight / 2;
+				y = HudHeight / 2;
 			}
 
 			const auto& icon = m_CustomList[i];
 
 			if (0 != icon.spr)
 			{
-				const int x = (i < (MAX_CUSTOMSPRITES / 2)) ? 100 : (ScreenWidth - 100);
+				const int x = (i < (MAX_CUSTOMSPRITES / 2)) ? 100 : (HudWidth - 100);
 
 				SPR_Set(icon.spr, icon.color);
-				gEngfuncs.pfnSPR_DrawAdditive(0, x, y, &icon.rc);
+				SPR_DrawAdditive(0, x, y, &icon.rc);
 				y += (icon.rc.bottom - icon.rc.top) + 5;
 			}
 		}

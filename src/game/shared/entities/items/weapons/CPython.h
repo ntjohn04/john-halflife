@@ -39,7 +39,6 @@ public:
 	bool GetWeaponInfo(WeaponInfo& info) override;
 	void IncrementAmmo(CBasePlayer* pPlayer) override;
 	void PrimaryAttack() override;
-	float GetCrosshairSpread() const override;
 	void SecondaryAttack() override;
 	bool Deploy() override;
 	void Holster() override;

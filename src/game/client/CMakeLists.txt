@@ -190,6 +190,7 @@ target_sources(client PRIVATE
 	ui/hud/hud_playerbrowse.cpp
 	ui/hud/hud_projectinfo.cpp
 	ui/hud/hud_redraw.cpp
+	ui/hud/hud_scale.cpp
 	ui/hud/hud_spectator.cpp
 	ui/hud/hud_spectator.h
 	ui/hud/hud_update.cpp
