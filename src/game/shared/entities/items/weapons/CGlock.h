@@ -42,7 +42,8 @@ public:
 
 	void PrimaryAttack() override;
 	void SecondaryAttack() override;
-	void GlockFire(float flSpread, float flCycleTime, bool fUseAutoAim);
+	void GlockFire(const SpreadSettings& spread, float flCycleTime, bool fUseAutoAim);
+	float GetCrosshairSpread() const override;
 	bool Deploy() override;
 	void Reload() override;
 	void WeaponIdle() override;

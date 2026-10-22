@@ -142,6 +142,17 @@ public:
 private:
 	void DrawCrosshair(int x, int y);
 
+	/**
+	 *	@brief Draws the current weapon's dynamic crosshair, whose gap follows the weapon's spread.
+	 *	@return false if the regular crosshair should be drawn instead
+	 */
+	bool DrawDynamicCrosshair(int x, int y);
+
+	/**
+	 *	@brief Draws one frame of the dynamic crosshair sprite, centered on (x, y).
+	 */
+	void DrawCrosshairPiece(int frame, float x, float y, float scale);
+
 private:
 	struct Crosshair
 	{
@@ -162,6 +173,12 @@ private:
 	Crosshair m_AutoaimCrosshair;
 
 	cvar_t* m_pCvarCrosshairScale = nullptr;
+
+	cvar_t* m_pCvarDynamicCrosshair = nullptr;
+	cvar_t* m_pCvarDynamicCrosshairScale = nullptr;
+	HSPRITE m_DynamicCrosshairSprite = 0;
+	float m_DynamicCrosshairGap = 0;		  //!< Smoothed gap in pixels
+	float m_DynamicCrosshairLastDrawTime = 0; //!< Client time of the last draw, for smoothing
 };
 
 

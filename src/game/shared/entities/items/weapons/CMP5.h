@@ -42,6 +42,7 @@ public:
 	bool Deploy() override;
 	void Reload() override;
 	void WeaponIdle() override;
+	float GetCrosshairSpread() const override;
 	float m_flNextAnimTime;
 	int m_iShell;
 

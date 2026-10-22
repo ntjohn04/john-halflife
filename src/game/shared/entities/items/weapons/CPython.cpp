@@ -119,6 +119,15 @@ void CPython::SecondaryAttack()
 	m_flNextSecondaryAttack = 0.5;
 }
 
+// A careful first shot is slightly better than the classic 1 degree; fanning the trigger returns to it.
+static constexpr CBasePlayerWeapon::SpreadSettings PythonSpread{
+	.Min = 0.0065f, .Max = VECTOR_CONE_1DEGREES.x, .PerShot = 0.003f, .RecoveryRate = 0.1f};
+
+float CPython::GetCrosshairSpread() const
+{
+	return GetCurrentSpread(PythonSpread);
+}
+
 void CPython::PrimaryAttack()
 {
 	// don't fire underwater
@@ -156,8 +165,10 @@ void CPython::PrimaryAttack()
 	Vector vecSrc = m_pPlayer->GetGunPosition();
 	Vector vecAiming = m_pPlayer->GetAutoaimVector(AUTOAIM_10DEGREES);
 
+	const float flSpread = FireSpread(PythonSpread);
+
 	Vector vecDir;
-	vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, VECTOR_CONE_1DEGREES, 8192, BULLET_PLAYER_357, 0, 0, m_pPlayer, m_pPlayer->random_seed);
+	vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, Vector(flSpread, flSpread, flSpread), 8192, BULLET_PLAYER_357, 0, 0, m_pPlayer, m_pPlayer->random_seed);
 
 	int flags;
 #if defined(CLIENT_WEAPONS)

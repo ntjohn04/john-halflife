@@ -87,6 +87,20 @@ bool CShotgun::Deploy()
 	return DefaultDeploy("models/v_shotgun.mdl", "models/p_shotgun.mdl", SHOTGUN_DRAW, "shotgun");
 }
 
+// The pellet cone starts at 8.5 degrees and opens to the classic 10 when firing back to back.
+static constexpr CBasePlayerWeapon::SpreadSettings ShotgunSpread{
+	.Min = 0.0741f, .Max = VECTOR_CONE_10DEGREES.x, .PerShot = 0.004f, .RecoveryRate = 0.1f};
+
+float CShotgun::GetCrosshairSpread() const
+{
+	if (g_Skill.GetValue("shotgun_single_tight_spread") != 0)
+	{
+		return VECTOR_CONE_DM_SHOTGUN.x;
+	}
+
+	return GetCurrentSpread(ShotgunSpread);
+}
+
 void CShotgun::PrimaryAttack()
 {
 	// don't fire underwater
@@ -131,8 +145,9 @@ void CShotgun::PrimaryAttack()
 	}
 	else
 	{
-		// regular old, untouched spread.
-		vecDir = m_pPlayer->FireBulletsPlayer(6, vecSrc, vecAiming, VECTOR_CONE_10DEGREES, 2048, BULLET_PLAYER_BUCKSHOT, 0, 0, m_pPlayer, m_pPlayer->random_seed);
+		// regular spread, with bloom.
+		const float flSpread = FireSpread(ShotgunSpread);
+		vecDir = m_pPlayer->FireBulletsPlayer(6, vecSrc, vecAiming, Vector(flSpread, flSpread, flSpread), 2048, BULLET_PLAYER_BUCKSHOT, 0, 0, m_pPlayer, m_pPlayer->random_seed);
 	}
 
 	PLAYBACK_EVENT_FULL(flags, m_pPlayer->edict(), m_usSingleFire, 0.0, g_vecZero, g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0);
@@ -200,8 +215,9 @@ void CShotgun::SecondaryAttack()
 	}
 	else
 	{
-		// untouched default single player
-		vecDir = m_pPlayer->FireBulletsPlayer(12, vecSrc, vecAiming, VECTOR_CONE_10DEGREES, 2048, BULLET_PLAYER_BUCKSHOT, 0, 0, m_pPlayer, m_pPlayer->random_seed);
+		// default single player, with bloom.
+		const float flSpread = FireSpread(ShotgunSpread);
+		vecDir = m_pPlayer->FireBulletsPlayer(12, vecSrc, vecAiming, Vector(flSpread, flSpread, flSpread), 2048, BULLET_PLAYER_BUCKSHOT, 0, 0, m_pPlayer, m_pPlayer->random_seed);
 	}
 
 	PLAYBACK_EVENT_FULL(flags, m_pPlayer->edict(), m_usDoubleFire, 0.0, g_vecZero, g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0);

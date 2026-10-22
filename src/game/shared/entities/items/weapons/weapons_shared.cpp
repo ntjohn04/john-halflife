@@ -255,6 +255,40 @@ bool CBasePlayerWeapon::DefaultReload(int iClipSize, int iAnim, float fDelay)
 	return true;
 }
 
+float CBasePlayerWeapon::GetCurrentSpread(const SpreadSettings& settings) const
+{
+	// Recovery starts shortly after the weapon is ready to fire again, so holding the trigger keeps the bloom.
+	// With relative weapon times m_flNextPrimaryAttack keeps counting down below zero (to -1.1), which gives the recovery time.
+	constexpr float RecoveryDelay = 0.1f;
+
+	const float recoveryTime = std::max(0.f, UTIL_WeaponTimeBase() - m_flNextPrimaryAttack - RecoveryDelay);
+
+	return std::clamp(m_flSpread - settings.RecoveryRate * recoveryTime, settings.Min, settings.Max);
+}
+
+float CBasePlayerWeapon::FireSpread(const SpreadSettings& settings)
+{
+	const float spread = GetCurrentSpread(settings);
+	m_flSpread = std::min(spread + settings.PerShot, settings.Max);
+	return spread;
+}
+
+CrosshairStyle CBasePlayerWeapon::GetCrosshairStyle() const
+{
+	if (!m_WeaponInfo)
+	{
+		return CrosshairStyle::Ticks;
+	}
+
+	// Melee weapons use no ammo and thrown weapons are used up; neither has a bullet spread to show.
+	if (m_WeaponInfo->AttackModeInfo[0].AmmoType.empty() || (m_WeaponInfo->Flags & ITEM_FLAG_EXHAUSTIBLE) != 0)
+	{
+		return CrosshairStyle::Dot;
+	}
+
+	return CrosshairStyle::Ticks;
+}
+
 void CBasePlayerWeapon::ResetEmptySound()
 {
 	m_iPlayEmptySound = true;

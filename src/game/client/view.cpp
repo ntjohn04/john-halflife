@@ -88,6 +88,7 @@ cvar_t* jhl_camera_verticallag;
 cvar_t* jhl_camera_jumplandjolt;
 cvar_t* jhl_visuals_weaponlag;
 cvar_t* jhl_visuals_weaponwallpush;
+cvar_t* jhl_weapons_smoothrecoil;
 
 // These cvars are not registered (so users can't cheat), so set the ->value field directly
 // Register these cvars in V_Init() if needed for easy tweaking
@@ -1898,6 +1899,30 @@ void V_SmoothPunch(const Vector& kick, float spring, float damping)
 	ev_punchdamping = damping;
 }
 
+/*
+=============
+V_WeaponRecoil
+
+Weapon fire recoil as a smooth punch: an upward kick in [pitchMin, pitchMax] plus a random
+sideways and roll kick of up to jitter either way.
+Returns false if the player prefers the classic snap punch, which the caller then applies.
+=============
+*/
+bool V_WeaponRecoil(float pitchMin, float pitchMax, float jitter, float spring, float damping)
+{
+	if (0 == jhl_weapons_smoothrecoil->value)
+		return false;
+
+	const Vector kick{
+		gEngfuncs.pfnRandomFloat(pitchMin, pitchMax),
+		gEngfuncs.pfnRandomFloat(-jitter, jitter),
+		gEngfuncs.pfnRandomFloat(-jitter, jitter)};
+
+	V_SmoothPunch(kick, spring, damping);
+
+	return true;
+}
+
 static void MsgFunc_SmoothPunch(const char* pszName, BufferReader& reader)
 {
 	Vector kick;
@@ -1942,6 +1967,7 @@ void V_Init()
 	jhl_camera_jumplandjolt = gEngfuncs.pfnRegisterVariable("jhl_camera_jumplandjolt", "1", FCVAR_ARCHIVE);
 	jhl_visuals_weaponlag = gEngfuncs.pfnRegisterVariable("jhl_visuals_weaponlag", "1", FCVAR_ARCHIVE);
 	jhl_visuals_weaponwallpush = gEngfuncs.pfnRegisterVariable("jhl_visuals_weaponwallpush", "1", FCVAR_ARCHIVE);
+	jhl_weapons_smoothrecoil = gEngfuncs.pfnRegisterVariable("jhl_weapons_smoothrecoil", "1", FCVAR_ARCHIVE);
 
 	g_ClientUserMessages.RegisterHandler("SmoothPunch", &MsgFunc_SmoothPunch);
 }

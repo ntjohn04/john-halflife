@@ -47,6 +47,8 @@ public:
 	void IncrementAmmo(CBasePlayer* pPlayer) override;
 
 	void PrimaryAttack() override;
+	float GetCrosshairSpread() const override;
+	CrosshairStyle GetCrosshairStyle() const override { return CrosshairStyle::Arcs; }
 	void SecondaryAttack() override;
 	bool Deploy() override;
 	void Reload() override;

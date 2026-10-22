@@ -8,13 +8,14 @@ Before publishing, each of these must be replaced, removed, or cleared with its 
 
 Source: Half-Life: MMod (Steam), HL1MMod directory
 
-**12 files** in 3 folders.
+**13 files** in 4 folders.
 
 | Location | Type | Files |
 |---|---|---|
 | `sound/` | txt | 1 |
 | `sound/items/` | wav | 1 |
 | `sound/player/` | wav | 10 |
+| `sprites/` | spr | 1 |
 
 ## `sound/`
 
@@ -48,3 +49,11 @@ Source: Half-Life: MMod (Steam), HL1MMod directory
 | `sound/player/pl_wood2.wav` | same path | movement |  |
 | `sound/player/pl_wood3.wav` | same path | movement |  |
 | `sound/player/pl_wood4.wav` | same path | movement |  |
+
+## `sprites/`
+
+### spr
+
+| File | Installed as | Used by | Notes |
+|---|---|---|---|
+| `sprites/hud_crosshairs.spr` | same path | crosshair | Dynamic crosshair pieces (29 frames; frames 4-11 and 17 used). Additive, tinted by the crosshair colour |

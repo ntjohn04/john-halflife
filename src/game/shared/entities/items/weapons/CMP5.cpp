@@ -95,6 +95,15 @@ bool CMP5::Deploy()
 	return DefaultDeploy("models/v_9mmAR.mdl", "models/p_9mmAR.mdl", MP5_DEPLOY, "mp5");
 }
 
+// 4 degrees blooming to 6 over about six shots, recovering within a fraction of a second.
+static constexpr CBasePlayerWeapon::SpreadSettings MP5Spread{
+	.Min = VECTOR_CONE_4DEGREES.x, .Max = VECTOR_CONE_6DEGREES.x, .PerShot = 0.003f, .RecoveryRate = 0.3f};
+
+float CMP5::GetCrosshairSpread() const
+{
+	return GetCurrentSpread(MP5Spread);
+}
+
 void CMP5::PrimaryAttack()
 {
 	// don't fire underwater
@@ -124,18 +133,11 @@ void CMP5::PrimaryAttack()
 
 	Vector vecSrc = m_pPlayer->GetGunPosition();
 	Vector vecAiming = m_pPlayer->GetAutoaimVector(AUTOAIM_5DEGREES);
-	Vector vecDir;
 
-	if (g_Skill.GetValue("smg_wide_spread") != 0)
-	{
-		// optimized multiplayer. Widened to make it easier to hit a moving player
-		vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, VECTOR_CONE_6DEGREES, 8192, BULLET_PLAYER_MP5, 2, 0, m_pPlayer, m_pPlayer->random_seed);
-	}
-	else
-	{
-		// single player spread
-		vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, VECTOR_CONE_3DEGREES, 8192, BULLET_PLAYER_MP5, 2, 0, m_pPlayer, m_pPlayer->random_seed);
-	}
+	// Replaces the smg_wide_spread choice between 6 and 3 degrees: bursts start tighter and bloom to the classic 6.
+	const float flSpread = FireSpread(MP5Spread);
+
+	const Vector vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, Vector(flSpread, flSpread, flSpread), 8192, BULLET_PLAYER_MP5, 2, 0, m_pPlayer, m_pPlayer->random_seed);
 
 	int flags;
 #if defined(CLIENT_WEAPONS)

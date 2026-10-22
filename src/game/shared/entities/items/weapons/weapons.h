@@ -219,6 +219,16 @@ enum class WeaponState
 	OnTarget
 };
 
+/**
+ *	@brief Shape of the dynamic crosshair drawn for a weapon.
+ */
+enum class CrosshairStyle
+{
+	Ticks, //!< Four lines around the aim point, pushed out by spread
+	Arcs,  //!< Four arcs forming a circle, pushed out by spread
+	Dot	   //!< A dot, for weapons without bullet spread
+};
+
 void Weapon_RegisterWeaponData();
 
 constexpr int RefillAllAmmoAmount = -1;
@@ -416,6 +426,36 @@ public:
 	 */
 	float GetNextAttackDelay(float delay);
 
+	/**
+	 *	@brief Accuracy bloom: spread grows with each shot and recovers once the weapon has been ready to fire for a moment.
+	 *	Spread values are the same as the bullet cone values passed to FireBulletsPlayer.
+	 */
+	struct SpreadSettings
+	{
+		float Min;			//!< Spread once fully recovered.
+		float Max;			//!< Spread cap while firing continuously.
+		float PerShot;		//!< Spread added by each shot.
+		float RecoveryRate; //!< Spread removed per second while recovering.
+	};
+
+	/**
+	 *	@brief Spread the next shot would be fired with.
+	 */
+	float GetCurrentSpread(const SpreadSettings& settings) const;
+
+	/**
+	 *	@brief Returns the spread to fire this shot with and grows it for the next one.
+	 *	Must be called before the next attack time is updated for this shot.
+	 */
+	float FireSpread(const SpreadSettings& settings);
+
+	/**
+	 *	@brief Spread shown by the dynamic crosshair.
+	 */
+	virtual float GetCrosshairSpread() const { return 0; }
+
+	virtual CrosshairStyle GetCrosshairStyle() const;
+
 	void SetWeaponModels(const char* viewModel, const char* weaponModel);
 
 	void PrintState();
@@ -467,6 +507,7 @@ public:
 	float m_flTimeWeaponIdle;		 //!< soonest time ItemPostFrame will call WeaponIdle
 	int m_iPrimaryAmmoType = -1;	 //!< "primary" ammo index into players m_rgAmmo[]
 	int m_iSecondaryAmmoType = -1;	 //!< "secondary" ammo index into players m_rgAmmo[]
+	float m_flSpread = 0;			 //!< spread after the last shot (see SpreadSettings), predicted through weapon_data_t::fuser4
 	int m_iClip;					 //!< number of shots left in the primary weapon clip, -1 it not used
 	int m_iClientClip;				 //!< the last version of m_iClip sent to hud dll
 	WeaponState m_ClientWeaponState; //!< the last version of the weapon state sent to hud dll (is current weapon, is on target)

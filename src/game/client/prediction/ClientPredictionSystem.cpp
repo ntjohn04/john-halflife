@@ -188,6 +188,7 @@ void ClientPredictionSystem::WeaponsPostThink(local_state_t* from, local_state_t
 		pCurrent->m_flNextSecondaryAttack = pfrom->m_flNextSecondaryAttack;
 		pCurrent->m_flTimeWeaponIdle = pfrom->m_flTimeWeaponIdle;
 		pCurrent->pev->fuser1 = pfrom->fuser1;
+		pCurrent->m_flSpread = pfrom->fuser4;
 
 		pCurrent->m_iSecondaryAmmoType = (int)from->client.vuser3[2];
 		pCurrent->m_iPrimaryAmmoType = (int)from->client.vuser4[0];
@@ -347,6 +348,7 @@ void ClientPredictionSystem::WeaponsPostThink(local_state_t* from, local_state_t
 		pto->m_flNextSecondaryAttack = pCurrent->m_flNextSecondaryAttack;
 		pto->m_flTimeWeaponIdle = pCurrent->m_flTimeWeaponIdle;
 		pto->fuser1 = pCurrent->pev->fuser1;
+		pto->fuser4 = pCurrent->m_flSpread;
 
 		// Decrement weapon counters, server does this at same time ( during post think, after doing everything else )
 		pto->m_flNextReload -= cmd->msec / 1000.0;

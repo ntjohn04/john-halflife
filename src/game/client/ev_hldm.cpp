@@ -66,6 +66,50 @@ static int g_tracerCount[MAX_PLAYERS];
 #include "pm_shared.h"
 
 void V_PunchAxis(int axis, float punch);
+bool V_WeaponRecoil(float pitchMin, float pitchMax, float jitter, float spring, float damping);
+
+/**
+ *	@brief Smooth recoil settings for a weapon (see V_WeaponRecoil).
+ *	Positive pitch kicks the view up. Spring and damping follow MMod; kicks are tuned so the visible peak
+ *	lands between MMod's and the classic snap punch (re/specs/weapons_recoil_accuracy.md).
+ */
+struct WeaponRecoil
+{
+	float PitchMin;
+	float PitchMax;
+	float Jitter;
+	float Spring;
+	float Damping;
+};
+
+// clang-format off
+constexpr WeaponRecoil RecoilGlock{2.05f, 2.5f, 0.25f, 200, 9};
+constexpr WeaponRecoil RecoilGlockRapid{2.0f, 2.45f, 0.25f, 65, 12};
+constexpr WeaponRecoil RecoilShotgunSingle{4.1f, 5.05f, 0.75f, 45, 9};
+constexpr WeaponRecoil RecoilShotgunDouble{7.9f, 9.7f, 0.75f, 10, 12};
+constexpr WeaponRecoil RecoilMP5{-2.45f, 2.45f, 0.4f, 125, 7.5f};
+constexpr WeaponRecoil RecoilMP5Grenade{7.5f, 9.15f, 0.75f, 25, 9};
+constexpr WeaponRecoil RecoilPython{6.6f, 8.1f, 1.75f, 85, 12};
+constexpr WeaponRecoil RecoilGauss{2.45f, 2.95f, 0.25f, 65, 12};
+constexpr WeaponRecoil RecoilCrossbow{2.0f, 2.45f, 0.25f, 65, 12};
+constexpr WeaponRecoil RecoilRpg{4.65f, 5.7f, 0.25f, 85, 12};
+constexpr WeaponRecoil RecoilHornetGun{-2.7f, 0, 0.25f, 125, 7.5f}; // Kicks down, as in the original.
+
+// Opposing Force weapons have no MMod counterpart; these match the original punch with the closest MMod feel.
+constexpr WeaponRecoil RecoilEagle{4.3f, 5.25f, 0.5f, 85, 12};
+constexpr WeaponRecoil RecoilM249{-2.7f, 2.7f, 1.0f, 125, 7.5f};
+constexpr WeaponRecoil RecoilDisplacer{2.45f, 2.95f, 0.25f, 65, 12};
+constexpr WeaponRecoil RecoilSporeLauncher{3.3f, 4.05f, 0.25f, 65, 12};
+constexpr WeaponRecoil RecoilSniperRifle{2.5f, 3.05f, 0.25f, 85, 12};
+// clang-format on
+
+/**
+ *	@brief Applies smooth recoil; returns false if the player turned it off, in which case the caller applies the classic punch.
+ */
+static bool EV_WeaponRecoil(const WeaponRecoil& recoil)
+{
+	return V_WeaponRecoil(recoil.PitchMin, recoil.PitchMax, recoil.Jitter, recoil.Spring, recoil.Damping);
+}
 
 extern cvar_t* cl_lw;
 extern cvar_t* r_decals;
@@ -487,7 +531,8 @@ void EV_FireGlock1(event_args_t* args)
 		EV_MuzzleFlash();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(empty ? GLOCK_SHOOT_EMPTY : GLOCK_SHOOT, 0);
 
-		V_PunchAxis(0, -2.0);
+		if (!EV_WeaponRecoil(RecoilGlock))
+			V_PunchAxis(0, -2.0);
 	}
 
 	EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, 20, -12, 4);
@@ -532,7 +577,8 @@ void EV_FireGlock2(event_args_t* args)
 		EV_MuzzleFlash();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(empty ? GLOCK_SHOOT_EMPTY : GLOCK_SHOOT, 0);
 
-		V_PunchAxis(0, -2.0);
+		if (!EV_WeaponRecoil(RecoilGlockRapid))
+			V_PunchAxis(0, -2.0);
 	}
 
 	EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, 20, -12, 4);
@@ -582,7 +628,8 @@ void EV_FireShotGunDouble(event_args_t* args)
 		// Add muzzle flash to current weapon model
 		EV_MuzzleFlash();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(SHOTGUN_FIRE2, 0);
-		V_PunchAxis(0, -10.0);
+		if (!EV_WeaponRecoil(RecoilShotgunDouble))
+			V_PunchAxis(0, -10.0);
 	}
 
 	for (j = 0; j < 2; j++)
@@ -637,7 +684,8 @@ void EV_FireShotGunSingle(event_args_t* args)
 		EV_MuzzleFlash();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(SHOTGUN_FIRE, 0);
 
-		V_PunchAxis(0, -5.0);
+		if (!EV_WeaponRecoil(RecoilShotgunSingle))
+			V_PunchAxis(0, -5.0);
 	}
 
 	EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, 32, -12, 6);
@@ -695,7 +743,8 @@ void EV_FireMP5(event_args_t* args)
 		EV_MuzzleFlash();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(MP5_FIRE1 + gEngfuncs.pfnRandomLong(0, 2), 0);
 
-		V_PunchAxis(0, gEngfuncs.pfnRandomFloat(-2, 2));
+		if (!EV_WeaponRecoil(RecoilMP5))
+			V_PunchAxis(0, gEngfuncs.pfnRandomFloat(-2, 2));
 	}
 
 	EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, 20, -12, 4);
@@ -731,7 +780,8 @@ void EV_FireMP52(event_args_t* args)
 	if (EV_IsLocal(idx))
 	{
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(MP5_LAUNCH, 0);
-		V_PunchAxis(0, -10);
+		if (!EV_WeaponRecoil(RecoilMP5Grenade))
+			V_PunchAxis(0, -10);
 	}
 
 	switch (gEngfuncs.pfnRandomLong(0, 1))
@@ -777,7 +827,8 @@ void EV_FirePython(event_args_t* args)
 		EV_MuzzleFlash();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(PYTHON_FIRE1, body);
 
-		V_PunchAxis(0, -10.0);
+		if (!EV_WeaponRecoil(RecoilPython))
+			V_PunchAxis(0, -10.0);
 
 		SetLocalBody(WEAPON_PYTHON, body);
 	}
@@ -887,7 +938,8 @@ void EV_FireGauss(event_args_t* args)
 
 	if (EV_IsLocal(idx))
 	{
-		V_PunchAxis(0, -2.0);
+		if (!EV_WeaponRecoil(RecoilGauss))
+			V_PunchAxis(0, -2.0);
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(GAUSS_FIRE2, 0);
 
 		if (!m_fPrimaryFire)
@@ -1270,7 +1322,8 @@ void EV_FireCrossbow(event_args_t* args)
 		else
 			gEngfuncs.pEventAPI->EV_WeaponAnimation(CROSSBOW_FIRE3, 0);
 
-		V_PunchAxis(0, -2.0);
+		if (!EV_WeaponRecoil(RecoilCrossbow))
+			V_PunchAxis(0, -2.0);
 	}
 }
 //======================
@@ -1296,7 +1349,8 @@ void EV_FireRpg(event_args_t* args)
 	{
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(RPG_FIRE2, 0);
 
-		V_PunchAxis(0, -5.0);
+		if (!EV_WeaponRecoil(RecoilRpg))
+			V_PunchAxis(0, -5.0);
 	}
 }
 //======================
@@ -1500,7 +1554,8 @@ void EV_HornetGunFire(event_args_t* args)
 	// Only play the weapon anims if I shot it.
 	if (EV_IsLocal(idx))
 	{
-		V_PunchAxis(0, gEngfuncs.pfnRandomLong(0, 2));
+		if (!EV_WeaponRecoil(RecoilHornetGun))
+			V_PunchAxis(0, gEngfuncs.pfnRandomLong(0, 2));
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(HGUN_SHOOT, 0);
 	}
 
@@ -1618,7 +1673,8 @@ void EV_FireEagle(event_args_t* args)
 		EV_MuzzleFlash();
 
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(bEmpty ? EAGLE_SHOOT_EMPTY : EAGLE_SHOOT, 0);
-		V_PunchAxis(0, -4.0);
+		if (!EV_WeaponRecoil(RecoilEagle))
+			V_PunchAxis(0, -4.0);
 	}
 
 	Vector ShellVelocity;
@@ -1757,8 +1813,11 @@ void EV_FireM249(event_args_t* args)
 		SetLocalBody(WEAPON_M249, iBody);
 		EV_MuzzleFlash();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(gEngfuncs.pfnRandomLong(0, 2) + M249_SHOOT1, iBody);
-		V_PunchAxis(0, gEngfuncs.pfnRandomFloat(-2, 2));
-		V_PunchAxis(1, gEngfuncs.pfnRandomFloat(-1, 1));
+		if (!EV_WeaponRecoil(RecoilM249))
+		{
+			V_PunchAxis(0, gEngfuncs.pfnRandomFloat(-2, 2));
+			V_PunchAxis(1, gEngfuncs.pfnRandomFloat(-1, 1));
+		}
 	}
 
 	Vector ShellVelocity;
@@ -1853,7 +1912,8 @@ void EV_FireDisplacer(event_args_t* args)
 		if (EV_IsLocal(args->entindex))
 		{
 			gEngfuncs.pEventAPI->EV_WeaponAnimation(DISPLACER_FIRE, 0);
-			V_PunchAxis(0, -2);
+			if (!EV_WeaponRecoil(RecoilDisplacer))
+				V_PunchAxis(0, -2);
 		}
 
 		break;
@@ -1894,7 +1954,8 @@ void EV_FireSpore(event_args_t* args)
 	{
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(SPLAUNCHER_FIRE, 0);
 
-		V_PunchAxis(0, -3.0);
+		if (!EV_WeaponRecoil(RecoilSporeLauncher))
+			V_PunchAxis(0, -3.0);
 
 		if (cl_entity_t* pViewModel = gEngfuncs.GetViewModel())
 		{
@@ -1928,7 +1989,8 @@ void EV_SniperRifle(event_args_t* args)
 	{
 		EV_MuzzleFlash();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(iClip <= 0 ? SNIPERRIFLE_FIRELASTROUND : SNIPERRIFLE_FIRE, 0);
-		V_PunchAxis(0, -2.0);
+		if (!EV_WeaponRecoil(RecoilSniperRifle))
+			V_PunchAxis(0, -2.0);
 	}
 
 	EV_PlaySound(idx, vecOrigin,

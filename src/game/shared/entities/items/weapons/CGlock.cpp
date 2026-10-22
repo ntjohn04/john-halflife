@@ -73,17 +73,28 @@ bool CGlock::Deploy()
 	return DefaultDeploy("models/v_9mmhandgun.mdl", "models/p_9mmhandgun.mdl", GLOCK_DRAW, "onehanded");
 }
 
+// Aimed fire stays at the classic accuracy but inherits any bloom left over from rapid fire.
+static constexpr CBasePlayerWeapon::SpreadSettings GlockPrimarySpread{.Min = 0.01f, .Max = 0.1f, .PerShot = 0, .RecoveryRate = 0.1f};
+
+// Rapid fire starts tighter than the classic 0.1 and blooms back up to it.
+static constexpr CBasePlayerWeapon::SpreadSettings GlockSecondarySpread{.Min = 0.06f, .Max = 0.1f, .PerShot = 0.03f, .RecoveryRate = 0.1f};
+
 void CGlock::SecondaryAttack()
 {
-	GlockFire(0.1, 0.2, false);
+	GlockFire(GlockSecondarySpread, 0.2, false);
 }
 
 void CGlock::PrimaryAttack()
 {
-	GlockFire(0.01, 0.3, true);
+	GlockFire(GlockPrimarySpread, 0.3, true);
 }
 
-void CGlock::GlockFire(float flSpread, float flCycleTime, bool fUseAutoAim)
+float CGlock::GetCrosshairSpread() const
+{
+	return GetCurrentSpread(GlockPrimarySpread);
+}
+
+void CGlock::GlockFire(const SpreadSettings& spread, float flCycleTime, bool fUseAutoAim)
 {
 	if (GetMagazine1() <= 0)
 	{
@@ -135,6 +146,8 @@ void CGlock::GlockFire(float flSpread, float flCycleTime, bool fUseAutoAim)
 	{
 		vecAiming = gpGlobals->v_forward;
 	}
+
+	const float flSpread = FireSpread(spread);
 
 	Vector vecDir;
 	vecDir = m_pPlayer->FireBulletsPlayer(1, vecSrc, vecAiming, Vector(flSpread, flSpread, flSpread), 8192, BULLET_PLAYER_9MM, 0, 0, m_pPlayer, m_pPlayer->random_seed);
