@@ -1492,6 +1492,18 @@ void CBasePlayer::PlayerUse()
 	}
 }
 
+// Kicks the player's view with a spring-damped punch on the client. The client decides whether to show it.
+static void SendSmoothPunch(CBasePlayer* player, const Vector& kick, float spring, float damping)
+{
+	MESSAGE_BEGIN(MSG_ONE, gmsgSmoothPunch, nullptr, player);
+	WRITE_FLOAT(kick.x);
+	WRITE_FLOAT(kick.y);
+	WRITE_FLOAT(kick.z);
+	WRITE_FLOAT(spring);
+	WRITE_FLOAT(damping);
+	MESSAGE_END();
+}
+
 void CBasePlayer::Jump()
 {
 	if (FBitSet(pev->flags, FL_WATERJUMP))
@@ -1526,6 +1538,11 @@ void CBasePlayer::Jump()
 		pev->velocity.Length() > 50)
 	{
 		SetAnimation(PLAYER_SUPERJUMP);
+		SendSmoothPunch(this, {6, 0, 0}, 25, 8);
+	}
+	else
+	{
+		SendSmoothPunch(this, {3, 0, 0}, 25, 8);
 	}
 
 	// If you're standing on a conveyor, add it's velocity to yours (for momentum)
@@ -2586,6 +2603,12 @@ void CBasePlayer::PostThink()
 
 	// do weapon stuff
 	ItemPostFrame();
+
+	// Landing jolt, dipping the view in proportion to how fast the player fell.
+	if (FBitSet(pev->flags, FL_ONGROUND) && pev->health > 0 && m_flFallVelocity >= 75)
+	{
+		SendSmoothPunch(this, {-0.01f * m_flFallVelocity, 0, 0}, 50, 8);
+	}
 
 	// check to see if player landed hard enough to make a sound
 	// falling farther than half of the maximum safe distance, but not as far a max safe distance will

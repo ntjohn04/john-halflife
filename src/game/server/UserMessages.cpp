@@ -91,4 +91,7 @@ void LinkUserMessages()
 	gmsgFog = REG_USER_MSG("Fog", 14);
 
 	gmsgClientGibs = REG_USER_MSG("ClientGibs", 18);
+
+	// Kick angles (3 floats), spring, damping.
+	gmsgSmoothPunch = REG_USER_MSG("SmoothPunch", 20);
 }

@@ -20,6 +20,8 @@
 #include "Exports.h"
 #include "tri.h"
 #include "view.h"
+#include "parsemsg.h"
+#include "networking/ClientUserMessages.h"
 
 extern Vector vJumpOrigin;
 extern Vector vJumpAngles;
@@ -61,6 +63,11 @@ bool v_resetCamera = true;
 
 Vector ev_punchangle;
 
+// Spring-damped motion of ev_punchangle, driven by the SmoothPunch message (see V_SmoothPunch).
+Vector ev_punchvelocity;
+float ev_punchspring;
+float ev_punchdamping;
+
 cvar_t* scr_ofsx;
 cvar_t* scr_ofsy;
 cvar_t* scr_ofsz;
@@ -73,6 +80,14 @@ cvar_t* cl_bob;
 cvar_t* cl_bobup;
 cvar_t* cl_waterdist;
 cvar_t* cl_chasedist;
+
+// johnhalflife camera features. See re/specs/camera_movement.md.
+cvar_t* jhl_camera_bob;
+cvar_t* jhl_camera_viewroll;
+cvar_t* jhl_camera_verticallag;
+cvar_t* jhl_camera_jumplandjolt;
+cvar_t* jhl_visuals_weaponlag;
+cvar_t* jhl_visuals_weaponwallpush;
 
 // These cvars are not registered (so users can't cheat), so set the ->value field directly
 // Register these cvars in V_Init() if needed for easy tweaking
@@ -143,15 +158,23 @@ void V_InterpolateAngles( float *start, float *end, float *output, float frac )
 	V_NormalizeAngles( output );
 } */
 
-// Quakeworld bob code, this fixes jitters in the mutliplayer since the clock (pparams->time) isn't quite linear
-float V_CalcBob(ref_params_t* pparams)
+struct BobState
 {
-	static double bobtime = 0;
-	static float bob = 0;
+	double bobtime = 0;
+	float bob = 0;
+	float lasttime = 0;
+};
+
+// Quakeworld bob code, this fixes jitters in the mutliplayer since the clock (pparams->time) isn't quite linear
+// rate scales how fast the bob cycle advances; each distinct bob signal needs its own state.
+float V_CalcBob(ref_params_t* pparams, BobState& state, float rate)
+{
 	float cycle;
-	static float lasttime = 0;
 	Vector vel;
 
+	double& bobtime = state.bobtime;
+	float& bob = state.bob;
+	float& lasttime = state.lasttime;
 
 	if (pparams->onground == -1 ||
 		pparams->time == lasttime)
@@ -164,7 +187,7 @@ float V_CalcBob(ref_params_t* pparams)
 
 	// TODO: bobtime will eventually become a value so large that it will no longer behave properly.
 	// Consider resetting the variable if a level change is detected (pparams->time < lasttime might do the trick).
-	bobtime += pparams->frametime;
+	bobtime += pparams->frametime * rate;
 	cycle = bobtime - (int)(bobtime / cl_bobcycle->value) * cl_bobcycle->value;
 	cycle /= cl_bobcycle->value;
 
@@ -394,6 +417,12 @@ void V_CalcViewRoll(ref_params_t* pparams)
 	if (!viewentity)
 		return;
 
+	// Stronger strafe roll: replaces the incoming roll with 4x the view-relative roll, then the normal roll is added on top.
+	if (0 != jhl_camera_viewroll->value)
+	{
+		pparams->viewangles[ROLL] = 4 * V_CalcRoll(pparams->viewangles, pparams->simvel, cl_rollangle->value, cl_rollspeed->value);
+	}
+
 	side = V_CalcRoll(viewentity->angles, pparams->simvel, cl_rollangle->value, cl_rollspeed->value);
 
 	pparams->viewangles[ROLL] += side;
@@ -450,6 +479,140 @@ void V_CalcIntermissionRefdef(ref_params_t* pparams)
 	v_angles = pparams->viewangles;
 }
 
+/*
+==============
+V_CalcVerticalLag
+
+Raises the eye a little while moving upward (jumps, stairs, ladders, lifts) and lets it settle afterwards.
+The view model is not raised, so the weapon appears to lag behind.
+==============
+*/
+void V_CalcVerticalLag(ref_params_t* pparams)
+{
+	static float lift = 0;
+
+	if (0 == jhl_camera_verticallag->value)
+	{
+		lift = 0;
+		return;
+	}
+
+	// Rates were tuned per frame; scale them to 100 fps so the effect doesn't depend on frame rate.
+	const float frames = pparams->frametime / 0.01f;
+
+	if (pparams->simvel[2] > 2)
+	{
+		lift = std::min(lift + 0.17f * frames, 3.f);
+	}
+	else
+	{
+		lift = std::max(lift - 0.12f * frames, 0.f);
+	}
+
+	pparams->vieworg[2] += lift;
+}
+
+/*
+==============
+V_CalcWeaponLag
+
+Makes the view model trail behind the view when turning.
+==============
+*/
+void V_CalcWeaponLag(ref_params_t* pparams, cl_entity_t* view)
+{
+	static Vector lastFacing{0, 0, 1};
+
+	if (0 == jhl_visuals_weaponlag->value || 0 == pparams->frametime)
+		return;
+
+	Vector forward, right, up;
+	AngleVectors(view->angles, forward, right, up);
+
+	const Vector difference = forward - lastFacing;
+	const float differenceLength = difference.Length();
+
+	// Catch up faster when the view has turned far away from the weapon.
+	float speed = 5;
+	if (differenceLength > 0.5f)
+	{
+		speed *= differenceLength * 2;
+	}
+
+	lastFacing = lastFacing + difference * (speed * pparams->frametime);
+
+	if (lastFacing.Length() == 0)
+	{
+		lastFacing = {0, 0, 1};
+	}
+	else
+	{
+		lastFacing = lastFacing.Normalize();
+	}
+
+	view->origin[0] -= difference[0] * 3;
+	view->origin[1] -= difference[1] * 3;
+	view->origin[2] += difference[2] * 4.5f;
+}
+
+/*
+==============
+V_CalcWeaponWallPush
+
+Pulls the view model back and tilts it up when the player is close to a wall.
+==============
+*/
+void V_CalcWeaponWallPush(ref_params_t* pparams, cl_entity_t* view)
+{
+	static float push = 0;
+
+	if (0 == jhl_visuals_weaponwallpush->value)
+	{
+		push = 0;
+		return;
+	}
+
+	Vector forward, right, up;
+	AngleVectors(pparams->cl_viewangles, forward, right, up);
+
+	const Vector start = pparams->vieworg;
+	const Vector end = start + forward * 35;
+
+	pmtrace_t* trace = gEngfuncs.PM_TraceLine(start, end, PM_NORMAL, 2 /*point sized hull*/, -1);
+
+	const float target = (1 - trace->fraction) * 0.65f;
+
+	push += (target - push) * std::min(pparams->frametime * 15.5f, 1.f);
+
+	view->angles[PITCH] += push * 12.25f;
+	view->angles[YAW] -= push * 4.5f;
+	view->origin = view->origin - pparams->forward * (push * 8.5f) - pparams->up * (push * 12.5f);
+}
+
+/*
+==============
+V_UpdatePunchSpring
+
+Moves ev_punchangle as a damped spring pulled back towards zero.
+==============
+*/
+void V_UpdatePunchSpring(float frametime)
+{
+	if (ev_punchangle.Length() <= 0.001f && ev_punchvelocity.Length() <= 0.001f)
+		return;
+
+	const Vector newPunch = ev_punchangle + ev_punchvelocity * frametime;
+
+	const float damping = std::max(0.f, 1 - frametime * ev_punchdamping);
+	const float spring = std::min(std::max(0.f, frametime * ev_punchspring), 2.f);
+
+	ev_punchvelocity = newPunch * -spring + ev_punchvelocity * damping;
+
+	ev_punchangle[PITCH] = std::clamp(newPunch[PITCH], -15.f, 15.f);
+	ev_punchangle[YAW] = std::clamp(newPunch[YAW], -179.f, 179.f);
+	ev_punchangle[ROLL] = std::clamp(newPunch[ROLL], -15.f, 15.f);
+}
+
 #define ORIGIN_BACKUP 64
 #define ORIGIN_MASK (ORIGIN_BACKUP - 1)
 
@@ -475,7 +638,7 @@ void V_CalcNormalRefdef(ref_params_t* pparams)
 {
 	cl_entity_t *ent, *view;
 	Vector angles;
-	float bob, waterOffset;
+	float bob, sidebob, waterOffset;
 	static viewinterp_t ViewInterp;
 
 	static float oldz = 0;
@@ -501,7 +664,19 @@ void V_CalcNormalRefdef(ref_params_t* pparams)
 
 	// transform the view offset by the model's matrix to get the offset from
 	// model origin for the view
-	bob = V_CalcBob(pparams);
+	if (0 != jhl_camera_bob->value)
+	{
+		// Two bob signals: a slower main bob and a side bob at twice its rate, for a figure-eight weapon sway.
+		static BobState mainBobState, sideBobState;
+		bob = V_CalcBob(pparams, mainBobState, 0.75f);
+		sidebob = V_CalcBob(pparams, sideBobState, 1.5f);
+	}
+	else
+	{
+		static BobState bobState;
+		bob = V_CalcBob(pparams, bobState, 1);
+		sidebob = 0;
+	}
 
 	// refresh position
 	pparams->vieworg = pparams->simorg;
@@ -600,6 +775,8 @@ void V_CalcNormalRefdef(ref_params_t* pparams)
 		}
 	}
 
+	V_CalcVerticalLag(pparams);
+
 	// Treating cam_ofs[2] as the distance
 	if (0 != CL_IsThirdPerson())
 	{
@@ -632,21 +809,37 @@ void V_CalcNormalRefdef(ref_params_t* pparams)
 	// Let the viewmodel shake at about 10% of the amplitude
 	gEngfuncs.V_ApplyShake(view->origin, view->angles, 0.9);
 
-	for (int i = 0; i < 3; i++)
+	if (0 != jhl_camera_bob->value)
 	{
-		view->origin[i] += bob * 0.4 * pparams->forward[i];
-	}
-	view->origin[2] += bob;
+		view->origin = view->origin + pparams->right * (bob * 0.33f) + pparams->up * (sidebob * 0.17f);
+		view->origin[2] += bob;
 
-	// throw in a little tilt.
-	view->angles[YAW] -= bob * 0.5;
-	view->angles[ROLL] -= bob * 1;
-	view->angles[PITCH] -= bob * 0.3;
+		view->angles[YAW] -= bob * 0.3f;
+		view->angles[ROLL] -= sidebob * 0.5f;
+		view->angles[PITCH] -= bob * 0.3f;
 
-	if (0 != cl_bobtilt->value)
-	{
 		view->curstate.angles = view->angles;
 	}
+	else
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			view->origin[i] += bob * 0.4 * pparams->forward[i];
+		}
+		view->origin[2] += bob;
+
+		// throw in a little tilt.
+		view->angles[YAW] -= bob * 0.5;
+		view->angles[ROLL] -= bob * 1;
+		view->angles[PITCH] -= bob * 0.3;
+
+		if (0 != cl_bobtilt->value)
+		{
+			view->curstate.angles = view->angles;
+		}
+	}
+
+	V_CalcWeaponLag(pparams, view);
 
 	// pushing the view origin down off of the same X/Z plane as the ent's origin will give the
 	// gun a very nice 'shifting' effect when the player looks up/down. If there is a problem
@@ -672,6 +865,8 @@ void V_CalcNormalRefdef(ref_params_t* pparams)
 		view->origin[2] += 0.5;
 	}
 
+	V_CalcWeaponWallPush(pparams, view);
+
 	// Add in the punchangle, if any
 	pparams->viewangles = pparams->viewangles + pparams->punchangle;
 
@@ -679,6 +874,7 @@ void V_CalcNormalRefdef(ref_params_t* pparams)
 	pparams->viewangles = pparams->viewangles + ev_punchangle;
 
 	V_DropPunchAngle(pparams->frametime, ev_punchangle);
+	V_UpdatePunchSpring(pparams->frametime);
 
 	// smooth out stair step ups
 #if 1
@@ -1684,6 +1880,42 @@ void V_PunchAxis(int axis, float punch)
 
 /*
 =============
+V_SmoothPunch
+
+Kicks the client side punch with a damped spring that settles it back to zero.
+The kick is in degrees; spring and damping apply to all kicks until the next one.
+=============
+*/
+void V_SmoothPunch(const Vector& kick, float spring, float damping)
+{
+	constexpr float KickScale = 20;
+
+	ev_punchvelocity[PITCH] -= kick[PITCH] * KickScale;
+	ev_punchvelocity[YAW] += kick[YAW] * KickScale;
+	ev_punchvelocity[ROLL] += kick[ROLL] * KickScale;
+
+	ev_punchspring = spring;
+	ev_punchdamping = damping;
+}
+
+static void MsgFunc_SmoothPunch(const char* pszName, BufferReader& reader)
+{
+	Vector kick;
+	kick[PITCH] = reader.ReadFloat();
+	kick[YAW] = reader.ReadFloat();
+	kick[ROLL] = reader.ReadFloat();
+	const float spring = reader.ReadFloat();
+	const float damping = reader.ReadFloat();
+
+	// The server sends jump and landing jolts to everyone; players opt out here.
+	if (0 == jhl_camera_jumplandjolt->value)
+		return;
+
+	V_SmoothPunch(kick, spring, damping);
+}
+
+/*
+=============
 V_Init
 =============
 */
@@ -1703,6 +1935,15 @@ void V_Init()
 	cl_bobup = gEngfuncs.pfnRegisterVariable("cl_bobup", "0.5", 0);
 	cl_waterdist = gEngfuncs.pfnRegisterVariable("cl_waterdist", "4", 0);
 	cl_chasedist = gEngfuncs.pfnRegisterVariable("cl_chasedist", "112", 0);
+
+	jhl_camera_bob = gEngfuncs.pfnRegisterVariable("jhl_camera_bob", "1", FCVAR_ARCHIVE);
+	jhl_camera_viewroll = gEngfuncs.pfnRegisterVariable("jhl_camera_viewroll", "1", FCVAR_ARCHIVE);
+	jhl_camera_verticallag = gEngfuncs.pfnRegisterVariable("jhl_camera_verticallag", "1", FCVAR_ARCHIVE);
+	jhl_camera_jumplandjolt = gEngfuncs.pfnRegisterVariable("jhl_camera_jumplandjolt", "1", FCVAR_ARCHIVE);
+	jhl_visuals_weaponlag = gEngfuncs.pfnRegisterVariable("jhl_visuals_weaponlag", "1", FCVAR_ARCHIVE);
+	jhl_visuals_weaponwallpush = gEngfuncs.pfnRegisterVariable("jhl_visuals_weaponwallpush", "1", FCVAR_ARCHIVE);
+
+	g_ClientUserMessages.RegisterHandler("SmoothPunch", &MsgFunc_SmoothPunch);
 }
 
 

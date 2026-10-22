@@ -2518,7 +2518,7 @@ void PM_Jump()
 			(pmove->flDuckTime > 0) &&
 			pmove->velocity.Length() > 50)
 		{
-			pmove->punchangle[0] = -5;
+			// No punch here: the server sends a smooth punch jolt for jumps instead.
 
 			for (i = 0; i < 2; i++)
 			{
@@ -2671,13 +2671,7 @@ void PM_CheckFalling()
 			// play step sound for current texture
 			PM_PlayStepSound(PM_MapTextureTypeStepType(pmove->chtexturetype), fvol);
 
-			// Knock the screen around a little bit, temporary effect
-			pmove->punchangle[2] = pmove->flFallVelocity * 0.013; // punch z axis
-
-			if (pmove->punchangle[0] > 8)
-			{
-				pmove->punchangle[0] = 8;
-			}
+			// No screen punch here: the server sends a smooth punch landing jolt instead.
 		}
 	}
 
