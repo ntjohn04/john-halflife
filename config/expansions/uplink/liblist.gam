@@ -1,0 +1,15 @@
+// Valve Game Info file
+//  These are key/value pairs.  Certain mods will use different settings.
+//
+// John Half-Life: Uplink. Everything but the menu comes from johnhalflife through fallback_dir.
+game "John Half-Life: Uplink"
+icon "game"
+startmap "hldemo1"
+trainmap "t0a0"
+fallback_dir "johnhalflife"
+mpentity "info_player_deathmatch"
+gamedll "dlls\server.dll"
+gamedll_linux "dlls/server.so"
+gamedll_osx "dlls/server.dylib"
+secure "1"
+edicts "2048"

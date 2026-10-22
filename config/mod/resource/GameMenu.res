@@ -13,11 +13,6 @@
 		"OnlyInGame" "1"
 		"notsingle" "1"
 	}
-	"3"
-	{
-		"label" "#GameUI_CampaignSelect"
-		"command" "engine disconnect; maxplayers 1; map hlu_campaignselect"
-	}
 	"4"
 	{
 		"label" "#GameUI_GameMenu_LeaveGame"

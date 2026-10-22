@@ -246,8 +246,9 @@ install(FILES $<TARGET_FILE:OpenAL::OpenAL> DESTINATION cl_dlls)
 # John Half-Life's expansions: thin mod folders next to the base one that borrow all its content through
 # fallback_dir, each with its own name, main menu and saves (docs/johnhalflife/README.md#expansions).
 # valveDir is the matching Valve game, whose menu background, logo and icon are copied from the player's own
-# install, never committed.
-function(jhl_install_expansion name valveDir)
+# install, never committed; without one the expansion keeps Half-Life's.
+function(jhl_install_expansion name)
+	set(valveDir "${ARGV1}")
 	set(dir ../johnhalflife_${name})
 
 	install(TARGETS client
@@ -263,9 +264,12 @@ function(jhl_install_expansion name valveDir)
 	install(FILES $<TARGET_FILE:OpenAL::OpenAL> DESTINATION ${dir}/cl_dlls)
 	install(FILES config/network/delta.lst DESTINATION ${dir})
 
-	# The base main menu has Campaign Select; each expansion has its own without it.
-	install(DIRECTORY config/mod/ DESTINATION ${dir} PATTERN "GameMenu.res" EXCLUDE)
+	install(DIRECTORY config/mod/ DESTINATION ${dir})
 	install(DIRECTORY config/expansions/${name}/ DESTINATION ${dir})
+
+	if (NOT valveDir)
+		return()
+	endif()
 
 	install(CODE "set(valve \"\${CMAKE_INSTALL_PREFIX}/../${valveDir}\")
 		set(expansion \"\${CMAKE_INSTALL_PREFIX}/../johnhalflife_${name}\")
@@ -284,6 +288,7 @@ endfunction()
 
 jhl_install_expansion(op4 gearbox)
 jhl_install_expansion(bs bshift)
+jhl_install_expansion(uplink)
 
 if (UNIX)
 	# Create a symbolic link to the OpenAL library so the dependency can be located at runtime.
