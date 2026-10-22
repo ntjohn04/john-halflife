@@ -18,6 +18,7 @@
 
 #include "hud.h"
 #include "weapon_effects.h"
+#include "Exports.h"
 #include "event_api.h"
 #include "r_efx.h"
 #include "dlight.h"
@@ -36,8 +37,9 @@ void EV_GunMuzzleEffects()
 		return;
 	}
 
-	// Zoomed in, the view model isn't drawn, so its attachment is stale and the effects would appear where the muzzle last was.
-	if (gHUD.m_iFOV != 0 && gHUD.m_iFOV < static_cast<int>(CVAR_GET_FLOAT("default_fov")))
+	// In third person or zoomed in, the view model isn't drawn, so its attachment is stale and the effects would
+	// appear where the muzzle last was.
+	if (0 != CL_IsThirdPerson() || (gHUD.m_iFOV != 0 && gHUD.m_iFOV < static_cast<int>(CVAR_GET_FLOAT("default_fov"))))
 	{
 		return;
 	}
