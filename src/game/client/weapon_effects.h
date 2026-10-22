@@ -18,9 +18,16 @@
 #include "vector.h"
 
 /**
- *	@brief Registers the BulletHit message, which the server sends for bullets it fires (NPCs, mounted guns).
+ *	@brief Registers the effect cvars and the BulletHit and WaterSplash messages, which the server sends for
+ *	bullets it fires (NPCs, mounted guns).
  */
-void BulletImpacts_Initialize();
+void WeaponEffects_Initialize();
+
+/**
+ *	@brief A stronger, warmer muzzle light and a faint smoke wisp at the local player's view model muzzle.
+ *	Call alongside EV_MuzzleFlash for firearms.
+ */
+void EV_GunMuzzleEffects();
 
 /**
  *	@brief Subtle extra feedback where a bullet hits a surface, on top of the usual decal, specks and ricochet:

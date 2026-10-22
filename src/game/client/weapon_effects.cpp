@@ -13,12 +13,11 @@
  *
  ****/
 
-// A reserved take on MMod's bullet impact effects (see re/specs/bullet_impacts.md):
-// MMod adds debris, glowing sprites and per-material decals; this keeps to engine particles,
-// a short light and one stock smoke sprite.
+// Reserved takes on MMod's weapon effects, using engine particles, short lights and stock sprites:
+// bullet impacts and water splashes (see re/specs/bullet_impacts.md) and muzzle light and smoke.
 
 #include "hud.h"
-#include "bullet_impacts.h"
+#include "weapon_effects.h"
 #include "event_api.h"
 #include "r_efx.h"
 #include "dlight.h"
@@ -28,6 +27,63 @@
 
 
 static cvar_t* g_cl_bulletimpacts = nullptr;
+static cvar_t* g_cl_muzzleflash = nullptr;
+
+void EV_GunMuzzleEffects()
+{
+	if (0 == g_cl_muzzleflash->value)
+	{
+		return;
+	}
+
+	cl_entity_t* viewModel = gEngfuncs.GetViewModel();
+
+	if (!viewModel || !viewModel->model)
+	{
+		return;
+	}
+
+	// The muzzle is the first attachment on the stock view models; it's set while the model is drawn.
+	Vector muzzle = viewModel->attachment[0];
+
+	if (muzzle == g_vecZero)
+	{
+		return;
+	}
+
+	// A warm flash on top of the engine's own muzzle light, making it stronger and slightly longer.
+	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)
+	{
+		light->origin = muzzle;
+		light->radius = gEngfuncs.pfnRandomFloat(140, 170);
+		light->color.r = 255;
+		light->color.g = 190;
+		light->color.b = 110;
+		light->die = gEngfuncs.GetClientTime() + 0.06f;
+		light->decay = light->radius * 12;
+	}
+
+	// A faint wisp of smoke drifting up from the muzzle.
+	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
+
+	if (modelIndex == 0)
+	{
+		return;
+	}
+
+	Vector velocity{gEngfuncs.pfnRandomFloat(-4, 4), gEngfuncs.pfnRandomFloat(-4, 4), gEngfuncs.pfnRandomFloat(12, 20)};
+
+	// Plays once and is removed on its last frame (see DustImpact).
+	TEMPENTITY* wisp = gEngfuncs.pEfxAPI->R_TempSprite(muzzle, velocity, gEngfuncs.pfnRandomFloat(0.12f, 0.18f),
+		modelIndex, kRenderTransAlpha, kRenderFxNone, 0.18f, 2.0f, FTENT_SPRANIMATE);
+
+	if (wisp)
+	{
+		wisp->entity.curstate.rendercolor = {190, 190, 190};
+		wisp->entity.curstate.framerate = 28;
+		wisp->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+	}
+}
 
 static void MetalImpact(const Vector& position, const Vector& normal)
 {
@@ -215,9 +271,10 @@ static void MsgFunc_BulletImpact(const char* pszName, BufferReader& reader)
 	BulletImpactEffects(position, normal, textureType);
 }
 
-void BulletImpacts_Initialize()
+void WeaponEffects_Initialize()
 {
 	g_cl_bulletimpacts = gEngfuncs.pfnRegisterVariable("jhl_fx_bulletimpacts", "1", FCVAR_ARCHIVE);
+	g_cl_muzzleflash = gEngfuncs.pfnRegisterVariable("jhl_fx_muzzleflash", "1", FCVAR_ARCHIVE);
 
 	g_ClientUserMessages.RegisterHandler("BulletHit", &MsgFunc_BulletImpact);
 	g_ClientUserMessages.RegisterHandler("WaterSplash", &MsgFunc_WaterSplash);

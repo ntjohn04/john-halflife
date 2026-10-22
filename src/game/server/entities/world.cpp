@@ -289,7 +289,11 @@ void CWorld::Precache()
 	PrecacheSound("common/null.wav"); // clears sound channels
 
 	PrecacheSound("items/suitchargeok1.wav"); //!!! temporary sound for respawning weapons.
-	PrecacheSound("items/gunpickup2.wav");	  // player picks up a gun.
+	// player picks up a gun (one at random, see RandomWeaponPickupSound).
+	PrecacheSound("items/gunpickup1.wav");
+	PrecacheSound("items/gunpickup2.wav");
+	PrecacheSound("items/gunpickup3.wav");
+	PrecacheSound("items/gunpickup4.wav");
 
 	PrecacheSound("common/bodydrop3.wav"); // dead bodies hitting the ground (animation events)
 	PrecacheSound("common/bodydrop4.wav");

@@ -64,7 +64,7 @@ extern engine_studio_api_t IEngineStudio;
 static int g_tracerCount[MAX_PLAYERS];
 
 #include "pm_shared.h"
-#include "bullet_impacts.h"
+#include "weapon_effects.h"
 
 void V_PunchAxis(int axis, float punch);
 bool V_WeaponRecoil(float pitchMin, float pitchMax, float jitter, float spring, float damping);
@@ -548,6 +548,7 @@ void EV_FireGlock1(event_args_t* args)
 	if (EV_IsLocal(idx))
 	{
 		EV_MuzzleFlash();
+		EV_GunMuzzleEffects();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(empty ? GLOCK_SHOOT_EMPTY : GLOCK_SHOOT, 0);
 
 		if (!EV_WeaponRecoil(RecoilGlock))
@@ -594,6 +595,7 @@ void EV_FireGlock2(event_args_t* args)
 	{
 		// Add muzzle flash to current weapon model
 		EV_MuzzleFlash();
+		EV_GunMuzzleEffects();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(empty ? GLOCK_SHOOT_EMPTY : GLOCK_SHOOT, 0);
 
 		if (!EV_WeaponRecoil(RecoilGlockRapid))
@@ -646,6 +648,7 @@ void EV_FireShotGunDouble(event_args_t* args)
 	{
 		// Add muzzle flash to current weapon model
 		EV_MuzzleFlash();
+		EV_GunMuzzleEffects();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(SHOTGUN_FIRE2, 0);
 		if (!EV_WeaponRecoil(RecoilShotgunDouble))
 			V_PunchAxis(0, -10.0);
@@ -701,6 +704,7 @@ void EV_FireShotGunSingle(event_args_t* args)
 	{
 		// Add muzzle flash to current weapon model
 		EV_MuzzleFlash();
+		EV_GunMuzzleEffects();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(SHOTGUN_FIRE, 0);
 
 		if (!EV_WeaponRecoil(RecoilShotgunSingle))
@@ -760,6 +764,7 @@ void EV_FireMP5(event_args_t* args)
 	{
 		// Add muzzle flash to current weapon model
 		EV_MuzzleFlash();
+		EV_GunMuzzleEffects();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(MP5_FIRE1 + gEngfuncs.pfnRandomLong(0, 2), 0);
 
 		if (!EV_WeaponRecoil(RecoilMP5))
@@ -844,6 +849,7 @@ void EV_FirePython(event_args_t* args)
 
 		// Add muzzle flash to current weapon model
 		EV_MuzzleFlash();
+		EV_GunMuzzleEffects();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(PYTHON_FIRE1, body);
 
 		if (!EV_WeaponRecoil(RecoilPython))
@@ -1690,6 +1696,7 @@ void EV_FireEagle(event_args_t* args)
 	if (EV_IsLocal(args->entindex))
 	{
 		EV_MuzzleFlash();
+		EV_GunMuzzleEffects();
 
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(bEmpty ? EAGLE_SHOOT_EMPTY : EAGLE_SHOOT, 0);
 		if (!EV_WeaponRecoil(RecoilEagle))
@@ -1831,6 +1838,7 @@ void EV_FireM249(event_args_t* args)
 	{
 		SetLocalBody(WEAPON_M249, iBody);
 		EV_MuzzleFlash();
+		EV_GunMuzzleEffects();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(gEngfuncs.pfnRandomLong(0, 2) + M249_SHOOT1, iBody);
 		if (!EV_WeaponRecoil(RecoilM249))
 		{
@@ -2007,6 +2015,7 @@ void EV_SniperRifle(event_args_t* args)
 	if (EV_IsLocal(idx))
 	{
 		EV_MuzzleFlash();
+		EV_GunMuzzleEffects();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(iClip <= 0 ? SNIPERRIFLE_FIRELASTROUND : SNIPERRIFLE_FIRE, 0);
 		if (!EV_WeaponRecoil(RecoilSniperRifle))
 			V_PunchAxis(0, -2.0);

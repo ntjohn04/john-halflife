@@ -68,7 +68,7 @@ int DamageDecal(CBaseEntity* pEntity, int bitsDamageType)
 	return pEntity->DamageDecal(bitsDamageType);
 }
 
-// Lets nearby clients add their bullet impact effects (bullet_impacts.cpp) for bullets fired on the server.
+// Lets nearby clients add their bullet impact effects (weapon_effects.cpp) for bullets fired on the server.
 // The player's own bullets get theirs from the client-side weapon events instead.
 static void SendBulletImpact(TraceResult* pTrace, CBaseEntity* pEntity)
 {
@@ -103,6 +103,12 @@ static bool IsLiquid(const Vector& position)
 {
 	const int contents = UTIL_PointContents(position);
 	return contents == CONTENTS_WATER || contents == CONTENTS_SLIME;
+}
+
+const char* RandomWeaponPickupSound()
+{
+	static const char* const Sounds[] = {"items/gunpickup1.wav", "items/gunpickup2.wav", "items/gunpickup3.wav", "items/gunpickup4.wav"};
+	return Sounds[RANDOM_LONG(0, std::size(Sounds) - 1)];
 }
 
 void SendBulletWaterSplash(const Vector& start, const Vector& end)
@@ -320,7 +326,7 @@ void W_Precache()
 	g_sModelIndexWExplosion = UTIL_PrecacheModel("sprites/WXplo1.spr");		// underwater fireball
 	g_sModelIndexSmoke = UTIL_PrecacheModel("sprites/steam1.spr");			// smoke
 
-	// Bullet water splash ripple (client bullet_impacts.cpp); MMod's sprite (mmod_port), optional.
+	// Bullet water splash ripple (client weapon_effects.cpp); MMod's sprite (mmod_port), optional.
 	if (g_pFileSystem->FileExists("sprites/water_splash_ring.spr"))
 	{
 		UTIL_PrecacheModel("sprites/water_splash_ring.spr");
@@ -444,7 +450,7 @@ ItemAddResult CBasePlayerWeapon::Apply(CBasePlayer* player)
 
 		if (m_PlayPickupSound)
 		{
-			player->EmitSound(CHAN_ITEM, "items/gunpickup2.wav", 1, ATTN_NORM);
+			player->EmitSound(CHAN_ITEM, RandomWeaponPickupSound(), 1, ATTN_NORM);
 		}
 
 		// Clear out think functions so they don't try to run item spawn/respawn logic.

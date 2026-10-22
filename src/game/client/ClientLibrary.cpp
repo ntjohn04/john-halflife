@@ -20,7 +20,7 @@
 #include "hud.h"
 #include "cbase.h"
 #include "client_gibs.h"
-#include "bullet_impacts.h"
+#include "weapon_effects.h"
 #include "ClientLibrary.h"
 #include "entity.h"
 #include "net_api.h"
@@ -59,7 +59,7 @@ bool ClientLibrary::Initialize()
 
 	TempEntity_Initialize();
 	ClientGibs_Initialize();
-	BulletImpacts_Initialize();
+	WeaponEffects_Initialize();
 
 	return true;
 }

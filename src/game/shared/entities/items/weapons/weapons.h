@@ -602,6 +602,12 @@ void DecalGunshot(TraceResult* pTrace, int iBulletType);
  *	@brief Server only: tells nearby clients to draw a splash if a bullet fired from @p start to @p end entered water.
  */
 void SendBulletWaterSplash(const Vector& start, const Vector& end);
+
+/**
+ *	@brief Server only: one of the four stock gun pickup sounds, picked at random.
+ *	Vanilla only ever plays the second one.
+ */
+const char* RandomWeaponPickupSound();
 void SpawnBlood(Vector vecSpot, int bloodColor, float flDamage);
 int DamageDecal(CBaseEntity* pEntity, int bitsDamageType);
 
