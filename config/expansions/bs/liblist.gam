@@ -1,0 +1,15 @@
+// Valve Game Info file
+//  These are key/value pairs.  Certain mods will use different settings.
+//
+// John Half-Life: Blue Shift. Everything but the menu comes from johnhalflife through fallback_dir.
+game "John Half-Life: Blue Shift"
+icon "game"
+startmap "ba_tram1"
+trainmap "ba_hazard1"
+fallback_dir "johnhalflife"
+mpentity "info_player_deathmatch"
+gamedll "dlls\server.dll"
+gamedll_linux "dlls/server.so"
+gamedll_osx "dlls/server.dylib"
+secure "1"
+edicts "2048"

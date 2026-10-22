@@ -104,18 +104,19 @@ a copy of the game code.
 |---|---|---|---|
 | `johnhalflife` | John Half-Life | `c0a0` / `t0a0` | `config/liblist.gam.in`, `config/mod/` |
 | `johnhalflife_op4` | John Half-Life: Opposing Force | `of0a0` / `ofboot0` | `config/expansions/op4/` |
+| `johnhalflife_bs` | John Half-Life: Blue Shift | `ba_tram1` / `ba_hazard1` | `config/expansions/bs/` |
 
 * The base menu keeps the Unified SDK's Campaign Select (for Uplink and quick switching) and has New Game back;
   the expansions' menus have New Game without Campaign Select.
 * The build installs the game code, `delta.lst` and the settings files into each folder. Each expansion's
-  menu background, logo and icon are copied from the player's own Valve install (`gearbox`) at install time
-  and never committed.
+  menu background (and Blue Shift's background layout), logo and icon are copied from the player's own Valve
+  install (`gearbox`, `bshift`) at install time and never committed (`jhl_install_expansion` in
+  `CMakeLists.txt`). Blue Shift keeps multiplayer, unlike vanilla, so John Settings stays in the same place.
 * Settings and saves are per folder, as with the real games.
 * The engine adds the `fallback_dir` folder under the search path ID `GAME_FALLBACK`. The Unified SDK reads its
   config files (model/sound replacement, skill, server config, map cycle) from `GAMECONFIG`, the mod's own folder
   only, to keep downloaded content out, so `FileSystem_LoadFileIntoBuffer` also tries `GAME_FALLBACK` when a
   `GAMECONFIG` read finds nothing. Without it, the expansions' view models stayed Half-Life's.
-* Status: Opposing Force is a prototype; Blue Shift follows once it's confirmed.
 
 ## MMod assets
 

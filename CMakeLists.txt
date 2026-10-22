@@ -243,41 +243,47 @@ install(DIRECTORY config/mod/ DESTINATION .)
 #	RUNTIME DESTINATION cl_dlls)
 install(FILES $<TARGET_FILE:OpenAL::OpenAL> DESTINATION cl_dlls)
 
-# John Half-Life: Opposing Force: a thin mod folder next to the base one that borrows all its content through
-# fallback_dir, with its own name, main menu and saves (docs/johnhalflife/README.md#expansions).
-set(JHL_OP4_DIR ../johnhalflife_op4)
+# John Half-Life's expansions: thin mod folders next to the base one that borrow all its content through
+# fallback_dir, each with its own name, main menu and saves (docs/johnhalflife/README.md#expansions).
+# valveDir is the matching Valve game, whose menu background, logo and icon are copied from the player's own
+# install, never committed.
+function(jhl_install_expansion name valveDir)
+	set(dir ../johnhalflife_${name})
 
-install(TARGETS client
-	RUNTIME DESTINATION ${JHL_OP4_DIR}/cl_dlls
-	LIBRARY DESTINATION ${JHL_OP4_DIR}/cl_dlls
-)
+	install(TARGETS client
+		RUNTIME DESTINATION ${dir}/cl_dlls
+		LIBRARY DESTINATION ${dir}/cl_dlls
+	)
 
-install(TARGETS server
-	RUNTIME DESTINATION ${JHL_OP4_DIR}/dlls
-	LIBRARY DESTINATION ${JHL_OP4_DIR}/dlls
-)
+	install(TARGETS server
+		RUNTIME DESTINATION ${dir}/dlls
+		LIBRARY DESTINATION ${dir}/dlls
+	)
 
-install(FILES $<TARGET_FILE:OpenAL::OpenAL> DESTINATION ${JHL_OP4_DIR}/cl_dlls)
-install(FILES config/network/delta.lst DESTINATION ${JHL_OP4_DIR})
-# The base main menu has Campaign Select; the expansion has its own without it.
-install(DIRECTORY config/mod/ DESTINATION ${JHL_OP4_DIR} PATTERN "GameMenu.res" EXCLUDE)
-install(DIRECTORY config/expansions/op4/ DESTINATION ${JHL_OP4_DIR})
+	install(FILES $<TARGET_FILE:OpenAL::OpenAL> DESTINATION ${dir}/cl_dlls)
+	install(FILES config/network/delta.lst DESTINATION ${dir})
 
-# Opposing Force's menu background, logo and icon, copied from the player's own install, never committed.
-install(CODE [[
-	set(gearbox "${CMAKE_INSTALL_PREFIX}/../gearbox")
-	set(op4 "${CMAKE_INSTALL_PREFIX}/../johnhalflife_op4")
+	# The base main menu has Campaign Select; each expansion has its own without it.
+	install(DIRECTORY config/mod/ DESTINATION ${dir} PATTERN "GameMenu.res" EXCLUDE)
+	install(DIRECTORY config/expansions/${name}/ DESTINATION ${dir})
 
-	if (EXISTS "${gearbox}/resource/background")
-		file(GLOB background "${gearbox}/resource/background/*")
-		file(COPY ${background} DESTINATION "${op4}/resource/background")
-		file(GLOB menuArt "${gearbox}/resource/game_menu*" "${gearbox}/resource/menu_*")
-		file(COPY ${menuArt} DESTINATION "${op4}/resource")
-		file(COPY "${gearbox}/game.ico" "${gearbox}/game.tga" DESTINATION "${op4}")
-	else()
-		message(WARNING "Opposing Force not found next to the mod; John Half-Life: Opposing Force will use Half-Life's menu")
-	endif()
-]])
+	install(CODE "set(valve \"\${CMAKE_INSTALL_PREFIX}/../${valveDir}\")
+		set(expansion \"\${CMAKE_INSTALL_PREFIX}/../johnhalflife_${name}\")
+		if (EXISTS \"\${valve}/resource/background\")
+			file(GLOB background \"\${valve}/resource/background/*\")
+			file(COPY \${background} DESTINATION \"\${expansion}/resource/background\")
+			file(GLOB menuArt \"\${valve}/resource/game_menu*\" \"\${valve}/resource/menu_*\" \"\${valve}/resource/Background*Layout.txt\")
+			if (menuArt)
+				file(COPY \${menuArt} DESTINATION \"\${expansion}/resource\")
+			endif()
+			file(COPY \"\${valve}/game.ico\" \"\${valve}/game.tga\" DESTINATION \"\${expansion}\")
+		else()
+			message(WARNING \"${valveDir} not found next to the mod; johnhalflife_${name} will use Half-Life's menu\")
+		endif()")
+endfunction()
+
+jhl_install_expansion(op4 gearbox)
+jhl_install_expansion(bs bshift)
 
 if (UNIX)
 	# Create a symbolic link to the OpenAL library so the dependency can be located at runtime.
