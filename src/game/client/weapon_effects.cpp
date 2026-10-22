@@ -36,6 +36,12 @@ void EV_GunMuzzleEffects()
 		return;
 	}
 
+	// Zoomed in, the view model isn't drawn, so its attachment is stale and the effects would appear where the muzzle last was.
+	if (gHUD.m_iFOV != 0 && gHUD.m_iFOV < static_cast<int>(CVAR_GET_FLOAT("default_fov")))
+	{
+		return;
+	}
+
 	cl_entity_t* viewModel = gEngfuncs.GetViewModel();
 
 	if (!viewModel || !viewModel->model)
