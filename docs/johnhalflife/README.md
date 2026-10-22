@@ -47,6 +47,11 @@ installed with the build together with the menu files in `config/mod/resource/`:
 * `OptionsSubMultiplayer.res`: Valve's layout, with the Advanced... button renamed.
 * `OptionsSubAdvanced.res`: Valve's layout of the Lock tab, with the content lock hidden and a note pointing
   to the settings.
+* `OptionsSubVideo.res`: Valve's layout of the Video tab, with the renderer choice (software is obsolete),
+  HD models, custom addon content and low video quality hidden. These four aren't settings but engine commands
+  (`_setrenderer`, `_sethdmodels`, `_setaddons_folder`, `_set_vid_level`) stored in the registry key shared by
+  every GoldSrc game (`HKCU\Software\Valve\Half-Life\Settings`), applied on restart. So they can't be listed
+  in John Settings, and the mod leaves their values alone rather than change them for vanilla too.
 
 **Don't use `LIST` (dropdown) entries unless the values are exactly 0, 1, 2, ... in order.** GameUI treats a
 list's stored value as an item index: when the dialog opens it reads the setting's current value as the
