@@ -326,7 +326,8 @@ void W_Precache()
 	g_sModelIndexWExplosion = UTIL_PrecacheModel("sprites/WXplo1.spr");		// underwater fireball
 	g_sModelIndexSmoke = UTIL_PrecacheModel("sprites/steam1.spr");			// smoke
 
-	// Bullet water splash ripple (client weapon_effects.cpp); MMod's sprite (mmod_port), optional.
+	// Bullet water splash droplets and ripple (client weapon_effects.cpp); the ripple is MMod's sprite (mmod_port), optional.
+	UTIL_PrecacheModel("sprites/wsplash3.spr");
 	if (g_pFileSystem->FileExists("sprites/water_splash_ring.spr"))
 	{
 		UTIL_PrecacheModel("sprites/water_splash_ring.spr");

@@ -252,6 +252,9 @@ void BulletWaterSplash(const Vector& surfacePosition)
 	Vector spray = up * gEngfuncs.pfnRandomFloat(60, 90);
 	gEngfuncs.pEfxAPI->R_StreakSplash(origin, spray, WhiteTracerColor, gEngfuncs.pfnRandomLong(6, 10), 1, -30, 30);
 
+	// Stock droplet spray (grey-white).
+	SplashSprite("sprites/wsplash3.spr", surfacePosition + up * 4, gEngfuncs.pfnRandomFloat(0.25f, 0.35f), 0.5f, kRenderTransAdd, 20);
+
 	// Ripple ring lying flat on the surface (MMod's sprite, see mmod_port; skipped if it isn't installed).
 	if (TEMPENTITY* ring = SplashSprite("sprites/water_splash_ring.spr", surfacePosition + up, gEngfuncs.pfnRandomFloat(0.35f, 0.5f), 0.3f, kRenderTransAdd, 18); ring)
 	{
