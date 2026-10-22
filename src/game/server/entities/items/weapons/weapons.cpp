@@ -72,6 +72,12 @@ int DamageDecal(CBaseEntity* pEntity, int bitsDamageType)
 // The player's own bullets get theirs from the client-side weapon events instead.
 static void SendBulletImpact(TraceResult* pTrace, CBaseEntity* pEntity)
 {
+	// Sending an unregistered message is a fatal engine error.
+	if (0 == gmsgBulletImpact)
+	{
+		return;
+	}
+
 	char textureType = CHAR_TEX_CONCRETE;
 
 	edict_t* hit = pEntity ? pEntity->edict() : CBaseEntity::World->edict();
@@ -276,6 +282,12 @@ void W_Precache()
 	g_sModelIndexFireball = UTIL_PrecacheModel("sprites/zerogxplode.spr");	// fireball
 	g_sModelIndexWExplosion = UTIL_PrecacheModel("sprites/WXplo1.spr");		// underwater fireball
 	g_sModelIndexSmoke = UTIL_PrecacheModel("sprites/steam1.spr");			// smoke
+
+	// Bullet impact dust (client bullet_impacts.cpp); it falls back to steam1.spr if this isn't installed.
+	if (g_pFileSystem->FileExists("sprites/jhl_impact_puff.spr"))
+	{
+		UTIL_PrecacheModel("sprites/jhl_impact_puff.spr");
+	}
 	g_sModelIndexBubbles = UTIL_PrecacheModel("sprites/bubble.spr");		// bubbles
 	g_sModelIndexBloodSpray = UTIL_PrecacheModel("sprites/bloodspray.spr"); // initial blood
 	g_sModelIndexBloodDrop = UTIL_PrecacheModel("sprites/blood.spr");		// splattered blood

@@ -18,7 +18,7 @@
 #include "vector.h"
 
 /**
- *	@brief Registers the BulletImpact message, which the server sends for bullets it fires (NPCs, mounted guns).
+ *	@brief Registers the BulletHit message, which the server sends for bullets it fires (NPCs, mounted guns).
  */
 void BulletImpacts_Initialize();
 

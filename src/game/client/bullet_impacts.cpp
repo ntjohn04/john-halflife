@@ -51,11 +51,17 @@ static void MetalImpact(const Vector& position, const Vector& normal)
 
 static void DustImpact(const Vector& position, const Vector& normal, const color24& color)
 {
-	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
+	// Our own copy of the stock steam sprite, trimmed to a single short puff (source in assetsrc/sprites).
+	int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/jhl_impact_puff.spr");
 
 	if (modelIndex == 0)
 	{
-		return;
+		modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
+
+		if (modelIndex == 0)
+		{
+			return;
+		}
 	}
 
 	Vector origin = position + normal * 4;
@@ -64,8 +70,13 @@ static void DustImpact(const Vector& position, const Vector& normal, const color
 	Vector velocity = normal * gEngfuncs.pfnRandomFloat(8, 16);
 	velocity.z += gEngfuncs.pfnRandomFloat(2, 6);
 
+	// Plays the sprite once and removes it on its last frame: the frames fade out by themselves, so the length of
+	// the puff is (number of frames) / PuffFrameRate. The lifetime is only a cap, kept longer than any animation.
+	// No FTENT_FADEOUT: fading keeps a finished sprite on screen while its animation wraps back to frame 0.
+	constexpr float PuffFrameRate = 24;
+
 	TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, gEngfuncs.pfnRandomFloat(0.25f, 0.35f),
-		modelIndex, kRenderTransAlpha, kRenderFxNone, 0.35f, 0.6f, FTENT_SPRANIMATE | FTENT_FADEOUT);
+		modelIndex, kRenderTransAlpha, kRenderFxNone, 0.35f, 2.0f, FTENT_SPRANIMATE);
 
 	if (!puff)
 	{
@@ -73,9 +84,8 @@ static void DustImpact(const Vector& position, const Vector& normal, const color
 	}
 
 	puff->entity.curstate.rendercolor = color;
-	puff->entity.curstate.framerate = 24;
+	puff->entity.curstate.framerate = PuffFrameRate;
 	puff->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
-	puff->fadeSpeed = 4;
 }
 
 void BulletImpactEffects(const Vector& position, const Vector& normal, char textureType)
@@ -131,5 +141,5 @@ void BulletImpacts_Initialize()
 {
 	g_cl_bulletimpacts = gEngfuncs.pfnRegisterVariable("jhl_fx_bulletimpacts", "1", FCVAR_ARCHIVE);
 
-	g_ClientUserMessages.RegisterHandler("BulletImpact", &MsgFunc_BulletImpact);
+	g_ClientUserMessages.RegisterHandler("BulletHit", &MsgFunc_BulletImpact);
 }
