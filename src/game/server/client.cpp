@@ -1289,6 +1289,11 @@ void ClientPrecache()
 
 	UTIL_PrecacheSound("items/power_jump.wav"); // long jump
 
+	for (const auto& deploySound : GetWeaponDeploySounds()) // switch to a weapon
+	{
+		UTIL_PrecacheSound(deploySound.Sound);
+	}
+
 	UTIL_PrecacheSound("debris/wood1.wav"); // hit wood texture
 	UTIL_PrecacheSound("debris/wood2.wav");
 	UTIL_PrecacheSound("debris/wood3.wav");

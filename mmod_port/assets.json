@@ -77,6 +77,104 @@
 			"Action": "copy",
 			"Feature": "movement",
 			"Sha256": "006e77b955a42736cd8269c38515c2d57c13420970ab9a2b7d87c7668155419c"
+		},
+		{
+			"Path": "sound/weapons/satchel_flap.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "23e7b7a75960e6ddad309f81c1062314d3772b1d37c69c68448432064830a770"
+		},
+		{
+			"Path": "sound/weapons/satchel_pickup.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "b5db9b9952bf30cec5d344b1794a9273b6ed45832f47754b7ccd7b9b45fc50a4"
+		},
+		{
+			"Path": "sound/weapons/weapon_draw_crossbow.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "1a60c4e75dc8b136a3b51d6caa0b671197641f74d6690826183c64535718374b"
+		},
+		{
+			"Path": "sound/weapons/weapon_draw_crowbar.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "0c269326103a5d4b65f7d4dc51207c00ee30bf6f16fc6b06bab4b4133a4965c0",
+			"Notes": "Also the placeholder for Opposing Force weapons"
+		},
+		{
+			"Path": "sound/weapons/weapon_draw_displacer.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "2e8875f08017be522f5553a1f1110acbdffcaf0770d5037775ddc4dd601e9c4e"
+		},
+		{
+			"Path": "sound/weapons/weapon_draw_egon.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "ab19124ea09dbc2a886c7fc317d342834c1f86f9a04a6f9823ec68daeb723541"
+		},
+		{
+			"Path": "sound/weapons/weapon_draw_gauss.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "58e4b2c4e5754ef5198f2eda03f0da833bb41646826ea6f8fc09ad8660d2f0a4"
+		},
+		{
+			"Path": "sound/weapons/weapon_draw_glock.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "97bb5b0a72b9b2fd5fbb6fd1d3642ce2b88ba578e872d046c8f1feb63e7a5543"
+		},
+		{
+			"Path": "sound/weapons/weapon_draw_grenade.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "a0cda66db23570d3ed380f8318ebbef45c3e77f749cc094a06de39bbb4d2ff8d"
+		},
+		{
+			"Path": "sound/weapons/weapon_draw_hornetgun.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "63055446dcdba25562c6dbe06c35e7e99307d84f06fcaaee5e9a152d589f2a13"
+		},
+		{
+			"Path": "sound/weapons/weapon_draw_mp5.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "e7e3874047f1183732ed60eaf506bb0d6150d2567dd9c624d1586958f5f8b69e"
+		},
+		{
+			"Path": "sound/weapons/weapon_draw_python.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "c91fa0573f54b54508769f2e10f0b58bb8e0ebef1d943c064356408a52bd8a1b"
+		},
+		{
+			"Path": "sound/weapons/weapon_draw_rpg.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "a9f54909dbc17761c9be37374095f772b791417ce95ea63c904042dcab6e5387"
+		},
+		{
+			"Path": "sound/weapons/weapon_draw_shotgun.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "73bab8ef537afd38a3c3ee36ede7c189041bfa0f384db03cd4f8f80456645069"
+		},
+		{
+			"Path": "sound/weapons/weapon_draw_snark.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "87cdde62dc5222308bde6a653f72ce6c2755be15baeb334c9276ee759a86e98e",
+			"Notes": "Identical to MMod's unused weapon_draw_satchel/tripmine"
+		},
+		{
+			"Path": "sound/weapons/weapon_draw_tripmine.wav",
+			"Action": "copy",
+			"Feature": "weapon-switch",
+			"Sha256": "87cdde62dc5222308bde6a653f72ce6c2755be15baeb334c9276ee759a86e98e"
 		}
 	]
 }

@@ -8,13 +8,14 @@ Before publishing, each of these must be replaced, removed, or cleared with its 
 
 Source: Half-Life: MMod (Steam), HL1MMod directory
 
-**12 files** in 3 folders.
+**28 files** in 4 folders.
 
 | Location | Type | Files |
 |---|---|---|
 | `sound/` | txt | 1 |
 | `sound/items/` | wav | 1 |
 | `sound/player/` | wav | 10 |
+| `sound/weapons/` | wav | 16 |
 
 ## `sound/`
 
@@ -48,3 +49,26 @@ Source: Half-Life: MMod (Steam), HL1MMod directory
 | `sound/player/pl_wood2.wav` | same path | movement |  |
 | `sound/player/pl_wood3.wav` | same path | movement |  |
 | `sound/player/pl_wood4.wav` | same path | movement |  |
+
+## `sound/weapons/`
+
+### wav
+
+| File | Installed as | Used by | Notes |
+|---|---|---|---|
+| `sound/weapons/satchel_flap.wav` | same path | weapon-switch |  |
+| `sound/weapons/satchel_pickup.wav` | same path | weapon-switch |  |
+| `sound/weapons/weapon_draw_crossbow.wav` | same path | weapon-switch |  |
+| `sound/weapons/weapon_draw_crowbar.wav` | same path | weapon-switch | Also the placeholder for Opposing Force weapons |
+| `sound/weapons/weapon_draw_displacer.wav` | same path | weapon-switch |  |
+| `sound/weapons/weapon_draw_egon.wav` | same path | weapon-switch |  |
+| `sound/weapons/weapon_draw_gauss.wav` | same path | weapon-switch |  |
+| `sound/weapons/weapon_draw_glock.wav` | same path | weapon-switch |  |
+| `sound/weapons/weapon_draw_grenade.wav` | same path | weapon-switch |  |
+| `sound/weapons/weapon_draw_hornetgun.wav` | same path | weapon-switch |  |
+| `sound/weapons/weapon_draw_mp5.wav` | same path | weapon-switch |  |
+| `sound/weapons/weapon_draw_python.wav` | same path | weapon-switch |  |
+| `sound/weapons/weapon_draw_rpg.wav` | same path | weapon-switch |  |
+| `sound/weapons/weapon_draw_shotgun.wav` | same path | weapon-switch |  |
+| `sound/weapons/weapon_draw_snark.wav` | same path | weapon-switch | Identical to MMod's unused weapon_draw_satchel/tripmine |
+| `sound/weapons/weapon_draw_tripmine.wav` | same path | weapon-switch |  |

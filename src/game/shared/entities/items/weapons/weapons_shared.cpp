@@ -211,11 +211,75 @@ bool CBasePlayerWeapon::DefaultDeploy(const char* szViewModel, const char* szWea
 
 	SendWeaponAnim(iAnim);
 
+	if (const char* deploySound = GetWeaponDeploySound(szViewModel); deploySound)
+	{
+		EMIT_SOUND_PREDICTED(m_pPlayer, CHAN_ITEM, deploySound, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
+	}
+
 	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5;
 	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 1.0;
 	m_flLastFireTime = 0.0;
 
 	return true;
+}
+
+// Played when switching to a weapon, by view model (the satchel's charge and radio sound different).
+// Half-Life weapons use MMod's sounds, installed by mmod_port. Opposing Force weapons without an MMod
+// counterpart get the crowbar's sound as an obvious placeholder until they have their own.
+static constexpr const char* DeploySoundPlaceholder = "weapons/weapon_draw_crowbar.wav";
+
+static constexpr WeaponDeploySound WeaponDeploySounds[] = {
+	{"models/v_crowbar.mdl", "weapons/weapon_draw_crowbar.wav"},
+	{"models/v_9mmhandgun.mdl", "weapons/weapon_draw_glock.wav"},
+	{"models/v_357.mdl", "weapons/weapon_draw_python.wav"},
+	{"models/v_9mmar.mdl", "weapons/weapon_draw_mp5.wav"},
+	{"models/v_shotgun.mdl", "weapons/weapon_draw_shotgun.wav"},
+	{"models/v_crossbow.mdl", "weapons/weapon_draw_crossbow.wav"},
+	{"models/v_rpg.mdl", "weapons/weapon_draw_rpg.wav"},
+	{"models/v_gauss.mdl", "weapons/weapon_draw_gauss.wav"},
+	{"models/v_egon.mdl", "weapons/weapon_draw_egon.wav"},
+	{"models/v_hgun.mdl", "weapons/weapon_draw_hornetgun.wav"},
+	{"models/v_grenade.mdl", "weapons/weapon_draw_grenade.wav"},
+	{"models/v_satchel.mdl", "weapons/satchel_pickup.wav"},
+	{"models/v_satchel_radio.mdl", "weapons/satchel_flap.wav"},
+	{"models/v_tripmine.mdl", "weapons/weapon_draw_tripmine.wav"},
+	{"models/v_squeak.mdl", "weapons/weapon_draw_snark.wav"},
+	{"models/v_displacer.mdl", "weapons/weapon_draw_displacer.wav"},
+
+	// Opposing Force placeholders.
+	{"models/v_knife.mdl", DeploySoundPlaceholder},
+	{"models/v_pipe_wrench.mdl", DeploySoundPlaceholder},
+	{"models/v_bgrap.mdl", DeploySoundPlaceholder},
+	{"models/v_desert_eagle.mdl", DeploySoundPlaceholder},
+	{"models/v_saw.mdl", DeploySoundPlaceholder},
+	{"models/v_m40a1.mdl", DeploySoundPlaceholder},
+	{"models/v_shock.mdl", DeploySoundPlaceholder},
+	{"models/v_spore_launcher.mdl", DeploySoundPlaceholder},
+	{"models/v_penguin.mdl", DeploySoundPlaceholder},
+};
+
+std::span<const WeaponDeploySound> GetWeaponDeploySounds()
+{
+	return WeaponDeploySounds;
+}
+
+const char* GetWeaponDeploySound(std::string_view viewModel)
+{
+	const auto equalsIgnoreCase = [](std::string_view lhs, std::string_view rhs)
+	{
+		return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](char a, char b)
+			{ return std::tolower(static_cast<unsigned char>(a)) == std::tolower(static_cast<unsigned char>(b)); });
+	};
+
+	for (const auto& entry : WeaponDeploySounds)
+	{
+		if (equalsIgnoreCase(entry.ViewModel, viewModel))
+		{
+			return entry.Sound;
+		}
+	}
+
+	return nullptr;
 }
 
 void CBasePlayerWeapon::Holster()

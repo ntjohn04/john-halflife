@@ -221,6 +221,22 @@ enum class WeaponState
 
 void Weapon_RegisterWeaponData();
 
+/**
+ *	@brief Sound played when switching to the weapon that uses a view model.
+ */
+struct WeaponDeploySound
+{
+	std::string_view ViewModel;
+	const char* Sound;
+};
+
+std::span<const WeaponDeploySound> GetWeaponDeploySounds();
+
+/**
+ *	@return The switch sound for a view model, or null if it has none.
+ */
+const char* GetWeaponDeploySound(std::string_view viewModel);
+
 constexpr int RefillAllAmmoAmount = -1;
 
 /**
