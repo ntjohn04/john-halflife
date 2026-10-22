@@ -21,6 +21,7 @@
 #include "cbase.h"
 #include "client_gibs.h"
 #include "weapon_effects.h"
+#include "jhl_settings.h"
 #include "ClientLibrary.h"
 #include "entity.h"
 #include "net_api.h"
@@ -60,6 +61,7 @@ bool ClientLibrary::Initialize()
 	TempEntity_Initialize();
 	ClientGibs_Initialize();
 	WeaponEffects_Initialize();
+	JhlSettings_Initialize();
 
 	return true;
 }
@@ -123,6 +125,8 @@ void ClientLibrary::Shutdown()
 void ClientLibrary::RunFrame()
 {
 	GameLibrary::RunFrame();
+
+	JhlSettings_RunFrame();
 
 	// Force the download cvar to enabled so we can download network data.
 	if (m_AllowDownload->value == 0)

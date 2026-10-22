@@ -38,6 +38,31 @@ All are client settings; set them in the console.
 Changed defaults of existing settings: `cl_rollangle` 0.65 and `cl_rollspeed` 300 (see
 [strafe roll](camera_movement.md#strafe-roll)).
 
+### Settings menu
+Options → Multiplayer → **John Settings...** lists the settings above plus a few vanilla ones (crosshair
+scale, field of view, frame rate limit, vertical sync, raw mouse input). It's driven by `config/mod/user.scr`,
+installed with the build together with the menu files in `config/mod/resource/`:
+
+* `gameui_english.txt`: the Unified SDK's copy, with the dialog and the Lock tab retitled "John Settings".
+* `OptionsSubMultiplayer.res`: Valve's layout, with the Advanced... button renamed.
+* `OptionsSubAdvanced.res`: Valve's layout of the Lock tab, with the content lock hidden and a note pointing
+  to the settings.
+
+The engine's options tabs are fixed, and only the `user.scr` list can hold mod settings: a tab's layout file
+can move or hide its controls, but which setting a control changes is decided in Valve's code. Single
+player only games (`type "singleplayer_only"` in `liblist.gam`, as MMod) show that list as a tab in place of
+Multiplayer; johnhalflife keeps multiplayer, so it sits behind a button. A dedicated settings window is
+possible with client VGUI2 (see BugfixedHL-Rebased) but was judged not worth the port for now.
+
+### Recommended settings
+`src/game/client/jhl_settings.cpp`
+
+* **First launch:** `crosshair_scale 2`, `m_rawinput 1`, and blood and gibs on (the content lock isn't
+  used). Applied once, a few frames after start so the saved config has loaded, then remembered in
+  `jhl_recommended_version`. Raising `RecommendedSettingsVersion` applies a changed list once more.
+* **Reset:** the `jhl_recommended` command, or the "Reset all to recommended settings" box in the dialog,
+  applies the first launch values and sets every johnhalflife setting back to its default.
+
 ## HUD
 
 ### HUD scale
@@ -76,4 +101,4 @@ Weapon prediction also syncs the current spread through `weapon_data_t.fuser4` (
 ## Open items
 
 * Opposing Force weapons without an MMod counterpart still use the crowbar's switch sound as a placeholder.
-* Settings menu and HUD work are next.
+* HUD work is next.

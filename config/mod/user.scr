@@ -1,0 +1,225 @@
+// NOTE:  THIS FILE IS AUTOMATICALLY REGENERATED,
+//DO NOT EDIT THIS HEADER, YOUR COMMENTS WILL BE LOST IF YOU DO
+// User options script
+//
+// Format:
+//  Version [float]
+//  Options description followed by
+//  Options defaults
+//
+// Option description syntax:
+//
+//  "cvar" { "Prompt" { type [ type info ] } { default } }
+//
+//  type =
+//   BOOL   (a yes/no toggle)
+//   STRING
+//   NUMBER
+//   LIST
+//
+// type info:
+// BOOL                 no type info
+// NUMBER       min max range, use -1 -1 for no limits
+// STRING       no type info
+// LIST          delimited list of options value pairs
+//
+//
+// default depends on type
+// BOOL is "0" or "1"
+// NUMBER is "value"
+// STRING is "value"
+// LIST is "index", where index "0" is the first element of the list
+
+
+// Half-Life User Info Configuration Layout Script (stores last settings chosen, too)
+// File generated:  Sat Feb 27 17:45:16 AM
+//
+//
+// Cvar	-	Setting
+
+VERSION 1.0
+
+DESCRIPTION INFO_OPTIONS
+{
+	"jhl_reset_recommended"
+	{
+		"Reset all to recommended settings (on OK)"
+		{ BOOL }
+		{ "0" }
+	}
+
+	"jhl_camera_bob"
+	{
+		"Camera: view bob and weapon sway"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"jhl_camera_viewroll"
+	{
+		"Camera: stronger strafe roll"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"cl_rollangle"
+	{
+		"Camera: strafe roll angle"
+		{ NUMBER 0.000000 10.000000 }
+		{ "0.650000" }
+	}
+
+	"cl_rollspeed"
+	{
+		"Camera: strafe roll speed"
+		{ NUMBER 0.000000 -1.000000 }
+		{ "300.000000" }
+	}
+
+	"jhl_camera_verticallag"
+	{
+		"Camera: eye lift when moving up"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"jhl_camera_jumplandjolt"
+	{
+		"Camera: jump and landing jolts"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"jhl_visuals_weaponlag"
+	{
+		"Weapons: lag behind when turning"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"jhl_visuals_weaponwallpush"
+	{
+		"Weapons: pull back near walls"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"jhl_weapons_smoothrecoil"
+	{
+		"Weapons: smooth recoil"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"jhl_fx_bulletimpacts"
+	{
+		"Effects: bullet impacts and water splashes"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"jhl_fx_muzzleflash"
+	{
+		"Effects: muzzle light, smoke and RPG backblast"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"jhl_hud_scale"
+	{
+		"HUD: scale"
+		{
+			LIST
+			"Automatic" "0"
+			"1x" "1"
+			"1.5x" "1.5"
+			"2x" "2"
+			"3x" "3"
+		}
+		{ "1.000000" }
+	}
+
+	"crosshair_scale"
+	{
+		"HUD: crosshair scale"
+		{
+			LIST
+			"1x" "1"
+			"2x" "2"
+			"3x" "3"
+			"4x" "4"
+		}
+		{ "2.000000" }
+	}
+
+	"default_fov"
+	{
+		"Field of view"
+		{ NUMBER 1.000000 179.000000 }
+		{ "90.000000" }
+	}
+
+	"fps_override"
+	{
+		"Allow frame rates above 100"
+		{ BOOL }
+		{ "0" }
+	}
+
+	"fps_max"
+	{
+		"Maximum frame rate"
+		{
+			LIST
+			"60" "60"
+			"100" "100"
+			"144" "144"
+			"200" "200"
+			"240" "240"
+			"300" "300"
+		}
+		{ "100.000000" }
+	}
+
+	"gl_vsync"
+	{
+		"Vertical sync"
+		{ BOOL }
+		{ "0" }
+	}
+
+	"m_rawinput"
+	{
+		"Raw mouse input"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"cl_bobtilt"
+	{
+		"#Valve_ViewBobTilt"
+		{ BOOL }
+		{ "0" }
+	}
+
+	"mp_decals"
+	{
+		"#Valve_Multiplayer_Decal_Limit"
+		{ NUMBER 0.000000 4096.000000 }
+		{ "300.000000" }
+	}
+
+	"cl_snd_hrtf_enabled"
+	{
+		"#Valve_HRTF_Enabled"
+		{ BOOL }
+		{ "0" }
+	}
+
+	"cl_snd_hrtf_implementation"
+	{
+		"#Valve_HRTF_Implementation"
+		{ STRING }
+		{ "" }
+	}
+}

@@ -109,6 +109,8 @@ target_sources(client PRIVATE
 	global_consts.h
 	interpolation.cpp
 	interpolation.h
+	jhl_settings.cpp
+	jhl_settings.h
 	player_info.h
 	view.cpp
 	view.h

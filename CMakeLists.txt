@@ -234,6 +234,9 @@ install(FILES
 	${CMAKE_BINARY_DIR}/liblist.gam
 	DESTINATION .)
 
+# johnhalflife's settings dialog and menu text (docs/johnhalflife/README.md#settings).
+install(DIRECTORY config/mod/ DESTINATION .)
+
 # CMake doesn't currently support installing imported libraries of type UNKNOWN.
 # See https://gitlab.kitware.com/cmake/cmake/-/issues/22406
 #install(IMPORTED_RUNTIME_ARTIFACTS OpenAL::OpenAL
