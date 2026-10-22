@@ -60,6 +60,14 @@ player only games (`type "singleplayer_only"` in `liblist.gam`, as MMod) show th
 Multiplayer; johnhalflife keeps multiplayer, so it sits behind a button. A dedicated settings window is
 possible with client VGUI2 (see BugfixedHL-Rebased) but was judged not worth the port for now.
 
+### Blood and gibs
+`jhl_gore` (in the dialog as "Vanilla | Blood and gibs")
+
+Valve's content lock only sets `violence_hblood`, `violence_hgibs`, `violence_ablood` and `violence_agibs` to 0
+(and back to 1 when unlocked, after checking the password); nothing re-applies it at startup. `jhl_gore`
+stands in for all four so the dialog can show one checkbox: at startup it's set from them (on only if all four
+are on), and changing it sets all four. It isn't saved itself; the four are.
+
 ### Recommended settings
 `src/game/client/jhl_settings.cpp`
 
