@@ -230,6 +230,7 @@ bool CBasePlayerWeapon::DefaultDeploy(const char* szViewModel, const char* szWea
 // Played when switching to a weapon, by view model (the satchel's charge and radio sound different).
 // Half-Life weapons use MMod's sounds, installed by mmod_port. Opposing Force weapons without an MMod
 // counterpart get the crowbar's sound as an obvious placeholder until they have their own.
+// The snark and spore launcher are left out: their draw animations already play a sound.
 static constexpr const char* DeploySoundPlaceholder = "weapons/weapon_draw_crowbar.wav";
 
 static constexpr WeaponDeploySound WeaponDeploySounds[] = {
@@ -247,7 +248,6 @@ static constexpr WeaponDeploySound WeaponDeploySounds[] = {
 	{"models/v_satchel.mdl", "weapons/satchel_pickup.wav"},
 	{"models/v_satchel_radio.mdl", "weapons/satchel_flap.wav"},
 	{"models/v_tripmine.mdl", "weapons/weapon_draw_tripmine.wav"},
-	{"models/v_squeak.mdl", "weapons/weapon_draw_snark.wav"},
 	{"models/v_displacer.mdl", "weapons/weapon_draw_displacer.wav"},
 
 	// Opposing Force placeholders.
@@ -258,7 +258,6 @@ static constexpr WeaponDeploySound WeaponDeploySounds[] = {
 	{"models/v_saw.mdl", DeploySoundPlaceholder},
 	{"models/v_m40a1.mdl", DeploySoundPlaceholder},
 	{"models/v_shock.mdl", DeploySoundPlaceholder},
-	{"models/v_spore_launcher.mdl", DeploySoundPlaceholder},
 	{"models/v_penguin.mdl", DeploySoundPlaceholder},
 };
 

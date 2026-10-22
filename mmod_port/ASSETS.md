@@ -8,14 +8,14 @@ Before publishing, each of these must be replaced, removed, or cleared with its 
 
 Source: Half-Life: MMod (Steam), HL1MMod directory
 
-**28 files** in 4 folders.
+**27 files** in 4 folders.
 
 | Location | Type | Files |
 |---|---|---|
 | `sound/` | txt | 1 |
 | `sound/items/` | wav | 1 |
 | `sound/player/` | wav | 10 |
-| `sound/weapons/` | wav | 16 |
+| `sound/weapons/` | wav | 15 |
 
 ## `sound/`
 
@@ -70,5 +70,4 @@ Source: Half-Life: MMod (Steam), HL1MMod directory
 | `sound/weapons/weapon_draw_python.wav` | same path | weapon-switch |  |
 | `sound/weapons/weapon_draw_rpg.wav` | same path | weapon-switch |  |
 | `sound/weapons/weapon_draw_shotgun.wav` | same path | weapon-switch |  |
-| `sound/weapons/weapon_draw_snark.wav` | same path | weapon-switch | Identical to MMod's unused weapon_draw_satchel/tripmine |
 | `sound/weapons/weapon_draw_tripmine.wav` | same path | weapon-switch |  |

@@ -164,13 +164,6 @@
 			"Sha256": "73bab8ef537afd38a3c3ee36ede7c189041bfa0f384db03cd4f8f80456645069"
 		},
 		{
-			"Path": "sound/weapons/weapon_draw_snark.wav",
-			"Action": "copy",
-			"Feature": "weapon-switch",
-			"Sha256": "87cdde62dc5222308bde6a653f72ce6c2755be15baeb334c9276ee759a86e98e",
-			"Notes": "Identical to MMod's unused weapon_draw_satchel/tripmine"
-		},
-		{
 			"Path": "sound/weapons/weapon_draw_tripmine.wav",
 			"Action": "copy",
 			"Feature": "weapon-switch",
