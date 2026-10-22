@@ -132,27 +132,6 @@ DESCRIPTION INFO_OPTIONS
 		{ "1.000000" }
 	}
 
-	"cl_bobtilt"
-	{
-		"SDK | View bob tilt"
-		{ BOOL }
-		{ "0" }
-	}
-
-	"cl_snd_hrtf_enabled"
-	{
-		"SDK | HRTF 3D audio"
-		{ BOOL }
-		{ "0" }
-	}
-
-	"cl_snd_hrtf_implementation"
-	{
-		"SDK | HRTF implementation"
-		{ STRING }
-		{ "" }
-	}
-
 	"crosshair_scale"
 	{
 		"Vanilla | Crosshair scale"
@@ -207,5 +186,26 @@ DESCRIPTION INFO_OPTIONS
 		"Vanilla | Multiplayer decal limit"
 		{ NUMBER 0.000000 4096.000000 }
 		{ "300.000000" }
+	}
+
+	"cl_bobtilt"
+	{
+		"SDK | View bob tilt"
+		{ BOOL }
+		{ "0" }
+	}
+
+	"cl_snd_hrtf_enabled"
+	{
+		"SDK | HRTF 3D audio"
+		{ BOOL }
+		{ "0" }
+	}
+
+	"cl_snd_hrtf_implementation"
+	{
+		"SDK | HRTF implementation"
+		{ STRING }
+		{ "" }
 	}
 }
