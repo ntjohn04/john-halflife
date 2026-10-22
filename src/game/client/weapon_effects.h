@@ -30,6 +30,12 @@ void WeaponEffects_Initialize();
 void EV_GunMuzzleEffects();
 
 /**
+ *	@brief EV_GunMuzzleEffects for the sniper rifle, whose view model attachment isn't at its muzzle:
+ *	the muzzle is placed relative to the view instead, and always leaves a wisp.
+ */
+void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, const Vector& right, const Vector& up);
+
+/**
  *	@brief Subtle extra feedback where a bullet hits a surface, on top of the usual decal, specks and ricochet:
  *	sparks and a brief flash on metal, a small dust puff on stone, dirt and wood. Uses only stock sprites.
  *	@param textureType Material of the surface hit (CHAR_TEX_*).

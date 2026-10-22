@@ -29,17 +29,25 @@
 
 static cvar_t* g_cl_bulletimpacts = nullptr;
 static cvar_t* g_cl_muzzleflash = nullptr;
+static cvar_t* g_cl_sniper_muzzle = nullptr; // Temporary, for tuning the sniper rifle's muzzle position.
 
-void EV_GunMuzzleEffects()
+static bool MuzzleEffectsEnabled()
 {
 	if (0 == g_cl_muzzleflash->value)
 	{
-		return;
+		return false;
 	}
 
 	// In third person or zoomed in, the view model isn't drawn, so its attachment is stale and the effects would
 	// appear where the muzzle last was.
-	if (0 != CL_IsThirdPerson() || (gHUD.m_iFOV != 0 && gHUD.m_iFOV < static_cast<int>(CVAR_GET_FLOAT("default_fov"))))
+	return 0 == CL_IsThirdPerson() && (gHUD.m_iFOV == 0 || gHUD.m_iFOV >= static_cast<int>(CVAR_GET_FLOAT("default_fov")));
+}
+
+static void MuzzleEffectsAt(const Vector& position, float wispChance);
+
+void EV_GunMuzzleEffects()
+{
+	if (!MuzzleEffectsEnabled())
 	{
 		return;
 	}
@@ -59,6 +67,30 @@ void EV_GunMuzzleEffects()
 		return;
 	}
 
+	// Now and then a wisp of smoke; real guns barely smoke.
+	MuzzleEffectsAt(muzzle, 0.3f);
+}
+
+void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, const Vector& right, const Vector& up)
+{
+	if (!MuzzleEffectsEnabled())
+	{
+		return;
+	}
+
+	// The M40A1 view model's attachment sits behind the player, so place the muzzle relative to the view instead:
+	// the view model is always drawn in the same place on screen.
+	Vector offset{30, 5, -5};
+	sscanf(g_cl_sniper_muzzle->string, "%f %f %f", &offset.x, &offset.y, &offset.z);
+
+	// A slow, heavy rifle shot: always leaves a wisp.
+	MuzzleEffectsAt(eyePosition + forward * offset.x + right * offset.y + up * offset.z, 1);
+}
+
+static void MuzzleEffectsAt(const Vector& position, float wispChance)
+{
+	Vector muzzle = position;
+
 	// A warm flash on top of the engine's own muzzle light, making it stronger and slightly longer.
 	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)
 	{
@@ -71,10 +103,8 @@ void EV_GunMuzzleEffects()
 		light->decay = light->radius * 12;
 	}
 
-	// Now and then, a faint wisp of smoke drifting up from the muzzle; real guns barely smoke.
-	constexpr float WispChance = 0.3f;
-
-	if (gEngfuncs.pfnRandomFloat(0, 1) >= WispChance)
+	// A faint wisp of smoke drifting up from the muzzle.
+	if (gEngfuncs.pfnRandomFloat(0, 1) >= wispChance)
 	{
 		return;
 	}
@@ -288,6 +318,7 @@ void WeaponEffects_Initialize()
 {
 	g_cl_bulletimpacts = gEngfuncs.pfnRegisterVariable("jhl_fx_bulletimpacts", "1", FCVAR_ARCHIVE);
 	g_cl_muzzleflash = gEngfuncs.pfnRegisterVariable("jhl_fx_muzzleflash", "1", FCVAR_ARCHIVE);
+	g_cl_sniper_muzzle = gEngfuncs.pfnRegisterVariable("jhl_fx_sniper_muzzle", "30 5 -5", 0);
 
 	g_ClientUserMessages.RegisterHandler("BulletHit", &MsgFunc_BulletImpact);
 	g_ClientUserMessages.RegisterHandler("WaterSplash", &MsgFunc_WaterSplash);

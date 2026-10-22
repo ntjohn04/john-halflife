@@ -2015,7 +2015,6 @@ void EV_SniperRifle(event_args_t* args)
 	if (EV_IsLocal(idx))
 	{
 		EV_MuzzleFlash();
-		EV_GunMuzzleEffects();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(iClip <= 0 ? SNIPERRIFLE_FIRELASTROUND : SNIPERRIFLE_FIRE, 0);
 		if (!EV_WeaponRecoil(RecoilSniperRifle))
 			V_PunchAxis(0, -2.0);
@@ -2029,6 +2028,11 @@ void EV_SniperRifle(event_args_t* args)
 	Vector vecAiming = forward;
 
 	EV_GetGunPosition(args, vecSrc, vecOrigin);
+
+	if (EV_IsLocal(idx))
+	{
+		EV_SniperMuzzleEffects(vecSrc, forward, right, up);
+	}
 
 	EV_HLDM_FireBullets(
 		idx,
