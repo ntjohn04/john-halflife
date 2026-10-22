@@ -27,3 +27,10 @@
 #define CHAR_TEX_GLASS 'Y'
 #define CHAR_TEX_FLESH 'F'
 #define CHAR_TEX_SNOW 'O'
+
+// Extended types used by the MMod-derived materials table (sound/mmod_materials.json).
+// Named after the textures they are assigned to there.
+#define CHAR_TEX_ORGANIC 'A'	   // tents, gib piles; steps like flesh
+#define CHAR_TEX_XEN_SHELL 'B'	   // hard Xen floors and walls; steps like wood
+#define CHAR_TEX_XEN_GROUND 'E'	   // Xen rock and soil; steps like dirt
+#define CHAR_TEX_SWAMP_BOARDS 'Z' // swamp walkways; steps like wood

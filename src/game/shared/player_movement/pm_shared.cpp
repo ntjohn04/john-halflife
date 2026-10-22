@@ -60,6 +60,8 @@ playermove_t* pmove = nullptr;
 #define STEP_WADE 7		// wading in liquid
 #define STEP_LADDER 8	// climbing ladder
 #define STEP_SNOW 9		// snow
+#define STEP_WOOD 10	// wood
+#define STEP_FLESH 11	// flesh and other organic surfaces
 
 const float MaxJetpackSpeed = 400.f;
 const float JetpackVerticalAccelerationPerSecond = MaxJetpackSpeed * 8;
@@ -338,6 +340,49 @@ void PM_PlayStepSound(int step, float fvol)
 			break;
 		}
 		break;
+	case STEP_WOOD:
+		switch (irand)
+		{
+		// right foot
+		case 0:
+			PM_PlaySound(CHAN_BODY, "player/pl_wood1.wav", fvol, ATTN_NORM, 0, PITCH_NORM);
+			break;
+		case 1:
+			PM_PlaySound(CHAN_BODY, "player/pl_wood3.wav", fvol, ATTN_NORM, 0, PITCH_NORM);
+			break;
+		// left foot
+		case 2:
+			PM_PlaySound(CHAN_BODY, "player/pl_wood2.wav", fvol, ATTN_NORM, 0, PITCH_NORM);
+			break;
+		case 3:
+			PM_PlaySound(CHAN_BODY, "player/pl_wood4.wav", fvol, ATTN_NORM, 0, PITCH_NORM);
+			break;
+		}
+		break;
+	case STEP_FLESH:
+	{
+		// Squelchy: the puddle sounds pitched down.
+		constexpr int FleshPitch = 85;
+
+		switch (irand)
+		{
+		// right foot
+		case 0:
+			PM_PlaySound(CHAN_BODY, "player/pl_slosh1.wav", fvol, ATTN_NORM, 0, FleshPitch);
+			break;
+		case 1:
+			PM_PlaySound(CHAN_BODY, "player/pl_slosh3.wav", fvol, ATTN_NORM, 0, FleshPitch);
+			break;
+		// left foot
+		case 2:
+			PM_PlaySound(CHAN_BODY, "player/pl_slosh2.wav", fvol, ATTN_NORM, 0, FleshPitch);
+			break;
+		case 3:
+			PM_PlaySound(CHAN_BODY, "player/pl_slosh4.wav", fvol, ATTN_NORM, 0, FleshPitch);
+			break;
+		}
+		break;
+	}
 	}
 }
 
@@ -349,8 +394,10 @@ int PM_MapTextureTypeStepType(char chTextureType)
 	case CHAR_TEX_CONCRETE:
 		return STEP_CONCRETE;
 	case CHAR_TEX_METAL:
+	case CHAR_TEX_COMPUTER:
 		return STEP_METAL;
 	case CHAR_TEX_DIRT:
+	case CHAR_TEX_XEN_GROUND:
 		return STEP_DIRT;
 	case CHAR_TEX_VENT:
 		return STEP_VENT;
@@ -362,6 +409,13 @@ int PM_MapTextureTypeStepType(char chTextureType)
 		return STEP_SLOSH;
 	case CHAR_TEX_SNOW:
 		return STEP_SNOW;
+	case CHAR_TEX_WOOD:
+	case CHAR_TEX_XEN_SHELL:
+	case CHAR_TEX_SWAMP_BOARDS:
+		return STEP_WOOD;
+	case CHAR_TEX_FLESH:
+	case CHAR_TEX_ORGANIC:
+		return STEP_FLESH;
 	}
 }
 
@@ -498,7 +552,13 @@ void PM_UpdateStepSound()
 				break;
 
 			case CHAR_TEX_DIRT:
+			case CHAR_TEX_XEN_GROUND:
 				fvol = fWalking ? 0.25 : 0.55;
+				pmove->flTimeStepSound = fWalking ? 400 : 300;
+				break;
+
+			case CHAR_TEX_FLESH:
+				fvol = fWalking ? 0.65 : 0.85;
 				pmove->flTimeStepSound = fWalking ? 400 : 300;
 				break;
 
@@ -2499,7 +2559,13 @@ void PM_Jump()
 		}
 		else
 		{
-			PM_PlayStepSound(PM_MapTextureTypeStepType(pmove->chtexturetype), 1.0);
+			// Jump effort sound, then a quieter push-off step.
+			static const char* const JumpSounds[] = {"player/pl_jump1.wav", "player/pl_jump2.wav", "player/pl_jump3.wav"};
+
+			PM_PlaySound(CHAN_AUTO, JumpSounds[pmove->RandomLong(0, std::size(JumpSounds) - 1)],
+				pmove->RandomFloat(0.55, 0.65), ATTN_NORM, 0, pmove->RandomLong(90, 100));
+
+			PM_PlayStepSound(PM_MapTextureTypeStepType(pmove->chtexturetype), 0.75);
 		}
 	}
 
@@ -2530,6 +2596,10 @@ void PM_Jump()
 			if (canjumppackjump)
 			{
 				PM_PlaySound(CHAN_STATIC, "ctf/pow_big_jump.wav", VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
+			}
+			else
+			{
+				PM_PlaySound(CHAN_VOICE, "items/power_jump.wav", VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 			}
 		}
 		else
@@ -2668,8 +2738,17 @@ void PM_CheckFalling()
 
 			PM_UpdateStepSound();
 
-			// play step sound for current texture
-			PM_PlayStepSound(PM_MapTextureTypeStepType(pmove->chtexturetype), fvol);
+			// Hard landings only get the fall pain sound.
+			if (pmove->flFallVelocity < PLAYER_MAX_SAFE_FALL_SPEED)
+			{
+				static const char* const LandSounds[] = {"player/pl_jumpland1.wav", "player/pl_jumpland2.wav", "player/pl_jumpland3.wav"};
+
+				PM_PlaySound(CHAN_VOICE, LandSounds[pmove->RandomLong(0, std::size(LandSounds) - 1)],
+					VOL_NORM, ATTN_NORM, 0, pmove->RandomLong(90, 100));
+
+				// play step sound for current texture
+				PM_PlayStepSound(PM_MapTextureTypeStepType(pmove->chtexturetype), fvol);
+			}
 
 			// No screen punch here: the server sends a smooth punch landing jolt instead.
 		}

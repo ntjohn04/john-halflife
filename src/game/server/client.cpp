@@ -1274,6 +1274,21 @@ void ClientPrecache()
 	UTIL_PrecacheSound("player/pl_snow3.wav");
 	UTIL_PrecacheSound("player/pl_snow4.wav");
 
+	UTIL_PrecacheSound("player/pl_wood1.wav"); // walk on wood
+	UTIL_PrecacheSound("player/pl_wood2.wav");
+	UTIL_PrecacheSound("player/pl_wood3.wav");
+	UTIL_PrecacheSound("player/pl_wood4.wav");
+
+	UTIL_PrecacheSound("player/pl_jump1.wav"); // jump
+	UTIL_PrecacheSound("player/pl_jump2.wav");
+	UTIL_PrecacheSound("player/pl_jump3.wav");
+
+	UTIL_PrecacheSound("player/pl_jumpland1.wav"); // land from a jump or fall
+	UTIL_PrecacheSound("player/pl_jumpland2.wav");
+	UTIL_PrecacheSound("player/pl_jumpland3.wav");
+
+	UTIL_PrecacheSound("items/power_jump.wav"); // long jump
+
 	UTIL_PrecacheSound("debris/wood1.wav"); // hit wood texture
 	UTIL_PrecacheSound("debris/wood2.wav");
 	UTIL_PrecacheSound("debris/wood3.wav");

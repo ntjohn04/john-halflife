@@ -1,0 +1,82 @@
+{
+	"Source": "Half-Life: MMod (Steam), HL1MMod directory",
+	"Assets": [
+		{
+			"Path": "sound/items/power_jump.wav",
+			"Action": "copy",
+			"Feature": "movement",
+			"Sha256": "e31ad7e562552e316a8f8997d9b682ebc9878802be7ad9136b9829adff6ad315"
+		},
+		{
+			"Path": "sound/materials.txt",
+			"Action": "convert-materials",
+			"Feature": "movement",
+			"Sha256": "c6fc25fe8b76ff33ec3a0c0a26eaefe584f8317a02f939cef95c652af492683e",
+			"Output": "sound/mmod_materials.json",
+			"Notes": "Texture material table; converted to JSON, also affects future impact effects"
+		},
+		{
+			"Path": "sound/player/pl_jump1.wav",
+			"Action": "copy",
+			"Feature": "movement",
+			"Sha256": "0800b7e83779209a1be044678ffbaa10763e7978f622415201ab121ac9e344d8",
+			"Notes": "Replaces an unused vanilla valve/ file of the same name"
+		},
+		{
+			"Path": "sound/player/pl_jump2.wav",
+			"Action": "copy",
+			"Feature": "movement",
+			"Sha256": "e18b5a039323ca9bf8bd42b9a7855e4c5b2d301258ba35fbd8deefa02be4005f",
+			"Notes": "Replaces an unused vanilla valve/ file of the same name"
+		},
+		{
+			"Path": "sound/player/pl_jump3.wav",
+			"Action": "copy",
+			"Feature": "movement",
+			"Sha256": "8e28e49ea5affbcecbe98e0ea7ad1eb2040ef08fa96a232fbca01668a51143ae"
+		},
+		{
+			"Path": "sound/player/pl_jumpland1.wav",
+			"Action": "copy",
+			"Feature": "movement",
+			"Sha256": "fa1ba44a100d7efb939a80e13886694f75e5401f19b5526e1d01691cda879ed9"
+		},
+		{
+			"Path": "sound/player/pl_jumpland2.wav",
+			"Action": "copy",
+			"Feature": "movement",
+			"Sha256": "e311ea8a70967b25f08b0e414be1b87649b40a130bb5faefb5eb5d8afb93a59f",
+			"Notes": "Replaces an unused vanilla valve/ file of the same name"
+		},
+		{
+			"Path": "sound/player/pl_jumpland3.wav",
+			"Action": "copy",
+			"Feature": "movement",
+			"Sha256": "ff7ce1f556cb6d84168b70bdd46af87ad61ddbefb4a3937e6d6fd8f204491882"
+		},
+		{
+			"Path": "sound/player/pl_wood1.wav",
+			"Action": "copy",
+			"Feature": "movement",
+			"Sha256": "81c376f0e58bf1bbb612e4a51a883e78e3bed1bd914e9fcb64cbb04bd0b30878"
+		},
+		{
+			"Path": "sound/player/pl_wood2.wav",
+			"Action": "copy",
+			"Feature": "movement",
+			"Sha256": "b839a31b805dff2d6302ae572edd1b599dcd4bab4e5a52463f2389d48127574b"
+		},
+		{
+			"Path": "sound/player/pl_wood3.wav",
+			"Action": "copy",
+			"Feature": "movement",
+			"Sha256": "e75c181ddb2f5b713582c17911d014defd10956990be63f79dd4410cb59660ca"
+		},
+		{
+			"Path": "sound/player/pl_wood4.wav",
+			"Action": "copy",
+			"Feature": "movement",
+			"Sha256": "006e77b955a42736cd8269c38515c2d57c13420970ab9a2b7d87c7668155419c"
+		}
+	]
+}
