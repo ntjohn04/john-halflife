@@ -243,14 +243,8 @@ void BulletWaterSplash(const Vector& surfacePosition)
 		return;
 	}
 
-	// R_StreakSplash colours come from the engine's 12-entry tracer colour table, not the palette; 0 is white.
-	constexpr int WhiteTracerColor = 0;
+	// No R_StreakSplash spray: its streaks are opaque, and their only alpha control is the global traceralpha cvar.
 	const Vector up{0, 0, 1};
-
-	// Spray thrown up out of the water.
-	Vector origin = surfacePosition;
-	Vector spray = up * gEngfuncs.pfnRandomFloat(60, 90);
-	gEngfuncs.pEfxAPI->R_StreakSplash(origin, spray, WhiteTracerColor, gEngfuncs.pfnRandomLong(6, 10), 1, -30, 30);
 
 	// Stock droplet spray (grey-white).
 	SplashSprite("sprites/wsplash3.spr", surfacePosition + up * 4, gEngfuncs.pfnRandomFloat(0.25f, 0.35f), 0.5f, kRenderTransAdd, 20);

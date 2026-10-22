@@ -42,6 +42,6 @@ void BulletImpactEffects(const Vector& position, const Vector& normal, char text
 void BulletWaterSplashAlongPath(const Vector& start, const Vector& end);
 
 /**
- *	@brief A small splash at a point on a water surface: a particle spray and a ripple ring.
+ *	@brief A small splash at a point on a water surface: a droplet sprite and a ripple ring.
  */
 void BulletWaterSplash(const Vector& surfacePosition);
