@@ -29,7 +29,6 @@
 
 static cvar_t* g_cl_bulletimpacts = nullptr;
 static cvar_t* g_cl_muzzleflash = nullptr;
-static cvar_t* g_cl_sniper_muzzle = nullptr; // Temporary, for tuning the sniper rifle's muzzle position.
 
 static bool MuzzleEffectsEnabled()
 {
@@ -80,11 +79,13 @@ void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, co
 
 	// The M40A1 view model's attachment sits behind the player, so place the muzzle relative to the view instead:
 	// the view model is always drawn in the same place on screen.
-	Vector offset{30, 5, -5};
-	sscanf(g_cl_sniper_muzzle->string, "%f %f %f", &offset.x, &offset.y, &offset.z);
+	// Offset from the eyes, checked in game.
+	constexpr float Forward = 30;
+	constexpr float Right = 5;
+	constexpr float Up = -5;
 
 	// A slow, heavy rifle shot: always leaves a wisp.
-	MuzzleEffectsAt(eyePosition + forward * offset.x + right * offset.y + up * offset.z, 1);
+	MuzzleEffectsAt(eyePosition + forward * Forward + right * Right + up * Up, 1);
 }
 
 static void MuzzleEffectsAt(const Vector& position, float wispChance)
@@ -318,7 +319,6 @@ void WeaponEffects_Initialize()
 {
 	g_cl_bulletimpacts = gEngfuncs.pfnRegisterVariable("jhl_fx_bulletimpacts", "1", FCVAR_ARCHIVE);
 	g_cl_muzzleflash = gEngfuncs.pfnRegisterVariable("jhl_fx_muzzleflash", "1", FCVAR_ARCHIVE);
-	g_cl_sniper_muzzle = gEngfuncs.pfnRegisterVariable("jhl_fx_sniper_muzzle", "30 5 -5", 0);
 
 	g_ClientUserMessages.RegisterHandler("BulletHit", &MsgFunc_BulletImpact);
 	g_ClientUserMessages.RegisterHandler("WaterSplash", &MsgFunc_WaterSplash);
