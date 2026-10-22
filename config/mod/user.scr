@@ -50,154 +50,154 @@ DESCRIPTION INFO_OPTIONS
 
 	"jhl_camera_bob"
 	{
-		"Camera: view bob and weapon sway"
+		"JHL | Camera: view bob and weapon sway"
 		{ BOOL }
 		{ "1" }
 	}
 
 	"jhl_camera_viewroll"
 	{
-		"Camera: stronger strafe roll"
+		"JHL | Camera: stronger strafe roll"
 		{ BOOL }
 		{ "1" }
 	}
 
 	"cl_rollangle"
 	{
-		"Camera: strafe roll angle"
+		"JHL | Camera: strafe roll angle"
 		{ NUMBER 0.000000 10.000000 }
 		{ "0.650000" }
 	}
 
 	"cl_rollspeed"
 	{
-		"Camera: strafe roll speed"
+		"JHL | Camera: strafe roll speed"
 		{ NUMBER 0.000000 -1.000000 }
 		{ "300.000000" }
 	}
 
 	"jhl_camera_verticallag"
 	{
-		"Camera: eye lift when moving up"
+		"JHL | Camera: eye lift when moving up"
 		{ BOOL }
 		{ "1" }
 	}
 
 	"jhl_camera_jumplandjolt"
 	{
-		"Camera: jump and landing jolts"
+		"JHL | Camera: jump and landing jolts"
 		{ BOOL }
 		{ "1" }
 	}
 
 	"jhl_visuals_weaponlag"
 	{
-		"Weapons: lag behind when turning"
+		"JHL | Weapons: lag behind when turning"
 		{ BOOL }
 		{ "1" }
 	}
 
 	"jhl_visuals_weaponwallpush"
 	{
-		"Weapons: pull back near walls"
+		"JHL | Weapons: pull back near walls"
 		{ BOOL }
 		{ "1" }
 	}
 
 	"jhl_weapons_smoothrecoil"
 	{
-		"Weapons: smooth recoil"
+		"JHL | Weapons: smooth recoil"
 		{ BOOL }
 		{ "1" }
 	}
 
 	"jhl_fx_bulletimpacts"
 	{
-		"Effects: bullet impacts and water splashes"
+		"JHL | Effects: bullet impacts and water splashes"
 		{ BOOL }
 		{ "1" }
 	}
 
 	"jhl_fx_muzzleflash"
 	{
-		"Effects: muzzle light, smoke and RPG backblast"
+		"JHL | Effects: muzzle light, smoke and RPG backblast"
 		{ BOOL }
 		{ "1" }
 	}
 
 	"jhl_hud_scale"
 	{
-		"HUD: scale (0 = automatic)"
+		"JHL | HUD scale (0 = automatic)"
 		{ NUMBER 0.000000 4.000000 }
 		{ "1.000000" }
 	}
 
 	"crosshair_scale"
 	{
-		"HUD: crosshair scale"
+		"Vanilla | Crosshair scale"
 		{ NUMBER 1.000000 4.000000 }
 		{ "2.000000" }
 	}
 
 	"default_fov"
 	{
-		"Field of view"
+		"Vanilla | Field of view"
 		{ NUMBER 1.000000 179.000000 }
 		{ "90.000000" }
 	}
 
 	"fps_override"
 	{
-		"Allow frame rates above 100"
+		"Vanilla | Allow frame rates above 100"
 		{ BOOL }
 		{ "0" }
 	}
 
 	"fps_max"
 	{
-		"Maximum frame rate"
+		"Vanilla | Maximum frame rate"
 		{ NUMBER 30.000000 1000.000000 }
 		{ "100.000000" }
 	}
 
 	"gl_vsync"
 	{
-		"Vertical sync"
+		"Vanilla | Vertical sync"
 		{ BOOL }
 		{ "0" }
 	}
 
 	"m_rawinput"
 	{
-		"Raw mouse input"
+		"Vanilla | Raw mouse input"
 		{ BOOL }
 		{ "1" }
 	}
 
-	"cl_bobtilt"
-	{
-		"#Valve_ViewBobTilt"
-		{ BOOL }
-		{ "0" }
-	}
-
 	"mp_decals"
 	{
-		"#Valve_Multiplayer_Decal_Limit"
+		"Vanilla | Multiplayer decal limit"
 		{ NUMBER 0.000000 4096.000000 }
 		{ "300.000000" }
 	}
 
+	"cl_bobtilt"
+	{
+		"SDK | View bob tilt"
+		{ BOOL }
+		{ "0" }
+	}
+
 	"cl_snd_hrtf_enabled"
 	{
-		"#Valve_HRTF_Enabled"
+		"SDK | HRTF 3D audio"
 		{ BOOL }
 		{ "0" }
 	}
 
 	"cl_snd_hrtf_implementation"
 	{
-		"#Valve_HRTF_Implementation"
+		"SDK | HRTF implementation"
 		{ STRING }
 		{ "" }
 	}
