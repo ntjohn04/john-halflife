@@ -64,6 +64,7 @@ extern engine_studio_api_t IEngineStudio;
 static int g_tracerCount[MAX_PLAYERS];
 
 #include "pm_shared.h"
+#include "bullet_impacts.h"
 
 void V_PunchAxis(int axis, float punch);
 bool V_WeaponRecoil(float pitchMin, float pitchMax, float jitter, float spring, float damping);
@@ -288,6 +289,22 @@ void EV_HLDM_GunshotDecalTrace(pmtrace_t* pTrace, char* decalName)
 	int iRand;
 
 	gEngfuncs.pEfxAPI->R_BulletImpactParticles(pTrace->endpos);
+
+	// Material-specific extras. Only the world has known materials on the client; brush entities count as concrete.
+	char textureType = CHAR_TEX_CONCRETE;
+
+	if (gEngfuncs.pEventAPI->EV_IndexFromTrace(pTrace) == 0)
+	{
+		const Vector start = pTrace->endpos + pTrace->plane.normal * 4;
+		const Vector end = pTrace->endpos - pTrace->plane.normal * 4;
+
+		if (const char* textureName = gEngfuncs.pEventAPI->EV_TraceTexture(pTrace->ent, start, end); textureName)
+		{
+			textureType = g_MaterialSystem.FindTextureType(g_MaterialSystem.StripTexturePrefix(textureName));
+		}
+	}
+
+	BulletImpactEffects(pTrace->endpos, pTrace->plane.normal, textureType);
 
 	iRand = gEngfuncs.pfnRandomLong(0, 0x7FFF);
 	if (iRand < (0x7fff / 2)) // not every bullet makes a sound.

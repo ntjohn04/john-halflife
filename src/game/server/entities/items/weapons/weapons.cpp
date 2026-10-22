@@ -68,6 +68,31 @@ int DamageDecal(CBaseEntity* pEntity, int bitsDamageType)
 	return pEntity->DamageDecal(bitsDamageType);
 }
 
+// Lets nearby clients add their bullet impact effects (bullet_impacts.cpp) for bullets fired on the server.
+// The player's own bullets get theirs from the client-side weapon events instead.
+static void SendBulletImpact(TraceResult* pTrace, CBaseEntity* pEntity)
+{
+	char textureType = CHAR_TEX_CONCRETE;
+
+	edict_t* hit = pEntity ? pEntity->edict() : CBaseEntity::World->edict();
+
+	const Vector start = pTrace->vecEndPos + pTrace->vecPlaneNormal * 4;
+	const Vector end = pTrace->vecEndPos - pTrace->vecPlaneNormal * 4;
+
+	if (const char* textureName = TRACE_TEXTURE(hit, start, end); textureName)
+	{
+		textureType = g_MaterialSystem.FindTextureType(g_MaterialSystem.StripTexturePrefix(textureName));
+	}
+
+	MESSAGE_BEGIN(MSG_PVS, gmsgBulletImpact, pTrace->vecEndPos);
+	WRITE_COORD_VECTOR(pTrace->vecEndPos);
+	WRITE_CHAR(static_cast<int>(pTrace->vecPlaneNormal.x * 127));
+	WRITE_CHAR(static_cast<int>(pTrace->vecPlaneNormal.y * 127));
+	WRITE_CHAR(static_cast<int>(pTrace->vecPlaneNormal.z * 127));
+	WRITE_BYTE(textureType);
+	MESSAGE_END();
+}
+
 void DecalGunshot(TraceResult* pTrace, int iBulletType)
 {
 	// Is the entity valid
@@ -92,10 +117,12 @@ void DecalGunshot(TraceResult* pTrace, int iBulletType)
 		default:
 			// smoke and decal
 			UTIL_GunshotDecalTrace(pTrace, DamageDecal(pEntity, DMG_BULLET));
+			SendBulletImpact(pTrace, pEntity);
 			break;
 		case BULLET_MONSTER_12MM:
 			// smoke and decal
 			UTIL_GunshotDecalTrace(pTrace, DamageDecal(pEntity, DMG_BULLET));
+			SendBulletImpact(pTrace, pEntity);
 			break;
 		case BULLET_PLAYER_CROWBAR:
 			// wall decal

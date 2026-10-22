@@ -94,4 +94,7 @@ void LinkUserMessages()
 
 	// Kick angles (3 floats), spring, damping.
 	gmsgSmoothPunch = REG_USER_MSG("SmoothPunch", 20);
+
+	// Position (3 coords), surface normal (3 chars), material type.
+	gmsgBulletImpact = REG_USER_MSG("BulletImpact", 10);
 }

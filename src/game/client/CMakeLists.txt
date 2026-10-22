@@ -88,6 +88,8 @@ target_sources(client PRIVATE
 	cdll_int.cpp
 	cl_dll.h
 	cl_util.h
+	bullet_impacts.cpp
+	bullet_impacts.h
 	client_gibs.cpp
 	client_gibs.h
 	ClientLibrary.cpp

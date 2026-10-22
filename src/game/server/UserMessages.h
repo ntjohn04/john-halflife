@@ -88,4 +88,6 @@ inline int gmsgClientGibs = 0;
 
 inline int gmsgSmoothPunch = 0;
 
+inline int gmsgBulletImpact = 0;
+
 void LinkUserMessages();
