@@ -63,7 +63,14 @@ void EV_GunMuzzleEffects()
 		light->decay = light->radius * 12;
 	}
 
-	// A faint wisp of smoke drifting up from the muzzle.
+	// Now and then, a faint wisp of smoke drifting up from the muzzle; real guns barely smoke.
+	constexpr float WispChance = 0.3f;
+
+	if (gEngfuncs.pfnRandomFloat(0, 1) >= WispChance)
+	{
+		return;
+	}
+
 	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
 
 	if (modelIndex == 0)
@@ -74,8 +81,8 @@ void EV_GunMuzzleEffects()
 	Vector velocity{gEngfuncs.pfnRandomFloat(-4, 4), gEngfuncs.pfnRandomFloat(-4, 4), gEngfuncs.pfnRandomFloat(12, 20)};
 
 	// Plays once and is removed on its last frame (see DustImpact).
-	TEMPENTITY* wisp = gEngfuncs.pEfxAPI->R_TempSprite(muzzle, velocity, gEngfuncs.pfnRandomFloat(0.12f, 0.18f),
-		modelIndex, kRenderTransAlpha, kRenderFxNone, 0.18f, 2.0f, FTENT_SPRANIMATE);
+	TEMPENTITY* wisp = gEngfuncs.pEfxAPI->R_TempSprite(muzzle, velocity, gEngfuncs.pfnRandomFloat(0.08f, 0.12f),
+		modelIndex, kRenderTransAlpha, kRenderFxNone, 0.1f, 2.0f, FTENT_SPRANIMATE);
 
 	if (wisp)
 	{
