@@ -243,13 +243,14 @@ void BulletWaterSplash(const Vector& surfacePosition)
 		return;
 	}
 
-	constexpr int LightGreyPaletteIndex = 12;
+	// R_StreakSplash colours come from the engine's 12-entry tracer colour table, not the palette; 0 is white.
+	constexpr int WhiteTracerColor = 0;
 	const Vector up{0, 0, 1};
 
 	// Spray thrown up out of the water.
 	Vector origin = surfacePosition;
 	Vector spray = up * gEngfuncs.pfnRandomFloat(60, 90);
-	gEngfuncs.pEfxAPI->R_StreakSplash(origin, spray, LightGreyPaletteIndex, gEngfuncs.pfnRandomLong(6, 10), 1, -30, 30);
+	gEngfuncs.pEfxAPI->R_StreakSplash(origin, spray, WhiteTracerColor, gEngfuncs.pfnRandomLong(6, 10), 1, -30, 30);
 
 	// Ripple ring lying flat on the surface (MMod's sprite, see mmod_port; skipped if it isn't installed).
 	if (TEMPENTITY* ring = SplashSprite("sprites/water_splash_ring.spr", surfacePosition + up, gEngfuncs.pfnRandomFloat(0.35f, 0.5f), 0.3f, kRenderTransAdd, 18); ring)
