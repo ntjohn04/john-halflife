@@ -127,28 +127,15 @@ DESCRIPTION INFO_OPTIONS
 
 	"jhl_hud_scale"
 	{
-		"HUD: scale"
-		{
-			LIST
-			"Automatic" "0"
-			"1x" "1"
-			"1.5x" "1.5"
-			"2x" "2"
-			"3x" "3"
-		}
+		"HUD: scale (0 = automatic)"
+		{ NUMBER 0.000000 4.000000 }
 		{ "1.000000" }
 	}
 
 	"crosshair_scale"
 	{
 		"HUD: crosshair scale"
-		{
-			LIST
-			"1x" "1"
-			"2x" "2"
-			"3x" "3"
-			"4x" "4"
-		}
+		{ NUMBER 1.000000 4.000000 }
 		{ "2.000000" }
 	}
 
@@ -169,15 +156,7 @@ DESCRIPTION INFO_OPTIONS
 	"fps_max"
 	{
 		"Maximum frame rate"
-		{
-			LIST
-			"60" "60"
-			"100" "100"
-			"144" "144"
-			"200" "200"
-			"240" "240"
-			"300" "300"
-		}
+		{ NUMBER 30.000000 1000.000000 }
 		{ "100.000000" }
 	}
 

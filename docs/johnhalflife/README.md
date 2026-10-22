@@ -48,6 +48,12 @@ installed with the build together with the menu files in `config/mod/resource/`:
 * `OptionsSubAdvanced.res`: Valve's layout of the Lock tab, with the content lock hidden and a note pointing
   to the settings.
 
+**Don't use `LIST` (dropdown) entries unless the values are exactly 0, 1, 2, ... in order.** GameUI treats a
+list's stored value as an item index: when the dialog opens it reads the setting's current value as the
+index, and on OK it sends the value of that item, or `0.0` if the index is past the end. A list with other
+values corrupts the setting a little more on every OK (this set `fps_max 0` once). `BOOL` and `NUMBER`
+entries read and write the real value; `NUMBER` is clamped to its min and max (-1 = no limit).
+
 The engine's options tabs are fixed, and only the `user.scr` list can hold mod settings: a tab's layout file
 can move or hide its controls, but which setting a control changes is decided in Valve's code. Single
 player only games (`type "singleplayer_only"` in `liblist.gam`, as MMod) show that list as a tab in place of
