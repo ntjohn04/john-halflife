@@ -104,8 +104,8 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 		Vector offset{36, 8, -6};
 		sscanf(g_cl_rpg_muzzle->string, "%f %f %f", &offset.x, &offset.y, &offset.z);
 
-		// Always a wisp, twice the size and opacity of a gun's.
-		MuzzleEffectsAt(eyePosition + forward * offset.x + right * offset.y + up * offset.z, 1, 2, 0.2f);
+		// Always a wisp, much larger than a gun's and twice as opaque.
+		MuzzleEffectsAt(eyePosition + forward * offset.x + right * offset.y + up * offset.z, 1, 3.5f, 0.2f);
 	}
 
 	// Backblast out of the rear of the tube, over the right shoulder. Placed from the player rather than the view
@@ -130,6 +130,7 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 		return;
 	}
 
+	// The blast itself, out the back.
 	for (int i = 0; i < 6; ++i)
 	{
 		Vector origin = rear - forward * gEngfuncs.pfnRandomFloat(0, 12);
@@ -143,6 +144,27 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 		{
 			puff->entity.curstate.rendercolor = {170, 170, 170};
 			puff->entity.curstate.framerate = 14;
+			puff->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+		}
+	}
+
+	// Smoke billowing back around the shooter: large, slow puffs that start behind on either side and roll forward
+	// past the shoulders, into view.
+	for (int i = 0; i < 4; ++i)
+	{
+		const float side = (i % 2) == 0 ? 1.f : -1.f;
+
+		Vector origin = rear + right * side * gEngfuncs.pfnRandomFloat(12, 22) - up * gEngfuncs.pfnRandomFloat(0, 12);
+		Vector velocity = forward * gEngfuncs.pfnRandomFloat(50, 80) + right * side * gEngfuncs.pfnRandomFloat(15, 30) + up * gEngfuncs.pfnRandomFloat(0, 12);
+
+		// 16 frames at 8 per second: about two seconds.
+		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, gEngfuncs.pfnRandomFloat(1.0f, 1.5f),
+			modelIndex, kRenderTransAlpha, kRenderFxNone, 0.22f, 3.0f, FTENT_SPRANIMATE);
+
+		if (puff)
+		{
+			puff->entity.curstate.rendercolor = {170, 170, 170};
+			puff->entity.curstate.framerate = 8;
 			puff->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
 		}
 	}
