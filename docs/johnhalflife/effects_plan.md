@@ -108,6 +108,9 @@ Changes:
   * A killing bullet headshot streams back toward the shooter (length 4, speed 150): `TraceAttack` remembers the
     last bullet headshot and `Killed` checks it was this monster in this frame, so non-fatal headshots and later
     explosion kills don't. Not for the sniper rifle, which has its own stream.
+  * The player's melee hits (`DMG_CLUB` from a player: crowbar, wrench, knife): 2 more blood bursts at half the
+    damage (each 14+14 droplets, so 84 instead of 28) and a short stream flung to a random side and slightly up
+    (length 1.2, speed 90), since a swing throws blood across rather than through.
 * **Gib splash** (`client_gibs.cpp`, `SpawnGibSplash`): vanilla draws nothing where a gibbed body was (and
   explosion damage skips the hit blood), so the body seemed to vanish. Now, on each death that gibs: 3 of the
   game's hit blood puffs (`R_BloodSprite`, size 16, the game's maximum) spread over a body-shaped area (±8

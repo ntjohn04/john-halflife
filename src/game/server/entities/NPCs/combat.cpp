@@ -29,6 +29,9 @@
 constexpr float HeavyHitDamage = 30;		// Hits this hard spurt blood out the far side,
 constexpr float ExitSpurtLength = 1.5f;		// a short stream: particle speed is length x speed (UTIL_BloodStream).
 constexpr int ExitSpurtSpeed = 100;
+constexpr int MeleeExtraBursts = 2;			// The player's melee hits: this many more blood bursts (each 14+14 droplets),
+constexpr float MeleeFlingLength = 1.2f;	// and a short stream flung to one side.
+constexpr int MeleeFlingSpeed = 90;
 constexpr float HeadshotStreamLength = 4;	// A killing headshot streams back toward the shooter, shorter than the
 constexpr int HeadshotStreamSpeed = 150;	// sniper rifle's, which passes the whole distance as its length.
 
@@ -1333,6 +1336,19 @@ void CBaseMonster::TraceAttack(CBaseEntity* attacker, float flDamage, Vector vec
 			if (flDamage >= HeavyHitDamage)
 			{
 				UTIL_BloodStream(ptr->vecEndPos, vecDir * ExitSpurtLength, BloodStreamColor(BloodColor()), ExitSpurtSpeed);
+			}
+
+			// The player's melee (crowbar, wrench, knife): more droplets, and a short fling to one side, as a swing
+			// throws blood across rather than through.
+			if ((bitsDamageType & DMG_CLUB) != 0 && attacker && attacker->IsPlayer())
+			{
+				for (int i = 0; i < MeleeExtraBursts; ++i)
+				{
+					UTIL_BloodDrips(ptr->vecEndPos, vecDir, BloodColor(), static_cast<int>(flDamage * 0.5f));
+				}
+
+				const Vector side = CrossProduct(vecDir, Vector{0, 0, 1}).Normalize() * (RANDOM_LONG(0, 1) != 0 ? 1.f : -1.f);
+				UTIL_BloodStream(ptr->vecEndPos, (side + Vector{0, 0, 0.5f}) * MeleeFlingLength, BloodStreamColor(BloodColor()), MeleeFlingSpeed);
 			}
 
 			if (ptr->iHitgroup == HITGROUP_HEAD && (bitsDamageType & DMG_BULLET) != 0 && !s_SniperBullet)
