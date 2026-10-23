@@ -18,7 +18,8 @@ can't change a temp entity after it arrives. That leaves three levers:
 
 Effects of the local player's own weapons are already client-side events (muzzle effects, impacts).
 
-**Default choice:** client enrichment for the shared paths below, so each theme gets a `jhl_fx_*` toggle and
+**Default choice:** client enrichment for the shared paths below, all behind **one** global toggle,
+`jhl_fx_particlesystem` (the user's choice over one per theme; created with the first effect that uses it), with
 richer combinations; tune or add on the server for one-off set pieces. Vanilla sprites and models only, as with
 the impacts: more, longer or layered particles, short lights, reused stock sprites. MMod assets only where
 nothing stock fits, through `mmod_port`.
@@ -64,9 +65,8 @@ they inherit from the shared work.
 | A set piece | `npc_create monster_apache`, then the RPG |
 | Before/after | The category's `jhl_fx_*` toggle |
 
-Worth adding first: a cheat command, `jhl_fx_test <effect>`, that plays one category's effect at the crosshair
-(explosion of a given size, blood burst, headshot, gib burst, sparks), so effects can be compared side by side
-without setting up the situation.
+**`jhl_fx_test`** plays any event's effect, or any building block with any parameters, where you aim: see
+[effects_test.md](effects_test.md). Design an effect with it first, then build it into the game.
 
 ## Per-category checklist
 

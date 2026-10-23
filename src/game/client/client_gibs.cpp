@@ -227,17 +227,9 @@ static TEMPENTITY* EV_TFC_CreateGib(const char* modelName, int body, byte bloodC
 	return ent;
 }
 
-static void MsgFunc_ClientGibs(const char* name, BufferReader& reader)
+void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& origin, const Vector& angles,
+	GibVelocityMultiplier multiplier, int flags)
 {
-	const int entindex = reader.ReadShort();
-	const byte bloodColor = reader.ReadByte();
-	byte numGibs = reader.ReadByte();
-	const Vector origin = reader.ReadCoordVector();
-	const Vector angles = reader.ReadCoordVector();
-
-	const auto multiplier = GibVelocityMultiplier(reader.ReadByte());
-
-	int flags = reader.ReadByte();
 	const auto type = GibType(flags & ~GibFlag_Mask);
 	flags &= GibFlag_Mask;
 
@@ -316,6 +308,21 @@ static void MsgFunc_ClientGibs(const char* name, BufferReader& reader)
 	{
 		EV_TFC_CreateGib(HumanHeadGibs.ModelName, 0, bloodColor, origin, angles, multiplier, true);
 	}
+}
+
+static void MsgFunc_ClientGibs(const char* name, BufferReader& reader)
+{
+	const int entindex = reader.ReadShort();
+	const byte bloodColor = reader.ReadByte();
+	const byte numGibs = reader.ReadByte();
+	const Vector origin = reader.ReadCoordVector();
+	const Vector angles = reader.ReadCoordVector();
+
+	const auto multiplier = GibVelocityMultiplier(reader.ReadByte());
+
+	const int flags = reader.ReadByte();
+
+	ClientGibs_Spawn(entindex, bloodColor, numGibs, origin, angles, multiplier, flags);
 }
 
 void ClientGibs_Initialize()

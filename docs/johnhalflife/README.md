@@ -6,6 +6,7 @@ These pages record what johnhalflife changes compared with the stock SDK, and wh
 * [Camera and movement](camera_movement.md)
 * [Weapons](weapons.md)
 * [Effects plan](effects_plan.md): the map of visual effects to work through next
+* [Effects test command](effects_test.md): `jhl_fx_test`, for designing particle effects
 
 ## Principles
 

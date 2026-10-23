@@ -16,3 +16,10 @@
 #pragma once
 
 void ClientGibs_Initialize();
+
+/**
+ *	@brief Spawns gibs as the server's ClientGibs message does.
+ *	@param flags A GibType combined with GibFlag_* values.
+ */
+void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& origin, const Vector& angles,
+	GibVelocityMultiplier multiplier, int flags);
