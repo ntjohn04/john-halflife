@@ -49,7 +49,8 @@ constexpr float JhlGibSidewaysSpread = 0.7f;   // Random sideways direction, +-0
 constexpr int TrailingGibsPerDeath = 7;		   // Gibs that leave a trail of blood drops as they fly,
 constexpr float BloodTrailTime = 1;			   // for this long after being thrown, thinning out,
 constexpr float BloodTrailSpacing = 4;		   // a drop every this many units at first.
-constexpr int BloodStreamRed = 70;			   // Red blood particles: palette 70 and up, as the game's red blood streams.
+constexpr int BloodStreamRed = 68;			   // Blood particles (flat, full brightness, so 2 darker than vanilla's red
+constexpr int BloodTrailYellow = 200;		   // streams at 70): red 68 and up, yellow 200 and down.
 // Effects pick colors a few palette entries up from the one they're given. 247 (the game's red) is followed by
 // bright reds up to 255,0,0 and 195 (yellow) is the brightest of its ramp, so darker starts match the decals.
 constexpr int SplashPuffRed = 74;			   // 87,0,0 and up.
@@ -138,7 +139,7 @@ static void EmitBloodTrail(TEMPENTITY* ent, float currenttime)
 	if (distance < spacing)
 		return;
 
-	const int baseColor = bloodColor == BLOOD_COLOR_RED ? BloodStreamRed : bloodColor == BLOOD_COLOR_YELLOW ? DarkYellow : bloodColor;
+	const int baseColor = bloodColor == BLOOD_COLOR_RED ? BloodStreamRed : bloodColor == BLOOD_COLOR_YELLOW ? BloodTrailYellow : bloodColor;
 	const int drops = std::min(static_cast<int>(distance / spacing), 8);
 	const Vector& gibVelocity = ent->entity.baseline.origin;
 

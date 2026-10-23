@@ -102,8 +102,10 @@ Changes:
     Desert Eagle 7, .357 7, sniper 11; headshots 5 (MP5) to 16.
   * Colors 74 (red) and 198 (yellow), like the gib splash, instead of 247/195 and their bright neighbours.
   * Every blood stream (ours, the sniper rifle's, `env_blood`, Nihilanth, pit worm) goes through
-    `UTIL_JhlBloodStreamColor`: red 70 (as vanilla's red streams), yellow 196. Colors in use, all from dark ramps:
-    hit and splash puffs 74/198, streams 70/196, gib trails 70/198, chunks baked red, decals unchanged.
+    `UTIL_JhlBloodStreamColor`: red 68, yellow 198. Colors in use, all from dark ramps: hit and splash puffs
+    74/198 (sprites: the tint multiplies a shaded texture, so they render darker than their index), streams 68/198
+    and gib trails 68/200 (particles: flat squares of one palette color at full brightness, so they start 2 darker
+    than vanilla's red streams at 70 to look alike), chunks baked red, decals unchanged.
   * A second burst at 0.6x size on every hit: the engine's droplet count is fixed at 14, so this adds 14 smaller,
     shorter-flying ones (its puff hides in the first).
   * Hits of 30+ damage (after the head multiplier: Desert Eagle, .357, sniper, heavier headshots) spurt a short
@@ -135,7 +137,7 @@ Changes:
   them from tinted sprites.
 * **Gib blood trails** (`client_gibs.cpp`, `EmitBloodTrail`): 7 gibs per death drop blood particles along their
   path for the first second after being thrown, a drop every 4 units at first and thinning out. Each drop is
-  an engine particle (`R_AllocParticle`, `pt_grav`) in the blood stream's colors (red palette 70+, yellow 198+),
+  an engine particle (`R_AllocParticle`, `pt_grav`) in the blood stream's colors (red palette 68+, yellow 200+),
   carrying 15% of the gib's speed, lasting 0.6-1 s. Calling `R_BloodStream` every frame would emit 100+ particles
   each time, so the trail is built from single drops instead. Respects `violence_hblood`/`violence_ablood`. Engine particles have one fixed
   size (no size field), so the drops can't grow or shrink; small shrinking `blood.spr` sprites would be the way.

@@ -1614,7 +1614,7 @@ Vector CBaseEntity::FireBulletsPlayer(unsigned int cShots, Vector vecSrc, Vector
 
 							if (pHitEntity->BloodColor() == BLOOD_COLOR_RED)
 							{
-								WRITE_BYTE(70);
+								WRITE_BYTE(UTIL_JhlBloodStreamColor(VanillaBloodStreamRed));
 							}
 							else
 							{

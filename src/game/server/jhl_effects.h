@@ -30,9 +30,11 @@ inline bool UTIL_JhlParticleSystem()
 constexpr int JhlBloodRed = 74;
 constexpr int JhlBloodYellow = 198;
 
-// Blood streams pick colors from the given one to 9 above it: red 70-79, yellow 196-205.
-constexpr int JhlBloodStreamRed = 70;
-constexpr int JhlBloodStreamYellow = 196;
+// Blood streams pick colors from the given one to 9 above it: red 68-77, yellow 198-207. Their particles are flat and
+// drawn at full brightness, so they start 2 darker than vanilla's red streams (70) to match the textured puffs.
+constexpr int JhlBloodStreamRed = 68;
+constexpr int JhlBloodStreamYellow = 198;
+constexpr int VanillaBloodStreamRed = 70;
 
 /**
  *	@brief The color to give a blood stream for a blood color: red 247 would run into the palette's bright reds, so
@@ -44,7 +46,8 @@ inline int UTIL_JhlBloodStreamColor(int color)
 	if (!UTIL_JhlParticleSystem())
 		return color;
 
-	if (color == BLOOD_COLOR_RED)
+	// Vanilla passes 70 for red streams (env_blood, the sniper rifle), others the blood color.
+	if (color == BLOOD_COLOR_RED || color == VanillaBloodStreamRed)
 		return JhlBloodStreamRed;
 
 	if (color == BLOOD_COLOR_YELLOW)
