@@ -31,9 +31,6 @@ enum handgrenade_e
 
 class CHandGrenade : public CBasePlayerWeapon
 {
-	DECLARE_CLASS(CHandGrenade, CBasePlayerWeapon);
-	DECLARE_DATAMAP();
-
 public:
 	void OnCreate() override;
 	void Precache() override;
@@ -59,9 +56,12 @@ public:
 
 	void SetWeaponData(const weapon_data_t& data) override;
 
-private:
-	void PinPullSoundThink();
+	void ItemPostFrame() override;
 
+private:
 	float m_flStartThrow;
 	float m_flReleaseThrow;
+
+	// When to play the pin pull sound (server only, not saved), 0 if none is due.
+	float m_flPinPullSoundTime = 0;
 };

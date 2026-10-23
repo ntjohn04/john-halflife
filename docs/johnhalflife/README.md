@@ -159,6 +159,15 @@ fatal ("bogus message type (0)").
 
 Weapon prediction also syncs the current spread through `weapon_data_t.fuser4` (added to `delta.lst`).
 
+## Saves
+
+Don't add a data map (`DECLARE_DATAMAP`/`BEGIN_DATAMAP`) to an entity class that doesn't have one, for example
+to use a think function: saves made before the change no longer restore it. Restoring reads one block per class
+in the hierarchy, starting with the most derived, and stops at the first one it doesn't find, so none of the
+inherited fields are restored. A weapon restored that way has no owner and crashed the game when equipped.
+Keep transient timers out of save data instead (as `CHandGrenade::ItemPostFrame` does), or accept breaking
+older saves.
+
 ## Open items
 
 * Opposing Force weapons without an MMod counterpart still use the crowbar's switch sound as a placeholder.

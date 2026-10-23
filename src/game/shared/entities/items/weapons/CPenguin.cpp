@@ -156,7 +156,7 @@ void CPenguin::PrimaryAttack()
 		if (0 == tr.fAllSolid && 0 == tr.fStartSolid && tr.flFraction > 0.25)
 		{
 			m_pPlayer->SetAnimation(PLAYER_ATTACK1);
-			ThrowKick(0.6f);
+			ThrowKick(1.1f);
 
 #ifndef CLIENT_DLL
 			auto penguin = CBaseEntity::Create("monster_penguin", tr.vecEndPos, m_pPlayer->pev->v_angle, m_pPlayer);

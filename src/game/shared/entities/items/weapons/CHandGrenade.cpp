@@ -18,10 +18,6 @@
 
 #define HANDGRENADE_PRIMARY_VOLUME 450
 
-BEGIN_DATAMAP(CHandGrenade)
-DEFINE_FUNCTION(PinPullSoundThink),
-	END_DATAMAP();
-
 LINK_ENTITY_TO_CLASS(weapon_handgrenade, CHandGrenade);
 
 void CHandGrenade::OnCreate()
@@ -95,6 +91,7 @@ void CHandGrenade::Holster()
 {
 	// Stop any throw that was in process so players don't blow themselves or somebody else up when the weapon is deployed again.
 	m_flStartThrow = 0;
+	m_flPinPullSoundTime = 0;
 
 	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5;
 
@@ -123,21 +120,23 @@ void CHandGrenade::PrimaryAttack()
 		SendWeaponAnim(HANDGRENADE_PINPULL);
 
 #ifndef CLIENT_DLL
-		SetThink(&CHandGrenade::PinPullSoundThink);
-		pev->nextthink = gpGlobals->time + GrenadePinPullSoundDelay;
+		m_flPinPullSoundTime = gpGlobals->time + GrenadePinPullSoundDelay;
 #endif
 		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.5;
 	}
 }
 
-void CHandGrenade::PinPullSoundThink()
+void CHandGrenade::ItemPostFrame()
 {
-	SetThink(nullptr);
-
-	if (m_pPlayer)
+#ifndef CLIENT_DLL
+	if (0 != m_flPinPullSoundTime && gpGlobals->time >= m_flPinPullSoundTime)
 	{
+		m_flPinPullSoundTime = 0;
 		m_pPlayer->EmitSound(CHAN_ITEM, GrenadePinPullSound, VOL_NORM, ATTN_NORM);
 	}
+#endif
+
+	CBasePlayerWeapon::ItemPostFrame();
 }
 
 void CHandGrenade::WeaponIdle()

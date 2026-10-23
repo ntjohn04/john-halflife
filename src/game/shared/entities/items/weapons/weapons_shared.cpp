@@ -345,13 +345,13 @@ void CBasePlayerWeapon::MeleeKick(float strength, bool hit)
 	if (hit)
 	{
 		// Pushed back a little by the impact.
-		WeaponKick({0.8f * strength, 0, 0}, 220, 16);
+		WeaponKick({1.04f * strength, 0, 0}, 220, 16);
 		return;
 	}
 
 	// Leaning into the swing: down and to one side, with a little roll. Heavier weapons swing wider and settle slower.
 	const float side = RANDOM_LONG(0, 1) != 0 ? 1.f : -1.f;
-	WeaponKick({-1.0f * strength, 0.8f * strength * side, 0.6f * strength * side}, 90 / strength, 10);
+	WeaponKick({-1.3f * strength, 1.04f * strength * side, 0.78f * strength * side}, 90 / strength, 10);
 }
 
 void CBasePlayerWeapon::ThrowKick(float strength)

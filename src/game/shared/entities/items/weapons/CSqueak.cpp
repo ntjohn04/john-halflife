@@ -508,7 +508,7 @@ void CSqueak::PrimaryAttack()
 		{
 			// player "shoot" animation
 			m_pPlayer->SetAnimation(PLAYER_ATTACK1);
-			ThrowKick(0.6f);
+			ThrowKick(1.1f);
 
 #ifndef CLIENT_DLL
 			CBaseEntity* pSqueak = CBaseEntity::Create("monster_snark", tr.vecEndPos, m_pPlayer->pev->v_angle, m_pPlayer);

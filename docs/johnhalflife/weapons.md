@@ -35,7 +35,7 @@ nothing on the server, so with client weapon prediction off (`cl_lw 0`) there's 
   swing (hold secondary attack) is the biggest and slowest, 2.4, kicked when it's released, since the swing
   itself runs in a server-only think; it gets no hit jolt, so it always settles slowly.
 * **Throws** (`ThrowKick`): the view dips forward and rolls slightly; a hand grenade throw at strength 1, the
-  snark, penguin and satchel tosses at 0.6.
+  snark, penguin and satchel tosses at 1.1 (slower than a melee swing of the same size).
 * With `developer 1`, every kick is printed to the console (`V_WeaponKick: ...`).
 * **Gluon gun** (`V_AddEgonDrift` in `view.cpp`): no kick, but while firing the view wanders slowly and
   smoothly in any direction, at 40% from the moment it fires, growing to about half a degree after 2 seconds of
@@ -79,8 +79,9 @@ only plays `gunpickup2`, which batteries still use. Ammo pickups are unchanged (
 ### Grenade pin
 Pulling the hand grenade's pin plays MMod's `weapons/grenade_pinpull.wav` (`mmod_port`, feature
 `grenade-pin`) when the pin comes out: 0.29 seconds in, frame 13 of the 45 fps pinpull animation, as MMod's
-model event does (its animation has the same timing as Valve's). Played by the server after that delay
-(`CHandGrenade::PinPullSoundThink`).
+model event does (its animation has the same timing as Valve's). Played by the server after that delay, timed
+in `CHandGrenade::ItemPostFrame` rather than a think function, which would need a data map (see
+[saves](README.md#saves)).
 
 ### RPG laser toggle
 Turning the RPG's laser guidance on plays the Desert Eagle's `weapons/desert_eagle_sight.wav`, and turning
