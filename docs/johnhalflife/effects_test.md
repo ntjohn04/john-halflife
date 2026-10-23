@@ -20,6 +20,7 @@ These reproduce an event with the original values. Each lists its parts, which a
 | `barrel` | `magnitude=100` | Explosive barrels and crates (`func_breakable`), `func_tank` shells, `env_explosion` | **explosion** scale max(1, (magnitude−50)×0.06), fps 15; **smoke** 0.3 s later at the same scale, fps 12; **shower** ×0–3 |
 | `blood` | `dmg=30 type=human\|alien` | Any hit on a monster | **blood_sprite** color 247 (red) or 195 (yellow), size dmg/10 clamped to 3–16; blood decals behind the hit |
 | `headshot` | `dmg=30 type=` | A head hit | Identical to `blood`, with the 3× head damage making it bigger. There's no headshot-specific effect yet. |
+| `sniperhit` | `type=human\|alien` | An M40A1 hit on something that bleeds | **bloodstream** color 70 (yellow: 195), speed 150, aimed back at the shooter with the **full distance** as its direction, which stretches it into a long line; the normal hit blood (size 10 for the sniper's 100 damage) |
 | `apache` | `time=4` | An Apache crashing, every 0.1 s for the 4 s it falls | **explosion** at a random point ±150 sideways, 50–150 below, scale 3.0–5.9, fps 12; **smoke** at another, scale 10, fps 10; **debris** `metalplategibs_green.mdl`, 4 pieces, box 400×400×132, spread 50, life 3, metal |
 | `vortzap` | | A vortigaunt's attack | **beam** `lgtning.spr`, color 180,255,96, brightness 1, noise 20 (0.2 here); **light** radius 80, color 255,180,96, 1 s. The beam's width, CBeam 50, is matched by eye (5 here). |
 
@@ -34,13 +35,43 @@ These reproduce an event with the original values. Each lists its parts, which a
 | `streaks` | Spark streaks (`R_SparkStreaks`) | `count=4 vmin=-120 vmax=120 offset=2` |
 | `shower` | A flying spark emitter (`spark_shower`) | `count=1 speedmin=200 speedmax=300 lifemin=0.5 lifemax=1.5` |
 | `blood_sprite` | The engine blood (`TE_BLOODSPRITE`) | `color=247 size=10 spray=sprites/bloodspray.spr drop=sprites/blood.spr` |
-| `bloodstream` | A stream of blood particles (`TE_BLOODSTREAM`) | `color=247 speed=100` |
+| `bloodstream` | A stream of blood particles (`TE_BLOODSTREAM`) | `color=70 speed=100 dir=normal length=1` (`dir=player` aims back at you, `up`; `length=dist` uses the distance to you) |
 | `debris` | Model debris (`TE_BREAKMODEL`) | `model=models/metalplategibs.mdl count=8 size=32 speed=100 spread=100 life=3 material=metal` |
 | `light` | A dynamic light | `radius=200 color=255,180,96 life=1 decay=0 offset=8` |
 | `beam` | A beam from you to the target (`TE_BEAMPOINTS`) | `sprite=sprites/lgtning.spr width=5 noise=0.2 brightness=1 color=180,255,96 life=0.5 speed=0 fps=10` |
 | `particles` | The engine's built-in particle effects | `type=burst` (`size=16 color=0 life=1`), `explosion`, `explosion2` (`color=0 length=16`), `blob`, `lava`, `teleport`, `implosion` (`radius=64 count=32 life=1`), `effect` (`color=0 count=32`) |
 | `ricochet` | The engine ricochet flash and sound (`TE_ARMOR_RICOCHET`) | `scale=1 sprite=sprites/richo1.spr` |
 | `gibs` | The game's gibs | `type=human count=0 velocity=quadruple head=1 sound=1` (`count=0` uses `cl_gibcount`) |
+
+## Recipes: blood as the game does it
+
+Hit blood is one `blood_sprite`, sized by the hit's damage ÷ 10, clamped to 3–16 (× 3 for a head hit). Red is
+palette color 247, yellow alien blood 195.
+
+| Hit | Command |
+|---|---|
+| Glock (8), MP5 (5), shotgun pellet (5), crowbar (10) | `jhl_fx_test blood_sprite size=3` |
+| .357 (40) | `jhl_fx_test blood_sprite size=4` |
+| Desert Eagle (34), M249 (15) | `jhl_fx_test blood_sprite size=3` |
+| Sniper rifle (100) | `jhl_fx_test blood_sprite size=10` |
+| .357 headshot (120) | `jhl_fx_test blood_sprite size=12` |
+| Alien blood | add `color=195` |
+
+The **line of blood** is a different effect, a `bloodstream`, which the game only uses in a few places:
+
+| Where | Command |
+|---|---|
+| Sniper rifle hit (`sniperhit` preset) | `jhl_fx_test bloodstream color=70 speed=150 dir=player length=dist` |
+| A spurt out of a surface (`env_blood` in maps) | `jhl_fx_test bloodstream color=70 speed=100` |
+| Upward fountain | `jhl_fx_test bloodstream color=70 speed=100 dir=up` |
+
+Two things make a stream look right:
+
+* **Color 70 for red.** A stream picks colors from `color` to `color`+9, so the blood sprite's 247 runs off the
+  end of the palette; the game uses 70 for red streams.
+* **Direction length × speed is the particle speed.** The engine doesn't normalize the direction. With length 1,
+  speed is roughly how far it arcs; the sniper rifle passes the whole distance to the shooter, which turns the
+  stream into a fast line.
 
 ## What each parameter does
 

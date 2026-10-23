@@ -65,6 +65,12 @@ public:
 		return *this;
 	}
 
+	Params& Set(const char* name, const char* value)
+	{
+		m_Values[name] = value;
+		return *this;
+	}
+
 	Params& Set(const char* name, const Vector& color)
 	{
 		m_Values[name] = fmt::format("{:g},{:g},{:g}", color.x, color.y, color.z);
@@ -203,6 +209,7 @@ int RenderMode(const std::string& name)
 
 constexpr int BloodRed = 247;
 constexpr int BloodYellow = 195;
+constexpr int BloodStreamRed = 70;
 
 // Parts of an effect that play later (smoke after an explosion, a falling helicopter's sequence).
 struct Pending
@@ -407,15 +414,26 @@ void Blood(const Target& target, Params& p)
 	gEngfuncs.pEfxAPI->R_BloodSprite(origin, color, ModelIndex(spray), ModelIndex(drop), size);
 }
 
-// A stream of blood particles arcing out of the surface (TE_BLOODSTREAM).
+// A stream of blood particles arcing out of the surface (TE_BLOODSTREAM). The engine doesn't normalize the
+// direction: particle speed is direction length x speed, so a long direction makes a long line.
 void BloodStream(const Target& target, Params& p)
 {
-	const int color = p.Int("color", BloodRed);
+	// The stream picks colors color..color+9, so red is 70, not the blood sprite's 247.
+	const int color = p.Int("color", BloodStreamRed);
 	const int speed = p.Int("speed", 100);
+	// normal: out of the surface; player: back toward you; up.
+	const auto dir = p.String("dir", "normal");
+	// Direction length; "dist" uses the distance to you, as the sniper rifle does.
+	const auto length = p.String("length", "1");
 	p.Print("bloodstream");
 
+	Vector direction = dir == "player" ? (target.Eye - target.Position).Normalize()
+					   : dir == "up"   ? Vector{0, 0, 1}
+									   : target.Normal;
+
+	direction = direction * (length == "dist" ? (target.Eye - target.Position).Length() : static_cast<float>(std::atof(length.c_str())));
+
 	Vector origin = target.Position;
-	Vector direction = target.Normal;
 	gEngfuncs.pEfxAPI->R_BloodStream(origin, direction, color, speed);
 }
 
@@ -667,6 +685,27 @@ void BloodPreset(const Target& target, Params& p, const char* what, float multip
 	gEngfuncs.Con_Printf("  plus blood decals behind the hit (TraceBleed)\n");
 }
 
+// An M40A1 sniper rifle hit on a bleeding target (CBaseEntity::FireBulletsPlayer): a blood stream aimed back at
+// the shooter, with the full distance as its direction, which stretches it into a line.
+void SniperHitPreset(const Target& target, Params& p)
+{
+	const bool alien = p.String("type", "human") == "alien";
+	p.Print("sniperhit (the sniper rifle's blood stream, plus the normal hit blood)");
+
+	Params stream;
+	stream.Set("color", static_cast<float>(alien ? BloodYellow : BloodStreamRed));
+	stream.Set("speed", 150.f);
+	stream.Set("dir", "player");
+	stream.Set("length", "dist");
+	BloodStream(target, stream);
+
+	Params blood;
+	blood.Set("color", static_cast<float>(alien ? BloodYellow : BloodRed));
+	// 100 damage (plr_762_bullet), times 3 on a headshot, size damage / 10 clamped to 16.
+	blood.Set("size", 10.f);
+	Blood(target, blood);
+}
+
 // An Apache crashing: CApache::DyingThink, every 0.1 seconds for the 4 seconds it falls. Played around a point in
 // front of the surface, since there's no helicopter.
 void ApachePreset(const Target& target, Params& p)
@@ -688,8 +727,8 @@ void ApachePreset(const Target& target, Params& p)
 			explosionTarget.Position = center.Position + Vector{Random(150), Random(150), gEngfuncs.pfnRandomFloat(-150, -50)};
 			Params explosion;
 			explosion.Set("scale", gEngfuncs.pfnRandomLong(30, 59) / 10.f);
-			explosion.Set("fps", 12);
-			explosion.Set("offset", 0);
+			explosion.Set("fps", 12.f);
+			explosion.Set("offset", 0.f);
 			if (first)
 				Explosion(explosionTarget, explosion);
 			else
@@ -698,8 +737,8 @@ void ApachePreset(const Target& target, Params& p)
 			Target smokeTarget = center;
 			smokeTarget.Position = center.Position + Vector{Random(150), Random(150), gEngfuncs.pfnRandomFloat(-150, -50)};
 			Params smoke;
-			smoke.Set("scale", 10);
-			smoke.Set("fps", 10);
+			smoke.Set("scale", 10.f);
+			smoke.Set("fps", 10.f);
 			if (first)
 				Smoke(smokeTarget, smoke);
 			else if (const int model = ModelIndex("sprites/steam1.spr"); model != 0)
@@ -730,9 +769,9 @@ void VortZapPreset(const Target& target, Params& p)
 	Beam(target, beam);
 
 	Params light;
-	light.Set("radius", 80);
+	light.Set("radius", 80.f);
 	light.Set("color", {255, 180, 96});
-	light.Set("life", 1);
+	light.Set("life", 1.f);
 	Target lightTarget = target;
 	lightTarget.Position = target.Eye + target.Forward * 32;
 	Light(lightTarget, light);
@@ -754,6 +793,7 @@ const std::vector<Command>& Commands()
 			{ BloodPreset(t, p, "blood (SpawnBlood from CBaseMonster::TraceAttack)", 1); }},
 		{"headshot", "dmg=30 type=human|alien", [](const Target& t, Params& p)
 			{ BloodPreset(t, p, "headshot (the same blood as any hit, with monster_head 3x damage)", 3); }},
+		{"sniperhit", "type=human|alien", SniperHitPreset},
 		{"apache", "time=4", ApachePreset},
 		{"vortzap", "", VortZapPreset},
 		{"sprite", "sprite= count= scale= alpha= render=alpha|add|glow|normal color=r,g,b fps= life= loop= offset= radius= speed= spread= up= gravity=0|1|2 fade= collide=", Sprite},
@@ -763,7 +803,7 @@ const std::vector<Command>& Commands()
 		{"streaks", "count= vmin= vmax= offset=", Streaks},
 		{"shower", "count= speedmin= speedmax= lifemin= lifemax=", Shower},
 		{"blood_sprite", "color= size= spray= drop=", Blood},
-		{"bloodstream", "color= speed=", BloodStream},
+		{"bloodstream", "color= speed= dir=normal|player|up length=<number>|dist", BloodStream},
 		{"debris", "model= count= size= speed= spread= life= material=metal|wood|glass|flesh|concrete|none", Debris},
 		{"light", "radius= color=r,g,b life= decay= offset=", Light},
 		{"beam", "sprite= width= noise= brightness= color=r,g,b life= speed= fps=", Beam},
