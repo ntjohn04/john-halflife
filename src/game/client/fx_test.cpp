@@ -165,7 +165,8 @@ Target FindTarget()
 	pmtrace_t tr;
 	gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(0, 1);
 	gEngfuncs.pEventAPI->EV_PushPMStates();
-	gEngfuncs.pEventAPI->EV_SetSolidPlayers(-1);
+	// Other players are solid, but not the local one, or the trace would stop inside them at once.
+	gEngfuncs.pEventAPI->EV_SetSolidPlayers(gEngfuncs.GetLocalPlayer()->index - 1);
 	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
 	gEngfuncs.pEventAPI->EV_PlayerTrace(start, end, PM_STUDIO_BOX, -1, &tr);
 	gEngfuncs.pEventAPI->EV_PopPMStates();
