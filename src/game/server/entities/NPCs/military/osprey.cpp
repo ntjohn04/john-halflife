@@ -15,6 +15,7 @@
 #include "cbase.h"
 #include "customentity.h"
 #include "osprey.h"
+#include "jhl_effects.h"
 
 LINK_ENTITY_TO_CLASS(monster_osprey, COsprey);
 
@@ -598,6 +599,8 @@ void COsprey::DyingThink()
 		WRITE_BYTE(250); // scale * 10
 		WRITE_BYTE(255); // brightness
 		MESSAGE_END();
+
+		UTIL_JhlCrashMushroom(this, vecSpot, 18);
 
 		/*
 		MESSAGE_BEGIN( MSG_BROADCAST, SVC_TEMPENTITY );

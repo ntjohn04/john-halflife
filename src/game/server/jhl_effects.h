@@ -26,6 +26,32 @@ inline bool UTIL_JhlParticleSystem()
 	return !cvar || cvar->value != 0;
 }
 
+/**
+ *	@brief A mushroom cloud (hexplo.spr, precached in W_Precache) rising from the ground under a crashing helicopter,
+ *	alongside its vanilla fexplo fireball. Sent as TE_SPRITE like that fireball, so it plays once at the engine's
+ *	default speed (30 frames, about as long as fexplo's).
+ */
+inline void UTIL_JhlCrashMushroom(CBaseEntity* helicopter, const Vector& wreck, float scale)
+{
+	if (!UTIL_JhlParticleSystem())
+		return;
+
+	TraceResult tr;
+	UTIL_TraceLine(wreck, wreck - Vector(0, 0, 1024), ignore_monsters, helicopter->edict(), &tr);
+
+	// The sprite is 96 px tall and centered; its base goes on the ground (slightly sunk, the bottom rows are empty).
+	Vector origin = tr.vecEndPos;
+	origin.z += 96 * scale * 0.45f;
+
+	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, origin);
+	WRITE_BYTE(TE_SPRITE);
+	WRITE_COORD_VECTOR(origin);
+	WRITE_SHORT(g_engfuncs.pfnModelIndex("sprites/hexplo.spr"));
+	WRITE_BYTE(static_cast<int>(scale * 10)); // scale * 10
+	WRITE_BYTE(200);						   // brightness
+	MESSAGE_END();
+}
+
 // Blood colors that don't pick up the palette's bright reds and yellows (as the client's gib splash).
 constexpr int JhlBloodRed = 74;
 constexpr int JhlBloodYellow = 198;

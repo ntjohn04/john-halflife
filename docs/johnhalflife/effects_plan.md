@@ -179,6 +179,15 @@ crossbow bolt; not the Apache/Osprey deaths at 12 fps, Opposing Force's mortar a
 
 The pool sprites are precached in `W_Precache`.
 
+**Helicopter deaths** (Apache, Osprey and the Black Ops versions):
+
+* Falling: vanilla sends one `zerogxplode` every 0.2 s at a random point under the hull (scale 3-5.9, 12 fps),
+  with smoke and metal gibs. Each one is now `zerogxplode` or a round pool sprite at random, the same size
+  (±10%, corrected for fill) and length (1.25 s ±10%), with random roll.
+* Crash: vanilla's single `fexplo` (`TE_SPRITE`; Apache scale 12 at +256, Osprey 25 at +512), huge smoke, a ring
+  and 200 gibs. Added: the `hexplo` mushroom cloud standing on the ground under the wreck (`UTIL_JhlCrashMushroom`,
+  `TE_SPRITE` too, brightness 200; Apache scale 10, Osprey 18).
+
 ## Testing
 
 | Need | How |

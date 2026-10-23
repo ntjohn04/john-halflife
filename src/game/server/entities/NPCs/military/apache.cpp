@@ -15,6 +15,7 @@
 
 #include "cbase.h"
 #include "apache.h"
+#include "jhl_effects.h"
 
 LINK_ENTITY_TO_CLASS(monster_apache, CApache);
 
@@ -256,6 +257,8 @@ void CApache::DyingThink()
 		WRITE_BYTE(120); // scale * 10
 		WRITE_BYTE(255); // brightness
 		MESSAGE_END();
+
+		UTIL_JhlCrashMushroom(this, vecSpot, 10);
 
 		// big smoke
 		MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, vecSpot);

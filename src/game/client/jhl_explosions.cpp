@@ -52,9 +52,13 @@ constexpr Fireball ShapedFireballs[] = {
 	{"sprites/hexplo.spr", 64, 96, 30},
 };
 
-// Only explosions sent at 15 fps change: grenades, rockets, satchels, tripmines, mortars, env_explosion and the
-// crossbow bolt. Helicopter deaths (12 fps) and Opposing Force's mortar (10 fps) keep the vanilla fireball.
+// Explosions sent at 15 fps get two fireballs: grenades, rockets, satchels, tripmines, mortars, env_explosion and the
+// crossbow bolt. Opposing Force's mortar (10 fps) keeps the vanilla fireball.
 constexpr float JhlFramerate = 15;
+
+// A falling helicopter (Apache, Osprey) sends one fireball every 0.2 s under its hull, scale 3-5.9 at 12 fps (1.25 s);
+// each is drawn from the vanilla and round fireballs instead.
+constexpr float FallingFramerate = 12;
 
 constexpr float LargeScale = 6;	  // Satchel, tripmine, Apache rocket, env_explosion magnitude 150+.
 constexpr float BiggestScale = 9; // func_mortar, env_explosion magnitude 200+: the mushroom cloud joins the pool.
@@ -133,15 +137,41 @@ bool FindFloor(const Vector& origin, float scale, Vector& floor)
 	floor = tr.endpos;
 	return true;
 }
+
+// One of a falling helicopter's fireballs: the vanilla one or a round one, the same size and length.
+void FallingFireball(const Vector& origin, int model, float scale)
+{
+	const int pick = gEngfuncs.pfnRandomLong(0, std::size(RoundFireballs));
+	const Fireball& fireball = pick == 0 ? Vanilla : RoundFireballs[pick - 1];
+	const int fireballModel = pick == 0 ? model : gEngfuncs.pEventAPI->EV_FindModelIndex(fireball.Sprite);
+
+	if (fireballModel == 0)
+		return;
+
+	const float size = scale * Vanilla.Width * Random(1 - Jitter, 1 + Jitter);
+	const float duration = Vanilla.Frames / FallingFramerate * Random(1 - Jitter, 1 + Jitter);
+
+	SpawnFireball(origin, fireballModel, size / (fireball.Width * fireball.Fill), fireball.Frames / duration, 180,
+		Random(0, 360));
+}
 } // namespace
 
 bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float framerate, int flags)
 {
-	if (!JhlParticleSystemEnabled() || framerate != JhlFramerate || (flags & TE_EXPLFLAG_NOADDITIVE) != 0)
+	if (!JhlParticleSystemEnabled() || (flags & TE_EXPLFLAG_NOADDITIVE) != 0)
 		return false;
 
 	// Not the underwater fireball.
 	if (model != gEngfuncs.pEventAPI->EV_FindModelIndex(Vanilla.Sprite))
+		return false;
+
+	if (framerate == FallingFramerate)
+	{
+		FallingFireball(origin, model, scale);
+		return true;
+	}
+
+	if (framerate != JhlFramerate)
 		return false;
 
 	const bool rocket = (flags & TE_EXPLFLAG_JHL_ROCKET) != 0;
