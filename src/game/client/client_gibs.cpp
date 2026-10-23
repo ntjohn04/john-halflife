@@ -16,6 +16,7 @@
 #include "hud.h"
 #include "client_gibs.h"
 #include "ClientLibrary.h"
+#include "com_model.h"
 #include "event_api.h"
 #include "pm_defs.h"
 #include "pmtrace.h"
@@ -37,7 +38,8 @@ static cvar_t* g_cl_gibvelscale = nullptr;
 
 // johnhalflife (jhl_fx_particlesystem): more gibs, lasting longer, each a little different in size and speed.
 constexpr int GibCountMultiplier = 7;		   // Death gibs; a single gib (a barnacle bite) stays one.
-constexpr int MaxUsesPerGibPiece = 3;		   // Each gib model piece at most this many times per death.
+constexpr int MaxUsesPerGibPiece = 3;		   // Each gib model piece at most this many times per death,
+constexpr int MaxUsesPerGibPieceLarge = 4;	   // or this many for large aliens, which have only 4 pieces (16 gibs).
 constexpr int SoundingGibsPerDeath = 4;		   // Gibs that make bounce sounds,
 constexpr int BounceSoundsPerGib = 3;		   // each on its first bounces only.
 constexpr float JhlGibLife = 60;			   // Seconds on the ground before fading (the giblife cvar otherwise).
@@ -51,6 +53,23 @@ constexpr int BloodStreamRed = 70;			   // Red blood particles: palette 70 and u
 
 static cvar_t* g_violence_hblood = nullptr;
 static cvar_t* g_violence_ablood = nullptr;
+
+// Full-size aliens with the 4-piece alien gibs, so they break into more than small aliens do. Looked up by the
+// dying monster's model, which the client still has when the gibs message arrives.
+static bool IsLargeAlien(int entindex)
+{
+	static constexpr std::string_view LargeAlienModels[] = {
+		"models/agrunt.mdl", "models/islave.mdl", "models/bullsquid.mdl", "models/controller.mdl",
+		"models/zombie.mdl", "models/zombie_barney.mdl", "models/zombie_soldier.mdl", "models/gonome.mdl",
+		"models/big_mom.mdl", "models/icky.mdl"};
+
+	const cl_entity_t* entity = gEngfuncs.GetEntityByIndex(entindex);
+
+	if (!entity || !entity->model)
+		return false;
+
+	return std::ranges::find(LargeAlienModels, std::string_view{entity->model->name}) != std::end(LargeAlienModels);
+}
 
 static bool ShowsBlood(int bloodColor)
 {
@@ -362,6 +381,7 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 		numGibs = std::clamp(numGibs * GibCountMultiplier, 0, MAX_TEMPENTS);
 	}
 
+	const int maxUsesPerPiece = type == GibType::Alien && IsLargeAlien(entindex) ? MaxUsesPerGibPieceLarge : MaxUsesPerGibPiece;
 	int soundingGibs = 0;
 	int trailingGibs = 0;
 
@@ -407,7 +427,7 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 
 			for (int piece = gibData->FirstSubModel; piece < gibData->SubModelCount; ++piece)
 			{
-				if (pieceUses[piece] < MaxUsesPerGibPiece)
+				if (pieceUses[piece] < maxUsesPerPiece)
 				{
 					available.push_back(piece);
 				}

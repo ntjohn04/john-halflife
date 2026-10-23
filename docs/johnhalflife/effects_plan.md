@@ -77,8 +77,9 @@ they inherit from the shared work.
 Changes:
 
 * Count × 7 for death gibs (a barnacle's single bite gib stays one), with each piece used at most 3 times per
-  death: in practice the cap decides, 15 human pieces plus the skull, 12 alien, 21 pit drone, 24 shock trooper;
-  voltigore limits kept. Each gib still leaves up to 5 blood decals as it bounces.
+  death (4 for large aliens: alien grunt, vortigaunt, bullsquid, controller, zombies, gonome, Big Momma,
+  ichthyosaur, by model, `IsLargeAlien`): in practice the cap decides, 15 human pieces plus the skull, 16 large
+  alien, 12 small alien, 21 pit drone, 24 shock trooper; voltigore limits kept. Each gib still leaves up to 5 blood decals as it bounces.
 * 60 s on the ground before fading, instead of `giblife`.
 * Each gib ±15% size and ±20% speed, and a wider random sideways direction (±0.7 instead of ±0.25 per
   horizontal axis), so gibs fan out instead of flying one way when a blast is level with the body. Vanilla's model renderer ignores scale; `StudioSetUpTransform` now applies it
