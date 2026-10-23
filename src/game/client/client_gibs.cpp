@@ -50,6 +50,10 @@ constexpr int TrailingGibsPerDeath = 7;		   // Gibs that leave a trail of blood 
 constexpr float BloodTrailTime = 1;			   // for this long after being thrown, thinning out,
 constexpr float BloodTrailSpacing = 4;		   // a drop every this many units at first.
 constexpr int BloodStreamRed = 70;			   // Red blood particles: palette 70 and up, as the game's red blood streams.
+constexpr int SplashBloodPuffs = 4;			   // A burst where the body was: the game's hit blood,
+constexpr float SplashBloodSize = 16;		   // at its largest size,
+constexpr float SplashStagger = 0.1f;		   // the extra puffs over this long;
+constexpr int SplashChunks = 50;			   // and blood chunk sprites thrown out (red blood only).
 
 static cvar_t* g_violence_hblood = nullptr;
 static cvar_t* g_violence_ablood = nullptr;
@@ -65,24 +69,25 @@ struct GibProfile
 	int MaxUsesPerPiece = MaxUsesPerGibPiece;
 	float Scale = 1;
 	bool Skull = true;
+	float Splash = 1; // Size of the blood splash where the body was.
 };
 
 static constexpr GibProfile GibProfiles[] = {
 	// Full-size aliens have only 4 alien gib pieces, so they may repeat a little more (16 gibs).
-	{.Model = "models/agrunt.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
-	{.Model = "models/islave.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
-	{.Model = "models/bullsquid.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
-	{.Model = "models/controller.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
-	{.Model = "models/zombie.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
-	{.Model = "models/zombie_barney.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
-	{.Model = "models/zombie_soldier.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
-	{.Model = "models/gonome.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
-	{.Model = "models/big_mom.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
-	{.Model = "models/icky.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
+	{.Model = "models/agrunt.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge, .Splash = 1.25f},
+	{.Model = "models/islave.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge, .Splash = 1.25f},
+	{.Model = "models/bullsquid.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge, .Splash = 1.25f},
+	{.Model = "models/controller.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge, .Splash = 1.25f},
+	{.Model = "models/zombie.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge, .Splash = 1.25f},
+	{.Model = "models/zombie_barney.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge, .Splash = 1.25f},
+	{.Model = "models/zombie_soldier.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge, .Splash = 1.25f},
+	{.Model = "models/gonome.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge, .Splash = 1.25f},
+	{.Model = "models/big_mom.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge, .Splash = 1.25f},
+	{.Model = "models/icky.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge, .Splash = 1.25f},
 	// Small creatures.
-	{.Model = "models/headcrab.mdl", .Multiplier = 1},
-	{.Model = "models/baby_headcrab.mdl", .Count = 1, .Scale = 0.5f},
-	{.Model = "models/bigrat.mdl", .Count = 2, .Scale = 0.35f, .Skull = false},
+	{.Model = "models/headcrab.mdl", .Multiplier = 1, .Splash = 0.5f},
+	{.Model = "models/baby_headcrab.mdl", .Count = 1, .Scale = 0.5f, .Splash = 0.25f},
+	{.Model = "models/bigrat.mdl", .Count = 2, .Scale = 0.35f, .Skull = false, .Splash = 0.25f},
 	// Each gib a barnacle coughs up (4 in its death animation) becomes 2.
 	{.Model = "models/barnacle.mdl", .Multiplier = 2},
 };
@@ -148,6 +153,86 @@ static void EmitBloodTrail(TEMPENTITY* ent, float currenttime)
 	}
 
 	ent->entity.curstate.vuser1 = ent->entity.origin;
+}
+
+// A blood puff that plays a moment later (curstate.fuser1: when; iuser1-3: color, spray and drop sprites;
+// fuser2: size).
+static void DelayedBloodPuff(TEMPENTITY* ent, float frametime, float currenttime)
+{
+	if (currenttime < ent->entity.curstate.fuser1)
+		return;
+
+	Vector origin = ent->entity.origin;
+	gEngfuncs.pEfxAPI->R_BloodSprite(origin, ent->entity.curstate.iuser1, ent->entity.curstate.iuser2,
+		ent->entity.curstate.iuser3, ent->entity.curstate.fuser2);
+	ent->die = currenttime;
+}
+
+// A burst of blood where a gibbed body was, so it doesn't just vanish: a few of the game's hit blood puffs,
+// staggered, and red blood chunks thrown out the way the gibs fly.
+static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bloodColor, float scale)
+{
+	if (scale <= 0 || !ShowsBlood(bloodColor))
+		return;
+
+	auto efx = gEngfuncs.pEfxAPI;
+	const float now = gEngfuncs.GetClientTime();
+	const int spray = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/bloodspray.spr");
+	const int drop = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/blood.spr");
+
+	if (spray != 0 && drop != 0)
+	{
+		const int puffs = std::max(1, static_cast<int>(std::lround(SplashBloodPuffs * scale)));
+		const float size = std::max(3.f, SplashBloodSize * scale);
+
+		for (int i = 0; i < puffs; ++i)
+		{
+			Vector position = origin + Vector{RANDOM_FLOAT(-6, 6), RANDOM_FLOAT(-6, 6), RANDOM_FLOAT(-6, 6)} * scale;
+
+			if (i == 0)
+			{
+				efx->R_BloodSprite(position, bloodColor, spray, drop, size);
+				continue;
+			}
+
+			if (TEMPENTITY* puff = efx->CL_TempEntAllocNoModel(position); puff)
+			{
+				puff->flags |= FTENT_NOMODEL | FTENT_CLIENTCUSTOM;
+				puff->callback = DelayedBloodPuff;
+				puff->entity.curstate.fuser1 = now + RANDOM_FLOAT(0, SplashStagger);
+				puff->entity.curstate.iuser1 = bloodColor;
+				puff->entity.curstate.iuser2 = spray;
+				puff->entity.curstate.iuser3 = drop;
+				puff->entity.curstate.fuser2 = size;
+				puff->die = now + SplashStagger + 1;
+			}
+		}
+	}
+
+	// Opposing Force's blood chunk sprite is red, so alien blood gets the puffs alone.
+	const int chunk = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/blood_chnk.spr");
+
+	if (bloodColor != BLOOD_COLOR_RED || chunk == 0)
+		return;
+
+	const int chunks = static_cast<int>(std::lround(SplashChunks * scale));
+
+	for (int i = 0; i < chunks; ++i)
+	{
+		Vector position = origin;
+		// Random, a little upward, and pushed the way the gibs fly (away from the attack).
+		Vector velocity = Vector{RANDOM_FLOAT(-80, 80), RANDOM_FLOAT(-80, 80), RANDOM_FLOAT(-80, 80) + 60} - attackdir * 40;
+
+		TEMPENTITY* sprite = efx->R_TempSprite(position, velocity, 0.4f, chunk, kRenderTransAlpha, kRenderFxNone, 1, 1,
+			FTENT_SPRANIMATE | FTENT_GRAVITY | FTENT_COLLIDEWORLD);
+
+		if (sprite)
+		{
+			sprite->entity.curstate.rendercolor = {255, 255, 255};
+			sprite->entity.curstate.framerate = 6;
+			sprite->entity.angles.z = RANDOM_FLOAT(0, 359);
+		}
+	}
 }
 
 static void EV_TFC_BloodDecalTrace(pmtrace_t* pTrace, int bloodColor)
@@ -370,6 +455,7 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 {
 	const auto type = GibType(flags & ~GibFlag_Mask);
 	flags &= GibFlag_Mask;
+	const int requestedGibs = numGibs;
 
 	const auto gibData = [&]() -> const GibData*
 	{
@@ -417,6 +503,12 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 			numGibs *= GibCountMultiplier;
 
 		numGibs = std::clamp(numGibs, 0, MAX_TEMPENTS);
+	}
+
+	// A death, not a single gib coughed up by a barnacle.
+	if (jhl && requestedGibs != 1)
+	{
+		SpawnGibSplash(origin, angles, bloodColor, profile.Splash);
 	}
 
 	const int maxUsesPerPiece = profile.MaxUsesPerPiece;

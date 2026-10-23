@@ -93,6 +93,13 @@ Changes:
 
 ## Blood (in progress)
 
+* **Gib splash** (`client_gibs.cpp`, `SpawnGibSplash`): vanilla draws nothing where a gibbed body was (and
+  explosion damage skips the hit blood), so the body seemed to vanish. Now, on each death that gibs: 4 of the
+  game's hit blood puffs (`R_BloodSprite`, size 16, the game's maximum) within ±6 units, the extra 3 over the
+  first 0.1 s; and for red blood, 50 of Opposing Force's `blood_chnk.spr` (scale 0.4, 6 fps, gravity, colliding,
+  random roll) thrown at ±80 plus 60 up and 40 the way the gibs fly. Alien blood gets the puffs only (the chunk
+  sprite is red). Sized by the gib profile's `Splash` (headcrab 0.5, baby crab and rat 0.25, large aliens 1.25);
+  a barnacle's single coughed-up gibs don't splash. `blood_chnk.spr` is precached in `W_Precache`.
 * **Gib blood trails** (`client_gibs.cpp`, `EmitBloodTrail`): 7 gibs per death drop blood particles along their
   path for the first second after being thrown, a drop every 4 units at first and thinning out. Each drop is
   an engine particle (`R_AllocParticle`, `pt_grav`) in the blood stream's colors (red palette 70+, yellow 195+),
