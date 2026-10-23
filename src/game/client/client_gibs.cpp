@@ -50,9 +50,13 @@ constexpr int TrailingGibsPerDeath = 7;		   // Gibs that leave a trail of blood 
 constexpr float BloodTrailTime = 1;			   // for this long after being thrown, thinning out,
 constexpr float BloodTrailSpacing = 4;		   // a drop every this many units at first.
 constexpr int BloodStreamRed = 70;			   // Red blood particles: palette 70 and up, as the game's red blood streams.
+// Effects pick colors a few palette entries up from the one they're given. 247 (the game's red) is followed by
+// bright reds up to 255,0,0 and 195 (yellow) is the brightest of its ramp, so darker starts match the decals.
+constexpr int SplashPuffRed = 74;			   // 87,0,0 and up.
+constexpr int DarkYellow = 198;				   // 155,131,7 and darker.
 constexpr int SplashBloodPuffs = 4;			   // A burst where the body was: the game's hit blood,
 constexpr float SplashBloodSize = 16;		   // at its largest size,
-constexpr float SplashStagger = 0.1f;		   // the extra puffs over this long;
+constexpr float SplashStagger = 0.15f;		   // the extra puffs over this long;
 constexpr int SplashChunks = 50;			   // and blood chunk sprites thrown out (red blood only).
 
 static cvar_t* g_violence_hblood = nullptr;
@@ -133,7 +137,7 @@ static void EmitBloodTrail(TEMPENTITY* ent, float currenttime)
 	if (distance < spacing)
 		return;
 
-	const int baseColor = bloodColor == BLOOD_COLOR_RED ? BloodStreamRed : bloodColor;
+	const int baseColor = bloodColor == BLOOD_COLOR_RED ? BloodStreamRed : bloodColor == BLOOD_COLOR_YELLOW ? DarkYellow : bloodColor;
 	const int drops = std::min(static_cast<int>(distance / spacing), 8);
 	const Vector& gibVelocity = ent->entity.baseline.origin;
 
@@ -168,6 +172,12 @@ static void DelayedBloodPuff(TEMPENTITY* ent, float frametime, float currenttime
 	ent->die = currenttime;
 }
 
+// A random point in a body around its center: wider than deep, and taller upward.
+static Vector RandomInBody(float scale)
+{
+	return Vector{RANDOM_FLOAT(-8, 8), RANDOM_FLOAT(-8, 8), RANDOM_FLOAT(-12, 18)} * scale;
+}
+
 // A burst of blood where a gibbed body was, so it doesn't just vanish: a few of the game's hit blood puffs,
 // staggered, and red blood chunks thrown out the way the gibs fly.
 static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bloodColor, float scale)
@@ -180,6 +190,8 @@ static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bl
 	const int spray = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/bloodspray.spr");
 	const int drop = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/blood.spr");
 
+	const int puffColor = bloodColor == BLOOD_COLOR_RED ? SplashPuffRed : bloodColor == BLOOD_COLOR_YELLOW ? DarkYellow : bloodColor;
+
 	if (spray != 0 && drop != 0)
 	{
 		const int puffs = std::max(1, static_cast<int>(std::lround(SplashBloodPuffs * scale)));
@@ -187,11 +199,11 @@ static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bl
 
 		for (int i = 0; i < puffs; ++i)
 		{
-			Vector position = origin + Vector{RANDOM_FLOAT(-6, 6), RANDOM_FLOAT(-6, 6), RANDOM_FLOAT(-6, 6)} * scale;
+			Vector position = origin + RandomInBody(scale);
 
 			if (i == 0)
 			{
-				efx->R_BloodSprite(position, bloodColor, spray, drop, size);
+				efx->R_BloodSprite(position, puffColor, spray, drop, size);
 				continue;
 			}
 
@@ -200,7 +212,7 @@ static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bl
 				puff->flags |= FTENT_NOMODEL | FTENT_CLIENTCUSTOM;
 				puff->callback = DelayedBloodPuff;
 				puff->entity.curstate.fuser1 = now + RANDOM_FLOAT(0, SplashStagger);
-				puff->entity.curstate.iuser1 = bloodColor;
+				puff->entity.curstate.iuser1 = puffColor;
 				puff->entity.curstate.iuser2 = spray;
 				puff->entity.curstate.iuser3 = drop;
 				puff->entity.curstate.fuser2 = size;
@@ -219,7 +231,7 @@ static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bl
 
 	for (int i = 0; i < chunks; ++i)
 	{
-		Vector position = origin;
+		Vector position = origin + RandomInBody(scale);
 		// Random, a little upward, and pushed the way the gibs fly (away from the attack).
 		Vector velocity = Vector{RANDOM_FLOAT(-80, 80), RANDOM_FLOAT(-80, 80), RANDOM_FLOAT(-80, 80) + 60} - attackdir * 40;
 
