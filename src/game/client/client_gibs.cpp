@@ -38,8 +38,8 @@ static cvar_t* g_cl_gibvelscale = nullptr;
 // johnhalflife (jhl_fx_particlesystem): more gibs, lasting longer, each a little different in size and speed.
 constexpr int GibCountMultiplier = 7;		   // Death gibs; a single gib (a barnacle bite) stays one.
 constexpr int MaxUsesPerGibPiece = 3;		   // Each gib model piece at most this many times per death.
-constexpr int SoundingGibsPerDeath = 3;		   // Gibs that make bounce sounds,
-constexpr int BounceSoundsPerGib = 2;		   // each on its first bounces only.
+constexpr int SoundingGibsPerDeath = 4;		   // Gibs that make bounce sounds,
+constexpr int BounceSoundsPerGib = 3;		   // each on its first bounces only.
 constexpr float JhlGibLife = 60;			   // Seconds on the ground before fading (the giblife cvar otherwise).
 constexpr float JhlGibScaleVariation = 0.15f;  // Size +-15%.
 constexpr float JhlGibSpeedVariation = 0.2f;   // Speed +-20%.

@@ -82,9 +82,9 @@ Changes:
 * 60 s on the ground before fading, instead of `giblife`.
 * Each gib ±15% size and ±20% speed. Vanilla's model renderer ignores scale; `StudioSetUpTransform` now applies it
   to entities marked with `ScaledModelMarker` in `iuser4` only, so map models with a scale keyvalue are unchanged.
-* Bounce sounds: 3 gibs per death squelch (`debris/flesh*.wav`, through the SDK's temp entity bounce sounds:
-  louder the harder they land, random pitch) on their first 2 bounces only, so about 6 sounds over the first
-  second instead of dozens.
+* Bounce sounds: 4 gibs per death squelch (`debris/flesh*.wav`, through the SDK's temp entity bounce sounds:
+  louder the harder they land, random pitch) on their first 3 bounces only, so at most 12 sounds over the first
+  second or so instead of dozens.
 
 ## Testing
 
