@@ -22,7 +22,32 @@
 
 #include "cbase.h"
 #include "func_break.h"
+#include "jhl_effects.h"
 #include "UserMessages.h"
+
+// johnhalflife hit blood (jhl_fx_particlesystem); the size curve, colors and extra droplets are in UTIL_BloodDrips.
+constexpr float HeavyHitDamage = 30;		// Hits this hard spurt blood out the far side,
+constexpr float ExitSpurtLength = 1.5f;		// a short stream: particle speed is length x speed (UTIL_BloodStream).
+constexpr int ExitSpurtSpeed = 100;
+constexpr float HeadshotStreamLength = 4;	// A killing headshot streams back toward the shooter, shorter than the
+constexpr int HeadshotStreamSpeed = 150;	// sniper rifle's, which passes the whole distance as its length.
+
+// The last bullet headshot, so a death in the same frame knows it was one. The sniper rifle's are left out: it has its
+// own blood stream.
+static struct
+{
+	EHANDLE Victim;
+	float Time = -1;
+	Vector Position;
+	Vector Direction;
+} s_LastHeadshot;
+
+static bool s_SniperBullet = false;
+
+static int BloodStreamColor(int bloodColor)
+{
+	return bloodColor == BLOOD_COLOR_RED ? JhlBloodStreamRed : bloodColor == BLOOD_COLOR_YELLOW ? JhlBloodStreamYellow : bloodColor;
+}
 
 BEGIN_DATAMAP(CGib)
 DEFINE_FUNCTION(BounceGibTouch),
@@ -645,6 +670,13 @@ void CBaseMonster::Killed(CBaseEntity* attacker, int iGib)
 	}
 
 	Remember(bits_MEMORY_KILLED);
+
+	// A killing headshot: a stream of blood back toward the shooter.
+	if (s_LastHeadshot.Victim == this && s_LastHeadshot.Time == gpGlobals->time && UTIL_JhlParticleSystem())
+	{
+		UTIL_BloodStream(s_LastHeadshot.Position, s_LastHeadshot.Direction * -HeadshotStreamLength,
+			BloodStreamColor(BloodColor()), HeadshotStreamSpeed);
+	}
 
 	// clear the deceased's sound channels.(may have been firing or reloading when killed)
 	EmitSound(CHAN_WEAPON, "common/null.wav", 1, ATTN_NORM);
@@ -1294,6 +1326,24 @@ void CBaseMonster::TraceAttack(CBaseEntity* attacker, float flDamage, Vector vec
 		}
 
 		SpawnBlood(ptr->vecEndPos, BloodColor(), flDamage); // a little surface blood.
+
+		if (BloodColor() != DONT_BLEED && UTIL_JhlParticleSystem())
+		{
+			// A heavy hit spurts out the far side, along the bullet's path.
+			if (flDamage >= HeavyHitDamage)
+			{
+				UTIL_BloodStream(ptr->vecEndPos, vecDir * ExitSpurtLength, BloodStreamColor(BloodColor()), ExitSpurtSpeed);
+			}
+
+			if (ptr->iHitgroup == HITGROUP_HEAD && (bitsDamageType & DMG_BULLET) != 0 && !s_SniperBullet)
+			{
+				s_LastHeadshot.Victim = this;
+				s_LastHeadshot.Time = gpGlobals->time;
+				s_LastHeadshot.Position = ptr->vecEndPos;
+				s_LastHeadshot.Direction = vecDir;
+			}
+		}
+
 		TraceBleed(flDamage, vecDir, ptr, bitsDamageType);
 		AddMultiDamage(attacker, this, flDamage, bitsDamageType);
 	}
@@ -1425,7 +1475,9 @@ void CBaseEntity::FireBullets(unsigned int cShots, Vector vecSrc, Vector vecDirS
 					break;
 
 				case BULLET_PLAYER_762:
+					s_SniperBullet = true;
 					pEntity->TraceAttack(attacker, GetSkillFloat("plr_762_bullet"sv), vecDir, &tr, DMG_BULLET);
+					s_SniperBullet = false;
 					TEXTURETYPE_PlaySound(&tr, vecSrc, vecEnd, iBulletType);
 					DecalGunshot(&tr, iBulletType);
 					break;
@@ -1523,7 +1575,9 @@ Vector CBaseEntity::FireBulletsPlayer(unsigned int cShots, Vector vecSrc, Vector
 					break;
 
 				case BULLET_PLAYER_762:
+					s_SniperBullet = true;
 					pEntity->TraceAttack(attacker, GetSkillFloat("plr_762_bullet"sv), vecDir, &tr, DMG_BULLET);
+					s_SniperBullet = false;
 
 					if (tr.pHit && tr.pHit->v.takedamage != DAMAGE_NO)
 					{

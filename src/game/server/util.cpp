@@ -23,6 +23,7 @@
 #include <limits>
 
 #include "cbase.h"
+#include "jhl_effects.h"
 #include "shake.h"
 #include "UserMessages.h"
 
@@ -997,16 +998,43 @@ void UTIL_BloodDrips(const Vector& origin, const Vector& direction, int color, i
 	if (amount > 255)
 		amount = 255;
 
-	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, origin);
-	WRITE_BYTE(TE_BLOODSPRITE);
-	WRITE_COORD(origin.x); // pos
-	WRITE_COORD(origin.y);
-	WRITE_COORD(origin.z);
-	WRITE_SHORT(g_sModelIndexBloodSpray);		// initial sprite model
-	WRITE_SHORT(g_sModelIndexBloodDrop);		// droplet sprite models
-	WRITE_BYTE(color);							// color index into host_basepal
-	WRITE_BYTE(std::clamp(amount / 10, 3, 16)); // size
-	MESSAGE_END();
+	int size = std::clamp(amount / 10, 3, 16);
+	const bool jhl = UTIL_JhlParticleSystem();
+
+	if (jhl)
+	{
+		// A gentler curve, so hits show their weapon's power instead of most sitting at the minimum of 3, never
+		// smaller than the original: MP5 3, Glock 4, M249 5, Desert Eagle and .357 7, sniper rifle 11.
+		size = std::clamp(static_cast<int>(std::lround(1 + std::sqrt(static_cast<float>(amount)))), size, 16);
+
+		if (color == BLOOD_COLOR_RED)
+			color = JhlBloodRed;
+		else if (color == BLOOD_COLOR_YELLOW)
+			color = JhlBloodYellow;
+	}
+
+	const auto bloodSprite = [&](int spriteSize)
+	{
+		MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, origin);
+		WRITE_BYTE(TE_BLOODSPRITE);
+		WRITE_COORD(origin.x); // pos
+		WRITE_COORD(origin.y);
+		WRITE_COORD(origin.z);
+		WRITE_SHORT(g_sModelIndexBloodSpray); // initial sprite model
+		WRITE_SHORT(g_sModelIndexBloodDrop);  // droplet sprite models
+		WRITE_BYTE(color);					  // color index into host_basepal
+		WRITE_BYTE(spriteSize);				  // size
+		MESSAGE_END();
+	};
+
+	bloodSprite(size);
+
+	// The engine always throws 14 droplets; a second, smaller burst adds more, shorter-flying ones, its puff hidden
+	// inside the first.
+	if (jhl)
+	{
+		bloodSprite(std::max(2, static_cast<int>(std::lround(size * 0.6f))));
+	}
 }
 
 Vector UTIL_RandomBloodVector()

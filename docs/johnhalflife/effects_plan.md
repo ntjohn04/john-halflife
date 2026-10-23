@@ -93,6 +93,21 @@ Changes:
 
 ## Blood (in progress)
 
+* **Hit blood** (server: `UTIL_BloodDrips` in `util.cpp`, `CBaseMonster::TraceAttack` and `Killed` in
+  `combat.cpp`, constants in `jhl_effects.h`). Server effects, so the toggle is read from the client's
+  `jhl_fx_particlesystem` (shared cvars in single player; a dedicated server always uses them). Vanilla: one
+  `TE_BLOODSPRITE` (`bloodspray.spr` puff + 14 `blood.spr` droplets) sized damage/10 clamped to 3-16, so nearly
+  every gun hit sat at 3 (a Desert Eagle body shot puffed like an MP5's); only the head multiplier (3x) varies.
+  * Size `1 + sqrt(damage)`, never below vanilla, capped at 16: MP5 3, Glock 4, crowbar 4, M249 5, wrench 6,
+    Desert Eagle 7, .357 7, sniper 11; headshots 5 (MP5) to 16.
+  * Colors 74 (red) and 198 (yellow), like the gib splash, instead of 247/195 and their bright neighbours.
+  * A second burst at 0.6x size on every hit: the engine's droplet count is fixed at 14, so this adds 14 smaller,
+    shorter-flying ones (its puff hides in the first).
+  * Hits of 30+ damage (after the head multiplier: Desert Eagle, .357, sniper, heavier headshots) spurt a short
+    blood stream out the far side along the bullet's path (length 1.5, speed 100).
+  * A killing bullet headshot streams back toward the shooter (length 4, speed 150): `TraceAttack` remembers the
+    last bullet headshot and `Killed` checks it was this monster in this frame, so non-fatal headshots and later
+    explosion kills don't. Not for the sniper rifle, which has its own stream.
 * **Gib splash** (`client_gibs.cpp`, `SpawnGibSplash`): vanilla draws nothing where a gibbed body was (and
   explosion damage skips the hit blood), so the body seemed to vanish. Now, on each death that gibs: 3 of the
   game's hit blood puffs (`R_BloodSprite`, size 16, the game's maximum) spread over a body-shaped area (±8
