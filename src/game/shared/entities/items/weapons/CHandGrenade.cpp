@@ -31,12 +31,16 @@ void CHandGrenade::OnCreate()
 	m_WorldModel = pev->model = MAKE_STRING("models/w_grenade.mdl");
 }
 
+// Placeholder until a real pin pull sound is chosen (see docs/johnhalflife/weapons.md#sounds).
+constexpr const char* GrenadePinPullSound = "weapons/mine_deploy.wav";
+
 void CHandGrenade::Precache()
 {
 	CBasePlayerWeapon::Precache();
 	PrecacheModel(STRING(m_WorldModel));
 	PrecacheModel("models/v_grenade.mdl");
 	PrecacheModel("models/p_grenade.mdl");
+	PrecacheSound(GrenadePinPullSound);
 }
 
 bool CHandGrenade::GetWeaponInfo(WeaponInfo& info)
@@ -111,6 +115,7 @@ void CHandGrenade::PrimaryAttack()
 		m_flReleaseThrow = 0;
 
 		SendWeaponAnim(HANDGRENADE_PINPULL);
+		EMIT_SOUND_PREDICTED(m_pPlayer, CHAN_ITEM, GrenadePinPullSound, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.5;
 	}
 }
@@ -164,6 +169,7 @@ void CHandGrenade::WeaponIdle()
 
 		// player "shoot" animation
 		m_pPlayer->SetAnimation(PLAYER_ATTACK1);
+		ThrowKick(1.0f);
 
 		// m_flReleaseThrow = 0;
 		m_flStartThrow = 0;

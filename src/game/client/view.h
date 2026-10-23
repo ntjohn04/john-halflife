@@ -20,6 +20,16 @@ inline Vector v_client_aimangles;
 inline Vector v_crosshairangle;
 
 void V_StartPitchDrift();
+
+/**
+ *	@brief A smooth view kick from a weapon action (melee swing, throw), skipped with jhl_weapons_smoothrecoil 0.
+ */
+void V_WeaponKick(const Vector& kick, float spring, float damping);
+
+/**
+ *	@brief Starts or stops the gluon gun's sustained view drift for the local player.
+ */
+void V_SetEgonFiring(bool firing);
 void V_StopPitchDrift();
 
 void V_GetInEyePos(int entity, Vector& origin, Vector& angles);

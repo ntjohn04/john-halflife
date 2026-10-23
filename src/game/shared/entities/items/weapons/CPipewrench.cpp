@@ -146,6 +146,8 @@ bool CPipewrench::Swing(const bool bFirst)
 		PLAYBACK_EVENT_FULL(FEV_NOTHOST, m_pPlayer->edict(), m_usPipewrench,
 			0.0, g_vecZero, g_vecZero, 0, 0, 0,
 			0.0, 0, static_cast<int>(tr.flFraction < 1));
+
+		MeleeKick(1.5f, false);
 	}
 
 
@@ -177,6 +179,8 @@ bool CPipewrench::Swing(const bool bFirst)
 	}
 	else
 	{
+		MeleeKick(1.5f, true);
+
 		switch (((m_iSwing++) % 2) + 1)
 		{
 		case 0:
@@ -337,6 +341,9 @@ void CPipewrench::BigSwing()
 
 	EmitSoundDyn(CHAN_WEAPON, "weapons/pwrench_big_miss.wav", VOL_NORM, ATTN_NORM, 0, 94 + RANDOM_LONG(0, 15));
 
+	// The charged swing, heavier still.
+	MeleeKick(2.4f, false);
+
 	if (tr.flFraction >= 1.0)
 	{
 		// miss
@@ -351,6 +358,8 @@ void CPipewrench::BigSwing()
 	}
 	else
 	{
+		MeleeKick(2.4f, true);
+
 		SendWeaponAnim(PIPEWRENCH_BIG_SWING_HIT);
 
 		// player "shoot" animation

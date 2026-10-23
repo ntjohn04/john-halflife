@@ -230,7 +230,7 @@ bool CBasePlayerWeapon::DefaultDeploy(const char* szViewModel, const char* szWea
 // Played when switching to a weapon, by view model (the satchel's charge and radio sound different).
 // Half-Life weapons use MMod's sounds, installed by mmod_port. Opposing Force weapons without an MMod
 // counterpart get the crowbar's sound as an obvious placeholder until they have their own.
-// The snark and spore launcher are left out: their draw animations already play a sound.
+// The snark and shock rifle are left out: their draw animations already play a sound.
 static constexpr const char* DeploySoundPlaceholder = "weapons/weapon_draw_crowbar.wav";
 
 static constexpr WeaponDeploySound WeaponDeploySounds[] = {
@@ -257,7 +257,7 @@ static constexpr WeaponDeploySound WeaponDeploySounds[] = {
 	{"models/v_desert_eagle.mdl", DeploySoundPlaceholder},
 	{"models/v_saw.mdl", DeploySoundPlaceholder},
 	{"models/v_m40a1.mdl", DeploySoundPlaceholder},
-	{"models/v_shock.mdl", DeploySoundPlaceholder},
+	{"models/v_spore_launcher.mdl", DeploySoundPlaceholder},
 	{"models/v_penguin.mdl", DeploySoundPlaceholder},
 };
 
@@ -331,6 +331,33 @@ float CBasePlayerWeapon::GetCurrentSpread(const SpreadSettings& settings) const
 	const float recoveryTime = std::max(0.f, UTIL_WeaponTimeBase() - m_flNextPrimaryAttack - RecoveryDelay);
 
 	return std::clamp(m_flSpread - settings.RecoveryRate * recoveryTime, settings.Min, settings.Max);
+}
+
+void CBasePlayerWeapon::WeaponKick(const Vector& kick, float spring, float damping)
+{
+#ifdef CLIENT_DLL
+	HUD_WeaponKick(kick, spring, damping);
+#endif
+}
+
+void CBasePlayerWeapon::MeleeKick(float strength, bool hit)
+{
+	if (hit)
+	{
+		// Pushed back a little by the impact.
+		WeaponKick({0.8f * strength, 0, 0}, 220, 16);
+		return;
+	}
+
+	// Leaning into the swing: down and to one side, with a little roll. Heavier weapons swing wider and settle slower.
+	const float side = RANDOM_LONG(0, 1) != 0 ? 1.f : -1.f;
+	WeaponKick({-1.0f * strength, 0.8f * strength * side, 0.6f * strength * side}, 90 / strength, 10);
+}
+
+void CBasePlayerWeapon::ThrowKick(float strength)
+{
+	// The arm follows through forward and down.
+	WeaponKick({-0.9f * strength, 0, 0.3f * strength}, 50, 10);
 }
 
 float CBasePlayerWeapon::FireSpread(const SpreadSettings& settings)

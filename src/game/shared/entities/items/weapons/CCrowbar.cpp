@@ -124,6 +124,8 @@ bool CCrowbar::Swing(bool fFirst)
 		PLAYBACK_EVENT_FULL(FEV_NOTHOST, m_pPlayer->edict(), m_usCrowbar,
 			0.0, g_vecZero, g_vecZero, 0, 0, 0,
 			0.0, 0, 0.0);
+
+		MeleeKick(1.0f, false);
 	}
 
 
@@ -140,6 +142,8 @@ bool CCrowbar::Swing(bool fFirst)
 	}
 	else
 	{
+		MeleeKick(1.0f, true);
+
 		switch (((m_iSwing++) % 2) + 1)
 		{
 		case 0:

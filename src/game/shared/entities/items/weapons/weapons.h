@@ -455,6 +455,30 @@ public:
 	 */
 	float FireSpread(const SpreadSettings& settings);
 
+	/**
+	 *	@brief Kicks the local player's view with a smooth punch, predicted on the client only (no network traffic).
+	 *	Does nothing on the server, or with jhl_weapons_smoothrecoil 0.
+	 *	@param kick Pitch (positive is up), yaw and roll, in degrees.
+	 */
+	void WeaponKick(const Vector& kick, float spring, float damping);
+
+	/**
+	 *	@brief Camera motion for a melee swing (@p hit false, on every first swing) or for connecting with something
+	 *	(@p hit true, a short sharp jolt that also settles the swing faster, since hits recover sooner).
+	 *	@param strength 1 for the crowbar; smaller for lighter weapons, larger for heavier ones.
+	 */
+	void MeleeKick(float strength, bool hit);
+
+	/**
+	 *	@brief Camera motion for throwing or dropping something. @p strength 1 is a grenade throw.
+	 */
+	void ThrowKick(float strength);
+
+	/**
+	 *	@brief Time between scope toggles, shared by the crossbow and the sniper rifle (originally 1 and 0.5 seconds).
+	 */
+	static constexpr float ScopeToggleDelay = 0.3f;
+
 	void SetWeaponModels(const char* viewModel, const char* weaponModel);
 
 	void PrintState();

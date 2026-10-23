@@ -148,7 +148,7 @@ void CSniperRifle::SecondaryAttack()
 	// TODO: this doesn't really make sense
 	pev->nextthink = 0.1;
 
-	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.5;
+	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + ScopeToggleDelay;
 }
 
 void CSniperRifle::Reload()

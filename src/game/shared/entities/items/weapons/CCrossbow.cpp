@@ -78,6 +78,7 @@ void CCrossbowBolt::Precache()
 {
 	PrecacheModel("models/crossbow_bolt.mdl");
 	PrecacheSound("weapons/xbow_hitbod1.wav");
+	PrecacheSound("weapons/sniper_zoom.wav");
 	PrecacheSound("weapons/xbow_hitbod2.wav");
 	PrecacheSound("weapons/xbow_fly1.wav");
 	PrecacheSound("weapons/xbow_hit1.wav");
@@ -384,6 +385,8 @@ void CCrossbow::FireBolt()
 
 void CCrossbow::SecondaryAttack()
 {
+	m_pPlayer->EmitSound(CHAN_ITEM, "weapons/sniper_zoom.wav", VOL_NORM, ATTN_NORM);
+
 	if (m_pPlayer->m_iFOV != 0)
 	{
 		m_pPlayer->m_iFOV = 0; // 0 means reset to default fov
@@ -394,7 +397,7 @@ void CCrossbow::SecondaryAttack()
 	}
 
 	pev->nextthink = UTIL_WeaponTimeBase() + 0.1;
-	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 1.0;
+	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + ScopeToggleDelay;
 }
 
 void CCrossbow::Reload()

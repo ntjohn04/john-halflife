@@ -110,6 +110,8 @@ bool CKnife::Swing(const bool bFirst)
 		PLAYBACK_EVENT_FULL(FEV_NOTHOST, m_pPlayer->edict(), m_usKnife,
 			0.0, g_vecZero, g_vecZero, 0, 0, 0,
 			0.0, 0, 0.0);
+
+		MeleeKick(0.6f, false);
 	}
 
 
@@ -126,6 +128,8 @@ bool CKnife::Swing(const bool bFirst)
 	}
 	else
 	{
+		MeleeKick(0.6f, true);
+
 		switch (((m_iSwing++) % 2) + 1)
 		{
 		case 0:

@@ -20,6 +20,11 @@ bool CL_IsDead();
 
 int HUD_GetWeaponAnim();
 void HUD_SendWeaponAnim(int iAnim, int body, bool force);
+
+/**
+ *	@brief Smooth view kick for the local player, applied once per predicted command (see V_WeaponKick).
+ */
+void HUD_WeaponKick(const Vector& kick, float spring, float damping);
 void HUD_PlaybackEvent(int flags, const edict_t* pInvoker, unsigned short eventindex, float delay, const float* origin, const float* angles, float fparam1, float fparam2, int iparam1, int iparam2, int bparam1, int bparam2);
 void HUD_SetMaxSpeed(const edict_t* ed, float speed);
 

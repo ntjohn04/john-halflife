@@ -629,6 +629,75 @@ struct viewinterp_t
 	int CurrentAngle;
 };
 
+// Gluon gun drift: a slow, smooth wander of the view while firing, none at first, growing over a few seconds of
+// sustained fire, then fading out once it stops.
+static float g_EgonFireStart = -1;
+static float g_EgonStopTime = -1;
+static float g_EgonStopAmount = 0;
+
+static float V_EgonDriftAmount(float now)
+{
+	constexpr float RampTime = 3;
+	constexpr float FadeTime = 0.4f;
+
+	if (g_EgonFireStart >= 0)
+	{
+		const float ramp = std::min(1.f, (now - g_EgonFireStart) / RampTime);
+		return ramp * ramp;
+	}
+
+	if (g_EgonStopTime >= 0 && now - g_EgonStopTime < FadeTime)
+	{
+		return g_EgonStopAmount * (1 - (now - g_EgonStopTime) / FadeTime);
+	}
+
+	return 0;
+}
+
+void V_SetEgonFiring(bool firing)
+{
+	const float now = gEngfuncs.GetClientTime();
+
+	if (firing)
+	{
+		if (g_EgonFireStart < 0)
+		{
+			g_EgonFireStart = now;
+		}
+	}
+	else if (g_EgonFireStart >= 0)
+	{
+		g_EgonStopAmount = V_EgonDriftAmount(now);
+		g_EgonFireStart = -1;
+		g_EgonStopTime = now;
+	}
+}
+
+static void V_AddEgonDrift(ref_params_t* pparams)
+{
+	const float now = gEngfuncs.GetClientTime();
+
+	// Don't keep drifting through death or a new map (the client clock restarts).
+	if (g_EgonFireStart >= 0 && (pparams->health <= 0 || now < g_EgonFireStart))
+	{
+		g_EgonFireStart = -1;
+		g_EgonStopTime = -1;
+	}
+
+	if (0 == jhl_weapons_smoothrecoil->value)
+		return;
+
+	const float amount = V_EgonDriftAmount(now);
+
+	if (amount <= 0)
+		return;
+
+	// Up to about half a degree, made of sines at unrelated rates so it never visibly repeats.
+	constexpr float MaxDrift = 0.4f;
+	pparams->viewangles[PITCH] += MaxDrift * amount * (0.6f * std::sin(now * 2.3f) + 0.4f * std::sin(now * 5.7f + 1.3f));
+	pparams->viewangles[YAW] += MaxDrift * amount * (0.6f * std::sin(now * 1.9f + 2.1f) + 0.4f * std::sin(now * 4.9f + 0.4f));
+}
+
 /*
 ==================
 V_CalcRefdef
@@ -873,6 +942,8 @@ void V_CalcNormalRefdef(ref_params_t* pparams)
 
 	// Include client side punch, too
 	pparams->viewangles = pparams->viewangles + ev_punchangle;
+
+	V_AddEgonDrift(pparams);
 
 	V_DropPunchAngle(pparams->frametime, ev_punchangle);
 	V_UpdatePunchSpring(pparams->frametime);
@@ -1897,6 +1968,14 @@ void V_SmoothPunch(const Vector& kick, float spring, float damping)
 
 	ev_punchspring = spring;
 	ev_punchdamping = damping;
+}
+
+void V_WeaponKick(const Vector& kick, float spring, float damping)
+{
+	if (0 == jhl_weapons_smoothrecoil->value)
+		return;
+
+	V_SmoothPunch(kick, spring, damping);
 }
 
 /*

@@ -161,4 +161,5 @@ Weapon prediction also syncs the current spread through `weapon_data_t.fuser4` (
 ## Open items
 
 * Opposing Force weapons without an MMod counterpart still use the crowbar's switch sound as a placeholder.
+* The hand grenade's pin pull sound is a placeholder (the tripmine's click).
 * HUD work is next.

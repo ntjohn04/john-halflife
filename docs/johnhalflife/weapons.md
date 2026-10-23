@@ -23,6 +23,25 @@ lands between MMod's and the original. The profiles are in `src/game/client/ev_h
 | RPG | 4.65–5.7 | 85 / 12 |
 | Sniper rifle | 2.5–3.05 | 85 / 12 |
 
+### Melee, throws and the gluon gun
+Also `jhl_weapons_smoothrecoil`. Weapons that had no recoil get small camera motions, through
+`CBasePlayerWeapon::WeaponKick` (`weapons_shared.cpp`): a smooth punch applied on the client the first time a
+command is predicted (like the weapon animation), so it's instant and sends nothing over the network. It does
+nothing on the server, so with client weapon prediction off (`cl_lw 0`) there's none.
+
+* **Melee** (`MeleeKick`): every swing leans down and to a random side with a little roll; connecting adds a
+  short sharp jolt back, which also settles the swing faster, matching the quicker recovery after a hit.
+  Strength: knife 0.6, crowbar 1, pipe wrench 1.5, its charged swing 2.4 (heavier swings are wider and slower).
+* **Throws** (`ThrowKick`): a hand grenade throw dips the view forward (strength 1); the snark, penguin and
+  satchel tosses barely do (0.4).
+* **Gluon gun** (`V_AddEgonDrift` in `view.cpp`): no kick, but while firing the view wanders slowly and
+  smoothly in any direction, from nothing at first up to about half a degree after 3 seconds of sustained fire,
+  fading out over 0.4 seconds after it stops.
+
+### Scopes
+The crossbow and the sniper rifle can toggle their scope every 0.3 seconds (`ScopeToggleDelay`; originally 1
+and 0.5 seconds), and the crossbow plays the sniper rifle's `weapons/sniper_zoom.wav`.
+
 ### Accuracy
 Spread grows per shot and recovers shortly after the weapon is ready again (`FireSpread` in
 `weapons_shared.cpp`). It always ends at the vanilla value, so sustained fire is never less accurate
@@ -46,13 +65,18 @@ Switching to a weapon plays a draw sound from a table keyed by view model (`weap
 
 * Half-Life weapons use MMod's draw sounds (15 files, tracked by `mmod_port`).
 * Opposing Force weapons without an MMod counterpart use the crowbar's sound as a placeholder.
-* The snark and spore launcher are left out; their own deploy animations already make a sound.
+* The snark and shock rifle are left out; their own deploy animations already make a sound.
 * Played from the server: weapon switches go through the `selectweapon` command and are never predicted,
   so a predicted sound would skip the local player.
 
 ### Weapon pickup
 Picking up a weapon or a weapon box plays one of the stock `items/gunpickup1-4.wav` at random. Vanilla
 only plays `gunpickup2`, which batteries still use. Ammo pickups are unchanged (`9mmclip1`).
+
+### Grenade pin
+Pulling the hand grenade's pin plays a sound, predicted like the fire sounds. **Placeholder:**
+`weapons/mine_deploy.wav` (the tripmine's click), `GrenadePinPullSound` in `CHandGrenade.cpp`; MMod has a
+real `grenade_pinpull.wav`.
 
 ### RPG laser toggle
 Turning the RPG's laser guidance on plays the Desert Eagle's `weapons/desert_eagle_sight.wav`, and turning

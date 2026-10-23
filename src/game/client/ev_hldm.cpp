@@ -68,6 +68,7 @@ static int g_tracerCount[MAX_PLAYERS];
 
 void V_PunchAxis(int axis, float punch);
 bool V_WeaponRecoil(float pitchMin, float pitchMax, float jitter, float spring, float damping);
+void V_SetEgonFiring(bool firing);
 
 /**
  *	@brief Smooth recoil settings for a weapon (see V_WeaponRecoil).
@@ -1420,6 +1421,11 @@ void EV_EgonFire(event_args_t* args)
 	iFireMode = args->iparam2;
 	const bool iStartup = 0 != args->bparam1;
 
+	if (EV_IsLocal(idx))
+	{
+		V_SetEgonFiring(true);
+	}
+
 
 	if (iStartup)
 	{
@@ -1528,6 +1534,8 @@ void EV_EgonStop(event_args_t* args)
 
 	if (EV_IsLocal(idx))
 	{
+		V_SetEgonFiring(false);
+
 		if (pBeam)
 		{
 			pBeam->die = 0.0;
