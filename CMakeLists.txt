@@ -237,6 +237,18 @@ install(FILES
 # johnhalflife's settings dialog and menu text (docs/johnhalflife/README.md#settings).
 install(DIRECTORY config/mod/ DESTINATION .)
 
+# Valve menu files used unchanged, copied from the player's own install (see the script).
+function(jhl_install_valve_menu target)
+	set(own "${ARGV1}")
+	set(hd "${ARGV2}")
+	install(CODE "set(JHL_TARGET \"${target}\")
+		set(JHL_OWN \"${own}\")
+		set(JHL_HD \"${hd}\")
+		include(\"${CMAKE_CURRENT_SOURCE_DIR}/cmake/JhlInstallValveMenu.cmake\")")
+endfunction()
+
+jhl_install_valve_menu(johnhalflife "" HD)
+
 # CMake doesn't currently support installing imported libraries of type UNKNOWN.
 # See https://gitlab.kitware.com/cmake/cmake/-/issues/22406
 #install(IMPORTED_RUNTIME_ARTIFACTS OpenAL::OpenAL
@@ -245,8 +257,8 @@ install(FILES $<TARGET_FILE:OpenAL::OpenAL> DESTINATION cl_dlls)
 
 # John Half-Life's expansions: thin mod folders next to the base one that borrow all its content through
 # fallback_dir, each with its own name, main menu and saves (docs/johnhalflife/README.md#expansions).
-# valveDir is the matching Valve game, whose menu background, logo and icon are copied from the player's own
-# install, never committed; without one the expansion keeps Half-Life's.
+# valveDir is the matching Valve game, whose menu art overrides Half-Life's; without one the expansion keeps
+# Half-Life's, including its widescreen background.
 function(jhl_install_expansion name)
 	set(valveDir "${ARGV1}")
 	set(dir ../johnhalflife_${name})
@@ -267,23 +279,11 @@ function(jhl_install_expansion name)
 	install(DIRECTORY config/mod/ DESTINATION ${dir})
 	install(DIRECTORY config/expansions/${name}/ DESTINATION ${dir})
 
-	if (NOT valveDir)
-		return()
+	if (valveDir)
+		jhl_install_valve_menu(johnhalflife_${name} ${valveDir})
+	else()
+		jhl_install_valve_menu(johnhalflife_${name} "" HD)
 	endif()
-
-	install(CODE "set(valve \"\${CMAKE_INSTALL_PREFIX}/../${valveDir}\")
-		set(expansion \"\${CMAKE_INSTALL_PREFIX}/../johnhalflife_${name}\")
-		if (EXISTS \"\${valve}/resource/background\")
-			file(GLOB background \"\${valve}/resource/background/*\")
-			file(COPY \${background} DESTINATION \"\${expansion}/resource/background\")
-			file(GLOB menuArt \"\${valve}/resource/game_menu*\" \"\${valve}/resource/menu_*\" \"\${valve}/resource/Background*Layout.txt\")
-			if (menuArt)
-				file(COPY \${menuArt} DESTINATION \"\${expansion}/resource\")
-			endif()
-			file(COPY \"\${valve}/game.ico\" \"\${valve}/game.tga\" DESTINATION \"\${expansion}\")
-		else()
-			message(WARNING \"${valveDir} not found next to the mod; johnhalflife_${name} will use Half-Life's menu\")
-		endif()")
 endfunction()
 
 jhl_install_expansion(op4 gearbox)

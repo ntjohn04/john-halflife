@@ -42,11 +42,9 @@ bool CHudProjectInfo::Draw(float flTime)
 	{
 		const int xPos = 20;
 
-		int lineWidth, lineHeight;
-		GetConsoleStringSize("", &lineWidth, &lineHeight);
-
-		// Shrink line height a bit.
-		lineHeight = static_cast<int>(lineHeight * 0.9f);
+		// The lines are drawn in the HUD font, so space them by its height. The console font's height was used before,
+		// which is smaller than the HUD font's in the 25th anniversary engine and made the lines overlap.
+		const int lineHeight = gHUD.m_scrinfo.iCharHeight;
 
 		int yPos = static_cast<int>(HudHeight * 0.05);
 

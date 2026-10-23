@@ -43,15 +43,21 @@ Options → Multiplayer → **John Settings...** lists the settings above plus a
 scale, field of view, frame rate limit, vertical sync, raw mouse input). It's driven by `config/mod/user.scr`,
 installed with the build together with the menu files in `config/mod/resource/`:
 
-* `gameui_english.txt`: the Unified SDK's copy, with the dialog and the Lock tab retitled "John Settings".
-* `OptionsSubMultiplayer.res`: Valve's layout, with the Advanced... button renamed.
-* `OptionsSubAdvanced.res`: Valve's layout of the Lock tab, with the content lock hidden and a note pointing
-  to the settings.
-* The Video tab is Valve's, but the menu text marks HD models and low video quality "(recommended off)" and
-  the software renderer "(not recommended)". These options aren't settings but engine commands
-  (`_setrenderer`, `_sethdmodels`, `_set_vid_level`) stored in the registry key shared by every GoldSrc game
-  (`HKCU\Software\Valve\Half-Life\Settings`), applied on restart. So they can't be listed in John Settings,
-  and the mod leaves their values alone rather than change them for vanilla too.
+* `gameui_english.txt`: the Unified SDK's copy (it has every 25th anniversary string), with the dialog titled
+  "John Settings", the Lock tab titled "Content", "Enable original models (recommended)" and the software
+  renderer "(not recommended)".
+* `OptionsSubMultiplayer.res`: the 25th anniversary layout, with the Advanced... button renamed.
+* `OptionsSubAdvanced.res`: the 25th anniversary layout of the Lock tab, which now also holds Valve's addon
+  content, original models and detail texture options; the content lock is hidden and its label points to the
+  settings.
+* These options aren't settings but engine commands (`_setrenderer`, `_sethdmodels`, `_setaddons_folder`)
+  stored in the registry key shared by every GoldSrc game (`HKCU\Software\Valve\Half-Life\Settings`), applied
+  on restart. So they can't be listed in John Settings, and the mod leaves their values alone rather than
+  change them for vanilla too.
+
+The two `.res` files are copies of Valve's for a specific version of the game (now the 25th anniversary one).
+If Valve changes those tabs again, rebase them on the new files rather than keep the old layout: a layout that
+doesn't mention one of the tab's controls leaves it at a default position (a stray checkbox).
 
 **Don't use `LIST` (dropdown) entries unless the values are exactly 0, 1, 2, ... in order.** GameUI treats a
 list's stored value as an item index: when the dialog opens it reads the setting's current value as the
@@ -107,13 +113,18 @@ a copy of the game code.
 | `johnhalflife_bs` | John Half-Life: Blue Shift | `ba_tram1` / `ba_hazard1` | `config/expansions/bs/` |
 | `johnhalflife_uplink` | John Half-Life: Uplink | `hldemo1` / `t0a0` | `config/expansions/uplink/` |
 
-* All four share one main menu (`config/mod/resource/GameMenu.res`): New Game is back and the Unified SDK's
-  Campaign Select is gone (its map, `hlu_campaignselect`, still works from the console). Uplink has no menu art
-  of its own and keeps Half-Life's, as in MMod.
-* The build installs the game code, `delta.lst` and the settings files into each folder. Each expansion's
-  menu background (and Blue Shift's background layout), logo and icon are copied from the player's own Valve
-  install (`gearbox`, `bshift`) at install time and never committed (`jhl_install_expansion` in
-  `CMakeLists.txt`). Blue Shift keeps multiplayer, unlike vanilla, so John Settings stays in the same place.
+* The build installs the game code, `delta.lst` and the settings files into each folder.
+* Menu files used unchanged are copied from the player's own Valve install at install time, so they match their
+  version of the game and are never committed (`cmake/JhlInstallValveMenu.cmake`): Half-Life's main menu
+  (`GameMenu.res`, shared by all four, so the Unified SDK's Campaign Select is gone; its map,
+  `hlu_campaignselect`, still works from the console), background layouts and tiles, logo and icon, then the
+  folder's own game's (`gearbox`, `bshift`) over them.
+* John Half-Life and Uplink use Half-Life's art and set the 25th anniversary `liblist.gam` keys
+  `hd_background "1"` (the 21:9 background in `HD_BackgroundLayout.txt`: 105 tiles of 256x256 at
+  `resolution 3840 1600`) and `animated_title "1"`, like Valve's `valve` folder. Opposing Force and Blue Shift
+  don't, like `gearbox` and `bshift`. Without them, or without the layout in the mod's own folder, the 25th
+  anniversary main menu was black.
+* Blue Shift keeps multiplayer, unlike vanilla, so John Settings stays in the same place.
 * Settings and saves are per folder, as with the real games.
 * The engine adds the `fallback_dir` folder under the search path ID `GAME_FALLBACK`. The Unified SDK reads its
   config files (model/sound replacement, skill, server config, map cycle) from `GAMECONFIG`, the mod's own folder
