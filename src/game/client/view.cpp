@@ -637,13 +637,15 @@ static float g_EgonStopAmount = 0;
 
 static float V_EgonDriftAmount(float now)
 {
-	constexpr float RampTime = 3;
+	constexpr float RampTime = 2;
 	constexpr float FadeTime = 0.4f;
 
 	if (g_EgonFireStart >= 0)
 	{
+		// Already a little from the start, since it's subtle, then growing.
+		constexpr float StartAmount = 0.4f;
 		const float ramp = std::min(1.f, (now - g_EgonFireStart) / RampTime);
-		return ramp * ramp;
+		return StartAmount + (1 - StartAmount) * ramp;
 	}
 
 	if (g_EgonStopTime >= 0 && now - g_EgonStopTime < FadeTime)
@@ -1972,6 +1974,8 @@ void V_SmoothPunch(const Vector& kick, float spring, float damping)
 
 void V_WeaponKick(const Vector& kick, float spring, float damping)
 {
+	gEngfuncs.Con_DPrintf("V_WeaponKick: %.2f %.2f %.2f, spring %.0f, damping %.0f\n", kick[PITCH], kick[YAW], kick[ROLL], spring, damping);
+
 	if (0 == jhl_weapons_smoothrecoil->value)
 		return;
 

@@ -356,8 +356,8 @@ void CBasePlayerWeapon::MeleeKick(float strength, bool hit)
 
 void CBasePlayerWeapon::ThrowKick(float strength)
 {
-	// The arm follows through forward and down.
-	WeaponKick({-0.9f * strength, 0, 0.3f * strength}, 50, 10);
+	// The arm follows through forward and down, rolling slightly with it.
+	WeaponKick({-0.9f * strength, 0.2f * strength, 0.5f * strength}, 50, 10);
 }
 
 float CBasePlayerWeapon::FireSpread(const SpreadSettings& settings)

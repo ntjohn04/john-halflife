@@ -31,6 +31,9 @@ enum handgrenade_e
 
 class CHandGrenade : public CBasePlayerWeapon
 {
+	DECLARE_CLASS(CHandGrenade, CBasePlayerWeapon);
+	DECLARE_DATAMAP();
+
 public:
 	void OnCreate() override;
 	void Precache() override;
@@ -57,6 +60,8 @@ public:
 	void SetWeaponData(const weapon_data_t& data) override;
 
 private:
+	void PinPullSoundThink();
+
 	float m_flStartThrow;
 	float m_flReleaseThrow;
 };

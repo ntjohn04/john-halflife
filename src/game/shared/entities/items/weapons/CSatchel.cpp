@@ -227,7 +227,7 @@ void CSatchel::Throw()
 
 		// player "shoot" animation
 		m_pPlayer->SetAnimation(PLAYER_ATTACK1);
-		ThrowKick(0.4f);
+		ThrowKick(0.6f);
 
 		m_chargeReady = 1;
 

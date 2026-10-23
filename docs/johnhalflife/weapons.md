@@ -31,12 +31,15 @@ nothing on the server, so with client weapon prediction off (`cl_lw 0`) there's 
 
 * **Melee** (`MeleeKick`): every swing leans down and to a random side with a little roll; connecting adds a
   short sharp jolt back, which also settles the swing faster, matching the quicker recovery after a hit.
-  Strength: knife 0.6, crowbar 1, pipe wrench 1.5, its charged swing 2.4 (heavier swings are wider and slower).
-* **Throws** (`ThrowKick`): a hand grenade throw dips the view forward (strength 1); the snark, penguin and
-  satchel tosses barely do (0.4).
+  Strength: knife 0.6, crowbar 1, pipe wrench 1.5 (heavier swings are wider and slower). The wrench's charged
+  swing (hold secondary attack) is the biggest and slowest, 2.4, kicked when it's released, since the swing
+  itself runs in a server-only think; it gets no hit jolt, so it always settles slowly.
+* **Throws** (`ThrowKick`): the view dips forward and rolls slightly; a hand grenade throw at strength 1, the
+  snark, penguin and satchel tosses at 0.6.
+* With `developer 1`, every kick is printed to the console (`V_WeaponKick: ...`).
 * **Gluon gun** (`V_AddEgonDrift` in `view.cpp`): no kick, but while firing the view wanders slowly and
-  smoothly in any direction, from nothing at first up to about half a degree after 3 seconds of sustained fire,
-  fading out over 0.4 seconds after it stops.
+  smoothly in any direction, at 40% from the moment it fires, growing to about half a degree after 2 seconds of
+  sustained fire, fading out over 0.4 seconds after it stops.
 
 ### Scopes
 The crossbow and the sniper rifle can toggle their scope every 0.3 seconds (`ScopeToggleDelay`; originally 1
@@ -74,9 +77,10 @@ Picking up a weapon or a weapon box plays one of the stock `items/gunpickup1-4.w
 only plays `gunpickup2`, which batteries still use. Ammo pickups are unchanged (`9mmclip1`).
 
 ### Grenade pin
-Pulling the hand grenade's pin plays a sound, predicted like the fire sounds. **Placeholder:**
-`weapons/mine_deploy.wav` (the tripmine's click), `GrenadePinPullSound` in `CHandGrenade.cpp`; MMod has a
-real `grenade_pinpull.wav`.
+Pulling the hand grenade's pin plays MMod's `weapons/grenade_pinpull.wav` (`mmod_port`, feature
+`grenade-pin`) when the pin comes out: 0.29 seconds in, frame 13 of the 45 fps pinpull animation, as MMod's
+model event does (its animation has the same timing as Valve's). Played by the server after that delay
+(`CHandGrenade::PinPullSoundThink`).
 
 ### RPG laser toggle
 Turning the RPG's laser guidance on plays the Desert Eagle's `weapons/desert_eagle_sight.wav`, and turning

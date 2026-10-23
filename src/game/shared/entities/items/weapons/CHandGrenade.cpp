@@ -18,6 +18,10 @@
 
 #define HANDGRENADE_PRIMARY_VOLUME 450
 
+BEGIN_DATAMAP(CHandGrenade)
+DEFINE_FUNCTION(PinPullSoundThink),
+	END_DATAMAP();
+
 LINK_ENTITY_TO_CLASS(weapon_handgrenade, CHandGrenade);
 
 void CHandGrenade::OnCreate()
@@ -31,8 +35,10 @@ void CHandGrenade::OnCreate()
 	m_WorldModel = pev->model = MAKE_STRING("models/w_grenade.mdl");
 }
 
-// Placeholder until a real pin pull sound is chosen (see docs/johnhalflife/weapons.md#sounds).
-constexpr const char* GrenadePinPullSound = "weapons/mine_deploy.wav";
+// MMod's sound (mmod_port), played when the pin comes out: frame 13 of the 45 fps pinpull animation, as MMod's
+// model event does.
+constexpr const char* GrenadePinPullSound = "weapons/grenade_pinpull.wav";
+constexpr float GrenadePinPullSoundDelay = 13 / 45.f;
 
 void CHandGrenade::Precache()
 {
@@ -115,8 +121,22 @@ void CHandGrenade::PrimaryAttack()
 		m_flReleaseThrow = 0;
 
 		SendWeaponAnim(HANDGRENADE_PINPULL);
-		EMIT_SOUND_PREDICTED(m_pPlayer, CHAN_ITEM, GrenadePinPullSound, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
+
+#ifndef CLIENT_DLL
+		SetThink(&CHandGrenade::PinPullSoundThink);
+		pev->nextthink = gpGlobals->time + GrenadePinPullSoundDelay;
+#endif
 		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.5;
+	}
+}
+
+void CHandGrenade::PinPullSoundThink()
+{
+	SetThink(nullptr);
+
+	if (m_pPlayer)
+	{
+		m_pPlayer->EmitSound(CHAN_ITEM, GrenadePinPullSound, VOL_NORM, ATTN_NORM);
 	}
 }
 

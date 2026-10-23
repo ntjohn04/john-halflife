@@ -341,8 +341,6 @@ void CPipewrench::BigSwing()
 
 	EmitSoundDyn(CHAN_WEAPON, "weapons/pwrench_big_miss.wav", VOL_NORM, ATTN_NORM, 0, 94 + RANDOM_LONG(0, 15));
 
-	// The charged swing, heavier still.
-	MeleeKick(2.4f, false);
 
 	if (tr.flFraction >= 1.0)
 	{
@@ -358,8 +356,6 @@ void CPipewrench::BigSwing()
 	}
 	else
 	{
-		MeleeKick(2.4f, true);
-
 		SendWeaponAnim(PIPEWRENCH_BIG_SWING_HIT);
 
 		// player "shoot" animation
@@ -476,6 +472,10 @@ void CPipewrench::WeaponIdle()
 		if (gpGlobals->time > m_flBigSwingStart + 1)
 		{
 			m_iSwingMode = SWING_DOING_BIG;
+
+			// The charged swing: the biggest, slowest motion. Kicked here because the swing itself is a server-only
+			// think; no hit jolt, so it settles slowly either way.
+			MeleeKick(2.4f, false);
 
 			m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 1.2;
 			SetThink(&CPipewrench::BigSwing);

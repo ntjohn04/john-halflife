@@ -79,6 +79,13 @@
 			"Sha256": "006e77b955a42736cd8269c38515c2d57c13420970ab9a2b7d87c7668155419c"
 		},
 		{
+			"Path": "sound/weapons/grenade_pinpull.wav",
+			"Action": "copy",
+			"Feature": "grenade-pin",
+			"Sha256": "39e4e79d8b52ef0ea1a3f04b81b944fceaebb0de377df41faf4ecac51b437fb5",
+			"Notes": "Hand grenade pin pull, played 0.29 s into the pinpull animation"
+		},
+		{
 			"Path": "sound/weapons/satchel_flap.wav",
 			"Action": "copy",
 			"Feature": "weapon-switch",

@@ -8,14 +8,14 @@ Before publishing, each of these must be replaced, removed, or cleared with its 
 
 Source: Half-Life: MMod (Steam), HL1MMod directory
 
-**28 files** in 5 folders.
+**29 files** in 5 folders.
 
 | Location | Type | Files |
 |---|---|---|
 | `sound/` | txt | 1 |
 | `sound/items/` | wav | 1 |
 | `sound/player/` | wav | 10 |
-| `sound/weapons/` | wav | 15 |
+| `sound/weapons/` | wav | 16 |
 | `sprites/` | spr | 1 |
 
 ## `sound/`
@@ -57,6 +57,7 @@ Source: Half-Life: MMod (Steam), HL1MMod directory
 
 | File | Installed as | Used by | Notes |
 |---|---|---|---|
+| `sound/weapons/grenade_pinpull.wav` | same path | grenade-pin | Hand grenade pin pull, played 0.29 s into the pinpull animation |
 | `sound/weapons/satchel_flap.wav` | same path | weapon-switch |  |
 | `sound/weapons/satchel_pickup.wav` | same path | weapon-switch |  |
 | `sound/weapons/weapon_draw_crossbow.wav` | same path | weapon-switch |  |

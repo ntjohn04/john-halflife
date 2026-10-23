@@ -134,13 +134,14 @@ a copy of the game code.
 
 ## MMod assets
 
-`mmod_port/` tracks every MMod file the mod uses (28 files): `assets.json` lists them with SHA-256 hashes,
+`mmod_port/` tracks every MMod file the mod uses (29 files): `assets.json` lists them with SHA-256 hashes,
 `ASSETS.md` is the generated report, and `port_assets.py install` copies them from a local MMod
 installation into the mod directory. Each must be replaced, removed or cleared with its author before
 anything is published. In short:
 
 * **Movement:** jump, landing, long jump and wood footstep sounds, and MMod's texture material table.
 * **Weapon switch:** 15 draw sounds.
+* **Grenade pin:** the pin pull sound.
 * **Water splash:** the ripple ring sprite (optional; the splash works without it).
 
 ## Networking
@@ -161,5 +162,4 @@ Weapon prediction also syncs the current spread through `weapon_data_t.fuser4` (
 ## Open items
 
 * Opposing Force weapons without an MMod counterpart still use the crowbar's switch sound as a placeholder.
-* The hand grenade's pin pull sound is a placeholder (the tripmine's click).
 * HUD work is next.
