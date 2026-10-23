@@ -91,7 +91,7 @@ Changes:
   louder the harder they land, random pitch) on their first 3 bounces only, so at most 12 sounds over the first
   second or so instead of dozens.
 
-## Blood (in progress)
+## Blood (done)
 
 * **Hit blood** (server: `UTIL_BloodDrips` in `util.cpp`, `CBaseMonster::TraceAttack` and `Killed` in
   `combat.cpp`, constants in `jhl_effects.h`). Server effects, so the toggle is read from the client's
@@ -142,6 +142,24 @@ Changes:
   carrying 15% of the gib's speed, lasting 0.6-1 s. Calling `R_BloodStream` every frame would emit 100+ particles
   each time, so the trail is built from single drops instead. Respects `violence_hblood`/`violence_ablood`. Engine particles have one fixed
   size (no size field), so the drops can't grow or shrink; small shrinking `blood.spr` sprites would be the way.
+
+## Explosions (in progress)
+
+Vanilla, from Valve's source and the engine (`hw.dll`; the SDK's client `R_Explosion` in `SoundSystem.cpp`
+matches it): every explosion is `TE_EXPLOSION` from `CGrenade::Explode` (grenades, MP5 grenades, RPG, satchel,
+tripmine, NPC grenades, `func_mortar`) or `env_explosion` (barrels, `func_tank`, map explosions):
+
+* Fireball: `zerogxplode.spr` (`WXplo1.spr` in water), scale (dmg−50)×0.06, 15 fps (1 s), additive at 180,
+  10 units up. Lights: 200 radius (250,250,150) for 0.01 s, 150 radius (255,190,40) fading over 1 s.
+  15 particles (color 254, ±32 sideways, 80-143 up, 2 s). `explode3-5` at attenuation 0.3.
+* Smoke 0.3 s later: `steam1.spr`, scale (dmg−50)×0.08 (`env_explosion`: the fireball's), 12 fps, gray 20-35,
+  rising 30 units/s. In water, bubbles instead.
+* 0-3 `spark_shower`s (not in water), a scorch decal, a debris sound.
+* Placed (dmg−24)×0.6 units out of the surface hit (46 for 100 damage).
+
+Fixed: Half-Life Updated places `CGrenade::Explode` only 0.6 units out (halflife#3244, damage going through
+walls), which sank grenade, rocket, satchel and tripmine fireballs and smoke halfway into the floor or wall.
+The damage stays at 0.6; the effects use vanilla's point again. `env_explosion` was never changed.
 
 ## Testing
 

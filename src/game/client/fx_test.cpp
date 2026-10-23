@@ -324,7 +324,8 @@ void Explosion(const Target& target, Params& p)
 	const auto name = p.String("sprite", "sprites/zerogxplode.spr");
 	const float scale = p.Float("scale", 3);
 	const float fps = p.Float("fps", 15);
-	const float offset = p.Float("offset", 0.6f);
+	// Out from the surface as far as a 100 damage grenade's: (dmg - 24) * 0.6.
+	const float offset = p.Float("offset", 45.6f);
 	int flags = TE_EXPLFLAG_NONE;
 	flags |= 0 == p.Int("additive", 1) ? TE_EXPLFLAG_NOADDITIVE : 0;
 	flags |= 0 == p.Int("light", 1) ? TE_EXPLFLAG_NODLIGHTS : 0;
@@ -344,7 +345,7 @@ void Smoke(const Target& target, Params& p)
 	const auto name = p.String("sprite", "sprites/steam1.spr");
 	const float scale = p.Float("scale", 4);
 	const float fps = p.Float("fps", 12);
-	const float offset = p.Float("offset", 0);
+	const float offset = p.Float("offset", 45.6f);
 	p.Print("smoke");
 
 	if (const int model = ModelIndex(name); model != 0)
@@ -661,15 +662,18 @@ void GrenadePreset(const Target& target, Params& p)
 
 	const float explosionScale = (damage - 50) * 0.06f;
 	const float smokeScale = (damage - 50) * 0.08f;
+	const float offset = (damage - 24) * 0.6f;
 
 	Params explosion;
 	explosion.Set("scale", explosionScale);
+	explosion.Set("offset", offset);
 	Explosion(target, explosion);
 
 	Later(0.3f, [=]()
 		{
 		Params smoke;
 		smoke.Set("scale", smokeScale);
+		smoke.Set("offset", offset);
 		gEngfuncs.Con_Printf("  (0.3 s later)\n");
 		Smoke(target, smoke); });
 
@@ -687,15 +691,18 @@ void BarrelPreset(const Target& target, Params& p)
 	p.Print("barrel (env_explosion; explosive breakables use their explosion magnitude)");
 
 	const float scale = std::max(10.f, (magnitude - 50) * 0.6f) / 10;
+	const float offset = (magnitude - 24) * 0.6f;
 
 	Params explosion;
 	explosion.Set("scale", scale);
+	explosion.Set("offset", offset);
 	Explosion(target, explosion);
 
 	Later(0.3f, [=]()
 		{
 		Params smoke;
 		smoke.Set("scale", scale);
+		smoke.Set("offset", offset);
 		gEngfuncs.Con_Printf("  (0.3 s later)\n");
 		Smoke(target, smoke); });
 

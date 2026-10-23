@@ -69,13 +69,23 @@ void CGrenade::Explode(TraceResult* pTrace, int bitsDamageType)
 		pev->origin = pTrace->vecEndPos + (pTrace->vecPlaneNormal * 0.6);
 	}
 
-	int iContents = UTIL_PointContents(pev->origin);
+	// johnhalflife: Half-Life Updated pulls explosions only 0.6 units out of the surface so their damage doesn't go
+	// through walls (halflife#3244), which also sank the fireball and smoke halfway into it. The damage stays there;
+	// the effects come from vanilla's point, (dmg - 24) * 0.6 units out.
+	Vector effectOrigin = pev->origin;
+
+	if (pTrace->flFraction != 1.0)
+	{
+		effectOrigin = pTrace->vecEndPos + (pTrace->vecPlaneNormal * (pev->dmg - 24) * 0.6);
+	}
+
+	int iContents = UTIL_PointContents(effectOrigin);
 
 	// This makes a dynamic light and the explosion sprites/sound
 	// Send to PAS because of the sound
-	UTIL_ExplosionEffect(pev->origin, iContents != CONTENTS_WATER ? g_sModelIndexFireball : g_sModelIndexWExplosion,
+	UTIL_ExplosionEffect(effectOrigin, iContents != CONTENTS_WATER ? g_sModelIndexFireball : g_sModelIndexWExplosion,
 		(pev->dmg - 50) * .60, 15, TE_EXPLFLAG_NONE,
-		MSG_PAS, pev->origin);
+		MSG_PAS, effectOrigin);
 
 	CSoundEnt::InsertSound(bits_SOUND_COMBAT, pev->origin, NORMAL_EXPLOSION_VOLUME, 3.0);
 	CBaseEntity* owner = GetOwner();
@@ -87,6 +97,9 @@ void CGrenade::Explode(TraceResult* pTrace, int bitsDamageType)
 	origin.z -= 1;
 
 	RadiusDamage(origin, this, owner, pev->dmg, bitsDamageType);
+
+	// The rest (debris sound, sparks, the smoke 0.3 seconds later) is effects.
+	SetOrigin(effectOrigin);
 
 	if (RANDOM_FLOAT(0, 1) < 0.5)
 	{

@@ -16,8 +16,8 @@ These reproduce an event with the original values. Each lists its parts, which a
 
 | Preset | Parameters | Event | Parts (original values) |
 |---|---|---|---|
-| `grenade` | `dmg=100` | Hand grenade, MP5 grenade, RPG (100); satchel, tripmine (150) | **explosion** `zerogxplode.spr`, scale (dmg−50)×0.06 (3 at 100), fps 15, with the engine's light, particles and sound; **smoke** 0.3 s later, `steam1.spr`, scale (dmg−50)×0.08 (4 at 100), fps 12; **shower** ×0–3; a scorch decal and a debris sound |
-| `barrel` | `magnitude=100` | Explosive barrels and crates (`func_breakable`), `func_tank` shells, `env_explosion` | **explosion** scale max(1, (magnitude−50)×0.06), fps 15; **smoke** 0.3 s later at the same scale, fps 12; **shower** ×0–3 |
+| `grenade` | `dmg=100` | Hand grenade, MP5 grenade, RPG (100); satchel, tripmine (150) | **explosion** `zerogxplode.spr`, scale (dmg−50)×0.06 (3 at 100), fps 15, with the engine's light, particles and sound; **smoke** 0.3 s later, `steam1.spr`, scale (dmg−50)×0.08 (4 at 100), fps 12; both (dmg−24)×0.6 off the surface (46 at 100), as vanilla; **shower** ×0–3; a scorch decal and a debris sound |
+| `barrel` | `magnitude=100` | Explosive barrels and crates (`func_breakable`), `func_tank` shells, `env_explosion` | **explosion** scale max(1, (magnitude−50)×0.06), fps 15; **smoke** 0.3 s later at the same scale, fps 12; both (magnitude−24)×0.6 off the surface; **shower** ×0–3 |
 | `blood` | `dmg=30 type=human\|alien` | Any hit on a monster | **blood_sprite** color 247 (red) or 195 (yellow), size dmg/10 clamped to 3–16; blood decals behind the hit |
 | `headshot` | `dmg=30 type=` | A head hit | Identical to `blood`, with the 3× head damage making it bigger. There's no headshot-specific effect yet. |
 | `sniperhit` | `type=human\|alien` | An M40A1 hit on something that bleeds | **bloodstream** color 70 (yellow: 195), speed 150, aimed back at the shooter with the **full distance** as its direction, which stretches it into a long line; the normal hit blood (size 10 for the sniper's 100 damage) |
@@ -29,8 +29,8 @@ These reproduce an event with the original values. Each lists its parts, which a
 | Primitive | Engine effect | Parameters (defaults) |
 |---|---|---|
 | `sprite` | Any sprite as a particle (`R_TempSprite`), the general building block | `sprite=sprites/steam1.spr count=1 scale=0.3 alpha=0.35 render=alpha color=255,255,255 fps=24 life=2 loop=0 offset=4 radius=0 speed=0 spread=0 up=0 gravity=0 fade=0 collide=0` |
-| `explosion` | The engine explosion (`TE_EXPLOSION`) | `sprite=sprites/zerogxplode.spr scale=3 fps=15 offset=0.6 additive=1 light=1 sound=1 particles=1` |
-| `smoke` | The engine smoke puff (`TE_SMOKE`) | `sprite=sprites/steam1.spr scale=4 fps=12 offset=0` |
+| `explosion` | The engine explosion (`TE_EXPLOSION`) | `sprite=sprites/zerogxplode.spr scale=3 fps=15 offset=45.6 additive=1 light=1 sound=1 particles=1` (the sprite must be one the map loaded; preview others with `sprite render=add alpha=0.7`) |
+| `smoke` | The engine smoke puff (`TE_SMOKE`) | `sprite=sprites/steam1.spr scale=4 fps=12 offset=45.6` |
 | `sparks` | The engine spark burst (`TE_SPARKS`); fixed look | `count=1` |
 | `streaks` | Spark streaks (`R_SparkStreaks`) | `count=4 vmin=-120 vmax=120 offset=2` |
 | `shower` | A flying spark emitter (`spark_shower`) | `count=1 speedmin=200 speedmax=300 lifemin=0.5 lifemax=1.5` |
