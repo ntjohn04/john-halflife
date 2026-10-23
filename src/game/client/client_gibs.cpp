@@ -43,9 +43,63 @@ constexpr int BounceSoundsPerGib = 3;		   // each on its first bounces only.
 constexpr float JhlGibLife = 60;			   // Seconds on the ground before fading (the giblife cvar otherwise).
 constexpr float JhlGibScaleVariation = 0.15f;  // Size +-15%.
 constexpr float JhlGibSpeedVariation = 0.2f;   // Speed +-20%.
+constexpr int TrailingGibsPerDeath = 3;		   // Gibs that leave a trail of blood drops as they fly,
+constexpr float BloodTrailTime = 1;			   // for this long after being thrown, thinning out,
+constexpr float BloodTrailSpacing = 4;		   // a drop every this many units at first.
+constexpr int BloodStreamRed = 70;			   // Red blood particles: palette 70 and up, as the game's red blood streams.
 
 static cvar_t* g_violence_hblood = nullptr;
 static cvar_t* g_violence_ablood = nullptr;
+
+static bool ShowsBlood(int bloodColor)
+{
+	if (bloodColor == DONT_BLEED)
+		return false;
+
+	return 0 != (bloodColor == BLOOD_COLOR_RED ? g_violence_hblood : g_violence_ablood)->value;
+}
+
+// A trailing gib drops blood particles along its path (curstate.fuser2: when the trail ends; vuser1: where the
+// last drop was left), like a thin blood stream following it.
+static void EmitBloodTrail(TEMPENTITY* ent, float currenttime)
+{
+	const float remaining = ent->entity.curstate.fuser2 - currenttime;
+	const int bloodColor = ent->entity.curstate.iuser1;
+
+	if (remaining <= 0 || !ShowsBlood(bloodColor))
+		return;
+
+	const Vector from = ent->entity.curstate.vuser1;
+	const Vector delta = ent->entity.origin - from;
+	const float distance = delta.Length();
+
+	// Drops get further apart as the trail runs out.
+	const float spacing = BloodTrailSpacing / std::max(0.2f, remaining / BloodTrailTime);
+
+	if (distance < spacing)
+		return;
+
+	const int baseColor = bloodColor == BLOOD_COLOR_RED ? BloodStreamRed : bloodColor;
+	const int drops = std::min(static_cast<int>(distance / spacing), 8);
+	const Vector& gibVelocity = ent->entity.baseline.origin;
+
+	for (int i = 0; i < drops; ++i)
+	{
+		particle_t* drop = gEngfuncs.pEfxAPI->R_AllocParticle(nullptr);
+
+		if (!drop)
+			break;
+
+		drop->org = from + delta * ((i + RANDOM_FLOAT(0, 1)) / drops);
+		drop->vel = gibVelocity * 0.15f + Vector{RANDOM_FLOAT(-10, 10), RANDOM_FLOAT(-10, 10), RANDOM_FLOAT(-10, 10)};
+		drop->color = static_cast<short>(baseColor + RANDOM_LONG(0, 3));
+		gEngfuncs.pEfxAPI->R_GetPackedColor(&drop->packedColor, drop->color);
+		drop->type = pt_grav;
+		drop->die = currenttime + RANDOM_FLOAT(0.6f, 1.0f);
+	}
+
+	ent->entity.curstate.vuser1 = ent->entity.origin;
+}
 
 static void EV_TFC_BloodDecalTrace(pmtrace_t* pTrace, int bloodColor)
 {
@@ -99,6 +153,8 @@ static void EV_TFC_GibCallback(TEMPENTITY* ent, float frametime, float currentti
 	{
 		// WaitTillLand
 	default:
+		EmitBloodTrail(ent, currenttime);
+
 		if (ent->entity.baseline.origin.Length() == 0)
 		{
 			ent->entity.curstate.playerclass = int(GibState::WaitTillExpire);
@@ -301,6 +357,7 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 	}
 
 	int soundingGibs = 0;
+	int trailingGibs = 0;
 
 	// Uses of each randomly picked piece, so none repeats more than MaxUsesPerGibPiece times in one death.
 	eastl::fixed_vector<int, 64> pieceUses;
@@ -371,6 +428,13 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 			gib->hitSound = BOUNCE_FLESH;
 			gib->entity.curstate.iuser2 = BounceSoundsPerGib;
 			++soundingGibs;
+		}
+
+		if (jhl && gib && trailingGibs < TrailingGibsPerDeath)
+		{
+			gib->entity.curstate.fuser2 = gEngfuncs.GetClientTime() + BloodTrailTime;
+			gib->entity.curstate.vuser1 = gib->entity.origin;
+			++trailingGibs;
 		}
 	}
 
