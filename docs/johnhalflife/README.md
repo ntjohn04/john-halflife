@@ -159,6 +159,17 @@ fatal ("bogus message type (0)").
 
 Weapon prediction also syncs the current spread through `weapon_data_t.fuser4` (added to `delta.lst`).
 
+## Versions
+
+The version is `project(HalfLifeMod VERSION ...)` in `CMakeLists.txt` and the release type is
+`HalfLife_RELEASE_TYPE` (Pre-Alpha, Alpha, Beta, Release), both shown in the build info
+(`cl_projectinfo_show 1`, or "SDK | Show build info" in John Settings; off by default). Milestones raise the
+minor version and get a git tag, `v<version>-<release type>`; fixes between milestones raise the patch.
+
+| Tag | What it covers |
+|---|---|
+| `v0.1.0-prealpha` | Camera and movement, weapons (recoil, accuracy, effects, sounds), John Settings and the menus on the 25th anniversary engine, separate game folders for Half-Life, Opposing Force, Blue Shift and Uplink |
+
 ## Saves
 
 Don't add a data map (`DECLARE_DATAMAP`/`BEGIN_DATAMAP`) to an entity class that doesn't have one, for example

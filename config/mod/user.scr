@@ -188,6 +188,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "300.000000" }
 	}
 
+	"cl_projectinfo_show"
+	{
+		"SDK | Show build info"
+		{ BOOL }
+		{ "0" }
+	}
+
 	"cl_bobtilt"
 	{
 		"SDK | View bob tilt"

@@ -24,9 +24,8 @@ bool CHudProjectInfo::Init()
 
 	m_IsAlphaBuild = g_ProjectInfo.IsAlphaBuild(*g_ProjectInfo.GetLocalInfo());
 
-	// Turn this on by default if this is a (pre-)alpha build.
-	// Users will easily know they're running a (pre-)alpha build and screenshots and videos will include important information.
-	m_ShowProjectInfo = CVAR_CREATE("cl_projectinfo_show", m_IsAlphaBuild ? "1" : "0", 0);
+	// Off by default, even in (pre-)alpha builds; John Settings has a checkbox for it.
+	m_ShowProjectInfo = CVAR_CREATE("cl_projectinfo_show", "0", FCVAR_ARCHIVE);
 
 	return true;
 }
@@ -38,7 +37,7 @@ bool CHudProjectInfo::VidInit()
 
 bool CHudProjectInfo::Draw(float flTime)
 {
-	if (m_IsAlphaBuild || m_ShowProjectInfo->value > 0)
+	if (m_ShowProjectInfo->value > 0)
 	{
 		const int xPos = 20;
 

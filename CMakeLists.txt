@@ -9,7 +9,8 @@ endif()
 set(VCPKG_OVERLAY_TRIPLETS ${CMAKE_SOURCE_DIR}/vcpkg_config/triplets)
 
 project(HalfLifeMod
-	VERSION 1.0.0
+	# John Half-Life's own version: milestones raise the minor version, fixes the patch (docs/johnhalflife/README.md#versions).
+	VERSION 0.1.0
 	DESCRIPTION "Half-Life CMake Mod Template"
 	LANGUAGES CXX)
 

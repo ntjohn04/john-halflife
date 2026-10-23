@@ -61,6 +61,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"m_rawinput", "1"},
 	{"jhl_gore", "1"},
 	{"mp_decals", "300"},
+	{"cl_projectinfo_show", "0"},
 	{"cl_bobtilt", "0"},
 	{"cl_snd_hrtf_enabled", "0"},
 	{"cl_snd_hrtf_implementation", ""},
