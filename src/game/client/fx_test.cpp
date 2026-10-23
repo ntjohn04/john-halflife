@@ -26,6 +26,7 @@
 #include "hud.h"
 #include "fx_test.h"
 #include "client_gibs.h"
+#include "com_model.h"
 #include "event_api.h"
 #include "r_efx.h"
 #include "dlight.h"
@@ -180,15 +181,52 @@ int ModelIndex(const std::string& name)
 		return index;
 	}
 
+	// A model the map didn't load gets index -1, which effects can't use (the engine reports "no model -1").
 	int index = 0;
 	gEngfuncs.CL_LoadModel(name.c_str(), &index);
 
-	if (index == 0)
+	if (index <= 0)
 	{
-		gEngfuncs.Con_Printf("jhl_fx_test: can't load %s\n", name.c_str());
+		gEngfuncs.Con_Printf("jhl_fx_test: %s isn't loaded by this map, so this effect can't use it here\n", name.c_str());
+		return 0;
 	}
 
 	return index;
+}
+
+// R_TempSprite for any sprite file: one the map didn't load has no index, so its temp entity is built from the model.
+TEMPENTITY* TempSprite(const std::string& name, Vector origin, const Vector& velocity, float scale, int render, float alpha,
+	float life, int flags)
+{
+	if (const int index = gEngfuncs.pEventAPI->EV_FindModelIndex(name.c_str()); index != 0)
+	{
+		return gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, scale, index, render, kRenderFxNone, alpha, life, flags);
+	}
+
+	int index = 0;
+	model_t* model = gEngfuncs.CL_LoadModel(name.c_str(), &index);
+
+	if (!model)
+	{
+		gEngfuncs.Con_Printf("jhl_fx_test: can't load %s\n", name.c_str());
+		return nullptr;
+	}
+
+	TEMPENTITY* sprite = gEngfuncs.pEfxAPI->CL_TempEntAlloc(origin, model);
+
+	if (!sprite)
+		return nullptr;
+
+	sprite->flags |= flags;
+	sprite->frameMax = static_cast<float>(model->numframes - 1);
+	sprite->entity.baseline.origin = velocity;
+	sprite->entity.curstate.scale = scale;
+	sprite->entity.curstate.rendermode = render;
+	sprite->entity.curstate.renderfx = kRenderFxNone;
+	sprite->entity.curstate.renderamt = sprite->entity.baseline.renderamt = static_cast<int>(alpha * 255);
+	sprite->die = gEngfuncs.GetClientTime() + life;
+
+	return sprite;
 }
 
 float Random(float range)
@@ -249,11 +287,6 @@ void Sprite(const Target& target, Params& p)
 	const bool collide = 0 != p.Int("collide", 0);
 	p.Print("sprite");
 
-	const int model = ModelIndex(name);
-
-	if (model == 0)
-		return;
-
 	int flags = loop ? FTENT_SPRCYCLE : FTENT_SPRANIMATE;
 
 	if (gravity == 1)
@@ -272,7 +305,7 @@ void Sprite(const Target& target, Params& p)
 		Vector origin = target.Position + target.Normal * offset + Vector{Random(radius), Random(radius), Random(radius)};
 		Vector velocity = target.Normal * speed + Vector{Random(spread), Random(spread), Random(spread) + upward};
 
-		TEMPENTITY* sprite = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, scale, model, render, kRenderFxNone, alpha, life, flags);
+		TEMPENTITY* sprite = TempSprite(name, origin, velocity, scale, render, alpha, life, flags);
 
 		if (!sprite)
 			continue;

@@ -328,6 +328,9 @@ void W_Precache()
 
 	// Bullet water splash droplets and ripple (client weapon_effects.cpp); the ripple is MMod's sprite (mmod_port), optional.
 	UTIL_PrecacheModel("sprites/wsplash3.spr");
+	// Opposing Force's blood chunk sprite, which no code used: candidate for the gibbing blood splash.
+	UTIL_PrecacheModel("sprites/blood_chnk.spr");
+
 	if (g_pFileSystem->FileExists("sprites/water_splash_ring.spr"))
 	{
 		UTIL_PrecacheModel("sprites/water_splash_ring.spr");
