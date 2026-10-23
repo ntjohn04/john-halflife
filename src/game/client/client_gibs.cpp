@@ -311,10 +311,12 @@ static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bl
 		}
 	}
 
-	// Opposing Force's blood chunk sprite is red, so alien blood gets the puffs alone.
-	const int chunk = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/blood_chnk.spr");
+	// Opposing Force's blood chunk sprite is red; alien blood uses a yellow copy of it
+	// (scripts/make_yellow_blood_chunk.py).
+	const char* const chunkSprite = bloodColor == BLOOD_COLOR_YELLOW ? "sprites/blood_chnk_yellow.spr" : "sprites/blood_chnk.spr";
+	const int chunk = gEngfuncs.pEventAPI->EV_FindModelIndex(chunkSprite);
 
-	if (bloodColor != BLOOD_COLOR_RED || chunk == 0)
+	if ((bloodColor != BLOOD_COLOR_RED && bloodColor != BLOOD_COLOR_YELLOW) || chunk == 0)
 		return;
 
 	const int chunks = static_cast<int>(std::lround(SplashChunks * scale));

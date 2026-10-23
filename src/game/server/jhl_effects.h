@@ -38,7 +38,7 @@ constexpr int VanillaBloodStreamRed = 70;
 
 /**
  *	@brief The color to give a blood stream for a blood color: red 247 would run into the palette's bright reds, so
- *	streams use 70 (as vanilla's own red streams do) and yellow 196. Others, and everything with the particle system
+ *	streams use JhlBloodStreamRed and JhlBloodStreamYellow. Others, and everything with the particle system
  *	off, are unchanged.
  */
 inline int UTIL_JhlBloodStreamColor(int color)
