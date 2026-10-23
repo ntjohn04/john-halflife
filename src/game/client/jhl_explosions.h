@@ -30,16 +30,16 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 struct JhlLingeringSmoke
 {
 	float Delay = 0.4f;
-	float LifeMin = 5;
-	float LifeMax = 7;
-	float StartWidth = 64; // 1.5× the vanilla smoke.
-	float EndWidth = 128;
+	float LifeMin = 9;
+	float LifeMax = 12;
+	float StartWidth = 85; // 2× the vanilla smoke.
+	float EndWidth = 340;
 	float RiseMin = 8;
 	float RiseMax = 12;
-	float Drift = 5;
-	int Opacity = 64; // Peak.
-	int GrayMin = 30;
-	int GrayMax = 40;
+	float Drift = 40; // Random each way, plus this much away from a nearby wall; dies down over its life.
+	int Opacity = 200; // Peak, right after it fades in; it thins out from there as it spreads.
+	int GrayMin = 70;
+	int GrayMax = 80;
 };
 
 /**

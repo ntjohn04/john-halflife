@@ -371,13 +371,13 @@ void LingeringSmoke(const Target& target, Params& p)
 	const float scale = p.Float("scale", 3);
 	const float offset = p.Float("offset", 45.6f);
 	settings.Delay = p.Float("delay", 0);
-	settings.LifeMin = settings.LifeMax = p.Float("life", 6);
+	settings.LifeMin = settings.LifeMax = p.Float("life", 10.5f);
 	settings.StartWidth = p.Float("start", settings.StartWidth);
 	settings.EndWidth = p.Float("end", settings.EndWidth);
 	settings.RiseMin = settings.RiseMax = p.Float("rise", 10);
 	settings.Drift = p.Float("drift", settings.Drift);
 	settings.Opacity = p.Int("opacity", settings.Opacity);
-	settings.GrayMin = settings.GrayMax = p.Int("gray", 35);
+	settings.GrayMin = settings.GrayMax = p.Int("gray", 75);
 	p.Print("lingersmoke");
 
 	if (!JhlExplosion_LingeringSmoke(target.Position + target.Normal * offset, scale, settings))
@@ -875,7 +875,7 @@ const std::vector<Command>& Commands()
 		{"sprite", "sprite= count= scale= alpha= render=alpha|add|glow|normal color=r,g,b fps= life= loop= offset= radius= speed= spread= up= gravity=0|1|2 fade= collide=", Sprite},
 		{"explosion", "sprite= scale= fps= offset= additive= light= sound= particles= rocket=", Explosion},
 		{"smoke", "sprite= scale= fps= offset=", Smoke},
-		{"lingersmoke", "scale=3 opacity=64 gray=35 life=6 start=64 end=128 rise=10 drift=5 delay=0 offset=45.6", LingeringSmoke},
+		{"lingersmoke", "scale=3 opacity=200 gray=75 life=10.5 start=85 end=340 rise=10 drift=40 delay=0 offset=45.6", LingeringSmoke},
 		{"sparks", "count=", Sparks},
 		{"streaks", "count= vmin= vmax= offset=", Streaks},
 		{"shower", "count= speedmin= speedmax= lifemin= lifemax=", Shower},

@@ -96,8 +96,8 @@ constexpr float ShapedSink = 0.05f;
 constexpr const char* LingeringSmokeSprite = "sprites/wep_smoke_01.spr";
 constexpr float LingeringSmokeSpriteWidth = 64;
 constexpr float LingeringSmokeHeight = 20;
-constexpr float LingeringSmokeFadeIn = 0.15f; // Fractions of its life.
-constexpr float LingeringSmokeFadeOut = 0.5f;
+constexpr float LingeringSmokeFadeIn = 0.05f; // Of its life.
+constexpr float LingeringSmokeDriftDecay = 0.3f; // Per second: drifting 40 units/s, it goes about 130 units.
 
 float Random(float low, float high)
 {
@@ -161,15 +161,56 @@ void LingeringSmokeThink(TEMPENTITY* ent, float frametime, float currenttime)
 		return;
 	}
 
-	float opacity = 1;
+	// Fades in quickly, then thins out the whole time it spreads.
+	float opacity;
 
 	if (t < LingeringSmokeFadeIn)
+	{
 		opacity = t / LingeringSmokeFadeIn;
-	else if (t > 1 - LingeringSmokeFadeOut)
-		opacity = std::max(0.f, (1 - t) / LingeringSmokeFadeOut);
+	}
+	else
+	{
+		const float remaining = std::max(0.f, (1 - t) / (1 - LingeringSmokeFadeIn));
+		opacity = remaining * remaining;
+	}
+
+	// Spreads fast at first, then slower.
+	const float spread = 1 - (1 - std::min(1.f, t)) * (1 - std::min(1.f, t));
 
 	ent->entity.curstate.renderamt = static_cast<int>(state.iuser1 * opacity);
-	ent->entity.curstate.scale = state.fuser3 + (state.fuser4 - state.fuser3) * std::min(1.f, t);
+	ent->entity.curstate.scale = state.fuser3 + (state.fuser4 - state.fuser3) * spread;
+
+	// The drift dies down (the rise doesn't).
+	const float slowdown = std::max(0.f, 1 - LingeringSmokeDriftDecay * frametime);
+	ent->entity.baseline.origin.x *= slowdown;
+	ent->entity.baseline.origin.y *= slowdown;
+}
+
+// Which way is away from walls near a point (horizontally; zero if there are none in range): the sum of the directions
+// to the walls found by 8 traces, reversed and weighted by closeness.
+Vector AwayFromWalls(const Vector& origin, float range)
+{
+	Vector away = g_vecZero;
+
+	gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(0, 1);
+	gEngfuncs.pEventAPI->EV_PushPMStates();
+	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
+
+	for (int i = 0; i < 8; ++i)
+	{
+		const float angle = i * 0.7853982f; // 45 degrees.
+		const Vector direction{std::cos(angle), std::sin(angle), 0};
+
+		pmtrace_t tr;
+		gEngfuncs.pEventAPI->EV_PlayerTrace(origin, origin + direction * range, PM_WORLD_ONLY, -1, &tr);
+
+		if (tr.fraction < 1)
+			away = away - direction * (1 - tr.fraction);
+	}
+
+	gEngfuncs.pEventAPI->EV_PopPMStates();
+
+	return away.Length() > 0.01f ? away.Normalize() : g_vecZero;
 }
 
 } // namespace
@@ -182,7 +223,10 @@ bool JhlExplosion_LingeringSmoke(const Vector& origin, float scale, const JhlLin
 		return false;
 
 	const float life = Random(settings.LifeMin, settings.LifeMax);
-	const Vector velocity{Random(-settings.Drift, settings.Drift), Random(-settings.Drift, settings.Drift),
+	// Drifts a random way, pushed away from a wall the explosion hit (explosions are (dmg - 24) * 0.6 units out of
+	// what they hit, which is scale * 10 + 15.6).
+	const Vector away = AwayFromWalls(origin, scale * 10 + 48);
+	const Vector velocity{(Random(-1, 1) + away.x) * settings.Drift, (Random(-1, 1) + away.y) * settings.Drift,
 		Random(settings.RiseMin, settings.RiseMax)};
 
 	TEMPENTITY* smoke = gEngfuncs.pEfxAPI->R_TempSprite(origin + Vector{0, 0, LingeringSmokeHeight}, velocity, 0, model,
