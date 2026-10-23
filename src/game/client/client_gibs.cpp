@@ -43,6 +43,7 @@ constexpr int BounceSoundsPerGib = 3;		   // each on its first bounces only.
 constexpr float JhlGibLife = 60;			   // Seconds on the ground before fading (the giblife cvar otherwise).
 constexpr float JhlGibScaleVariation = 0.15f;  // Size +-15%.
 constexpr float JhlGibSpeedVariation = 0.2f;   // Speed +-20%.
+constexpr float JhlGibSidewaysSpread = 0.7f;   // Random sideways direction, +-0.7 (vanilla 0.25).
 constexpr int TrailingGibsPerDeath = 7;		   // Gibs that leave a trail of blood drops as they fly,
 constexpr float BloodTrailTime = 1;			   // for this long after being thrown, thinning out,
 constexpr float BloodTrailSpacing = 4;		   // a drop every this many units at first.
@@ -278,9 +279,14 @@ static TEMPENTITY* EV_TFC_CreateGib(const char* modelName, int body, byte bloodC
 		// make the gib fly away from the attack vector
 		velocity = attackdir * -1;
 
+		// A wider sideways spread (johnhalflife), so gibs fan out rather than all flying one way when the blast is
+		// level with the body.
+		const float sidewaysSpread = JhlParticleSystemEnabled() ? JhlGibSidewaysSpread : 0.25f;
+
 		for (int i = 0; i < 3; ++i)
 		{
-			velocity[i] = (velocity[i] + RANDOM_FLOAT(-0.25f, 0.25f)) * vmultiple * RANDOM_FLOAT(300, 400);
+			const float spread = i < 2 ? sidewaysSpread : 0.25f;
+			velocity[i] = (velocity[i] + RANDOM_FLOAT(-spread, spread)) * vmultiple * RANDOM_FLOAT(300, 400);
 		}
 
 		ent->entity.baseline.angles.x = RANDOM_FLOAT(100, 200);

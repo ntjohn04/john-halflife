@@ -80,7 +80,8 @@ Changes:
   death: in practice the cap decides, 15 human pieces plus the skull, 12 alien, 21 pit drone, 24 shock trooper;
   voltigore limits kept. Each gib still leaves up to 5 blood decals as it bounces.
 * 60 s on the ground before fading, instead of `giblife`.
-* Each gib ±15% size and ±20% speed. Vanilla's model renderer ignores scale; `StudioSetUpTransform` now applies it
+* Each gib ±15% size and ±20% speed, and a wider random sideways direction (±0.7 instead of ±0.25 per
+  horizontal axis), so gibs fan out instead of flying one way when a blast is level with the body. Vanilla's model renderer ignores scale; `StudioSetUpTransform` now applies it
   to entities marked with `ScaledModelMarker` in `iuser4` only, so map models with a scale keyvalue are unchanged.
 * Bounce sounds: 4 gibs per death squelch (`debris/flesh*.wav`, through the SDK's temp entity bounce sounds:
   louder the harder they land, random pitch) on their first 3 bounces only, so at most 12 sounds over the first
