@@ -47,10 +47,6 @@ static struct
 
 static bool s_SniperBullet = false;
 
-static int BloodStreamColor(int bloodColor)
-{
-	return bloodColor == BLOOD_COLOR_RED ? JhlBloodStreamRed : bloodColor == BLOOD_COLOR_YELLOW ? JhlBloodStreamYellow : bloodColor;
-}
 
 BEGIN_DATAMAP(CGib)
 DEFINE_FUNCTION(BounceGibTouch),
@@ -678,7 +674,7 @@ void CBaseMonster::Killed(CBaseEntity* attacker, int iGib)
 	if (s_LastHeadshot.Victim == this && s_LastHeadshot.Time == gpGlobals->time && UTIL_JhlParticleSystem())
 	{
 		UTIL_BloodStream(s_LastHeadshot.Position, s_LastHeadshot.Direction * -HeadshotStreamLength,
-			BloodStreamColor(BloodColor()), HeadshotStreamSpeed);
+			BloodColor(), HeadshotStreamSpeed);
 	}
 
 	// clear the deceased's sound channels.(may have been firing or reloading when killed)
@@ -1335,7 +1331,7 @@ void CBaseMonster::TraceAttack(CBaseEntity* attacker, float flDamage, Vector vec
 			// A heavy hit spurts out the far side, along the bullet's path.
 			if (flDamage >= HeavyHitDamage)
 			{
-				UTIL_BloodStream(ptr->vecEndPos, vecDir * ExitSpurtLength, BloodStreamColor(BloodColor()), ExitSpurtSpeed);
+				UTIL_BloodStream(ptr->vecEndPos, vecDir * ExitSpurtLength, BloodColor(), ExitSpurtSpeed);
 			}
 
 			// The player's melee (crowbar, wrench, knife): more droplets, and a short fling to one side, as a swing
@@ -1348,7 +1344,7 @@ void CBaseMonster::TraceAttack(CBaseEntity* attacker, float flDamage, Vector vec
 				}
 
 				const Vector side = CrossProduct(vecDir, Vector{0, 0, 1}).Normalize() * (RANDOM_LONG(0, 1) != 0 ? 1.f : -1.f);
-				UTIL_BloodStream(ptr->vecEndPos, (side + Vector{0, 0, 0.5f}) * MeleeFlingLength, BloodStreamColor(BloodColor()), MeleeFlingSpeed);
+				UTIL_BloodStream(ptr->vecEndPos, (side + Vector{0, 0, 0.5f}) * MeleeFlingLength, BloodColor(), MeleeFlingSpeed);
 			}
 
 			if (ptr->iHitgroup == HITGROUP_HEAD && (bitsDamageType & DMG_BULLET) != 0 && !s_SniperBullet)
@@ -1622,7 +1618,7 @@ Vector CBaseEntity::FireBulletsPlayer(unsigned int cShots, Vector vecSrc, Vector
 							}
 							else
 							{
-								WRITE_BYTE(pHitEntity->BloodColor());
+								WRITE_BYTE(UTIL_JhlBloodStreamColor(pHitEntity->BloodColor()));
 							}
 
 							WRITE_BYTE(150);

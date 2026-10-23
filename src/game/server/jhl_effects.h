@@ -33,3 +33,22 @@ constexpr int JhlBloodYellow = 198;
 // Blood streams pick colors from the given one to 9 above it: red 70-79, yellow 196-205.
 constexpr int JhlBloodStreamRed = 70;
 constexpr int JhlBloodStreamYellow = 196;
+
+/**
+ *	@brief The color to give a blood stream for a blood color: red 247 would run into the palette's bright reds, so
+ *	streams use 70 (as vanilla's own red streams do) and yellow 196. Others, and everything with the particle system
+ *	off, are unchanged.
+ */
+inline int UTIL_JhlBloodStreamColor(int color)
+{
+	if (!UTIL_JhlParticleSystem())
+		return color;
+
+	if (color == BLOOD_COLOR_RED)
+		return JhlBloodStreamRed;
+
+	if (color == BLOOD_COLOR_YELLOW)
+		return JhlBloodStreamYellow;
+
+	return color;
+}

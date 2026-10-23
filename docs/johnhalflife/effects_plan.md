@@ -101,6 +101,9 @@ Changes:
   * Size `1 + sqrt(damage)`, never below vanilla, capped at 16: MP5 3, Glock 4, crowbar 4, M249 5, wrench 6,
     Desert Eagle 7, .357 7, sniper 11; headshots 5 (MP5) to 16.
   * Colors 74 (red) and 198 (yellow), like the gib splash, instead of 247/195 and their bright neighbours.
+  * Every blood stream (ours, the sniper rifle's, `env_blood`, Nihilanth, pit worm) goes through
+    `UTIL_JhlBloodStreamColor`: red 70 (as vanilla's red streams), yellow 196. Colors in use, all from dark ramps:
+    hit and splash puffs 74/198, streams 70/196, gib trails 70/198, chunks baked red, decals unchanged.
   * A second burst at 0.6x size on every hit: the engine's droplet count is fixed at 14, so this adds 14 smaller,
     shorter-flying ones (its puff hides in the first).
   * Hits of 30+ damage (after the head multiplier: Desert Eagle, .357, sniper, heavier headshots) spurt a short

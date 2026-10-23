@@ -964,6 +964,7 @@ void UTIL_BloodStream(const Vector& origin, const Vector& direction, int color, 
 	if (g_Language == LANGUAGE_GERMAN && color == BLOOD_COLOR_RED)
 		color = 0;
 
+	color = UTIL_JhlBloodStreamColor(color);
 
 	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, origin);
 	WRITE_BYTE(TE_BLOODSTREAM);
