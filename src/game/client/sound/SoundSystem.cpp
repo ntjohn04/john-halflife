@@ -20,6 +20,7 @@
 
 #include "DummySoundSystem.h"
 #include "GameSoundSystem.h"
+#include "jhl_explosions.h"
 #include "MusicSystem.h"
 #include "r_efx.h"
 #include "SoundSystem.h"
@@ -396,8 +397,11 @@ void R_Explosion(const Vector& pos, int model, float scale, float framerate, int
 {
 	if (scale != 0)
 	{
-		auto sprite = gEngfuncs.pEfxAPI->R_DefaultSprite(pos, model, framerate);
-		gEngfuncs.pEfxAPI->R_Sprite_Explode(sprite, scale, flags);
+		if (!JhlExplosion_Fireballs(pos, model, scale, framerate, flags))
+		{
+			auto sprite = gEngfuncs.pEfxAPI->R_DefaultSprite(pos, model, framerate);
+			gEngfuncs.pEfxAPI->R_Sprite_Explode(sprite, scale, flags);
+		}
 
 		if ((flags & TE_EXPLFLAG_NOPARTICLES) == 0)
 		{

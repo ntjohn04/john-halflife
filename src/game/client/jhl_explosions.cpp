@@ -1,0 +1,207 @@
+/***
+ *
+ *	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+ *
+ *	This product contains software technology licensed from Id
+ *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc.
+ *	All Rights Reserved.
+ *
+ *   Use, distribution, and modification of this source code and/or resulting
+ *   object code is restricted to non-commercial enhancements to products from
+ *   Valve LLC.  All other use, distribution, or modification is prohibited
+ *   without written permission from Valve LLC.
+ *
+ ****/
+
+#include "hud.h"
+#include "event_api.h"
+#include "jhl_explosion.h"
+#include "jhl_explosions.h"
+#include "jhl_settings.h"
+#include "pm_defs.h"
+#include "pmtrace.h"
+#include "r_efx.h"
+
+namespace
+{
+struct Fireball
+{
+	const char* Sprite;
+	float Width; // Frame size in pixels; frames are centered on the origin.
+	float Height;
+	int Frames;
+};
+
+// The vanilla fireball: 64 px, 15 frames at 15 fps (1 s).
+constexpr Fireball Vanilla{"sprites/zerogxplode.spr", 64, 64, 15};
+
+// Round fireballs, which look right anywhere.
+constexpr Fireball RoundFireballs[] = {
+	{"sprites/bexplo.spr", 64, 64, 24},
+	{"sprites/cexplo.spr", 80, 80, 25},
+	{"sprites/dexplo.spr", 80, 80, 26},
+	{"sprites/eexplo.spr", 80, 80, 25},
+};
+
+// Fireballs that rise from the bottom of the frame (a wide blast, a fire column, a mushroom cloud), so they stand on a
+// floor. The mushroom (the last) is for the biggest explosions only.
+constexpr Fireball ShapedFireballs[] = {
+	{"sprites/fexplo.spr", 80, 96, 30},
+	{"sprites/gexplo.spr", 80, 96, 23},
+	{"sprites/hexplo.spr", 64, 96, 30},
+};
+
+// Only explosions sent at 15 fps change: grenades, rockets, satchels, tripmines, mortars, env_explosion and the
+// crossbow bolt. Helicopter deaths (12 fps) and Opposing Force's mortar (10 fps) keep the vanilla fireball.
+constexpr float JhlFramerate = 15;
+
+constexpr float LargeScale = 6;	  // Satchel, tripmine, Apache rocket, env_explosion magnitude 150+.
+constexpr float BiggestScale = 9; // func_mortar, env_explosion magnitude 200+: the mushroom cloud joins the pool.
+constexpr float RocketScale = 1.5f;
+
+constexpr float Jitter = 0.1f;		 // Scale and frame rate, both fireballs.
+constexpr float PositionJitter = 4; // Units, the vanilla fireball.
+
+// The second fireball, relative to the first's size; delayed a little, set off sideways and up by a fraction of the
+// first's size, dimmer (the vanilla fireball is additive at 180) since the two add up.
+constexpr float RoundSecondSizeMin = 0.6f;
+constexpr float RoundSecondSizeMax = 0.8f;
+constexpr float ShapedSecondSizeMin = 0.8f;
+constexpr float ShapedSecondSizeMax = 1.0f;
+constexpr float SecondDelay = 0.1f;
+constexpr float SecondSideways = 0.06f;
+constexpr float SecondUp = 0.1f;
+constexpr int SecondBrightness = 140;
+
+// How long the second fireball plays: about as long as the vanilla one, longer for large explosions.
+constexpr float SmallDurationMin = 1.0f;
+constexpr float SmallDurationMax = 1.2f;
+constexpr float LargeDurationMin = 1.6f;
+constexpr float LargeDurationMax = 2.0f;
+
+// The sprite's bottom rows are mostly empty, so a shaped fireball sinks this much of its height into the floor.
+constexpr float ShapedSink = 0.05f;
+
+float Random(float low, float high)
+{
+	return gEngfuncs.pfnRandomFloat(low, high);
+}
+
+void SpawnFireball(const Vector& origin, int model, float scale, float framerate, int brightness, float roll)
+{
+	TEMPENTITY* sprite = gEngfuncs.pEfxAPI->R_DefaultSprite(origin, model, framerate);
+
+	if (!sprite)
+		return;
+
+	gEngfuncs.pEfxAPI->R_Sprite_Explode(sprite, scale, TE_EXPLFLAG_NONE);
+	sprite->entity.curstate.renderamt = brightness;
+	sprite->entity.angles.z = roll;
+}
+
+// A fireball that plays a moment later (curstate.fuser1: when; iuser1: model; fuser2: scale; fuser3: frame rate;
+// iuser2: brightness; fuser4: roll).
+void DelayedFireball(TEMPENTITY* ent, float frametime, float currenttime)
+{
+	if (currenttime < ent->entity.curstate.fuser1)
+		return;
+
+	const auto& state = ent->entity.curstate;
+	SpawnFireball(ent->entity.origin, state.iuser1, state.fuser2, state.fuser3, state.iuser2, state.fuser4);
+	ent->die = currenttime;
+}
+
+// Where a floor is under an explosion, if one is close enough for it to have hit it: explosions are placed
+// (dmg - 24) * 0.6 units out of what they hit, which is scale * 10 + 15.6.
+bool FindFloor(const Vector& origin, float scale, Vector& floor)
+{
+	const Vector end = origin - Vector{0, 0, scale * 10 + 48};
+
+	pmtrace_t tr;
+	gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(0, 1);
+	gEngfuncs.pEventAPI->EV_PushPMStates();
+	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
+	gEngfuncs.pEventAPI->EV_PlayerTrace(origin, end, PM_WORLD_ONLY, -1, &tr);
+	gEngfuncs.pEventAPI->EV_PopPMStates();
+
+	if (tr.fraction >= 1 || tr.plane.normal.z < 0.7f)
+		return false;
+
+	floor = tr.endpos;
+	return true;
+}
+} // namespace
+
+bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float framerate, int flags)
+{
+	if (!JhlParticleSystemEnabled() || framerate != JhlFramerate || (flags & TE_EXPLFLAG_NOADDITIVE) != 0)
+		return false;
+
+	// Not the underwater fireball.
+	if (model != gEngfuncs.pEventAPI->EV_FindModelIndex(Vanilla.Sprite))
+		return false;
+
+	const bool rocket = (flags & TE_EXPLFLAG_JHL_ROCKET) != 0;
+	const bool large = rocket || scale >= LargeScale;
+	const float firstScale = scale * (rocket ? RocketScale : 1) * Random(1 - Jitter, 1 + Jitter);
+	const float size = firstScale * Vanilla.Width;
+
+	const Vector jitter{Random(-PositionJitter, PositionJitter), Random(-PositionJitter, PositionJitter),
+		Random(-PositionJitter, PositionJitter)};
+	SpawnFireball(origin + jitter, model, firstScale, JhlFramerate * Random(1 - Jitter, 1 + Jitter), 180, Random(0, 360));
+
+	// The second fireball: shaped for large explosions on a floor, round otherwise.
+	Vector floor;
+	const bool shaped = large && FindFloor(origin, scale, floor);
+
+	const Fireball* second;
+
+	if (shaped)
+	{
+		const int count = scale >= BiggestScale ? std::size(ShapedFireballs) : std::size(ShapedFireballs) - 1;
+		second = &ShapedFireballs[gEngfuncs.pfnRandomLong(0, count - 1)];
+	}
+	else
+	{
+		second = &RoundFireballs[gEngfuncs.pfnRandomLong(0, std::size(RoundFireballs) - 1)];
+	}
+
+	const int secondModel = gEngfuncs.pEventAPI->EV_FindModelIndex(second->Sprite);
+
+	if (secondModel == 0)
+		return true;
+
+	const float secondSize = size * (shaped ? Random(ShapedSecondSizeMin, ShapedSecondSizeMax) : Random(RoundSecondSizeMin, RoundSecondSizeMax));
+	const float secondScale = secondSize / second->Width;
+	const float duration = large ? Random(LargeDurationMin, LargeDurationMax) : Random(SmallDurationMin, SmallDurationMax);
+
+	Vector secondOrigin = origin + Vector{Random(-1, 1) * SecondSideways * size, Random(-1, 1) * SecondSideways * size, 0};
+
+	if (shaped)
+	{
+		// Stand it on the floor (R_Sprite_Explode raises sprites 10 units).
+		const float height = second->Height * secondScale;
+		secondOrigin.z = floor.z + height * (0.5f - ShapedSink) - 10;
+	}
+	else
+	{
+		secondOrigin.z += Random(0, SecondUp * size);
+	}
+
+	if (TEMPENTITY* timer = gEngfuncs.pEfxAPI->CL_TempEntAllocNoModel(secondOrigin); timer)
+	{
+		const float now = gEngfuncs.GetClientTime();
+
+		timer->flags |= FTENT_NOMODEL | FTENT_CLIENTCUSTOM;
+		timer->callback = DelayedFireball;
+		timer->entity.curstate.fuser1 = now + Random(0, SecondDelay);
+		timer->entity.curstate.iuser1 = secondModel;
+		timer->entity.curstate.fuser2 = secondScale;
+		timer->entity.curstate.fuser3 = second->Frames / duration;
+		timer->entity.curstate.iuser2 = SecondBrightness;
+		timer->entity.curstate.fuser4 = shaped ? 0 : Random(0, 360);
+		timer->die = now + SecondDelay + 1;
+	}
+
+	return true;
+}

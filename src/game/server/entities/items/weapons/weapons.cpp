@@ -326,6 +326,13 @@ void W_Precache()
 	g_sModelIndexWExplosion = UTIL_PrecacheModel("sprites/WXplo1.spr");		// underwater fireball
 	g_sModelIndexSmoke = UTIL_PrecacheModel("sprites/steam1.spr");			// smoke
 
+	// johnhalflife's second fireballs (client jhl_explosions.cpp).
+	for (const char* sprite : {"sprites/bexplo.spr", "sprites/cexplo.spr", "sprites/dexplo.spr", "sprites/eexplo.spr",
+			 "sprites/fexplo.spr", "sprites/gexplo.spr", "sprites/hexplo.spr"})
+	{
+		UTIL_PrecacheModel(sprite);
+	}
+
 	// Bullet water splash droplets and ripple (client weapon_effects.cpp); the ripple is MMod's sprite (mmod_port), optional.
 	UTIL_PrecacheModel("sprites/wsplash3.spr");
 	// Opposing Force's blood chunk sprite, which no code used, and a yellow copy of it: the gibbing blood splash.

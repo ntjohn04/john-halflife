@@ -14,6 +14,7 @@
  ****/
 
 #include "cbase.h"
+#include "jhl_explosion.h"
 
 LINK_ENTITY_TO_CLASS(grenade, CGrenade);
 
@@ -84,7 +85,7 @@ void CGrenade::Explode(TraceResult* pTrace, int bitsDamageType)
 	// This makes a dynamic light and the explosion sprites/sound
 	// Send to PAS because of the sound
 	UTIL_ExplosionEffect(effectOrigin, iContents != CONTENTS_WATER ? g_sModelIndexFireball : g_sModelIndexWExplosion,
-		(pev->dmg - 50) * .60, 15, TE_EXPLFLAG_NONE,
+		(pev->dmg - 50) * .60, 15, ClassnameIs("rpg_rocket") ? TE_EXPLFLAG_JHL_ROCKET : TE_EXPLFLAG_NONE,
 		MSG_PAS, effectOrigin);
 
 	CSoundEnt::InsertSound(bits_SOUND_COMBAT, pev->origin, NORMAL_EXPLOSION_VOLUME, 3.0);

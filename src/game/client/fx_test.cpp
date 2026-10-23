@@ -26,6 +26,7 @@
 #include "hud.h"
 #include "fx_test.h"
 #include "client_gibs.h"
+#include "jhl_explosion.h"
 #include "com_model.h"
 #include "event_api.h"
 #include "r_efx.h"
@@ -332,6 +333,7 @@ void Explosion(const Target& target, Params& p)
 	flags |= 0 == p.Int("light", 1) ? TE_EXPLFLAG_NODLIGHTS : 0;
 	flags |= 0 == p.Int("sound", 1) ? TE_EXPLFLAG_NOSOUND : 0;
 	flags |= 0 == p.Int("particles", 1) ? TE_EXPLFLAG_NOPARTICLES : 0;
+	flags |= 0 != p.Int("rocket", 0) ? TE_EXPLFLAG_JHL_ROCKET : 0;
 	p.Print("explosion");
 
 	if (const int model = ModelIndex(name); model != 0)
@@ -659,6 +661,7 @@ void Gibs(const Target& target, Params& p)
 void GrenadePreset(const Target& target, Params& p)
 {
 	const float damage = p.Float("dmg", 100);
+	const int rocket = p.Int("rocket", 0);
 	p.Print("grenade (CGrenade::Explode; hand grenade, MP5 grenade and RPG 100, satchel and tripmine 150)");
 
 	const float explosionScale = (damage - 50) * 0.06f;
@@ -668,6 +671,7 @@ void GrenadePreset(const Target& target, Params& p)
 	Params explosion;
 	explosion.Set("scale", explosionScale);
 	explosion.Set("offset", offset);
+	explosion.Set("rocket", static_cast<float>(rocket));
 	Explosion(target, explosion);
 
 	Later(0.3f, [=]()
@@ -829,7 +833,7 @@ struct Command
 const std::vector<Command>& Commands()
 {
 	static const std::vector<Command> commands{
-		{"grenade", "dmg=100", GrenadePreset},
+		{"grenade", "dmg=100 rocket=0|1", GrenadePreset},
 		{"barrel", "magnitude=100", BarrelPreset},
 		{"blood", "dmg=30 type=human|alien", [](const Target& t, Params& p)
 			{ BloodPreset(t, p, "blood (SpawnBlood from CBaseMonster::TraceAttack)", 1); }},
@@ -839,7 +843,7 @@ const std::vector<Command>& Commands()
 		{"apache", "time=4", ApachePreset},
 		{"vortzap", "", VortZapPreset},
 		{"sprite", "sprite= count= scale= alpha= render=alpha|add|glow|normal color=r,g,b fps= life= loop= offset= radius= speed= spread= up= gravity=0|1|2 fade= collide=", Sprite},
-		{"explosion", "sprite= scale= fps= offset= additive= light= sound= particles=", Explosion},
+		{"explosion", "sprite= scale= fps= offset= additive= light= sound= particles= rocket=", Explosion},
 		{"smoke", "sprite= scale= fps= offset=", Smoke},
 		{"sparks", "count=", Sparks},
 		{"streaks", "count= vmin= vmax= offset=", Streaks},
