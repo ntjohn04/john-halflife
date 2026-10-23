@@ -54,10 +54,10 @@ constexpr int BloodStreamRed = 70;			   // Red blood particles: palette 70 and u
 // bright reds up to 255,0,0 and 195 (yellow) is the brightest of its ramp, so darker starts match the decals.
 constexpr int SplashPuffRed = 74;			   // 87,0,0 and up.
 constexpr int DarkYellow = 198;				   // 155,131,7 and darker.
-constexpr int SplashBloodPuffs = 4;			   // A burst where the body was: the game's hit blood,
+constexpr int SplashBloodPuffs = 3;			   // A burst where the body was: the game's hit blood,
 constexpr float SplashBloodSize = 16;		   // at its largest size,
 constexpr float SplashStagger = 0.15f;		   // the extra puffs over this long;
-constexpr int SplashChunks = 50;			   // and blood chunk sprites thrown out (red blood only).
+constexpr int SplashChunks = 30;			   // and blood chunk sprites thrown out (red blood only).
 
 static cvar_t* g_violence_hblood = nullptr;
 static cvar_t* g_violence_ablood = nullptr;
