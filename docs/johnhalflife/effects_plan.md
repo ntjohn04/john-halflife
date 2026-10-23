@@ -88,11 +88,12 @@ Changes:
 
 ## Blood (in progress)
 
-* **Gib blood trails** (`client_gibs.cpp`, `EmitBloodTrail`): 3 gibs per death drop blood particles along their
+* **Gib blood trails** (`client_gibs.cpp`, `EmitBloodTrail`): 7 gibs per death drop blood particles along their
   path for the first second after being thrown, a drop every 4 units at first and thinning out. Each drop is
   an engine particle (`R_AllocParticle`, `pt_grav`) in the blood stream's colors (red palette 70+, yellow 195+),
   carrying 15% of the gib's speed, lasting 0.6-1 s. Calling `R_BloodStream` every frame would emit 100+ particles
-  each time, so the trail is built from single drops instead. Respects `violence_hblood`/`violence_ablood`.
+  each time, so the trail is built from single drops instead. Respects `violence_hblood`/`violence_ablood`. Engine particles have one fixed
+  size (no size field), so the drops can't grow or shrink; small shrinking `blood.spr` sprites would be the way.
 
 ## Testing
 
