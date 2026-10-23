@@ -100,4 +100,7 @@ void LinkUserMessages()
 
 	// Point on the water surface (3 coords).
 	gmsgWaterSplash = REG_USER_MSG("WaterSplash", 6);
+
+	// Entity index of a monster that died without gibbing, blood color.
+	gmsgBloodPool = REG_USER_MSG("BloodPool", 3);
 }

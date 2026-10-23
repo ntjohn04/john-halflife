@@ -664,6 +664,15 @@ void CBaseMonster::Killed(CBaseEntity* attacker, int iGib)
 	{
 		SetTouch(nullptr);
 		BecomeDead();
+
+		// Clients put a pool of blood under the body once it has fallen (client_gibs.cpp).
+		if (0 != gmsgBloodPool && BloodColor() != DONT_BLEED)
+		{
+			MESSAGE_BEGIN(MSG_PVS, gmsgBloodPool, pev->origin);
+			WRITE_SHORT(entindex());
+			WRITE_BYTE(BloodColor());
+			MESSAGE_END();
+		}
 	}
 
 	// don't let the status bar glitch for players.with <0 health.

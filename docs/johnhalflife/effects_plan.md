@@ -106,6 +106,9 @@ Changes:
   traced straight down (floors only, up to 256 units): `{bigblood1`/`{bigblood2` (96/80 px) for red, three
   overlapping `{yblood1` for yellow (its largest is 48 px); `{blood5`/`{yblood1` at splash 0.5 (headcrab),
   `{blood7`/`{yblood2` below (rat, baby crab).
+  Every other death too: a bleeding NPC that dies without gibbing sends `BloodPool` (entity, blood color) from
+  `CBaseMonster::Killed`, and the client puts the pool under wherever the body is 1 s later, once it has fallen,
+  sized by the same gib profiles.
 * The palette's reds are all pure (R,0,0), so blood colors can't be desaturated by index; the chunks are 90% opaque
   instead. The puffs' sprite is made inside `R_BloodSprite`, out of reach; desaturating them would mean building
   them from tinted sprites.

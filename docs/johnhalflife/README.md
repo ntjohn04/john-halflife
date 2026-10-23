@@ -149,13 +149,14 @@ anything is published. In short:
 
 ## Networking
 
-Three user messages were added; everything else is client side or reuses existing sounds.
+Four user messages were added; everything else is client side or reuses existing sounds.
 
 | Message | Size | Sent by | Purpose |
 |---|---|---|---|
 | `SmoothPunch` | 20 bytes | Server, on jump and landing | Spring-damped view jolt |
 | `BulletHit` | 10 bytes | Server, `DecalGunshot` (NPCs, mounted guns) | Bullet impact effects |
 | `WaterSplash` | 6 bytes | Server, NPC bullets entering water | Water splash |
+| `BloodPool` | 3 bytes | Server, a bleeding NPC dying without gibbing (PVS) | Blood pool under the body |
 
 User message names must be 11 characters or fewer; a longer name fails to register and sending it is
 fatal ("bogus message type (0)").

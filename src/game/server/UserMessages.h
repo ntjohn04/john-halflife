@@ -90,5 +90,6 @@ inline int gmsgSmoothPunch = 0;
 
 inline int gmsgBulletImpact = 0;
 inline int gmsgWaterSplash = 0;
+inline int gmsgBloodPool = 0;
 
 void LinkUserMessages();

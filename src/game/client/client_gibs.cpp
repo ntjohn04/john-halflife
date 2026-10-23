@@ -57,7 +57,8 @@ constexpr int DarkYellow = 198;				   // 155,131,7 and darker.
 constexpr int SplashBloodPuffs = 3;			   // A burst where the body was: the game's hit blood,
 constexpr float SplashBloodSize = 16;		   // at its largest size,
 constexpr float SplashStagger = 0.15f;		   // the extra puffs over this long;
-constexpr int SplashChunks = 30;			   // and blood chunk sprites thrown out (red blood only).
+constexpr int SplashChunks = 30;
+constexpr float BloodPoolDelay = 1;			   // Seconds after a death without gibbing before the pool appears.			   // and blood chunk sprites thrown out (red blood only).
 
 static cvar_t* g_violence_hblood = nullptr;
 static cvar_t* g_violence_ablood = nullptr;
@@ -216,6 +217,47 @@ static void SpawnBloodPool(const Vector& origin, int bloodColor, float scale)
 	for (int i = 0; i < 3; ++i)
 	{
 		FloorDecal(origin + Vector{RANDOM_FLOAT(-16, 16), RANDOM_FLOAT(-16, 16), 0}, "{yblood1");
+	}
+}
+
+// A pool under a body that died without gibbing, once it has fallen (curstate.fuser1: when; iuser1: the body's
+// entity; iuser2: blood color; fuser2: size).
+static void DelayedBloodPool(TEMPENTITY* ent, float frametime, float currenttime)
+{
+	if (currenttime < ent->entity.curstate.fuser1)
+		return;
+
+	ent->die = currenttime;
+
+	if (const cl_entity_t* body = gEngfuncs.GetEntityByIndex(ent->entity.curstate.iuser1); body && body->model)
+	{
+		SpawnBloodPool(body->origin + Vector{0, 0, 8}, ent->entity.curstate.iuser2, ent->entity.curstate.fuser2);
+	}
+}
+
+static void MsgFunc_BloodPool(const char* name, BufferReader& reader)
+{
+	const int entindex = reader.ReadShort();
+	const int bloodColor = reader.ReadByte();
+
+	if (!JhlParticleSystemEnabled())
+		return;
+
+	const cl_entity_t* body = gEngfuncs.GetEntityByIndex(entindex);
+
+	if (!body)
+		return;
+
+	if (TEMPENTITY* timer = gEngfuncs.pEfxAPI->CL_TempEntAllocNoModel(body->origin); timer)
+	{
+		const float now = gEngfuncs.GetClientTime();
+		timer->flags |= FTENT_NOMODEL | FTENT_CLIENTCUSTOM;
+		timer->callback = DelayedBloodPool;
+		timer->entity.curstate.fuser1 = now + BloodPoolDelay;
+		timer->entity.curstate.iuser1 = entindex;
+		timer->entity.curstate.iuser2 = bloodColor;
+		timer->entity.curstate.fuser2 = FindGibProfile(entindex).Splash;
+		timer->die = now + BloodPoolDelay + 1;
 	}
 }
 
@@ -693,4 +735,5 @@ void ClientGibs_Initialize()
 	g_violence_ablood = g_ConCommands.GetCVar("violence_ablood");
 
 	g_ClientUserMessages.RegisterHandler("ClientGibs", &MsgFunc_ClientGibs);
+	g_ClientUserMessages.RegisterHandler("BloodPool", &MsgFunc_BloodPool);
 }
