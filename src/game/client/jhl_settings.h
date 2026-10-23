@@ -25,3 +25,8 @@ void JhlSettings_Initialize();
  *	and again whenever the settings dialog's reset box is ticked. Call every frame.
  */
 void JhlSettings_RunFrame();
+
+/**
+ *	@brief Whether johnhalflife's particle system changes are on (jhl_fx_particlesystem): gibs, and future effects.
+ */
+bool JhlParticleSystemEnabled();

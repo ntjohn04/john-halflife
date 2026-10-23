@@ -12,6 +12,7 @@
 
 #include "r_studioint.h"
 
+#include "client_gibs.h"
 #include "StudioModelRenderer.h"
 #include "GameStudioModelRenderer.h"
 
@@ -532,6 +533,18 @@ void CStudioModelRenderer::StudioSetUpTransform(bool trivial_accept)
 
 	angles[PITCH] = -angles[PITCH];
 	AngleMatrix(angles, (*m_protationmatrix));
+
+	// Scaled client-side models (johnhalflife gibs); everything else ignores scale, as in vanilla.
+	if (m_pCurrentEntity->curstate.iuser4 == ScaledModelMarker && m_pCurrentEntity->curstate.scale > 0)
+	{
+		for (int row = 0; row < 3; ++row)
+		{
+			for (int column = 0; column < 3; ++column)
+			{
+				(*m_protationmatrix)[row][column] *= m_pCurrentEntity->curstate.scale;
+			}
+		}
+	}
 
 	if (0 == IEngineStudio.IsHardware())
 	{

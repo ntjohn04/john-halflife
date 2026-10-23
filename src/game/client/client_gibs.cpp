@@ -20,6 +20,7 @@
 #include "pm_defs.h"
 #include "pmtrace.h"
 #include "networking/ClientUserMessages.h"
+#include "jhl_settings.h"
 
 enum class GibState
 {
@@ -33,6 +34,13 @@ enum class GibState
 static cvar_t* g_cl_gibcount = nullptr;
 static cvar_t* g_cl_giblife = nullptr;
 static cvar_t* g_cl_gibvelscale = nullptr;
+
+// johnhalflife (jhl_fx_particlesystem): more gibs, lasting longer, each a little different in size and speed.
+static cvar_t* g_jhl_gibcount_scale = nullptr; // Temporary, for tuning the gib count multiplier in game.
+constexpr int MaxUsesPerGibPiece = 3;		   // Each gib model piece at most this many times per death.
+constexpr float JhlGibLife = 60;			   // Seconds on the ground before fading (the giblife cvar otherwise).
+constexpr float JhlGibScaleVariation = 0.15f;  // Size +-15%.
+constexpr float JhlGibSpeedVariation = 0.2f;   // Speed +-20%.
 
 static cvar_t* g_violence_hblood = nullptr;
 static cvar_t* g_violence_ablood = nullptr;
@@ -92,7 +100,7 @@ static void EV_TFC_GibCallback(TEMPENTITY* ent, float frametime, float currentti
 		if (ent->entity.baseline.origin.Length() == 0)
 		{
 			ent->entity.curstate.playerclass = int(GibState::WaitTillExpire);
-			ent->entity.baseline.fuser1 = g_cl_giblife->value;
+			ent->entity.baseline.fuser1 = JhlParticleSystemEnabled() ? JhlGibLife : g_cl_giblife->value;
 		}
 
 		ent->die = gEngfuncs.GetClientTime() + 1;
@@ -212,6 +220,15 @@ static TEMPENTITY* EV_TFC_CreateGib(const char* modelName, int body, byte bloodC
 		ent->entity.baseline.angles.y = RANDOM_FLOAT(100, 200);
 	}
 
+	if (JhlParticleSystemEnabled())
+	{
+		ent->entity.curstate.velocity = ent->entity.curstate.velocity * RANDOM_FLOAT(1 - JhlGibSpeedVariation, 1 + JhlGibSpeedVariation);
+
+		// The model renderer only applies scale to entities marked like this (see StudioSetUpTransform).
+		ent->entity.curstate.scale = RANDOM_FLOAT(1 - JhlGibScaleVariation, 1 + JhlGibScaleVariation);
+		ent->entity.curstate.iuser4 = ScaledModelMarker;
+	}
+
 	EV_TFC_GibVelocityCheck(ent->entity.curstate.velocity);
 
 	ent->flags |= FTENT_GRAVITY | FTENT_ROTATE | FTENT_COLLIDEWORLD;
@@ -265,6 +282,17 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 		numGibs = std::clamp(int(g_cl_gibcount->value), 0, MAX_TEMPENTS);
 	}
 
+	const bool jhl = JhlParticleSystemEnabled();
+
+	if (jhl)
+	{
+		numGibs = std::clamp(int(numGibs * g_jhl_gibcount_scale->value), 0, MAX_TEMPENTS);
+	}
+
+	// Uses of each randomly picked piece, so none repeats more than MaxUsesPerGibPiece times in one death.
+	eastl::fixed_vector<int, 64> pieceUses;
+	pieceUses.resize(gibData->SubModelCount);
+
 	// Track the number of uses of a particular submodel so we can avoid spawning too many of the same submodel
 	eastl::fixed_vector<int, 64> limitTracking;
 
@@ -295,6 +323,27 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 			body = currentBody;
 
 			++limitTracking[currentBody];
+		}
+		else if (jhl)
+		{
+			// A random piece among those not used up yet; stop once every piece has been used enough.
+			eastl::fixed_vector<int, 64> available;
+
+			for (int piece = gibData->FirstSubModel; piece < gibData->SubModelCount; ++piece)
+			{
+				if (pieceUses[piece] < MaxUsesPerGibPiece)
+				{
+					available.push_back(piece);
+				}
+			}
+
+			if (available.empty())
+			{
+				break;
+			}
+
+			body = available[RANDOM_LONG(0, int(available.size()) - 1)];
+			++pieceUses[body];
 		}
 		else
 		{
@@ -330,6 +379,7 @@ void ClientGibs_Initialize()
 	g_cl_gibcount = g_ConCommands.CreateCVar("gibcount", "4", FCVAR_ARCHIVE);
 	g_cl_giblife = g_ConCommands.CreateCVar("giblife", "25", FCVAR_ARCHIVE);
 	g_cl_gibvelscale = g_ConCommands.CreateCVar("gibvelscale", "1.0", FCVAR_ARCHIVE);
+	g_jhl_gibcount_scale = gEngfuncs.pfnRegisterVariable("jhl_fx_gibcount_scale", "7", 0);
 
 	g_violence_hblood = g_ConCommands.GetCVar("violence_hblood");
 	g_violence_ablood = g_ConCommands.GetCVar("violence_ablood");

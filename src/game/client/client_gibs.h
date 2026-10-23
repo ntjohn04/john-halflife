@@ -15,6 +15,12 @@
 
 #pragma once
 
+/**
+ *	@brief iuser4 value of a client-side model the renderer should scale by curstate.scale (vanilla ignores model scale,
+ *	so only entities marked this way get it).
+ */
+constexpr int ScaledModelMarker = 0x4A484C; // "JHL"
+
 void ClientGibs_Initialize();
 
 /**

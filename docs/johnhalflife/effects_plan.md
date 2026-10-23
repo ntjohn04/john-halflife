@@ -55,6 +55,34 @@ Suggested order: **1 → 2 → 3 → 4 → 5 → 6 → 7**. Explosions first bec
 barrels and part of every set piece; blood second because it's on screen the most; set pieces late because
 they inherit from the shared work.
 
+## Gibs (in progress)
+
+`jhl_fx_particlesystem`, client side (`client_gibs.cpp`). How gibbing works:
+
+* Every NPC dies through `Killed` → `GibMonster`. The shared version picks human or alien gibs (each NPC class
+  overrides `HasHumanGibs`/`HasAlienGibs`), adds a skull for humans and sends one `ClientGibs` message; each
+  client spawns the gibs itself. Grunts, assassins, grunt allies and controllers do extra work and then call it;
+  the pit drone (6), shock trooper (6) and voltigore (12) send their own model and count; the barnacle 1; the
+  Apache, Osprey, Nihilanth and penguin throw no flesh gibs.
+* Gib sets: human `hgibs.mdl` (5 random pieces, submodels 1-5, plus the skull), alien `agibs.mdl` (4), pit drone
+  (7), shock trooper (8), voltigore (9 with per-piece limits, 12 in all).
+* Count `gibcount` (4) for the shared path, life on the ground `giblife` (25 s), speed `gibvelscale` (1): client
+  cvars.
+* When: below −30 health from explosions, melee, crushing and falls; always from the displacer, shock rifle,
+  spores, houndeye blast, tail whips, the barnacle and NPC bullets over 16 damage; never from the player's
+  bullets, hornets or the shock roach; corpses gib from accumulated explosion, melee and crush damage. Speed by
+  overkill: 0.7× above −50, 2× above −200, 4× below. The player's bullets never gibbing stays: there's nothing
+  between a corpse and gibs.
+
+Changes:
+
+* Count × `jhl_fx_gibcount_scale` (temporary tuning cvar, 7 for now), with each piece used at most 3 times per
+  death (so 15 human pieces plus the skull, 12 alien) and voltigore limits kept.
+* 60 s on the ground before fading, instead of `giblife`.
+* Each gib ±15% size and ±20% speed. Vanilla's model renderer ignores scale; `StudioSetUpTransform` now applies it
+  to entities marked with `ScaledModelMarker` in `iuser4` only, so map models with a scale keyvalue are unchanged.
+* Later: bounce sounds on a few gibs per death, from vanilla sounds.
+
 ## Testing
 
 | Need | How |

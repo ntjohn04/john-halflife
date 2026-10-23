@@ -52,6 +52,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_weapons_smoothrecoil", "1"},
 	{"jhl_fx_bulletimpacts", "1"},
 	{"jhl_fx_muzzleflash", "1"},
+	{"jhl_fx_particlesystem", "1"},
 	{"jhl_hud_scale", "1"},
 	{"crosshair_scale", "2"},
 	{"default_fov", "105"},
@@ -74,6 +75,7 @@ constexpr int FramesBeforeFirstLaunchCheck = 5;
 constexpr const char* GoreSettings[] = {"violence_hblood", "violence_hgibs", "violence_ablood", "violence_agibs"};
 
 cvar_t* g_RecommendedVersion = nullptr;
+cvar_t* g_ParticleSystem = nullptr;
 cvar_t* g_Gore = nullptr;
 float g_AppliedGore = -1;
 cvar_t* g_ResetRecommended = nullptr;
@@ -123,8 +125,16 @@ void ApplyAllRecommended()
 }
 }
 
+bool JhlParticleSystemEnabled()
+{
+	return 0 != g_ParticleSystem->value;
+}
+
 void JhlSettings_Initialize()
 {
+	// One switch for all of johnhalflife's particle system changes (see docs/johnhalflife/effects_plan.md).
+	g_ParticleSystem = gEngfuncs.pfnRegisterVariable("jhl_fx_particlesystem", "1", FCVAR_ARCHIVE);
+
 	// Archived, so it survives in config.cfg and the first launch values are only applied once per version.
 	g_RecommendedVersion = gEngfuncs.pfnRegisterVariable("jhl_recommended_version", "0", FCVAR_ARCHIVE);
 
