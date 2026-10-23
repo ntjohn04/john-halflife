@@ -235,13 +235,15 @@ static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bl
 		// Random, a little upward, and pushed the way the gibs fly (away from the attack).
 		Vector velocity = Vector{RANDOM_FLOAT(-80, 80), RANDOM_FLOAT(-80, 80), RANDOM_FLOAT(-80, 80) + 60} - attackdir * 40;
 
-		TEMPENTITY* sprite = efx->R_TempSprite(position, velocity, 0.4f, chunk, kRenderTransAlpha, kRenderFxNone, 1, 1,
+		TEMPENTITY* sprite = efx->R_TempSprite(position, velocity, 0.4f, chunk, kRenderTransAlpha, kRenderFxNone, 1, 2.5f,
 			FTENT_SPRANIMATE | FTENT_GRAVITY | FTENT_COLLIDEWORLD);
 
 		if (sprite)
 		{
 			sprite->entity.curstate.rendercolor = {255, 255, 255};
-			sprite->entity.curstate.framerate = 6;
+			// It disappears on its last frame, so a random frame rate staggers the chunks' lifetimes: 4 frames at
+			// 2-6 fps lasts 0.67-2 seconds.
+			sprite->entity.curstate.framerate = 6 / RANDOM_FLOAT(1, 3);
 			sprite->entity.angles.z = RANDOM_FLOAT(0, 359);
 		}
 	}
