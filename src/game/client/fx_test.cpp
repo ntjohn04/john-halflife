@@ -27,6 +27,7 @@
 #include "fx_test.h"
 #include "client_gibs.h"
 #include "jhl_explosion.h"
+#include "jhl_explosions.h"
 #include "jhl_settings.h"
 #include "com_model.h"
 #include "event_api.h"
@@ -360,6 +361,28 @@ void Smoke(const Target& target, Params& p)
 		{
 			gEngfuncs.pEfxAPI->R_Sprite_Smoke(smoke, scale);
 		}
+	}
+}
+
+// The lingering cloud after an explosion's smoke (jhl_explosions.cpp), by itself; scale is the fireball's.
+void LingeringSmoke(const Target& target, Params& p)
+{
+	JhlLingeringSmoke settings;
+	const float scale = p.Float("scale", 3);
+	const float offset = p.Float("offset", 45.6f);
+	settings.Delay = p.Float("delay", 0);
+	settings.LifeMin = settings.LifeMax = p.Float("life", 6);
+	settings.StartWidth = p.Float("start", settings.StartWidth);
+	settings.EndWidth = p.Float("end", settings.EndWidth);
+	settings.RiseMin = settings.RiseMax = p.Float("rise", 10);
+	settings.Drift = p.Float("drift", settings.Drift);
+	settings.Opacity = p.Int("opacity", settings.Opacity);
+	settings.GrayMin = settings.GrayMax = p.Int("gray", 35);
+	p.Print("lingersmoke");
+
+	if (!JhlExplosion_LingeringSmoke(target.Position + target.Normal * offset, scale, settings))
+	{
+		gEngfuncs.Con_Printf("jhl_fx_test: sprites/wep_smoke_01.spr isn't loaded; load a map again\n");
 	}
 }
 
@@ -852,6 +875,7 @@ const std::vector<Command>& Commands()
 		{"sprite", "sprite= count= scale= alpha= render=alpha|add|glow|normal color=r,g,b fps= life= loop= offset= radius= speed= spread= up= gravity=0|1|2 fade= collide=", Sprite},
 		{"explosion", "sprite= scale= fps= offset= additive= light= sound= particles= rocket=", Explosion},
 		{"smoke", "sprite= scale= fps= offset=", Smoke},
+		{"lingersmoke", "scale=3 opacity=64 gray=35 life=6 start=64 end=128 rise=10 drift=5 delay=0 offset=45.6", LingeringSmoke},
 		{"sparks", "count=", Sparks},
 		{"streaks", "count= vmin= vmax= offset=", Streaks},
 		{"shower", "count= speedmin= speedmax= lifemin= lifemax=", Shower},

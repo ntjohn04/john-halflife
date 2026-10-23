@@ -91,23 +91,11 @@ constexpr float LargeDurationMax = 2.0f;
 // The sprite's bottom rows are mostly empty, so a shaped fireball sinks this much of its height into the floor.
 constexpr float ShapedSink = 0.05f;
 
-// A big, faint smoke cloud that lingers after the vanilla smoke (steam1, which the server sends 0.3 s in: 20 units up,
-// rising 30 units/s for 1.3 s, about (fireball scale × 43) units wide). Opposing Force's single-frame puff, so it can
-// grow and fade smoothly; widths relative to the fireball's scale.
+// The lingering smoke (settings in jhl_explosions.h): Opposing Force's single-frame puff, so it can grow and fade
+// smoothly.
 constexpr const char* LingeringSmokeSprite = "sprites/wep_smoke_01.spr";
 constexpr float LingeringSmokeSpriteWidth = 64;
-constexpr float LingeringSmokeDelay = 0.4f;
-constexpr float LingeringSmokeLifeMin = 5;
-constexpr float LingeringSmokeLifeMax = 7;
-constexpr float LingeringSmokeStartWidth = 64; // 1.5× the vanilla smoke.
-constexpr float LingeringSmokeEndWidth = 128;
 constexpr float LingeringSmokeHeight = 20;
-constexpr float LingeringSmokeRiseMin = 8;
-constexpr float LingeringSmokeRiseMax = 12;
-constexpr float LingeringSmokeDrift = 5;
-constexpr int LingeringSmokeOpacity = 64; // Peak, of 255.
-constexpr int LingeringSmokeGrayMin = 30;
-constexpr int LingeringSmokeGrayMax = 40;
 constexpr float LingeringSmokeFadeIn = 0.15f; // Fractions of its life.
 constexpr float LingeringSmokeFadeOut = 0.5f;
 
@@ -160,7 +148,8 @@ bool FindFloor(const Vector& origin, float scale, Vector& floor)
 	return true;
 }
 
-// Grows and fades the lingering smoke (curstate.fuser1: start time; fuser2: life; fuser3, fuser4: start and end scale).
+// Grows and fades the lingering smoke (curstate.fuser1: start time; fuser2: life; fuser3, fuser4: start and end scale;
+// iuser1: peak opacity).
 void LingeringSmokeThink(TEMPENTITY* ent, float frametime, float currenttime)
 {
 	const auto& state = ent->entity.curstate;
@@ -179,41 +168,48 @@ void LingeringSmokeThink(TEMPENTITY* ent, float frametime, float currenttime)
 	else if (t > 1 - LingeringSmokeFadeOut)
 		opacity = std::max(0.f, (1 - t) / LingeringSmokeFadeOut);
 
-	ent->entity.curstate.renderamt = static_cast<int>(LingeringSmokeOpacity * opacity);
+	ent->entity.curstate.renderamt = static_cast<int>(state.iuser1 * opacity);
 	ent->entity.curstate.scale = state.fuser3 + (state.fuser4 - state.fuser3) * std::min(1.f, t);
 }
 
-void LingeringSmoke(const Vector& origin, float scale)
+} // namespace
+
+bool JhlExplosion_LingeringSmoke(const Vector& origin, float scale, const JhlLingeringSmoke& settings)
 {
 	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex(LingeringSmokeSprite);
 
 	if (model == 0)
-		return;
+		return false;
 
-	const float life = Random(LingeringSmokeLifeMin, LingeringSmokeLifeMax);
-	const Vector velocity{Random(-LingeringSmokeDrift, LingeringSmokeDrift), Random(-LingeringSmokeDrift, LingeringSmokeDrift),
-		Random(LingeringSmokeRiseMin, LingeringSmokeRiseMax)};
+	const float life = Random(settings.LifeMin, settings.LifeMax);
+	const Vector velocity{Random(-settings.Drift, settings.Drift), Random(-settings.Drift, settings.Drift),
+		Random(settings.RiseMin, settings.RiseMax)};
 
 	TEMPENTITY* smoke = gEngfuncs.pEfxAPI->R_TempSprite(origin + Vector{0, 0, LingeringSmokeHeight}, velocity, 0, model,
-		kRenderTransAlpha, kRenderFxNone, 0, LingeringSmokeDelay + life, 0);
+		kRenderTransAlpha, kRenderFxNone, 0, settings.Delay + life, 0);
 
 	if (!smoke)
-		return;
+		return false;
 
 	const float now = gEngfuncs.GetClientTime();
-	const auto gray = static_cast<byte>(gEngfuncs.pfnRandomLong(LingeringSmokeGrayMin, LingeringSmokeGrayMax));
+	const auto gray = static_cast<byte>(gEngfuncs.pfnRandomLong(settings.GrayMin, settings.GrayMax));
 
 	smoke->flags |= FTENT_CLIENTCUSTOM;
 	smoke->callback = LingeringSmokeThink;
 	smoke->entity.curstate.rendercolor = {gray, gray, gray};
 	smoke->entity.curstate.renderamt = 0;
-	smoke->entity.curstate.fuser1 = now + LingeringSmokeDelay;
+	smoke->entity.curstate.iuser1 = settings.Opacity;
+	smoke->entity.curstate.fuser1 = now + settings.Delay;
 	smoke->entity.curstate.fuser2 = life;
-	smoke->entity.curstate.fuser3 = scale * LingeringSmokeStartWidth / LingeringSmokeSpriteWidth;
-	smoke->entity.curstate.fuser4 = scale * LingeringSmokeEndWidth / LingeringSmokeSpriteWidth;
+	smoke->entity.curstate.fuser3 = scale * settings.StartWidth / LingeringSmokeSpriteWidth;
+	smoke->entity.curstate.fuser4 = scale * settings.EndWidth / LingeringSmokeSpriteWidth;
 	smoke->entity.curstate.scale = smoke->entity.curstate.fuser3;
 	smoke->entity.angles.z = Random(0, 360);
+	return true;
 }
+
+namespace
+{
 
 // One of a falling helicopter's fireballs: the vanilla one or a round one, the same size and length.
 void FallingFireball(const Vector& origin, int model, float scale)
@@ -260,7 +256,7 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 		Random(-PositionJitter, PositionJitter)};
 	SpawnFireball(origin + jitter, model, firstScale, JhlFramerate * Random(1 - Jitter, 1 + Jitter), 180, Random(0, 360));
 
-	LingeringSmoke(origin, scale * (rocket ? RocketScale : 1));
+	JhlExplosion_LingeringSmoke(origin, scale * (rocket ? RocketScale : 1));
 
 	// The second fireball: shaped for large explosions on a floor, round otherwise.
 	Vector floor;
