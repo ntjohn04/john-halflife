@@ -98,10 +98,17 @@ Changes:
   game's hit blood puffs (`R_BloodSprite`, size 16, the game's maximum) spread over a body-shaped area (±8
   sideways, −12 to +18 vertically), the extra 2 over the first 0.15 s, in darker colors than the game's (red 74,
   yellow 198: effects use a few palette entries from the one given, and 247 is followed by bright reds while 195
-  is the brightest yellow); and for red blood, 30 of Opposing Force's `blood_chnk.spr` (scale 0.4, 2-6 fps at random so they last 0.67-2 s, gravity, colliding,
+  is the brightest yellow); and for red blood, 30 of Opposing Force's `blood_chnk.spr` (scale 0.4, 90% opaque, 1-2.7 fps at random so they last 1.5-4 s, gravity, colliding,
   random roll) from points in the same area, thrown at ±80 plus 60 up and 40 the way the gibs fly. Alien blood gets the puffs only (the chunk
   sprite is red). Sized by the gib profile's `Splash` (headcrab 0.5, baby crab and rat 0.25, large aliens 1.25);
   a barnacle's single coughed-up gibs don't splash. `blood_chnk.spr` is precached in `W_Precache`.
+* **Blood pool** (`SpawnBloodPool`, as MMod's gibbing blood pools): a decal on the floor under a gibbed body,
+  traced straight down (floors only, up to 256 units): `{bigblood1`/`{bigblood2` (96/80 px) for red, three
+  overlapping `{yblood1` for yellow (its largest is 48 px); `{blood5`/`{yblood1` at splash 0.5 (headcrab),
+  `{blood7`/`{yblood2` below (rat, baby crab).
+* The palette's reds are all pure (R,0,0), so blood colors can't be desaturated by index; the chunks are 90% opaque
+  instead. The puffs' sprite is made inside `R_BloodSprite`, out of reach; desaturating them would mean building
+  them from tinted sprites.
 * **Gib blood trails** (`client_gibs.cpp`, `EmitBloodTrail`): 7 gibs per death drop blood particles along their
   path for the first second after being thrown, a drop every 4 units at first and thinning out. Each drop is
   an engine particle (`R_AllocParticle`, `pt_grav`) in the blood stream's colors (red palette 70+, yellow 198+),

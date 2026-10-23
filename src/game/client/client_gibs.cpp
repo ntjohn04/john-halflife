@@ -172,6 +172,53 @@ static void DelayedBloodPuff(TEMPENTITY* ent, float frametime, float currenttime
 	ent->die = currenttime;
 }
 
+// Puts a decal where a downward trace from a point lands on a floor, if it does.
+static void FloorDecal(const Vector& point, const char* decalName)
+{
+	Vector start = point;
+	Vector end = point - Vector{0, 0, 256};
+
+	pmtrace_t tr;
+	gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(0, 1);
+	gEngfuncs.pEventAPI->EV_PushPMStates();
+	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
+	gEngfuncs.pEventAPI->EV_PlayerTrace(start, end, PM_WORLD_ONLY, -1, &tr);
+	gEngfuncs.pEventAPI->EV_PopPMStates();
+
+	// Floors only: not off a ledge, not up a wall or a steep slope.
+	if (tr.fraction >= 1 || tr.plane.normal.z < 0.7f || r_decals->value == 0)
+		return;
+
+	const int decalId = gEngfuncs.pEfxAPI->Draw_DecalIndexFromName(decalName);
+	const int textureIndex = gEngfuncs.pEfxAPI->Draw_DecalIndex(decalId);
+	gEngfuncs.pEfxAPI->R_DecalShoot(textureIndex, gEngfuncs.pEventAPI->EV_IndexFromTrace(&tr), 0, &tr.endpos.x, 0);
+}
+
+// A pool of blood on the floor where a gibbed body was (as MMod does): the game's big blood splat, or for yellow
+// blood, whose largest decal is smaller, three overlapping. Smaller for small creatures.
+static void SpawnBloodPool(const Vector& origin, int bloodColor, float scale)
+{
+	if (scale <= 0 || !ShowsBlood(bloodColor))
+		return;
+
+	if (bloodColor == BLOOD_COLOR_RED)
+	{
+		FloorDecal(origin, scale >= 1 ? (RANDOM_LONG(0, 1) != 0 ? "{bigblood1" : "{bigblood2") : scale >= 0.5f ? "{blood5" : "{blood7");
+		return;
+	}
+
+	if (scale < 1)
+	{
+		FloorDecal(origin, scale >= 0.5f ? "{yblood1" : "{yblood2");
+		return;
+	}
+
+	for (int i = 0; i < 3; ++i)
+	{
+		FloorDecal(origin + Vector{RANDOM_FLOAT(-16, 16), RANDOM_FLOAT(-16, 16), 0}, "{yblood1");
+	}
+}
+
 // A random point in a body around its center: wider than deep, and taller upward.
 static Vector RandomInBody(float scale)
 {
@@ -235,15 +282,16 @@ static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bl
 		// Random, a little upward, and pushed the way the gibs fly (away from the attack).
 		Vector velocity = Vector{RANDOM_FLOAT(-80, 80), RANDOM_FLOAT(-80, 80), RANDOM_FLOAT(-80, 80) + 60} - attackdir * 40;
 
-		TEMPENTITY* sprite = efx->R_TempSprite(position, velocity, 0.4f, chunk, kRenderTransAlpha, kRenderFxNone, 1, 2.5f,
+		// Slightly translucent, so a little of the surroundings shows through the sprite's pure red, as with the decals.
+		TEMPENTITY* sprite = efx->R_TempSprite(position, velocity, 0.4f, chunk, kRenderTransAlpha, kRenderFxNone, 0.9f, 4.5f,
 			FTENT_SPRANIMATE | FTENT_GRAVITY | FTENT_COLLIDEWORLD);
 
 		if (sprite)
 		{
 			sprite->entity.curstate.rendercolor = {255, 255, 255};
-			// It disappears on its last frame, so a random frame rate staggers the chunks' lifetimes: 4 frames at
-			// 2-6 fps lasts 0.67-2 seconds.
-			sprite->entity.curstate.framerate = 6 / RANDOM_FLOAT(1, 3);
+			// It disappears on its last frame, so a random frame rate staggers the chunks' lifetimes: its 4 frames
+			// last 1.5-4 seconds.
+			sprite->entity.curstate.framerate = 4 / RANDOM_FLOAT(1.5f, 4);
 			sprite->entity.angles.z = RANDOM_FLOAT(0, 359);
 		}
 	}
@@ -523,6 +571,7 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 	if (jhl && requestedGibs != 1)
 	{
 		SpawnGibSplash(origin, angles, bloodColor, profile.Splash);
+		SpawnBloodPool(origin, bloodColor, profile.Splash);
 	}
 
 	const int maxUsesPerPiece = profile.MaxUsesPerPiece;
