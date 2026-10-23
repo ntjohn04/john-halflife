@@ -115,7 +115,8 @@ a copy of the game code.
 
 * The build installs the game code, `delta.lst` and the settings files into each folder.
 * Menu files used unchanged are copied from the player's own Valve install at install time, so they match their
-  version of the game and are never committed (`cmake/JhlInstallValveMenu.cmake`): Half-Life's main menu
+  version of the game and are never committed (`cmake/JhlInstallValveMenu.cmake`): Half-Life's main menu,
+  without its hint text next to each button
   (`GameMenu.res`, shared by all four, so the Unified SDK's Campaign Select is gone; its map,
   `hlu_campaignselect`, still works from the console), background layouts and tiles, logo and icon, then the
   folder's own game's (`gearbox`, `bshift`) over them.

@@ -15,8 +15,10 @@ if (NOT EXISTS "${valve}/resource")
 	return()
 endif()
 
-# One main menu for every game.
-file(COPY "${valve}/resource/GameMenu.res" DESTINATION "${target}/resource")
+# One main menu for every game, without the 25th anniversary's hint text next to each button.
+file(READ "${valve}/resource/GameMenu.res" gameMenu)
+string(REGEX REPLACE "[ \t]*\"HelpText\"[^\n]*\n" "" gameMenu "${gameMenu}")
+file(WRITE "${target}/resource/GameMenu.res" "${gameMenu}")
 
 foreach(source valve ${JHL_OWN})
 	set(from "${root}/${source}")
