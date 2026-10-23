@@ -561,7 +561,7 @@ void COsprey::DyingThink()
 		WRITE_SHORT(m_iTailGibs); // model id#
 
 		// # of shards
-		WRITE_BYTE(8); // let client decide
+		WRITE_BYTE(UTIL_JhlParticleSystem() ? RANDOM_LONG(8, 16) : 8); // let client decide
 
 		// duration
 		WRITE_BYTE(200); // 10.0 seconds

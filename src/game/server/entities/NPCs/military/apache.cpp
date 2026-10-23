@@ -221,7 +221,7 @@ void CApache::DyingThink()
 		WRITE_SHORT(m_iBodyGibs); // model id#
 
 		// # of shards
-		WRITE_BYTE(4); // let client decide
+		WRITE_BYTE(UTIL_JhlParticleSystem() ? RANDOM_LONG(4, 8) : 4); // let client decide
 
 		// duration
 		WRITE_BYTE(30); // 3.0 seconds

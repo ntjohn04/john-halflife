@@ -59,6 +59,8 @@ constexpr float JhlFramerate = 15;
 // A falling helicopter (Apache, Osprey) sends one fireball every 0.2 s under its hull, scale 3-5.9 at 12 fps (1.25 s);
 // each is drawn from the vanilla and round fireballs instead.
 constexpr float FallingFramerate = 12;
+constexpr float FallingSizeMin = 1;
+constexpr float FallingSizeMax = 1.2f;
 
 constexpr float LargeScale = 6;	  // Satchel, tripmine, Apache rocket, env_explosion magnitude 150+.
 constexpr float BiggestScale = 9; // func_mortar, env_explosion magnitude 200+: the mushroom cloud joins the pool.
@@ -148,7 +150,7 @@ void FallingFireball(const Vector& origin, int model, float scale)
 	if (fireballModel == 0)
 		return;
 
-	const float size = scale * Vanilla.Width * Random(1 - Jitter, 1 + Jitter);
+	const float size = scale * Vanilla.Width * Random(FallingSizeMin, FallingSizeMax);
 	const float duration = Vanilla.Frames / FallingFramerate * Random(1 - Jitter, 1 + Jitter);
 
 	SpawnFireball(origin, fireballModel, size / (fireball.Width * fireball.Fill), fireball.Frames / duration, 180,
