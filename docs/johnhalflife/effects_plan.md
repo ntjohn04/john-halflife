@@ -168,8 +168,9 @@ crossbow bolt; not the Apache/Osprey deaths at 12 fps, Opposing Force's mortar a
 * The vanilla fireball, with random roll, scale and frame rate ±10% and position ±4 units. Lights, particles and
   sound are the engine's, once.
 * A second fireball 0-0.1 s later, at 140 brightness (the vanilla one is 180; both are additive):
-  * Small explosions: round `bexplo`/`cexplo`/`dexplo`/`eexplo`, 0.6-0.8× the first's size, random roll, set
-    off ±6% of its size sideways and 0-10% up, playing 1-1.2 s.
+  * Small explosions: round `bexplo`/`cexplo`/`dexplo`/`eexplo`, 0.9-1.1× the first's size (corrected for how
+    much of each frame the fire fills), random roll, set off ±6% of its size sideways and, on a floor, 5-15% down
+    (elsewhere 0-10% up), playing 0.9-1.3 s.
   * Large ones (scale 6+: satchel, tripmine, Apache rocket, magnitude 150+; and RPG rockets) on a floor: shaped
     `fexplo`/`gexplo` standing on it, plus the `hexplo` mushroom cloud at scale 9+ (`func_mortar`, magnitude
     200+); 0.8-1× the first's size, upright, playing 1.6-2 s. Off a floor (walls, ceilings, mid-air), round ones.

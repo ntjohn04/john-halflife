@@ -30,6 +30,7 @@ struct Fireball
 	float Width; // Frame size in pixels; frames are centered on the origin.
 	float Height;
 	int Frames;
+	float Fill = 1; // How much of the frame the fire fills, relative to the vanilla fireball (by eye).
 };
 
 // The vanilla fireball: 64 px, 15 frames at 15 fps (1 s).
@@ -37,10 +38,10 @@ constexpr Fireball Vanilla{"sprites/zerogxplode.spr", 64, 64, 15};
 
 // Round fireballs, which look right anywhere.
 constexpr Fireball RoundFireballs[] = {
-	{"sprites/bexplo.spr", 64, 64, 24},
-	{"sprites/cexplo.spr", 80, 80, 25},
-	{"sprites/dexplo.spr", 80, 80, 26},
-	{"sprites/eexplo.spr", 80, 80, 25},
+	{"sprites/bexplo.spr", 64, 64, 24, 0.8f},
+	{"sprites/cexplo.spr", 80, 80, 25, 0.85f},
+	{"sprites/dexplo.spr", 80, 80, 26, 0.7f},
+	{"sprites/eexplo.spr", 80, 80, 25, 0.85f},
 };
 
 // Fireballs that rise from the bottom of the frame (a wide blast, a fire column, a mushroom cloud), so they stand on a
@@ -62,20 +63,22 @@ constexpr float RocketScale = 1.5f;
 constexpr float Jitter = 0.1f;		 // Scale and frame rate, both fireballs.
 constexpr float PositionJitter = 4; // Units, the vanilla fireball.
 
-// The second fireball, relative to the first's size; delayed a little, set off sideways and up by a fraction of the
-// first's size, dimmer (the vanilla fireball is additive at 180) since the two add up.
-constexpr float RoundSecondSizeMin = 0.6f;
-constexpr float RoundSecondSizeMax = 0.8f;
+// The second fireball, relative to the first's size; delayed a little, set off sideways and up (on a floor, down) by a
+// fraction of the first's size, dimmer (the vanilla fireball is additive at 180) since the two add up.
+constexpr float RoundSecondSizeMin = 0.9f;
+constexpr float RoundSecondSizeMax = 1.1f;
 constexpr float ShapedSecondSizeMin = 0.8f;
 constexpr float ShapedSecondSizeMax = 1.0f;
 constexpr float SecondDelay = 0.1f;
 constexpr float SecondSideways = 0.06f;
 constexpr float SecondUp = 0.1f;
+constexpr float SecondDownOnFloorMin = 0.05f;
+constexpr float SecondDownOnFloorMax = 0.15f;
 constexpr int SecondBrightness = 140;
 
 // How long the second fireball plays: about as long as the vanilla one, longer for large explosions.
-constexpr float SmallDurationMin = 1.0f;
-constexpr float SmallDurationMax = 1.2f;
+constexpr float SmallDurationMin = 0.9f;
+constexpr float SmallDurationMax = 1.3f;
 constexpr float LargeDurationMin = 1.6f;
 constexpr float LargeDurationMax = 2.0f;
 
@@ -152,7 +155,8 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 
 	// The second fireball: shaped for large explosions on a floor, round otherwise.
 	Vector floor;
-	const bool shaped = large && FindFloor(origin, scale, floor);
+	const bool onFloor = FindFloor(origin, scale, floor);
+	const bool shaped = large && onFloor;
 
 	const Fireball* second;
 
@@ -172,7 +176,7 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 		return true;
 
 	const float secondSize = size * (shaped ? Random(ShapedSecondSizeMin, ShapedSecondSizeMax) : Random(RoundSecondSizeMin, RoundSecondSizeMax));
-	const float secondScale = secondSize / second->Width;
+	const float secondScale = secondSize / (second->Width * second->Fill);
 	const float duration = large ? Random(LargeDurationMin, LargeDurationMax) : Random(SmallDurationMin, SmallDurationMax);
 
 	Vector secondOrigin = origin + Vector{Random(-1, 1) * SecondSideways * size, Random(-1, 1) * SecondSideways * size, 0};
@@ -182,6 +186,10 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 		// Stand it on the floor (R_Sprite_Explode raises sprites 10 units).
 		const float height = second->Height * secondScale;
 		secondOrigin.z = floor.z + height * (0.5f - ShapedSink) - 10;
+	}
+	else if (onFloor)
+	{
+		secondOrigin.z -= Random(SecondDownOnFloorMin, SecondDownOnFloorMax) * size;
 	}
 	else
 	{
