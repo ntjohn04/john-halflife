@@ -54,21 +54,50 @@ constexpr int BloodStreamRed = 70;			   // Red blood particles: palette 70 and u
 static cvar_t* g_violence_hblood = nullptr;
 static cvar_t* g_violence_ablood = nullptr;
 
-// Full-size aliens with the 4-piece alien gibs, so they break into more than small aliens do. Looked up by the
-// dying monster's model, which the client still has when the gibs message arrives.
-static bool IsLargeAlien(int entindex)
+// How a particular monster gibs, where it differs from the defaults (GibCountMultiplier, MaxUsesPerGibPiece, full
+// size, a skull for humans). Looked up by the dying monster's model, which the client still has when the gibs
+// message arrives.
+struct GibProfile
 {
-	static constexpr std::string_view LargeAlienModels[] = {
-		"models/agrunt.mdl", "models/islave.mdl", "models/bullsquid.mdl", "models/controller.mdl",
-		"models/zombie.mdl", "models/zombie_barney.mdl", "models/zombie_soldier.mdl", "models/gonome.mdl",
-		"models/big_mom.mdl", "models/icky.mdl"};
+	std::string_view Model;
+	int Count = 0;		// Exactly this many gibs, if set.
+	int Multiplier = 0; // The gib count times this, if set (instead of GibCountMultiplier, which skips single gibs).
+	int MaxUsesPerPiece = MaxUsesPerGibPiece;
+	float Scale = 1;
+	bool Skull = true;
+};
+
+static constexpr GibProfile GibProfiles[] = {
+	// Full-size aliens have only 4 alien gib pieces, so they may repeat a little more (16 gibs).
+	{.Model = "models/agrunt.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
+	{.Model = "models/islave.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
+	{.Model = "models/bullsquid.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
+	{.Model = "models/controller.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
+	{.Model = "models/zombie.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
+	{.Model = "models/zombie_barney.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
+	{.Model = "models/zombie_soldier.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
+	{.Model = "models/gonome.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
+	{.Model = "models/big_mom.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
+	{.Model = "models/icky.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge},
+	// Small creatures.
+	{.Model = "models/headcrab.mdl", .Multiplier = 1},
+	{.Model = "models/baby_headcrab.mdl", .Count = 1, .Scale = 0.5f},
+	{.Model = "models/bigrat.mdl", .Count = 2, .Scale = 0.35f, .Skull = false},
+	// Each gib a barnacle coughs up (4 in its death animation) becomes 2.
+	{.Model = "models/barnacle.mdl", .Multiplier = 2},
+};
+
+static const GibProfile& FindGibProfile(int entindex)
+{
+	static constexpr GibProfile Default{};
 
 	const cl_entity_t* entity = gEngfuncs.GetEntityByIndex(entindex);
 
 	if (!entity || !entity->model)
-		return false;
+		return Default;
 
-	return std::ranges::find(LargeAlienModels, std::string_view{entity->model->name}) != std::end(LargeAlienModels);
+	const auto it = std::ranges::find(GibProfiles, std::string_view{entity->model->name}, &GibProfile::Model);
+	return it != std::end(GibProfiles) ? *it : Default;
 }
 
 static bool ShowsBlood(int bloodColor)
@@ -375,13 +404,22 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 	}
 
 	const bool jhl = JhlParticleSystemEnabled();
+	static constexpr GibProfile Vanilla{.MaxUsesPerPiece = MAX_TEMPENTS};
+	const GibProfile& profile = jhl ? FindGibProfile(entindex) : Vanilla;
 
-	if (jhl && numGibs > 1)
+	if (jhl)
 	{
-		numGibs = std::clamp(numGibs * GibCountMultiplier, 0, MAX_TEMPENTS);
+		if (0 != profile.Count)
+			numGibs = profile.Count;
+		else if (0 != profile.Multiplier)
+			numGibs *= profile.Multiplier;
+		else if (numGibs > 1)
+			numGibs *= GibCountMultiplier;
+
+		numGibs = std::clamp(numGibs, 0, MAX_TEMPENTS);
 	}
 
-	const int maxUsesPerPiece = type == GibType::Alien && IsLargeAlien(entindex) ? MaxUsesPerGibPieceLarge : MaxUsesPerGibPiece;
+	const int maxUsesPerPiece = profile.MaxUsesPerPiece;
 	int soundingGibs = 0;
 	int trailingGibs = 0;
 
@@ -448,6 +486,11 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 
 		TEMPENTITY* gib = EV_TFC_CreateGib(gibData->ModelName, body, bloodColor, origin, angles, multiplier, false);
 
+		if (gib && profile.Scale != 1)
+		{
+			gib->entity.curstate.scale *= profile.Scale;
+		}
+
 		// A few gibs squelch when they bounce (debris/flesh*.wav, louder the harder they hit).
 		if (jhl && gib && soundingGibs < SoundingGibsPerDeath)
 		{
@@ -464,7 +507,7 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 		}
 	}
 
-	if ((flags & GibFlag_SpawnHead) != 0)
+	if ((flags & GibFlag_SpawnHead) != 0 && profile.Skull)
 	{
 		EV_TFC_CreateGib(HumanHeadGibs.ModelName, 0, bloodColor, origin, angles, multiplier, true);
 	}
