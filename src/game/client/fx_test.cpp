@@ -195,7 +195,8 @@ int ModelIndex(const std::string& name)
 	return index;
 }
 
-// R_TempSprite for any sprite file: one the map didn't load has no index, so its temp entity is built from the model.
+// R_TempSprite for any sprite file: one the map didn't load has no index, so its temp entity is built from the model,
+// loaded as a HUD sprite (CL_LoadModel only finds what the map precached).
 TEMPENTITY* TempSprite(const std::string& name, Vector origin, const Vector& velocity, float scale, int render, float alpha,
 	float life, int flags)
 {
@@ -204,8 +205,8 @@ TEMPENTITY* TempSprite(const std::string& name, Vector origin, const Vector& vel
 		return gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, scale, index, render, kRenderFxNone, alpha, life, flags);
 	}
 
-	int index = 0;
-	model_t* model = gEngfuncs.CL_LoadModel(name.c_str(), &index);
+	const HSPRITE handle = gEngfuncs.pfnSPR_Load(name.c_str());
+	auto model = handle > 0 ? const_cast<model_t*>(gEngfuncs.GetSpritePointer(handle)) : nullptr;
 
 	if (!model)
 	{
