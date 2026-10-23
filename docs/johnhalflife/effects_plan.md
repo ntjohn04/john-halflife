@@ -55,7 +55,7 @@ Suggested order: **1 → 2 → 3 → 4 → 5 → 6 → 7**. Explosions first bec
 barrels and part of every set piece; blood second because it's on screen the most; set pieces late because
 they inherit from the shared work.
 
-## Gibs (in progress)
+## Gibs (done)
 
 `jhl_fx_particlesystem`, client side (`client_gibs.cpp`). How gibbing works:
 
@@ -76,12 +76,15 @@ they inherit from the shared work.
 
 Changes:
 
-* Count × `jhl_fx_gibcount_scale` (temporary tuning cvar, 7 for now), with each piece used at most 3 times per
-  death (so 15 human pieces plus the skull, 12 alien) and voltigore limits kept.
+* Count × 7 for death gibs (a barnacle's single bite gib stays one), with each piece used at most 3 times per
+  death: in practice the cap decides, 15 human pieces plus the skull, 12 alien, 21 pit drone, 24 shock trooper;
+  voltigore limits kept. Each gib still leaves up to 5 blood decals as it bounces.
 * 60 s on the ground before fading, instead of `giblife`.
 * Each gib ±15% size and ±20% speed. Vanilla's model renderer ignores scale; `StudioSetUpTransform` now applies it
   to entities marked with `ScaledModelMarker` in `iuser4` only, so map models with a scale keyvalue are unchanged.
-* Later: bounce sounds on a few gibs per death, from vanilla sounds.
+* Bounce sounds: 3 gibs per death squelch (`debris/flesh*.wav`, through the SDK's temp entity bounce sounds:
+  louder the harder they land, random pitch) on their first 2 bounces only, so about 6 sounds over the first
+  second instead of dozens.
 
 ## Testing
 

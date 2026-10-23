@@ -36,8 +36,10 @@ static cvar_t* g_cl_giblife = nullptr;
 static cvar_t* g_cl_gibvelscale = nullptr;
 
 // johnhalflife (jhl_fx_particlesystem): more gibs, lasting longer, each a little different in size and speed.
-static cvar_t* g_jhl_gibcount_scale = nullptr; // Temporary, for tuning the gib count multiplier in game.
+constexpr int GibCountMultiplier = 7;		   // Death gibs; a single gib (a barnacle bite) stays one.
 constexpr int MaxUsesPerGibPiece = 3;		   // Each gib model piece at most this many times per death.
+constexpr int SoundingGibsPerDeath = 3;		   // Gibs that make bounce sounds,
+constexpr int BounceSoundsPerGib = 2;		   // each on its first bounces only.
 constexpr float JhlGibLife = 60;			   // Seconds on the ground before fading (the giblife cvar otherwise).
 constexpr float JhlGibScaleVariation = 0.15f;  // Size +-15%.
 constexpr float JhlGibSpeedVariation = 0.2f;   // Speed +-20%.
@@ -141,6 +143,15 @@ static void EV_TFC_GibCallback(TEMPENTITY* ent, float frametime, float currentti
 
 static void EV_TFC_GibTouchCallback(TEMPENTITY* ent, pmtrace_t* ptr)
 {
+	// Bounce sounds play after this callback, so a gib out of bounce sounds is silenced before its next one.
+	if (0 != ent->hitSound)
+	{
+		if (ent->entity.curstate.iuser2 <= 0)
+			ent->hitSound = 0;
+		else
+			--ent->entity.curstate.iuser2;
+	}
+
 	if (ent->entity.baseline.origin.Length() > 0 && ent->entity.curstate.team > 0)
 	{
 		EV_TFC_BloodDecalTrace(ptr, ent->entity.curstate.iuser1);
@@ -284,10 +295,12 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 
 	const bool jhl = JhlParticleSystemEnabled();
 
-	if (jhl)
+	if (jhl && numGibs > 1)
 	{
-		numGibs = std::clamp(int(numGibs * g_jhl_gibcount_scale->value), 0, MAX_TEMPENTS);
+		numGibs = std::clamp(numGibs * GibCountMultiplier, 0, MAX_TEMPENTS);
 	}
+
+	int soundingGibs = 0;
 
 	// Uses of each randomly picked piece, so none repeats more than MaxUsesPerGibPiece times in one death.
 	eastl::fixed_vector<int, 64> pieceUses;
@@ -350,7 +363,15 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 			body = RANDOM_LONG(gibData->FirstSubModel, gibData->SubModelCount - 1);
 		}
 
-		EV_TFC_CreateGib(gibData->ModelName, body, bloodColor, origin, angles, multiplier, false);
+		TEMPENTITY* gib = EV_TFC_CreateGib(gibData->ModelName, body, bloodColor, origin, angles, multiplier, false);
+
+		// A few gibs squelch when they bounce (debris/flesh*.wav, louder the harder they hit).
+		if (jhl && gib && soundingGibs < SoundingGibsPerDeath)
+		{
+			gib->hitSound = BOUNCE_FLESH;
+			gib->entity.curstate.iuser2 = BounceSoundsPerGib;
+			++soundingGibs;
+		}
 	}
 
 	if ((flags & GibFlag_SpawnHead) != 0)
@@ -379,7 +400,6 @@ void ClientGibs_Initialize()
 	g_cl_gibcount = g_ConCommands.CreateCVar("gibcount", "4", FCVAR_ARCHIVE);
 	g_cl_giblife = g_ConCommands.CreateCVar("giblife", "25", FCVAR_ARCHIVE);
 	g_cl_gibvelscale = g_ConCommands.CreateCVar("gibvelscale", "1.0", FCVAR_ARCHIVE);
-	g_jhl_gibcount_scale = gEngfuncs.pfnRegisterVariable("jhl_fx_gibcount_scale", "7", 0);
 
 	g_violence_hblood = g_ConCommands.GetCVar("violence_hblood");
 	g_violence_ablood = g_ConCommands.GetCVar("violence_ablood");
