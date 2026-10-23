@@ -27,6 +27,7 @@
 #include "fx_test.h"
 #include "client_gibs.h"
 #include "jhl_explosion.h"
+#include "jhl_settings.h"
 #include "com_model.h"
 #include "event_api.h"
 #include "r_efx.h"
@@ -657,6 +658,12 @@ void Gibs(const Target& target, Params& p)
 
 // ---- Presets: what the game does for an event, with the original values -------------------------------------
 
+// The server sends explosion smoke 7% bigger with jhl_fx_particlesystem on (UTIL_JhlExplosionSmokeScale).
+float ExplosionSmokeFactor()
+{
+	return JhlParticleSystemEnabled() ? 1.07f : 1.f;
+}
+
 // A grenade, rocket, satchel or tripmine: CGrenade::Explode and CGrenade::Smoke, scaled by the damage.
 void GrenadePreset(const Target& target, Params& p)
 {
@@ -677,7 +684,7 @@ void GrenadePreset(const Target& target, Params& p)
 	Later(0.3f, [=]()
 		{
 		Params smoke;
-		smoke.Set("scale", smokeScale);
+		smoke.Set("scale", smokeScale * ExplosionSmokeFactor());
 		smoke.Set("offset", offset);
 		gEngfuncs.Con_Printf("  (0.3 s later)\n");
 		Smoke(target, smoke); });
@@ -706,7 +713,7 @@ void BarrelPreset(const Target& target, Params& p)
 	Later(0.3f, [=]()
 		{
 		Params smoke;
-		smoke.Set("scale", scale);
+		smoke.Set("scale", scale * ExplosionSmokeFactor());
 		smoke.Set("offset", offset);
 		gEngfuncs.Con_Printf("  (0.3 s later)\n");
 		Smoke(target, smoke); });

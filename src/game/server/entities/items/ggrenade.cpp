@@ -14,6 +14,7 @@
  ****/
 
 #include "cbase.h"
+#include "jhl_effects.h"
 #include "jhl_explosion.h"
 
 LINK_ENTITY_TO_CLASS(grenade, CGrenade);
@@ -151,7 +152,7 @@ void CGrenade::Smoke()
 		WRITE_COORD(pev->origin.y);
 		WRITE_COORD(pev->origin.z);
 		WRITE_SHORT(g_sModelIndexSmoke);
-		WRITE_BYTE((pev->dmg - 50) * 0.80); // scale * 10
+		WRITE_BYTE(UTIL_JhlExplosionSmokeScale((pev->dmg - 50) * 0.80)); // scale * 10
 		WRITE_BYTE(12);						// framerate
 		MESSAGE_END();
 	}

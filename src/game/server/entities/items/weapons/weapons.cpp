@@ -326,9 +326,9 @@ void W_Precache()
 	g_sModelIndexWExplosion = UTIL_PrecacheModel("sprites/WXplo1.spr");		// underwater fireball
 	g_sModelIndexSmoke = UTIL_PrecacheModel("sprites/steam1.spr");			// smoke
 
-	// johnhalflife's second fireballs (client jhl_explosions.cpp).
+	// johnhalflife's second fireballs and lingering explosion smoke (client jhl_explosions.cpp).
 	for (const char* sprite : {"sprites/bexplo.spr", "sprites/cexplo.spr", "sprites/dexplo.spr", "sprites/eexplo.spr",
-			 "sprites/fexplo.spr", "sprites/gexplo.spr", "sprites/hexplo.spr"})
+			 "sprites/fexplo.spr", "sprites/gexplo.spr", "sprites/hexplo.spr", "sprites/wep_smoke_01.spr"})
 	{
 		UTIL_PrecacheModel(sprite);
 	}

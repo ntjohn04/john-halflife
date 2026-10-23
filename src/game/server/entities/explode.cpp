@@ -20,6 +20,7 @@
 
 #include "cbase.h"
 #include "explode.h"
+#include "jhl_effects.h"
 
 /**
  *	@brief Spark Shower
@@ -233,7 +234,7 @@ void CEnvExplosion::Smoke()
 		WRITE_COORD(pev->origin.y);
 		WRITE_COORD(pev->origin.z);
 		WRITE_SHORT(g_sModelIndexSmoke);
-		WRITE_BYTE((byte)m_spriteScale); // scale * 10
+		WRITE_BYTE(UTIL_JhlExplosionSmokeScale(m_spriteScale)); // scale * 10
 		WRITE_BYTE(12);					 // framerate
 		MESSAGE_END();
 	}

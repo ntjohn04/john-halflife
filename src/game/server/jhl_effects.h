@@ -27,6 +27,18 @@ inline bool UTIL_JhlParticleSystem()
 }
 
 /**
+ *	@brief The scale (× 10) an explosion's smoke puff is sent with: 7% bigger than vanilla's (the client adds a big
+ *	lingering cloud behind it, jhl_explosions.cpp).
+ */
+inline int UTIL_JhlExplosionSmokeScale(float vanillaScale)
+{
+	if (!UTIL_JhlParticleSystem())
+		return static_cast<int>(vanillaScale);
+
+	return std::min(255, static_cast<int>(vanillaScale * 1.07f));
+}
+
+/**
  *	@brief A mushroom cloud (hexplo.spr, precached in W_Precache) rising from the ground under a crashing helicopter,
  *	alongside its vanilla fexplo fireball. Sent as TE_SPRITE like that fireball, so it plays once at the engine's
  *	default speed (30 frames, about as long as fexplo's).

@@ -179,6 +179,13 @@ crossbow bolt; not the Apache/Osprey deaths at 12 fps, Opposing Force's mortar a
 
 The pool sprites are precached in `W_Precache`.
 
+**Smoke:** the vanilla puff (`TE_SMOKE`, drawn by the engine: `steam1`, 20 units up, gray 20-35, rising 30 units/s)
+is sent 7% bigger (`UTIL_JhlExplosionSmokeScale`, `CGrenade::Smoke` and `CEnvExplosion::Smoke`). No other
+vanilla smoke sprite fits it: the rest are additive (they glow) or columns. With every two-fireball explosion
+the client adds a lingering cloud: Opposing Force's single-frame `wep_smoke_01`, gray 30-40, from 0.4 s, for
+5-7 s, growing from 1.5× to 3× the vanilla puff's width, peaking at 64/255 opacity (fades in over the first 15%,
+out over the last 50%), rising 8-12 units/s with ±5 drift, random roll.
+
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 
 * Falling: vanilla sends one `zerogxplode` every 0.2 s at a random point under the hull (scale 3-5.9, 12 fps),
