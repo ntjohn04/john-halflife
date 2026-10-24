@@ -289,13 +289,13 @@ Apache, turrets, the loader, the G-Man, the worms, unbreakable glass; vanilla: a
 
 **Vortigaunts** (`islave.cpp`; vanilla: `lgtning` beams, charging arm beams width 30 noise 80 dark green brightness
 64 ramping by beam count × 32 (BeamGlow), the zap one per hand width 50 noise 20 bright green 255, the revive
-one per hand width 30 noise 80): with `jhl_fx_particlesystem`, layers on each vanilla beam (`LayerBeam`, kept out
-of `m_pBeam` whose count sets the eye glow and the charging pitch):
+one per hand width 30 noise 80): with `jhl_fx_particlesystem`, a thin, wild, dimmer strand layered on each
+(`LayerBeam`, kept out of `m_pBeam` whose count sets the eye glow and the charging pitch):
 
-* Charging: noise 60 and 40 at 2× and 3× the ramp's brightness (with vanilla's noise 80 at 1×: 64, 128, 192
-  at first, brightening together).
-* Zap: a copy (thicker, brighter spots) and width 20 noise 40.
-* Revive: a copy and width 12 noise 100.
+* Charging: the vanilla beam at noise 60 (80), and a strand width 15 noise 210 at half its brightness, brightening
+  with it (BeamGlow).
+* Zap: the vanilla beam, and a strand width 20 noise 100 brightness 102 (0.4).
+* Revive: vanilla.
 
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 

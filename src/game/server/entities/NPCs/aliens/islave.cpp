@@ -99,11 +99,11 @@ public:
 	 *	and brightness (or, for the charging arm beams, brightness times the vanilla ramp's, BeamGlow). Kept apart
 	 *	from m_pBeam so its count still sets the eye glow and the charging pitch. Not saved: beams are temporary.
 	 */
-	void LayerBeam(CBeam* beam, int width, int noise, int brightness, int glow = 0);
+	void LayerBeam(CBeam* beam, int width, int noise, int brightness, float glow = 0);
 
 	static constexpr int MaxLayerBeams = ISLAVE_MAX_BEAMS * 2;
 	CBeam* m_pLayerBeams[MaxLayerBeams]{};
-	int m_LayerGlow[MaxLayerBeams]{};
+	float m_LayerGlow[MaxLayerBeams]{};
 	int m_iLayerBeams = 0;
 	float m_flNextAttack;
 
@@ -685,9 +685,13 @@ void CISlave::ArmBeam(int side)
 	m_pBeam[m_iBeams]->SetNoise(80);
 	m_pBeam[m_iBeams]->pev->spawnflags |= SF_BEAM_TEMPORARY; // Flag these to be destroyed on save/restore or level transition
 
-	// johnhalflife: two smoother, brighter layers, brightening with it as it charges (BeamGlow).
-	LayerBeam(m_pBeam[m_iBeams], 30, 60, 128, 2);
-	LayerBeam(m_pBeam[m_iBeams], 30, 40, 192, 3);
+	// johnhalflife: a little smoother, with a thin, wild, half as bright strand brightening with it as it charges
+	// (BeamGlow).
+	if (UTIL_JhlParticleSystem())
+	{
+		m_pBeam[m_iBeams]->SetNoise(60);
+		LayerBeam(m_pBeam[m_iBeams], 15, 210, 32, 0.5f);
+	}
 
 	m_iBeams++;
 }
@@ -709,11 +713,11 @@ void CISlave::BeamGlow()
 	for (int i = 0; i < m_iLayerBeams; i++)
 	{
 		if (m_pLayerBeams[i] && m_LayerGlow[i] != 0)
-			m_pLayerBeams[i]->SetBrightness(std::min(255, b * m_LayerGlow[i]));
+			m_pLayerBeams[i]->SetBrightness(std::min(255, static_cast<int>(b * m_LayerGlow[i])));
 	}
 }
 
-void CISlave::LayerBeam(CBeam* beam, int width, int noise, int brightness, int glow)
+void CISlave::LayerBeam(CBeam* beam, int width, int noise, int brightness, float glow)
 {
 	if (!UTIL_JhlParticleSystem() || !beam || m_iLayerBeams >= MaxLayerBeams)
 		return;
@@ -754,11 +758,6 @@ void CISlave::WackBeam(int side, CBaseEntity* pEntity)
 	m_pBeam[m_iBeams]->SetBrightness(255);
 	m_pBeam[m_iBeams]->SetNoise(80);
 	m_pBeam[m_iBeams]->pev->spawnflags |= SF_BEAM_TEMPORARY; // Flag these to be destroyed on save/restore or level transition
-
-	// johnhalflife: as the zap, a copy (thicker, brighter spots) and a thin, wilder one.
-	LayerBeam(m_pBeam[m_iBeams], 30, 80, 255);
-	LayerBeam(m_pBeam[m_iBeams], 12, 100, 255);
-
 	m_iBeams++;
 }
 
@@ -788,9 +787,8 @@ void CISlave::ZapBeam(int side)
 	m_pBeam[m_iBeams]->SetNoise(20);
 	m_pBeam[m_iBeams]->pev->spawnflags |= SF_BEAM_TEMPORARY; // Flag these to be destroyed on save/restore or level transition
 
-	// johnhalflife: a copy, making it thicker with brighter spots, and a thin, jagged one.
-	LayerBeam(m_pBeam[m_iBeams], 50, 20, 255);
-	LayerBeam(m_pBeam[m_iBeams], 20, 40, 255);
+	// johnhalflife: a thin, wild, dimmer strand around it.
+	LayerBeam(m_pBeam[m_iBeams], 20, 100, 102);
 
 	m_iBeams++;
 
