@@ -17,6 +17,16 @@
 #include "squadmonster.h"
 #include "jhl_effects.h"
 
+/**
+ *	@brief The sprite of the controller's balls (in its hands, its head ball and energy balls): with
+ *	jhl_fx_particlesystem, xspark4 with its haze faded out round (scripts/make_round_xspark4.py); the haze fills the
+ *	frames to their edges, which showed as a faint square around them.
+ */
+static const char* ControllerBallSprite()
+{
+	return UTIL_JhlParticleSystem() ? "sprites/xspark4_round.spr" : "sprites/xspark4.spr";
+}
+
 #define CONTROLLER_AE_HEAD_OPEN 1
 #define CONTROLLER_AE_BALL_SHOOT 2
 #define CONTROLLER_AE_SMALL_SHOOT 3
@@ -373,7 +383,7 @@ void CController::Precache()
 	PRECACHE_SOUND_ARRAY(pDeathSounds);
 
 	PrecacheModel("sprites/xspark4.spr");
-	PrecacheModel("sprites/xspark4_round.spr"); // johnhalflife: the head ball's (CControllerHeadBall::Spawn).
+	PrecacheModel("sprites/xspark4_round.spr"); // johnhalflife: ControllerBallSprite.
 
 	UTIL_PrecacheOther("controller_energy_ball");
 	UTIL_PrecacheOther("controller_head_ball");
@@ -772,7 +782,7 @@ void CController::RunAI()
 	{
 		if (m_pBall[i] == nullptr)
 		{
-			m_pBall[i] = CSprite::SpriteCreate("sprites/xspark4.spr", pev->origin, true);
+			m_pBall[i] = CSprite::SpriteCreate(ControllerBallSprite(), pev->origin, true);
 			m_pBall[i]->SetTransparency(kRenderGlow, 255, 255, 255, 255, kRenderFxNoDissipation);
 			m_pBall[i]->SetAttachment(edict(), (i + 3));
 			m_pBall[i]->SetScale(1.0);
@@ -1081,9 +1091,7 @@ void CControllerHeadBall::Spawn()
 	pev->movetype = MOVETYPE_FLY;
 	pev->solid = SOLID_BBOX;
 
-	// johnhalflife: xspark4 with its haze faded out round (scripts/make_round_xspark4.py): at this scale its haze, which
-	// fills the frames to their edges, showed as a faint square.
-	SetModel(UTIL_JhlParticleSystem() ? "sprites/xspark4_round.spr" : "sprites/xspark4.spr");
+	SetModel(ControllerBallSprite());
 	pev->rendermode = kRenderTransAdd;
 	pev->rendercolor.x = 255;
 	pev->rendercolor.y = 255;
@@ -1320,7 +1328,7 @@ void CControllerZapBall::Spawn()
 	pev->movetype = MOVETYPE_FLY;
 	pev->solid = SOLID_BBOX;
 
-	SetModel("sprites/xspark4.spr");
+	SetModel(ControllerBallSprite());
 	pev->rendermode = kRenderTransAdd;
 	pev->rendercolor.x = 255;
 	pev->rendercolor.y = 255;
@@ -1342,6 +1350,7 @@ void CControllerZapBall::Spawn()
 void CControllerZapBall::Precache()
 {
 	PrecacheModel("sprites/xspark4.spr");
+	PrecacheModel("sprites/xspark4_round.spr"); // johnhalflife: ControllerBallSprite.
 	// PrecacheSound("debris/zap4.wav");
 	// PrecacheSound("weapons/electro4.wav");
 }
