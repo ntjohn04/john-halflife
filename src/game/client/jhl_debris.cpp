@@ -17,10 +17,8 @@
 
 #include "hud.h"
 #include "com_model.h"
-#include "event_api.h"
 #include "jhl_debris.h"
 #include "parsemsg.h"
-#include "pm_defs.h"
 #include "pmtrace.h"
 #include "r_efx.h"
 #include "r_studioint.h"
@@ -36,9 +34,10 @@ constexpr std::size_t DebrisBudget = 250;
 // The most shards one breakable makes (the engine's own cap is 100).
 constexpr int MaxShards = 200;
 
-// A shard slower than this (units/s) with ground this close under it has settled (SettleShard).
-constexpr float ShardSettleSpeed = 20;
-constexpr float ShardSettleGround = 4;
+// A shard touching ground at least this level (the surface normal's z) no faster than this (units/s) stays there
+// (SettleShard).
+constexpr float ShardSettleFloor = 0.7f;
+constexpr float ShardSettleSpeed = 60;
 
 // A tracked piece: the temp entity and the serial number it was tagged with (curstate.iuser3), which tells whether
 // the temp entity is still that piece or has been reused for something else.
@@ -81,30 +80,17 @@ void ExpireShard(TEMPENTITY* ent)
 	ent->die = gEngfuncs.GetClientTime();
 }
 
-// Lays a shard flat once it has all but stopped on the ground (curstate.iuser1: settled). Gib models are made to lie
-// flat; the engine only flattens them landing slowly on a near-level floor, so on uneven ground they could stop
-// tilted, the origin on the ground and most of the piece under it.
-void SettleShard(TEMPENTITY* ent, float frametime, float currenttime)
+// Lays a shard flat when it touches the ground slowly enough to stay (the engine's collision calls this with what it
+// hit). Gib models are made to lie flat; the engine only flattens them landing very slowly on a near-level floor,
+// so they could stop tilted, the origin on the ground and most of the piece under it.
+void SettleShard(TEMPENTITY* ent, pmtrace_t* tr)
 {
-	if (ent->entity.curstate.iuser1 != 0 || ent->entity.baseline.origin.Length() > ShardSettleSpeed)
+	if (tr->plane.normal.z < ShardSettleFloor || ent->entity.baseline.origin.Length() > ShardSettleSpeed)
 		return;
 
-	Vector start = ent->entity.origin;
-	Vector end = start - Vector{0, 0, ShardSettleGround};
-
-	pmtrace_t tr;
-	gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(0, 1);
-	gEngfuncs.pEventAPI->EV_PushPMStates();
-	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
-	gEngfuncs.pEventAPI->EV_PlayerTrace(start, end, PM_WORLD_ONLY, -1, &tr);
-	gEngfuncs.pEventAPI->EV_PopPMStates();
-
-	if (tr.fraction >= 1)
-		return;
-
-	ent->entity.curstate.iuser1 = 1;
-	ent->entity.origin = tr.endpos;
+	ent->entity.origin = tr->endpos;
 	ent->entity.baseline.origin = g_vecZero;
+	ent->entity.baseline.angles = g_vecZero;
 	ent->entity.angles.x = 0;
 	ent->entity.angles.z = 0;
 	ent->flags &= ~(FTENT_ROTATE | FTENT_GRAVITY | FTENT_SLOWGRAVITY | FTENT_COLLIDEWORLD | FTENT_SMOKETRAIL);
@@ -172,8 +158,8 @@ void JhlDebris_ParseBreakModel(BufferReader& reader)
 		else
 			shard->entity.curstate.body = gEngfuncs.pfnRandomLong(0, variations - 1);
 
-		shard->flags |= FTENT_COLLIDEWORLD | FTENT_FADEOUT | FTENT_SLOWGRAVITY | FTENT_CLIENTCUSTOM;
-		shard->callback = SettleShard;
+		shard->flags |= FTENT_COLLIDEWORLD | FTENT_FADEOUT | FTENT_SLOWGRAVITY;
+		shard->hitcallback = SettleShard;
 
 		if (gEngfuncs.pfnRandomLong(0, 255) < 200)
 		{

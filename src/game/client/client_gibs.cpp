@@ -175,18 +175,26 @@ static void DelayedBloodPuff(TEMPENTITY* ent, float frametime, float currenttime
 	ent->die = currenttime;
 }
 
-// Puts a decal where a downward trace from a point lands on a floor, if it does.
-static void FloorDecal(const Vector& point, const char* decalName)
+// Puts a decal where a downward trace from a point lands on a floor, if it does. From a temp entity callback, the temp
+// entity update has already set up tracing (HUD_TempEntUpdate), and pushing it again makes the engine complain.
+static void FloorDecal(const Vector& point, const char* decalName, bool inTempEntUpdate)
 {
 	Vector start = point;
 	Vector end = point - Vector{0, 0, 256};
 
 	pmtrace_t tr;
-	gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(0, 1);
-	gEngfuncs.pEventAPI->EV_PushPMStates();
+
+	if (!inTempEntUpdate)
+	{
+		gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(0, 1);
+		gEngfuncs.pEventAPI->EV_PushPMStates();
+	}
+
 	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
 	gEngfuncs.pEventAPI->EV_PlayerTrace(start, end, PM_WORLD_ONLY, -1, &tr);
-	gEngfuncs.pEventAPI->EV_PopPMStates();
+
+	if (!inTempEntUpdate)
+		gEngfuncs.pEventAPI->EV_PopPMStates();
 
 	// Floors only: not off a ledge, not up a wall or a steep slope.
 	if (tr.fraction >= 1 || tr.plane.normal.z < 0.7f || r_decals->value == 0)
@@ -199,26 +207,26 @@ static void FloorDecal(const Vector& point, const char* decalName)
 
 // A pool of blood on the floor where a gibbed body was (as MMod does): the game's big blood splat, or for yellow
 // blood, whose largest decal is smaller, three overlapping. Smaller for small creatures.
-static void SpawnBloodPool(const Vector& origin, int bloodColor, float scale)
+static void SpawnBloodPool(const Vector& origin, int bloodColor, float scale, bool inTempEntUpdate)
 {
 	if (scale <= 0 || !ShowsBlood(bloodColor))
 		return;
 
 	if (bloodColor == BLOOD_COLOR_RED)
 	{
-		FloorDecal(origin, scale >= 1 ? (RANDOM_LONG(0, 1) != 0 ? "{bigblood1" : "{bigblood2") : scale >= 0.5f ? "{blood5" : "{blood7");
+		FloorDecal(origin, scale >= 1 ? (RANDOM_LONG(0, 1) != 0 ? "{bigblood1" : "{bigblood2") : scale >= 0.5f ? "{blood5" : "{blood7", inTempEntUpdate);
 		return;
 	}
 
 	if (scale < 1)
 	{
-		FloorDecal(origin, scale >= 0.5f ? "{yblood1" : "{yblood2");
+		FloorDecal(origin, scale >= 0.5f ? "{yblood1" : "{yblood2", inTempEntUpdate);
 		return;
 	}
 
 	for (int i = 0; i < 3; ++i)
 	{
-		FloorDecal(origin + Vector{RANDOM_FLOAT(-16, 16), RANDOM_FLOAT(-16, 16), 0}, "{yblood1");
+		FloorDecal(origin + Vector{RANDOM_FLOAT(-16, 16), RANDOM_FLOAT(-16, 16), 0}, "{yblood1", inTempEntUpdate);
 	}
 }
 
@@ -233,7 +241,7 @@ static void DelayedBloodPool(TEMPENTITY* ent, float frametime, float currenttime
 
 	if (const cl_entity_t* body = gEngfuncs.GetEntityByIndex(ent->entity.curstate.iuser1); body && body->model)
 	{
-		SpawnBloodPool(body->origin + Vector{0, 0, 8}, ent->entity.curstate.iuser2, ent->entity.curstate.fuser2);
+		SpawnBloodPool(body->origin + Vector{0, 0, 8}, ent->entity.curstate.iuser2, ent->entity.curstate.fuser2, true);
 	}
 }
 
@@ -626,7 +634,7 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 	if (jhl && requestedGibs != 1)
 	{
 		SpawnGibSplash(origin, angles, bloodColor, profile.Splash);
-		SpawnBloodPool(origin, bloodColor, profile.Splash);
+		SpawnBloodPool(origin, bloodColor, profile.Splash, false);
 	}
 
 	const int maxUsesPerPiece = profile.MaxUsesPerPiece;
