@@ -110,7 +110,14 @@ void CGrenade::Explode(TraceResult* pTrace, int bitsDamageType)
 	// The rest (debris sound, sparks, the smoke 0.3 seconds later) is effects.
 	SetOrigin(effectOrigin);
 
-	if (RANDOM_FLOAT(0, 1) < 0.5)
+	if (UTIL_JhlParticleSystem())
+	{
+		// As big as the client draws it (RPG rockets bigger).
+		const float scale = (pev->dmg - 50) * 0.06f * ((flags & TE_EXPLFLAG_JHL_ROCKET) != 0 ? JhlRocketExplosionScale : 1);
+		UTIL_JhlExplosionScorch(pTrace, scale);
+		UTIL_JhlExplosionShake(effectOrigin, scale);
+	}
+	else if (RANDOM_FLOAT(0, 1) < 0.5)
 	{
 		UTIL_DecalTrace(pTrace, DECAL_SCORCH1);
 	}
@@ -149,7 +156,10 @@ void CGrenade::Smoke()
 {
 	if (UTIL_PointContents(pev->origin) == CONTENTS_WATER)
 	{
-		UTIL_Bubbles(pev->origin - Vector(64, 64, 64), pev->origin + Vector(64, 64, 64), 100);
+		if (UTIL_JhlParticleSystem())
+			UTIL_JhlExplosionBubbles(pev->origin, (pev->dmg - 50) * 0.06f);
+		else
+			UTIL_Bubbles(pev->origin - Vector(64, 64, 64), pev->origin + Vector(64, 64, 64), 100);
 	}
 	else
 	{

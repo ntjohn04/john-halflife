@@ -18,6 +18,7 @@
 #include "hud.h"
 #include "client_gibs.h"
 #include "com_model.h"
+#include "dlight.h"
 #include "event_api.h"
 #include "jhl_debris.h"
 #include "jhl_explosion.h"
@@ -71,7 +72,7 @@ constexpr float FallingSizeMax = 1.2f;
 
 constexpr float LargeScale = 6;	  // Satchel, tripmine, Apache rocket, env_explosion magnitude 150+.
 constexpr float BiggestScale = 9; // func_mortar, env_explosion magnitude 200+: the mushroom cloud joins the pool.
-constexpr float RocketScale = 1.5f;
+constexpr float RocketScale = JhlRocketExplosionScale;
 
 constexpr float Jitter = 0.1f;		 // Scale and frame rate, both fireballs.
 constexpr float PositionJitter = 4; // Units, the vanilla fireball.
@@ -129,6 +130,27 @@ constexpr float SparkIntervalMax = 0.11f;
 // The client's temp entity physics halves this again for anything with gravity: 1 keeps half the speed per bounce,
 // near vanilla's 0.6 in the air.
 constexpr float SparkBounce = 1;
+
+// The specks and lights every explosion makes (instead of the engine's: 15 pure white specks, palette 254, ±32
+// sideways and 80-143 up, 2 s; a 200 unit flash for 0.01 s and a 150 unit orange glow over 1 s; the same for every
+// size). Embers: hot colors, more and wider for bigger explosions (scale over EmberScale, up to EmberMoreMax).
+constexpr int EmberCount = 15;
+constexpr float EmberScale = 3;
+constexpr float EmberMoreMax = 2.5f;
+constexpr int EmberColors[] = {252, 252, 253, 253, 254}; // Pale yellow, cream, some white.
+constexpr float EmberSidewaysMin = 20;
+constexpr float EmberSidewaysMax = 80;
+constexpr float EmberUpMin = 80;
+constexpr float EmberUpMax = 220;
+constexpr float EmberLifeMin = 1.5f;
+constexpr float EmberLifeMax = 2.5f;
+// Lights: the engine's radii times the explosion's size (scale over 3, 1 to LightMoreMax), ±LightVariation.
+constexpr float LightMoreMax = 2;
+constexpr float LightVariation = 0.05f;
+
+// Under water (WXplo1): a second fireball like the first's, 80-100% its size, a little later.
+constexpr const char* UnderwaterSprite = "sprites/WXplo1.spr";
+constexpr int UnderwaterFrames = 15;
 
 // Surface debris (SurfaceDebris): pieces of what an explosion hit, thrown off it, each picking its own values.
 constexpr int SurfaceDebrisMin = 6; // For a grenade; bigger explosions more (by scale over SurfaceDebrisScale),
@@ -622,6 +644,84 @@ void SurfaceDebris(const Surface& surface, float scale)
 	}
 }
 
+// An explosion's specks and lights, by its size (see EmberCount).
+void EmbersAndLights(const Vector& origin, float scale, int flags, bool embers)
+{
+	const float more = std::clamp(scale / EmberScale, 1.f, EmberMoreMax);
+	const float now = gEngfuncs.GetClientTime();
+
+	if (embers && (flags & TE_EXPLFLAG_NOPARTICLES) == 0)
+	{
+		const int count = static_cast<int>(EmberCount * more);
+
+		for (int i = 0; i < count; ++i)
+		{
+			particle_t* ember = gEngfuncs.pEfxAPI->R_AllocParticle(nullptr);
+
+			if (!ember)
+				break;
+
+			const float sideways = Random(EmberSidewaysMin, EmberSidewaysMax) * std::sqrt(more);
+			const float angle = Random(0, 6.2831853f);
+
+			ember->org = origin;
+			ember->vel = {std::cos(angle) * sideways, std::sin(angle) * sideways, Random(EmberUpMin, EmberUpMax)};
+			ember->color = static_cast<short>(EmberColors[gEngfuncs.pfnRandomLong(0, std::size(EmberColors) - 1)]);
+			gEngfuncs.pEfxAPI->R_GetPackedColor(&ember->packedColor, ember->color);
+			ember->type = pt_blob2; // As the engine's: drifting out and falling.
+			ember->die = now + Random(EmberLifeMin, EmberLifeMax);
+		}
+	}
+
+	if ((flags & TE_EXPLFLAG_NODLIGHTS) == 0)
+	{
+		const float lights = std::clamp(scale / 3, 1.f, LightMoreMax);
+
+		if (dlight_t* flash = gEngfuncs.pEfxAPI->CL_AllocDlight(0); flash)
+		{
+			flash->origin = origin;
+			flash->radius = 200 * lights * Random(1 - LightVariation, 1 + LightVariation);
+			flash->color = {250, 250, 150};
+			flash->die = now + 0.01f;
+			flash->decay = 800;
+		}
+
+		// It fades by 200 units a second, so it lasts until it has (vanilla's 150 lasts 0.75 s).
+		if (dlight_t* glow = gEngfuncs.pEfxAPI->CL_AllocDlight(0); glow)
+		{
+			glow->origin = origin;
+			glow->radius = 150 * lights * Random(1 - LightVariation, 1 + LightVariation);
+			glow->color = {255, 190, 40};
+			glow->decay = 200;
+			glow->die = now + std::max(1.f, glow->radius / glow->decay);
+		}
+	}
+}
+
+// An underwater explosion's fireballs: the vanilla one, with a little randomness, and a second like it.
+void UnderwaterFireballs(const Vector& origin, int model, float scale)
+{
+	SpawnFireball(origin, model, scale * Random(1 - Jitter, 1 + Jitter), JhlFramerate * Random(1 - Jitter, 1 + Jitter), 180,
+		Random(0, 360));
+
+	if (TEMPENTITY* timer = gEngfuncs.pEfxAPI->CL_TempEntAllocNoModel(origin); timer)
+	{
+		const float now = gEngfuncs.GetClientTime();
+		const float size = scale * Random(0.8f, 1.f);
+
+		timer->flags |= FTENT_NOMODEL | FTENT_CLIENTCUSTOM;
+		timer->callback = DelayedFireball;
+		timer->entity.origin = origin + Vector{Random(-1, 1), Random(-1, 1), Random(0, 1)} * (size * 64 * SecondSideways);
+		timer->entity.curstate.fuser1 = now + Random(0, SecondDelay);
+		timer->entity.curstate.iuser1 = model;
+		timer->entity.curstate.fuser2 = size;
+		timer->entity.curstate.fuser3 = UnderwaterFrames / Random(SmallDurationMin, SmallDurationMax);
+		timer->entity.curstate.iuser2 = SecondBrightness;
+		timer->entity.curstate.fuser4 = Random(0, 360);
+		timer->die = now + SecondDelay + 1;
+	}
+}
+
 // One of a falling helicopter's fireballs: the vanilla one or a round one, the same size and length.
 void FallingFireball(const Vector& origin, int model, float scale)
 {
@@ -645,17 +745,27 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 	if (!JhlParticleSystemEnabled() || (flags & TE_EXPLFLAG_NOADDITIVE) != 0)
 		return false;
 
-	// Not the underwater fireball.
-	if (model != gEngfuncs.pEventAPI->EV_FindModelIndex(Vanilla.Sprite))
-		return false;
+	// Drawing the fireballs, this draws the specks and lights too (R_Explosion leaves them to it).
+	const int vanillaModel = gEngfuncs.pEventAPI->EV_FindModelIndex(Vanilla.Sprite);
 
-	if (framerate == FallingFramerate)
+	if (model == vanillaModel && framerate == FallingFramerate)
 	{
 		FallingFireball(origin, model, scale);
+		EmbersAndLights(origin, scale, flags, true);
 		return true;
 	}
 
 	if (framerate != JhlFramerate)
+		return false;
+
+	if (model == gEngfuncs.pEventAPI->EV_FindModelIndex(UnderwaterSprite))
+	{
+		UnderwaterFireballs(origin, model, scale);
+		EmbersAndLights(origin, scale, flags, false);
+		return true;
+	}
+
+	if (model != vanillaModel)
 		return false;
 
 	// RPG rockets and explosive breakables are drawn bigger than their damage says, and as large explosions.
@@ -678,6 +788,7 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 		SparkShowers(origin, surface);
 
 	SurfaceDebris(surface, scale);
+	EmbersAndLights(origin, scale * bigger, flags, true);
 
 	// The second fireball: shaped for large explosions on a floor, round otherwise.
 	Vector floor;

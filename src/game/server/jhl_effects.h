@@ -28,6 +28,26 @@ inline bool UTIL_JhlParticleSystem()
 	return !cvar || cvar->value != 0;
 }
 
+// johnhalflife explosion extras (util.cpp), by the explosion's fireball scale (a grenade 3), for callers to use with
+// jhl_fx_particlesystem on (vanilla's otherwise).
+
+/**
+ *	@brief The scorch where an explosion hit: one of {scorch1-3} (vanilla 1-2), and for big explosions (scale 6+, 9+)
+ *	one or two more, overlapping.
+ */
+void UTIL_JhlExplosionScorch(TraceResult* trace, float scale);
+
+/**
+ *	@brief Shakes the screens of players near an explosion, more and further for bigger ones (vanilla: none).
+ */
+void UTIL_JhlExplosionShake(const Vector& origin, float scale);
+
+/**
+ *	@brief An underwater explosion's bubbles: vanilla's, more and over a bigger area for bigger explosions, and some
+ *	lingering after them, rising slowly.
+ */
+void UTIL_JhlExplosionBubbles(const Vector& origin, float scale);
+
 /**
  *	@brief TE_BREAKMODEL (breakable shards, helicopter debris). With jhl_fx_particlesystem on, it goes through the SDK's
  *	own temp entity message and the client makes the shards (jhl_debris.cpp): lasting 60 seconds like gibs,

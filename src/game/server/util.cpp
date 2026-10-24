@@ -1062,16 +1062,21 @@ void UTIL_BloodDecalTrace(TraceResult* pTrace, int bloodColor)
 }
 
 
+// UTIL_DecalTrace with the engine's decal index (DECAL_INDEX) rather than a gDecals entry.
+static void DecalTraceIndex(TraceResult* pTrace, int index);
+
 void UTIL_DecalTrace(TraceResult* pTrace, int decalNumber)
 {
-	short entityIndex;
-	int index;
-	int message;
-
 	if (decalNumber < 0)
 		return;
 
-	index = gDecals[decalNumber].index;
+	DecalTraceIndex(pTrace, gDecals[decalNumber].index);
+}
+
+static void DecalTraceIndex(TraceResult* pTrace, int index)
+{
+	short entityIndex;
+	int message;
 
 	if (index < 0)
 		return;
@@ -1337,6 +1342,76 @@ void UTIL_Bubbles(Vector mins, Vector maxs, int count)
 	WRITE_SHORT(g_sModelIndexBubbles);
 	WRITE_BYTE(count); // count
 	WRITE_COORD(8);	   // speed
+	MESSAGE_END();
+}
+
+// How much bigger than a grenade's (scale 3) an explosion is, for its scorches, shake and bubbles.
+static float JhlExplosionSize(float scale)
+{
+	return std::max(1.f, scale / 3);
+}
+
+void UTIL_JhlExplosionScorch(TraceResult* trace, float scale)
+{
+	if (trace->flFraction == 1.0)
+		return;
+
+	// Vanilla picks scorch 1 or 2; decals.wad has a third.
+	const auto randomScorch = []()
+	{
+		static const char* const Scorches[] = {"{scorch1", "{scorch2", "{scorch3"};
+		return DECAL_INDEX(Scorches[RANDOM_LONG(0, std::size(Scorches) - 1)]);
+	};
+
+	DecalTraceIndex(trace, randomScorch());
+
+	// Big explosions (satchels, tripmines, mortars, big barrels) scorch more: one or two more, overlapping, set off
+	// along the surface.
+	const int more = scale >= 9 ? 2 : scale >= 6 ? 1 : 0;
+	const Vector normal = trace->vecPlaneNormal;
+
+	for (int i = 0; i < more; ++i)
+	{
+		Vector along{RANDOM_FLOAT(-1, 1), RANDOM_FLOAT(-1, 1), RANDOM_FLOAT(-1, 1)};
+		along = along - normal * DotProduct(along, normal);
+
+		if (along.Length() < 0.01f)
+			continue;
+
+		const Vector start = trace->vecEndPos + normal * 8 + along.Normalize() * RANDOM_FLOAT(16, 32) * JhlExplosionSize(scale);
+
+		TraceResult extra;
+		UTIL_TraceLine(start, start - normal * 24, ignore_monsters, nullptr, &extra);
+		DecalTraceIndex(&extra, randomScorch());
+	}
+}
+
+void UTIL_JhlExplosionShake(const Vector& origin, float scale)
+{
+	// A grenade (scale 3): amplitude 4, 0.55 s, within 360 units; a mortar (9) 12, 0.85 s, within 780.
+	UTIL_ScreenShake(origin, scale * 1.3f, 150, 0.4f + scale * 0.05f, 150 + scale * 70);
+}
+
+void UTIL_JhlExplosionBubbles(const Vector& origin, float scale)
+{
+	const float size = JhlExplosionSize(scale);
+	const Vector extent{64 * size, 64 * size, 64 * size};
+
+	// Vanilla's 100 in a 128 unit box, bigger for bigger explosions,
+	UTIL_Bubbles(origin - extent, origin + extent, std::min(255, static_cast<int>(100 * size)));
+
+	// and some in a wider box, rising slowly, lingering after them.
+	const Vector wide = extent * 1.5f;
+	const float height = UTIL_WaterLevel(origin, origin.z, origin.z + 1024) - (origin.z - wide.z);
+
+	MESSAGE_BEGIN(MSG_PAS, SVC_TEMPENTITY, origin);
+	WRITE_BYTE(TE_BUBBLES);
+	WRITE_COORD_VECTOR(origin - wide); // mins
+	WRITE_COORD_VECTOR(origin + wide); // maxs
+	WRITE_COORD(height);
+	WRITE_SHORT(g_sModelIndexBubbles);
+	WRITE_BYTE(std::min(255, static_cast<int>(40 * size))); // count
+	WRITE_COORD(3);											  // speed
 	MESSAGE_END();
 }
 

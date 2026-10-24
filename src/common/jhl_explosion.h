@@ -22,6 +22,9 @@
  */
 constexpr int TE_EXPLFLAG_JHL_ROCKET = 128;
 
+// How much bigger RPG rockets' explosions are drawn (the client's fireballs, the server's scorch and shake).
+constexpr float JhlRocketExplosionScale = 1.5f;
+
 /**
  *	@brief johnhalflife TE_EXPLOSION flag: the explosion throws spark showers, which the client makes (instead of the
  *	server's spark_shower entities) with jhl_fx_particlesystem on.

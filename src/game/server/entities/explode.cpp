@@ -193,10 +193,18 @@ void CEnvExplosion::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE 
 		pev->origin = pev->origin;
 	}
 
+	// johnhalflife: as big as the client draws it (explosive breakables bigger).
+	const float jhlScale = m_spriteScale * 0.1f * (m_Breakable ? JhlBreakableExplosionScale : 1);
+
+	if (UTIL_JhlParticleSystem() && (pev->spawnflags & SF_ENVEXPLOSION_NOFIREBALL) == 0)
+		UTIL_JhlExplosionShake(pev->origin, jhlScale);
+
 	// draw decal
 	if ((pev->spawnflags & SF_ENVEXPLOSION_NODECAL) == 0)
 	{
-		if (RANDOM_FLOAT(0, 1) < 0.5)
+		if (UTIL_JhlParticleSystem())
+			UTIL_JhlExplosionScorch(&tr, jhlScale);
+		else if (RANDOM_FLOAT(0, 1) < 0.5)
 		{
 			UTIL_DecalTrace(&tr, DECAL_SCORCH1);
 		}

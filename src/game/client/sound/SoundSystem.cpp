@@ -395,13 +395,13 @@ constexpr const char* ExplosionSounds[] =
 
 void R_Explosion(const Vector& pos, int model, float scale, float framerate, int flags)
 {
-	if (scale != 0)
+	// johnhalflife's explosions draw their own specks and lights with their fireballs.
+	const bool jhlFireballs = scale != 0 && JhlExplosion_Fireballs(pos, model, scale, framerate, flags);
+
+	if (scale != 0 && !jhlFireballs)
 	{
-		if (!JhlExplosion_Fireballs(pos, model, scale, framerate, flags))
-		{
-			auto sprite = gEngfuncs.pEfxAPI->R_DefaultSprite(pos, model, framerate);
-			gEngfuncs.pEfxAPI->R_Sprite_Explode(sprite, scale, flags);
-		}
+		auto sprite = gEngfuncs.pEfxAPI->R_DefaultSprite(pos, model, framerate);
+		gEngfuncs.pEfxAPI->R_Sprite_Explode(sprite, scale, flags);
 
 		if ((flags & TE_EXPLFLAG_NOPARTICLES) == 0)
 		{

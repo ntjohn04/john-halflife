@@ -188,7 +188,23 @@ they don't use the map's model precache slots. Base scales make a typical piece 
 | Flesh, organic | `fleshgibs` (0.65) | flesh |
 | Water, snow | none | — |
 
-## Explosions (in progress)
+**Specks, lights, scorch, shake, underwater** (with `jhl_fx_particlesystem`; scales are the drawn fireball's, a
+grenade 3; RPG rockets 1.5×, explosive breakables 1.3×):
+
+* Specks: instead of the engine's 15 pure white (palette 254) ones, `EmbersAndLights` throws 15 × (scale / 3, 1 to
+  2.5) embers, pale yellow, cream and some white (252, 253, 254), 20-80 sideways (× √ that), 80-220 up, 1.5-2.5 s,
+  drifting and falling as the engine's (`pt_blob2`). Not under water.
+* Lights: the engine's flash (200, 0.01 s) and orange glow (150, fading 200 a second) times scale / 3 (1 to 2), ±5%;
+  the glow lasts until it has faded.
+* Scorch (`UTIL_JhlExplosionScorch`): one of `{scorch1`-`3` (vanilla 1-2; decals.wad has a third, placed by name),
+  and for scale 6+ one more, 9+ two more, overlapping, 16-32 × (scale / 3) units along the surface.
+* Shake (`UTIL_JhlExplosionShake`; vanilla: none): amplitude scale × 1.3, 0.4 + scale × 0.05 s, within
+  150 + scale × 70 units (a grenade 4, 0.55 s, 360 units).
+* Under water: the `WXplo1` fireball gets the vanilla one's randomness and a second, 80-100% its size, up to
+  0.1 s later; the lights as above. Bubbles (`UTIL_JhlExplosionBubbles`): vanilla's 100 in a 128 unit box, times
+  scale / 3 in count and box, and 40 × that more in a 1.5× box, rising slowly (speed 3, vanilla's 8).
+
+## Explosions (done)
 
 Vanilla, from Valve's source and the engine (`hw.dll`; the SDK's client `R_Explosion` in `SoundSystem.cpp`
 matches it): every explosion is `TE_EXPLOSION` from `CGrenade::Explode` (grenades, MP5 grenades, RPG, satchel,
