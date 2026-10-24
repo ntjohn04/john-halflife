@@ -526,10 +526,16 @@ Vector Intersect(Vector vecSrc, Vector vecDst, Vector vecMove, float flSpeed)
 	{
 		t = c / (flSpeed * flSpeed);
 	}
+	else if (const float discriminant = b * b - 4 * a * c; discriminant < 0)
+	{
+		// johnhalflife: no solution, the target (as estimated) moving faster than the ball; vanilla took the square root
+		// of this, and the ball got a NaN velocity ("Got a NaN velocity on controller_energy_ball") and was removed.
+		// Aim where it is now.
+		t = sqrt(c) / flSpeed;
+	}
 	else
 	{
-		t = b * b - 4 * a * c;
-		t = sqrt(t) / (2.0 * a);
+		t = sqrt(discriminant) / (2.0 * a);
 		float t1 = -b + t;
 		float t2 = -b - t;
 
