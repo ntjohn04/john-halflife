@@ -667,8 +667,14 @@ void CNihilanth::DyingThink()
 				MESSAGE_END();
 			}
 
-			// 1-2 every 0.1 s: about 900 of the engine's particles at a time, within its pool with room to spare.
-			UTIL_JhlSparkShowers(aroundHead(), RANDOM_LONG(1, 2), 1.5f);
+			// One on 3 of 4 thinks (every 0.1 s), from around and outside its head (it's some 600 units across), thrown
+			// outward to rain down the chamber, living 3 times an explosion's showers to fall all the way: about 900 of
+			// the engine's particles at a time (more ran out of them).
+			const float angle = RANDOM_FLOAT(0, 6.2831853f);
+			const Vector outward{std::cos(angle), std::sin(angle), 0};
+			const Vector start = head + outward * RANDOM_FLOAT(350, 650) + Vector(0, 0, RANDOM_FLOAT(-150, 150));
+			if (RANDOM_LONG(0, 3) != 0)
+				UTIL_JhlSparkShowers(start, 1, 3, (outward + Vector(0, 0, 0.3f)).Normalize());
 		}
 	}
 

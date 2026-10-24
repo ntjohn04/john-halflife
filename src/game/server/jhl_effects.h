@@ -79,13 +79,18 @@ inline void UTIL_JhlDynamicLight(const Vector& position, float radius, int r, in
  *	@brief Spark showers, as explosions throw them (the client's, jhl_explosions.cpp), going up from a point: TE_SPARKS
  *	through the SDK's own temp entity message (position, then the number of showers).
  */
-inline void UTIL_JhlSparkShowers(const Vector& position, int count, float lifeScale = 0.5f)
+inline void UTIL_JhlSparkShowers(const Vector& position, int count, float lifeScale = 0.5f, const Vector& direction = Vector(0, 0, 1))
 {
 	MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, position);
 	WRITE_BYTE(TE_SPARKS);
 	WRITE_COORD_VECTOR(position);
 	WRITE_BYTE(count);
 	WRITE_BYTE(std::clamp(static_cast<int>(lifeScale * 10), 1, 255)); // The showers' life, tenths of an explosion's.
+
+	// Which way they're thrown (as off a surface facing that way), hundredths.
+	for (int i = 0; i < 3; ++i)
+		WRITE_CHAR(std::clamp(static_cast<int>(direction[i] * 100), -100, 100));
+
 	MESSAGE_END();
 }
 

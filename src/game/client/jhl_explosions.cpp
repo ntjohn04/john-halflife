@@ -770,6 +770,10 @@ void JhlExplosion_ParseSparkShowers(BufferReader& reader)
 	Vector origin = reader.ReadCoordVector();
 	const int count = reader.ReadByte();
 	const float lifeScale = reader.ReadByte() / 10.f;
+	Vector direction;
+
+	for (int i = 0; i < 3; ++i)
+		direction[i] = reader.ReadChar() / 100.f;
 
 	// The engine's own burst, as vanilla.
 	if (!JhlParticleSystemEnabled())
@@ -790,7 +794,7 @@ void JhlExplosion_ParseSparkShowers(BufferReader& reader)
 	}
 
 	Surface surface;
-	surface.Normal = {0, 0, 1};
+	surface.Normal = direction.Length() > 0.1f ? direction.Normalize() : Vector{0, 0, 1};
 
 	if (gEngfuncs.PM_PointContents(origin, nullptr) == CONTENTS_WATER)
 		surface.Water = true;
