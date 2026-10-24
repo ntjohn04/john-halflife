@@ -195,7 +195,8 @@ burst every 0.1 s for 0.5-1.5 s: 8 streaks at ±200, a `richo1` flash of scale 0
 `TE_EXPLFLAG_JHL_SPARKS` instead and the client throws them (not in water). The surface hit is found by
 tracing down, up and 8 ways around: the one whose distance best matches where explosions are placed off what
 they hit (scale × 10 + 15.6, within 12 units), with its real normal; not simply the nearest, since a wall hit low
-down has the floor closer. 0-10 showers (the higher of two rolls, about 6.7 on average), each picking every
+down has the floor closer. showers by the surface's material (as bullet impacts read it; metal, vents, grates, computers count as metal):
+0-8 off metal, 0-5 off anything else, 0-7 if unknown (mid-air, brush entities), the higher of two rolls; each picking every
 value on its own: leaving up to nearly along the surface (its direction plus a random scatter of 1.2, never into
 it), 50-600 units/s skewed toward moderate (u^1.5, about 270 on average), plus 0-300 straight up (down off a
 ceiling), half or full gravity (50/50), 0.4-2.25 s, a burst every 0.07-0.11 s, keeping half their speed per

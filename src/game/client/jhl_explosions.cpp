@@ -20,7 +20,9 @@
 #include "jhl_explosions.h"
 #include "jhl_settings.h"
 #include "pm_defs.h"
+#include "pm_materials.h"
 #include "pmtrace.h"
+#include "sound/MaterialSystem.h"
 #include "r_efx.h"
 
 namespace
@@ -104,8 +106,11 @@ constexpr float LingeringSmokeDriftDecay = 0.3f; // Per second: drifting 40 unit
 // ±100 sideways +200 up, half gravity, sparking every 0.1 s for 0.5-1.5 s; each burst the engine's TE_SPARKS, 8
 // streaks at ±200 and a richo1 flash of scale 0.5-1). Every shower picks each of its values on its own, so no two
 // fly alike.
+// Showers: 0 to the most for the surface's material, the higher of two rolls (averages about 2/3 of the most).
 constexpr int SparkShowersMin = 0;
-constexpr int SparkShowersMax = 10; // The higher of two rolls: about 6.7 on average.
+constexpr int SparkShowersMaxMetal = 8;
+constexpr int SparkShowersMaxOther = 5;
+constexpr int SparkShowersMaxUnknown = 7; // Mid-air, or a brush entity (their materials aren't known on the client).
 constexpr float SparkSpeedMin = 50; // Off the surface; skewed (SparkSpeedSkew) so most are moderate, some fast.
 constexpr float SparkSpeedMax = 600;
 constexpr float SparkSpeedSkew = 1.5f;
@@ -317,7 +322,7 @@ void SparkShowerThink(TEMPENTITY* ent, float frametime, float currenttime)
 // hits nothing). Explosions are placed (dmg - 24) * 0.6 units out of what they hit, which is scale * 10 + 15.6, so
 // of the surfaces around (down, up and 8 ways around), it's the one at the distance closest to that. The nearest
 // surface isn't always it: a wall hit low down has the floor closer.
-Vector SurfaceNormal(const Vector& origin, float scale)
+Vector SurfaceNormal(const Vector& origin, float scale, pmtrace_t& hit)
 {
 	const float offset = scale * 10 + 15.6f;
 	const float range = offset * 1.5f + 16; // Room for hitting a surface at an angle to the 8 directions.
@@ -352,6 +357,7 @@ Vector SurfaceNormal(const Vector& origin, float scale)
 		{
 			bestMismatch = mismatch;
 			normal = tr.plane.normal;
+			hit = tr;
 		}
 	}
 
@@ -360,20 +366,56 @@ Vector SurfaceNormal(const Vector& origin, float scale)
 	return normal;
 }
 
+// The material of the surface a trace hit (pm_materials.h), or 0 if it isn't known: only the world's are on the
+// client, as for bullet impacts (ev_hldm.cpp).
+char SurfaceMaterial(const pmtrace_t& hit)
+{
+	if (gEngfuncs.pEventAPI->EV_IndexFromTrace(const_cast<pmtrace_t*>(&hit)) != 0)
+		return 0;
+
+	Vector start = hit.endpos + hit.plane.normal * 4;
+	Vector end = hit.endpos - hit.plane.normal * 4;
+
+	if (const char* textureName = gEngfuncs.pEventAPI->EV_TraceTexture(hit.ent, start, end); textureName)
+		return g_MaterialSystem.FindTextureType(g_MaterialSystem.StripTexturePrefix(textureName));
+
+	return 0;
+}
+
+// The most spark showers an explosion throws: more off metal (as bullet impacts count it: metal, vents, grates,
+// computers).
+int SparkShowersMax(char material)
+{
+	switch (material)
+	{
+	case 0:
+		return SparkShowersMaxUnknown;
+	case CHAR_TEX_METAL:
+	case CHAR_TEX_VENT:
+	case CHAR_TEX_GRATE:
+	case CHAR_TEX_COMPUTER:
+		return SparkShowersMaxMetal;
+	default:
+		return SparkShowersMaxOther;
+	}
+}
+
 // Spark showers as vanilla's spark_shower throws them, each with its own values.
 void SparkShowers(const Vector& origin, float scale)
 {
 	if (Vector point = origin; gEngfuncs.PM_PointContents(point, nullptr) == CONTENTS_WATER)
 		return;
 
-	const int count = std::max(gEngfuncs.pfnRandomLong(SparkShowersMin, SparkShowersMax),
-		gEngfuncs.pfnRandomLong(SparkShowersMin, SparkShowersMax));
+	pmtrace_t hit;
+	Vector normal = SurfaceNormal(origin, scale, hit);
+
+	const int most = SparkShowersMax(normal != g_vecZero ? SurfaceMaterial(hit) : 0);
+	const int count = std::max(gEngfuncs.pfnRandomLong(SparkShowersMin, most), gEngfuncs.pfnRandomLong(SparkShowersMin, most));
 
 	if (count == 0)
 		return;
 
 	// In mid-air, vanilla's sparks go up (its trace's normal is zero, and they get the upward push).
-	Vector normal = SurfaceNormal(origin, scale);
 	const bool ceiling = normal.z < 0;
 
 	if (normal == g_vecZero)
