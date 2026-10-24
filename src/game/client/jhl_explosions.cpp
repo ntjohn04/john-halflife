@@ -494,16 +494,19 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 	if (framerate != JhlFramerate)
 		return false;
 
+	// RPG rockets and explosive breakables are drawn bigger than their damage says, and as large explosions.
 	const bool rocket = (flags & TE_EXPLFLAG_JHL_ROCKET) != 0;
-	const bool large = rocket || scale >= LargeScale;
-	const float firstScale = scale * (rocket ? RocketScale : 1) * Random(1 - Jitter, 1 + Jitter);
+	const bool breakable = (flags & TE_EXPLFLAG_JHL_BREAKABLE) != 0;
+	const float bigger = rocket ? RocketScale : breakable ? JhlBreakableExplosionScale : 1;
+	const bool large = rocket || breakable || scale >= LargeScale;
+	const float firstScale = scale * bigger * Random(1 - Jitter, 1 + Jitter);
 	const float size = firstScale * Vanilla.Width;
 
 	const Vector jitter{Random(-PositionJitter, PositionJitter), Random(-PositionJitter, PositionJitter),
 		Random(-PositionJitter, PositionJitter)};
 	SpawnFireball(origin + jitter, model, firstScale, JhlFramerate * Random(1 - Jitter, 1 + Jitter), 180, Random(0, 360));
 
-	JhlExplosion_LingeringSmoke(origin, scale * (rocket ? RocketScale : 1));
+	JhlExplosion_LingeringSmoke(origin, scale * bigger);
 
 	if ((flags & TE_EXPLFLAG_JHL_SPARKS) != 0)
 		SparkShowers(origin, scale);

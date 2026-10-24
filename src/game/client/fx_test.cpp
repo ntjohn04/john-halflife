@@ -337,6 +337,7 @@ void Explosion(const Target& target, Params& p)
 	flags |= 0 == p.Int("particles", 1) ? TE_EXPLFLAG_NOPARTICLES : 0;
 	flags |= 0 != p.Int("rocket", 0) ? TE_EXPLFLAG_JHL_ROCKET : 0;
 	flags |= 0 != p.Int("sparks", 0) ? TE_EXPLFLAG_JHL_SPARKS : 0;
+	flags |= 0 != p.Int("breakable", 0) ? TE_EXPLFLAG_JHL_BREAKABLE : 0;
 	p.Print("explosion");
 
 	if (const int model = ModelIndex(name); model != 0)
@@ -762,21 +763,24 @@ void GrenadePreset(const Target& target, Params& p)
 void BarrelPreset(const Target& target, Params& p)
 {
 	const float magnitude = p.Float("magnitude", 100);
-	p.Print("barrel (env_explosion; explosive breakables use their explosion magnitude)");
+	const bool breakable = 0 != p.Int("breakable", 1);
+	p.Print("barrel (env_explosion; explosive breakables use their explosion magnitude; breakable=0: a map's env_explosion)");
 
 	const float scale = std::max(10.f, (magnitude - 50) * 0.6f) / 10;
 	const float offset = (magnitude - 24) * 0.6f;
+	const float smokeScale = scale * ExplosionSmokeFactor() * (breakable && JhlParticleSystemEnabled() ? JhlBreakableExplosionScale : 1);
 
 	Params explosion;
 	explosion.Set("scale", scale);
 	explosion.Set("offset", offset);
 	explosion.Set("sparks", JhlParticleSystemEnabled() ? 1.f : 0.f);
+	explosion.Set("breakable", breakable ? 1.f : 0.f);
 	Explosion(target, explosion);
 
 	Later(0.3f, [=]()
 		{
 		Params smoke;
-		smoke.Set("scale", scale * ExplosionSmokeFactor());
+		smoke.Set("scale", smokeScale);
 		smoke.Set("offset", offset);
 		gEngfuncs.Con_Printf("  (0.3 s later)\n");
 		Smoke(target, smoke); });
@@ -907,7 +911,7 @@ const std::vector<Command>& Commands()
 {
 	static const std::vector<Command> commands{
 		{"grenade", "dmg=100 rocket=0|1", GrenadePreset},
-		{"barrel", "magnitude=100", BarrelPreset},
+		{"barrel", "magnitude=100 breakable=1", BarrelPreset},
 		{"blood", "dmg=30 type=human|alien", [](const Target& t, Params& p)
 			{ BloodPreset(t, p, "blood (SpawnBlood from CBaseMonster::TraceAttack)", 1); }},
 		{"headshot", "dmg=30 type=human|alien", [](const Target& t, Params& p)
@@ -916,7 +920,7 @@ const std::vector<Command>& Commands()
 		{"apache", "time=4", ApachePreset},
 		{"vortzap", "", VortZapPreset},
 		{"sprite", "sprite= count= scale= alpha= render=alpha|add|glow|normal color=r,g,b fps= life= loop= offset= radius= speed= spread= up= gravity=0|1|2 fade= collide=", Sprite},
-		{"explosion", "sprite= scale= fps= offset= additive= light= sound= particles= rocket= sparks=", Explosion},
+		{"explosion", "sprite= scale= fps= offset= additive= light= sound= particles= rocket= sparks= breakable=", Explosion},
 		{"smoke", "sprite= scale= fps= offset=", Smoke},
 		{"lingersmoke", "scale=3 opacity=200 gray=75 life=10.5 start=85 end=340 rise=10 drift=40 delay=0 offset=45.6", LingeringSmoke},
 		{"sparks", "count=", Sparks},

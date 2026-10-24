@@ -27,3 +27,13 @@ constexpr int TE_EXPLFLAG_JHL_ROCKET = 128;
  *	server's spark_shower entities) with jhl_fx_particlesystem on.
  */
 constexpr int TE_EXPLFLAG_JHL_SPARKS = 64;
+
+/**
+ *	@brief johnhalflife TE_EXPLOSION flag: an explosive breakable (barrels, crates, pushables), which the client draws
+ *	bigger than its magnitude alone would.
+ */
+constexpr int TE_EXPLFLAG_JHL_BREAKABLE = 32;
+
+// How much bigger explosive breakables' explosions are drawn (the client's fireballs and lingering smoke, the server's
+// smoke puff).
+constexpr float JhlBreakableExplosionScale = 1.3f;

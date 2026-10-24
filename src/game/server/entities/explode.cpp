@@ -111,6 +111,10 @@ public:
 
 	int m_iMagnitude;  // how large is the fireball? how much damage?
 	int m_spriteScale; // what's the exact fireball sprite scale?
+
+	// johnhalflife: an explosive breakable's (ExplosionCreate), drawn bigger. Not saved: those explode at once and
+	// are gone 0.3 s later.
+	bool m_Breakable = false;
 };
 
 BEGIN_DATAMAP(CEnvExplosion)
@@ -205,7 +209,7 @@ void CEnvExplosion::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE 
 	// draw fireball
 	UTIL_ExplosionEffect(pev->origin, g_sModelIndexFireball,
 		(pev->spawnflags & SF_ENVEXPLOSION_NOFIREBALL) == 0 ? static_cast<byte>(m_spriteScale) : 0,
-		15, clientSparks ? TE_EXPLFLAG_JHL_SPARKS : TE_EXPLFLAG_NONE,
+		15, (clientSparks ? TE_EXPLFLAG_JHL_SPARKS : TE_EXPLFLAG_NONE) | (m_Breakable ? TE_EXPLFLAG_JHL_BREAKABLE : TE_EXPLFLAG_NONE),
 		MSG_PAS, pev->origin);
 
 	// do damage
@@ -239,7 +243,7 @@ void CEnvExplosion::Smoke()
 		WRITE_COORD(pev->origin.y);
 		WRITE_COORD(pev->origin.z);
 		WRITE_SHORT(g_sModelIndexSmoke);
-		WRITE_BYTE(UTIL_JhlExplosionSmokeScale(m_spriteScale)); // scale * 10
+		WRITE_BYTE(UTIL_JhlExplosionSmokeScale(m_spriteScale * (m_Breakable && UTIL_JhlParticleSystem() ? JhlBreakableExplosionScale : 1))); // scale * 10
 		WRITE_BYTE(12);					 // framerate
 		MESSAGE_END();
 	}
@@ -251,7 +255,8 @@ void CEnvExplosion::Smoke()
 }
 
 // HACKHACK -- create one of these and fake a keyvalue to get the right explosion setup
-void ExplosionCreate(const Vector& center, const Vector& angles, CBaseEntity* owner, int magnitude, bool doDamage)
+void ExplosionCreate(const Vector& center, const Vector& angles, CBaseEntity* owner, int magnitude, bool doDamage,
+	bool breakable)
 {
 	KeyValueData kvd;
 	char buf[128];
@@ -263,6 +268,8 @@ void ExplosionCreate(const Vector& center, const Vector& angles, CBaseEntity* ow
 	pExplosion->KeyValue(&kvd);
 	if (!doDamage)
 		pExplosion->pev->spawnflags |= SF_ENVEXPLOSION_NODAMAGE;
+
+	static_cast<CEnvExplosion*>(pExplosion)->m_Breakable = breakable;
 
 	pExplosion->Spawn();
 	pExplosion->Use(nullptr, nullptr, USE_TOGGLE, 0);

@@ -179,6 +179,14 @@ crossbow bolt; not the Apache/Osprey deaths at 12 fps, Opposing Force's mortar a
 
 The pool sprites are precached in `W_Precache`.
 
+**Explosive breakables** (barrels, crates, pushables: `func_breakable`/`func_pushable` with an explosion
+magnitude, through `env_explosion`): damage is the magnitude, radius 2.5× it, the fireball (magnitude−50)×0.06 (at
+least 1.0), so a magnitude 100 barrel is a grenade. The maps use 75-200 in Half-Life, 1-150 in Opposing Force
+(many 1-50, all at the minimum fireball), 64-100 for pushables. `ExplosionCreate(..., breakable)` from
+`CBreakable::Die` flags them (`TE_EXPLFLAG_JHL_BREAKABLE`): the first fireball and lingering smoke are 1.3×
+(`JhlBreakableExplosionScale`), the smoke puff too, and they count as large (shaped fireballs on a floor).
+Damage unchanged. The sent scale stays the magnitude's, which the client needs to find the surface hit.
+
 **Smoke:** the vanilla puff (`TE_SMOKE`, drawn by the engine: `steam1`, 20 units up, gray 20-35, rising 30 units/s)
 is sent 7% bigger (`UTIL_JhlExplosionSmokeScale`, `CGrenade::Smoke` and `CEnvExplosion::Smoke`). No other
 vanilla smoke sprite fits it: the rest are additive (they glow) or columns. With every two-fireball explosion
