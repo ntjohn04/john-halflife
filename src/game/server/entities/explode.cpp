@@ -112,8 +112,8 @@ public:
 	int m_iMagnitude;  // how large is the fireball? how much damage?
 	int m_spriteScale; // what's the exact fireball sprite scale?
 
-	// johnhalflife: an explosive breakable's (ExplosionCreate), drawn bigger. Not saved: those explode at once and
-	// are gone 0.3 s later.
+	// johnhalflife: an explosive breakable's (ExplosionCreate, or fired by one), drawn bigger. Not saved: it's set as
+	// it explodes and only matters for the smoke 0.3 s later.
 	bool m_Breakable = false;
 };
 
@@ -169,6 +169,10 @@ void CEnvExplosion::Spawn()
 void CEnvExplosion::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE useType, float value)
 {
 	TraceResult tr;
+
+	// johnhalflife: fired by a breakable as it breaks (how most of Half-Life's barrels explode).
+	if (pCaller && (pCaller->ClassnameIs("func_breakable") || pCaller->ClassnameIs("func_pushable")))
+		m_Breakable = true;
 
 	pev->model = string_t::Null; // invisible
 	pev->solid = SOLID_NOT;		 // intangible

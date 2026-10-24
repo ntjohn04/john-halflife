@@ -645,10 +645,14 @@ void CBreakable::Die()
 	}
 
 	vecSpot = pev->origin + (pev->mins + pev->maxs) * 0.5;
-	// johnhalflife: explosive breakables' shards are 7 times as many and last like gibs (jhl_debris.cpp).
-	if (Explodable())
+	// johnhalflife: explosive breakables throw 2.5 times the engine's shards (by size; a barrel about 20), at most 40,
+	// flying far more every way, lasting like gibs (jhl_debris.cpp).
+	if (ExplodesWhenBroken())
 	{
-		UTIL_JhlBreakModel(vecSpot, pev->size, vecVelocity, 10, m_idShard, 0, 25, cFlag, 7);
+		const float engineShards = (pev->size.x * pev->size.y + pev->size.y * pev->size.z + pev->size.z * pev->size.x) / 432;
+		const int shards = std::clamp(static_cast<int>(engineShards * 2.5f), 1, 40);
+
+		UTIL_JhlBreakModel(vecSpot, pev->size, vecVelocity + Vector(0, 0, 150), 35, m_idShard, shards, 25, cFlag);
 	}
 	else
 	{
@@ -729,6 +733,23 @@ void CBreakable::Die()
 	{
 		ExplosionCreate(Center(), pev->angles, this, ExplosionMagnitude(), true, true);
 	}
+}
+
+bool CBreakable::ExplodesWhenBroken()
+{
+	if (Explodable())
+		return true;
+
+	if (FStringNull(pev->target))
+		return false;
+
+	for (CBaseEntity* target = nullptr; (target = UTIL_FindEntityByTargetname(target, STRING(pev->target))) != nullptr;)
+	{
+		if (target->ClassnameIs("env_explosion"))
+			return true;
+	}
+
+	return false;
 }
 
 bool CBreakable::IsBreakable()

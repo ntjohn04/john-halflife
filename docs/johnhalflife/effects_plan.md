@@ -158,7 +158,7 @@ the client (`JhlDebris_ParseBreakModel`) makes the same shards for 60 s, up to 2
 
 | Debris | Vanilla | Now |
 |---|---|---|
-| Explosive breakables (barrels, crates, pushables) | by size (a barrel ~9), 2.5 s | 7× (a barrel ~63), 60 s |
+| Explosive breakables (barrels, crates, pushables; their own magnitude, or targeting an `env_explosion`, as most of Half-Life's barrels do) | by size (a barrel ~9), ±100 sideways, 0-100 up, 2.5 s | 2.5× by size (a barrel ~20), at most 40, ±350 sideways, 150-500 up, 60 s |
 | Apache falling, every 0.2 s | 4, 3 s | 4-8, 60 s |
 | Apache crash | 200 asked, 100 made (engine cap), 20 s | 200, 60 s |
 | Osprey falling, every 0.2 s | 8, 20 s | 8-16, 60 s |
@@ -206,7 +206,7 @@ The pool sprites are precached in `W_Precache`.
 magnitude, through `env_explosion`): damage is the magnitude, radius 2.5× it, the fireball (magnitude−50)×0.06 (at
 least 1.0), so a magnitude 100 barrel is a grenade. The maps use 75-200 in Half-Life, 1-150 in Opposing Force
 (many 1-50, all at the minimum fireball), 64-100 for pushables. `ExplosionCreate(..., breakable)` from
-`CBreakable::Die` flags them (`TE_EXPLFLAG_JHL_BREAKABLE`): the first fireball and lingering smoke are 1.3×
+`CBreakable::Die` flags them (`TE_EXPLFLAG_JHL_BREAKABLE`; also an `env_explosion` a breakable fires as it breaks, as most of Half-Life's barrels do): the first fireball and lingering smoke are 1.3×
 (`JhlBreakableExplosionScale`), the smoke puff too, and they count as large (shaped fireballs on a floor).
 Damage unchanged. The sent scale stays the magnitude's, which the client needs to find the surface hit.
 

@@ -75,6 +75,12 @@ public:
 	int ObjectCaps() override { return (CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION); }
 
 	inline bool Explodable() { return ExplosionMagnitude() > 0; }
+
+	/**
+	 *	@brief johnhalflife: whether breaking this makes an explosion: its own (Explodable), or an env_explosion it
+	 *	targets (how most of Half-Life's barrels do it).
+	 */
+	bool ExplodesWhenBroken();
 	inline int ExplosionMagnitude() { return pev->impulse; }
 	inline void ExplosionSetMagnitude(int magnitude) { pev->impulse = magnitude; }
 
