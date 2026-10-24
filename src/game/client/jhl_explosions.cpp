@@ -13,9 +13,13 @@
  *
  ****/
 
+#include <span>
+
 #include "hud.h"
+#include "client_gibs.h"
 #include "com_model.h"
 #include "event_api.h"
+#include "jhl_debris.h"
 #include "jhl_explosion.h"
 #include "jhl_explosions.h"
 #include "jhl_settings.h"
@@ -125,6 +129,22 @@ constexpr float SparkIntervalMax = 0.11f;
 // The client's temp entity physics halves this again for anything with gravity: 1 keeps half the speed per bounce,
 // near vanilla's 0.6 in the air.
 constexpr float SparkBounce = 1;
+
+// Surface debris (SurfaceDebris): pieces of what an explosion hit, thrown off it, each picking its own values.
+constexpr int SurfaceDebrisMin = 6; // For a grenade; bigger explosions more (by scale over SurfaceDebrisScale),
+constexpr int SurfaceDebrisMax = 18;
+constexpr float SurfaceDebrisScale = 3;
+constexpr float SurfaceDebrisMoreMax = 2; // up to twice as many.
+constexpr float SurfaceDebrisSpeedMin = 100;
+constexpr float SurfaceDebrisSpeedMax = 500;
+constexpr float SurfaceDebrisSpeedSkew = 1.3f; // Most moderate, some fast.
+constexpr float SurfaceDebrisSpread = 0.9f;	   // As SparkSpread.
+constexpr float SurfaceDebrisUpMin = 0;
+constexpr float SurfaceDebrisUpMax = 200;
+constexpr float SurfaceDebrisFullGravityChance = 0.75f; // Heavier than sparks; the rest half gravity.
+constexpr float SurfaceDebrisLifeMin = 8;
+constexpr float SurfaceDebrisLifeMax = 16;
+constexpr float SurfaceDebrisSizeVariation = 0.15f; // Each piece ±15%.
 
 // How far (units) from the expected distance a surface can be and still count as the one an explosion hit.
 constexpr float SurfaceMatchTolerance = 12;
@@ -401,15 +421,41 @@ int SparkShowersMax(char material)
 }
 
 // Spark showers as vanilla's spark_shower throws them, each with its own values.
-void SparkShowers(const Vector& origin, float scale)
+// The surface an explosion hit, for its sparks and debris.
+struct Surface
 {
+	bool Water = false; // The explosion is under water: no sparks or debris.
+	Vector Normal;		// Zero in mid-air.
+	pmtrace_t Hit;		// Where it was found (Normal isn't zero).
+	char Material = 0;	// pm_materials.h, or 0 if unknown (mid-air, brush entities).
+};
+
+Surface FindSurface(const Vector& origin, float scale)
+{
+	Surface surface;
+
 	if (Vector point = origin; gEngfuncs.PM_PointContents(point, nullptr) == CONTENTS_WATER)
+	{
+		surface.Water = true;
+		return surface;
+	}
+
+	surface.Normal = SurfaceNormal(origin, scale, surface.Hit);
+
+	if (surface.Normal != g_vecZero)
+		surface.Material = SurfaceMaterial(surface.Hit);
+
+	return surface;
+}
+
+void SparkShowers(const Vector& origin, const Surface& surface)
+{
+	if (surface.Water)
 		return;
 
-	pmtrace_t hit;
-	Vector normal = SurfaceNormal(origin, scale, hit);
+	Vector normal = surface.Normal;
 
-	const int most = SparkShowersMax(normal != g_vecZero ? SurfaceMaterial(hit) : 0);
+	const int most = SparkShowersMax(surface.Material);
 	const int count = std::max(gEngfuncs.pfnRandomLong(SparkShowersMin, most), gEngfuncs.pfnRandomLong(SparkShowersMin, most));
 
 	if (count == 0)
@@ -455,6 +501,124 @@ void SparkShowers(const Vector& origin, float scale)
 		ent->entity.baseline.rendermode = gEngfuncs.pfnRandomLong(SparkStreakSpeedMin, SparkStreakSpeedMax);
 		ent->entity.baseline.fuser2 = Random(SparkFlashMaxMin, SparkFlashMaxMax);
 		ent->die = now + life + 1;
+	}
+}
+
+// A vanilla gib model for surface debris, and the scale that makes its typical piece about 10 units (they were made for
+// breakables of every size, from 4 unit pebbles to 33 unit planks).
+struct DebrisModel
+{
+	const char* Model;
+	float Scale;
+};
+
+constexpr DebrisModel ConcreteDebris[] = {{"models/concretegibs.mdl", 1.1f}, {"models/cindergibs.mdl", 0.75f}};
+constexpr DebrisModel DirtDebris[] = {{"models/rockgibs.mdl", 1.6f}};
+constexpr DebrisModel MetalDebris[] = {{"models/metalplategibs.mdl", 0.45f}, {"models/metalgibs.mdl", 0.7f}, {"models/chromegibs.mdl", 0.8f}};
+constexpr DebrisModel VentDebris[] = {{"models/ventgibs.mdl", 0.55f}};
+constexpr DebrisModel GrateDebris[] = {{"models/metalgibs.mdl", 0.7f}, {"models/catwalkgibs.mdl", 0.35f}};
+constexpr DebrisModel TileDebris[] = {{"models/ceilinggibs.mdl", 0.85f}, {"models/concretegibs.mdl", 1.1f}};
+constexpr DebrisModel WoodDebris[] = {{"models/woodgibs.mdl", 0.35f}};
+constexpr DebrisModel ComputerDebris[] = {{"models/computergibs.mdl", 0.45f}, {"models/metalgibs.mdl", 0.7f}};
+constexpr DebrisModel GlassDebris[] = {{"models/glassgibs.mdl", 0.5f}};
+constexpr DebrisModel FleshDebris[] = {{"models/fleshgibs.mdl", 0.65f}};
+
+// The debris a surface material throws, and how its pieces sound bouncing (BREAK_*); none off water and snow.
+std::span<const DebrisModel> SurfaceDebrisModels(char material, int& breakType)
+{
+	switch (material)
+	{
+	case CHAR_TEX_METAL:
+		breakType = BREAK_METAL;
+		return MetalDebris;
+	case CHAR_TEX_VENT:
+		breakType = BREAK_METAL;
+		return VentDebris;
+	case CHAR_TEX_GRATE:
+		breakType = BREAK_METAL;
+		return GrateDebris;
+	case CHAR_TEX_COMPUTER:
+		breakType = BREAK_METAL;
+		return ComputerDebris;
+	case CHAR_TEX_WOOD:
+	case CHAR_TEX_SWAMP_BOARDS:
+		breakType = BREAK_WOOD;
+		return WoodDebris;
+	case CHAR_TEX_GLASS:
+		breakType = BREAK_GLASS;
+		return GlassDebris;
+	case CHAR_TEX_FLESH:
+	case CHAR_TEX_ORGANIC:
+		breakType = BREAK_FLESH;
+		return FleshDebris;
+	case CHAR_TEX_DIRT:
+	case CHAR_TEX_XEN_GROUND:
+	case CHAR_TEX_XEN_SHELL:
+		breakType = BREAK_CONCRETE;
+		return DirtDebris;
+	case CHAR_TEX_TILE:
+		breakType = BREAK_CONCRETE;
+		return TileDebris;
+	case CHAR_TEX_SLOSH:
+	case CHAR_TEX_SNOW:
+		return {};
+	default: // Concrete, and unknown (brush entities; unlisted textures are concrete too).
+		breakType = BREAK_CONCRETE;
+		return ConcreteDebris;
+	}
+}
+
+// Pieces of the surface an explosion hit, thrown off it; each its own model, size, speed, direction, gravity and life.
+void SurfaceDebris(const Surface& surface, float scale)
+{
+	if (surface.Water || surface.Normal == g_vecZero)
+		return;
+
+	int breakType = BREAK_CONCRETE;
+	const auto models = SurfaceDebrisModels(surface.Material, breakType);
+
+	if (models.empty())
+		return;
+
+	const Vector& normal = surface.Normal;
+	const bool ceiling = normal.z < 0;
+	const float bigger = std::clamp(scale / SurfaceDebrisScale, 1.f, SurfaceDebrisMoreMax);
+	const int count = static_cast<int>(gEngfuncs.pfnRandomLong(SurfaceDebrisMin, SurfaceDebrisMax) * bigger);
+
+	for (int i = 0; i < count; ++i)
+	{
+		const DebrisModel& debris = models[gEngfuncs.pfnRandomLong(0, models.size() - 1)];
+		model_t* model = JhlDebris_LoadModel(debris.Model);
+
+		if (!model)
+			continue;
+
+		Vector scatter{Random(-1, 1), Random(-1, 1), Random(-1, 1)};
+
+		// Never back into the surface.
+		if (DotProduct(scatter, normal) < 0)
+			scatter = scatter - normal * (2 * DotProduct(scatter, normal));
+
+		const Vector direction = (normal + scatter * SurfaceDebrisSpread).Normalize();
+		const float speed = SurfaceDebrisSpeedMin + (SurfaceDebrisSpeedMax - SurfaceDebrisSpeedMin) * std::pow(Random(0, 1), SurfaceDebrisSpeedSkew);
+		Vector velocity = direction * speed;
+		velocity.z += (ceiling ? -1 : 1) * Random(SurfaceDebrisUpMin, SurfaceDebrisUpMax);
+
+		const Vector origin = surface.Hit.endpos + normal * 4 + Vector{Random(-4, 4), Random(-4, 4), Random(-4, 4)};
+		TEMPENTITY* piece = JhlDebris_Piece(origin, model, breakType, velocity, Random(SurfaceDebrisLifeMin, SurfaceDebrisLifeMax));
+
+		if (!piece)
+			return;
+
+		if (Random(0, 1) < SurfaceDebrisFullGravityChance)
+		{
+			piece->flags &= ~FTENT_SLOWGRAVITY;
+			piece->flags |= FTENT_GRAVITY;
+		}
+
+		// The model renderer only scales entities marked so (StudioSetUpTransform).
+		piece->entity.curstate.scale = debris.Scale * Random(1 - SurfaceDebrisSizeVariation, 1 + SurfaceDebrisSizeVariation);
+		piece->entity.curstate.iuser4 = ScaledModelMarker;
 	}
 }
 
@@ -508,8 +672,12 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 
 	JhlExplosion_LingeringSmoke(origin, scale * bigger);
 
+	const Surface surface = FindSurface(origin, scale);
+
 	if ((flags & TE_EXPLFLAG_JHL_SPARKS) != 0)
-		SparkShowers(origin, scale);
+		SparkShowers(origin, surface);
+
+	SurfaceDebris(surface, scale);
 
 	// The second fireball: shaped for large explosions on a floor, round otherwise.
 	Vector floor;

@@ -166,6 +166,28 @@ the client (`JhlDebris_ParseBreakModel`) makes the same shards for 60 s, up to 2
 | Other breakables (glass, crates, vents) | by size, 2.5 s | unchanged (a big pane would be ~280 for a minute) |
 | NPC gibs | (see Gibs) | unchanged: 7×, 60 s, now in the budget |
 
+**Surface debris** (`SurfaceDebris`, `jhl_explosions.cpp`): every two-fireball explosion that hit a surface (not
+in water or mid-air) throws pieces of it, from where it hit: 6-18 for a grenade, up to twice that for bigger
+explosions (scale / 3). Each piece picks its own model (from the material's), size (the model's scale ±15%),
+speed (100-500, skewed to moderate), direction (as sparks: scatter 0.9, never into the surface), 0-200 up
+(down off a ceiling), gravity (full 75%, half 25%), tumbling, and life (8-16 s, then fades), counted against the
+debris budget. Models are loaded by the client if the map didn't precache them (`JhlDebris_LoadModel`), so
+they don't use the map's model precache slots. Base scales make a typical piece about 10 units:
+
+| Material | Models (scale) | Bounce sounds |
+|---|---|---|
+| Concrete, unknown (brush entities) | `concretegibs` (1.1), `cindergibs` (0.75) | concrete |
+| Dirt, Xen ground and shell | `rockgibs` (1.6) | concrete |
+| Metal | `metalplategibs` (0.45), `metalgibs` (0.7), `chromegibs` (0.8) | metal |
+| Vent | `ventgibs` (0.55) | metal |
+| Grate | `metalgibs` (0.7), `catwalkgibs` (0.35) | metal |
+| Computer | `computergibs` (0.45), `metalgibs` (0.7) | metal |
+| Tile | `ceilinggibs` (0.85), `concretegibs` (1.1) | concrete |
+| Wood, swamp boards | `woodgibs` (0.35) | wood |
+| Glass | `glassgibs` (0.5), translucent | glass |
+| Flesh, organic | `fleshgibs` (0.65) | flesh |
+| Water, snow | none | — |
+
 ## Explosions (in progress)
 
 Vanilla, from Valve's source and the engine (`hw.dll`; the SDK's client `R_Explosion` in `SoundSystem.cpp`

@@ -126,55 +126,63 @@ void JhlDebris_BreakModel(const Vector& position, const Vector& size, const Vect
 	if (!model)
 		return;
 
-	const int type = flags & BREAK_TYPEMASK;
-	const int variations = Variations(model);
-	const float now = gEngfuncs.GetClientTime();
-
 	for (int i = 0; i < count; ++i)
 	{
 		const Vector origin{position.x + gEngfuncs.pfnRandomFloat(-0.5f, 0.5f) * size.x,
 			position.y + gEngfuncs.pfnRandomFloat(-0.5f, 0.5f) * size.y,
 			position.z + gEngfuncs.pfnRandomFloat(-0.5f, 0.5f) * size.z};
 
-		TEMPENTITY* shard = gEngfuncs.pEfxAPI->CL_TempEntAlloc(origin, model);
-
-		if (!shard)
-			return;
-
-		shard->hitSound = type;
-
-		if (model->type == mod_sprite)
-			shard->entity.curstate.frame = gEngfuncs.pfnRandomLong(0, variations - 1);
-		else
-			shard->entity.curstate.body = gEngfuncs.pfnRandomLong(0, variations - 1);
-
-		shard->flags |= FTENT_COLLIDEWORLD | FTENT_FADEOUT | FTENT_SLOWGRAVITY;
-
-		if (gEngfuncs.pfnRandomLong(0, 255) < 200)
-		{
-			shard->flags |= FTENT_ROTATE;
-			shard->entity.baseline.angles = {gEngfuncs.pfnRandomFloat(-256, 255), gEngfuncs.pfnRandomFloat(-256, 255),
-				gEngfuncs.pfnRandomFloat(-256, 255)};
-		}
-
-		if (gEngfuncs.pfnRandomLong(0, 255) < 100 && (flags & BREAK_SMOKE) != 0)
-			shard->flags |= FTENT_SMOKETRAIL;
-
-		if (type == BREAK_GLASS || (flags & BREAK_TRANS) != 0)
-		{
-			shard->entity.curstate.rendermode = kRenderTransTexture;
-			shard->entity.curstate.renderamt = shard->entity.baseline.renderamt = 128;
-		}
-		else
-		{
-			shard->entity.curstate.rendermode = kRenderNormal;
-			shard->entity.baseline.renderamt = 255;
-		}
-
-		shard->entity.baseline.origin = {velocity.x + gEngfuncs.pfnRandomFloat(-random, random),
+		const Vector shardVelocity{velocity.x + gEngfuncs.pfnRandomFloat(-random, random),
 			velocity.y + gEngfuncs.pfnRandomFloat(-random, random), velocity.z + gEngfuncs.pfnRandomFloat(0, random)};
-		shard->die = now + life + gEngfuncs.pfnRandomFloat(0, 1);
 
-		JhlDebris_Track(shard, ExpireShard);
+		if (!JhlDebris_Piece(origin, model, flags, shardVelocity, life + gEngfuncs.pfnRandomFloat(0, 1)))
+			return;
 	}
+}
+
+TEMPENTITY* JhlDebris_Piece(const Vector& origin, model_t* model, int flags, const Vector& velocity, float life)
+{
+	TEMPENTITY* shard = gEngfuncs.pEfxAPI->CL_TempEntAlloc(origin, model);
+
+	if (!shard)
+		return nullptr;
+
+	const int type = flags & BREAK_TYPEMASK;
+	const int variations = Variations(model);
+
+	shard->hitSound = type;
+
+	if (model->type == mod_sprite)
+		shard->entity.curstate.frame = gEngfuncs.pfnRandomLong(0, variations - 1);
+	else
+		shard->entity.curstate.body = gEngfuncs.pfnRandomLong(0, variations - 1);
+
+	shard->flags |= FTENT_COLLIDEWORLD | FTENT_FADEOUT | FTENT_SLOWGRAVITY;
+
+	if (gEngfuncs.pfnRandomLong(0, 255) < 200)
+	{
+		shard->flags |= FTENT_ROTATE;
+		shard->entity.baseline.angles = {gEngfuncs.pfnRandomFloat(-256, 255), gEngfuncs.pfnRandomFloat(-256, 255),
+			gEngfuncs.pfnRandomFloat(-256, 255)};
+	}
+
+	if (gEngfuncs.pfnRandomLong(0, 255) < 100 && (flags & BREAK_SMOKE) != 0)
+		shard->flags |= FTENT_SMOKETRAIL;
+
+	if (type == BREAK_GLASS || (flags & BREAK_TRANS) != 0)
+	{
+		shard->entity.curstate.rendermode = kRenderTransTexture;
+		shard->entity.curstate.renderamt = shard->entity.baseline.renderamt = 128;
+	}
+	else
+	{
+		shard->entity.curstate.rendermode = kRenderNormal;
+		shard->entity.baseline.renderamt = 255;
+	}
+
+	shard->entity.baseline.origin = velocity;
+	shard->die = gEngfuncs.GetClientTime() + life;
+
+	JhlDebris_Track(shard, ExpireShard);
+	return shard;
 }

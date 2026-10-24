@@ -49,3 +49,10 @@ model_t* JhlDebris_LoadModel(const char* name);
  */
 void JhlDebris_BreakModel(const Vector& position, const Vector& size, const Vector& velocity, float random, int count,
 	model_t* model, int flags, float life);
+
+/**
+ *	@brief One piece of debris, as the engine's shards (a random body or frame, tumbling 200 in 256, half gravity,
+ *	translucent for glass; @p flags BREAK_*), lasting @p life seconds, counted against the budget.
+ *	@return The piece, to change further, or null if out of temp entities.
+ */
+TEMPENTITY* JhlDebris_Piece(const Vector& origin, model_t* model, int flags, const Vector& velocity, float life);
