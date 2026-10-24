@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include "UserMessages.h"
+
 /**
  *	@brief Whether johnhalflife's particle system changes are on for effects the server sends (hit blood).
  *	It's the client's jhl_fx_particlesystem, which the server can read in single player since the engine's cvars are
@@ -24,6 +26,34 @@ inline bool UTIL_JhlParticleSystem()
 {
 	const cvar_t* cvar = g_engfuncs.pfnCVarGetPointer("jhl_fx_particlesystem");
 	return !cvar || cvar->value != 0;
+}
+
+/**
+ *	@brief TE_BREAKMODEL (breakable shards, helicopter debris). With jhl_fx_particlesystem on, it goes through the SDK's
+ *	own temp entity message and the client makes the shards (jhl_debris.cpp): lasting 60 seconds like gibs,
+ *	@p multiplier times the count, counted against its debris budget. Otherwise the engine's, as vanilla.
+ *	@param count 0: by the size. @param life Tenths of a second (vanilla only).
+ */
+inline void UTIL_JhlBreakModel(const Vector& position, const Vector& size, const Vector& velocity, int random,
+	int model, int count, int life, int flags, int multiplier = 1)
+{
+	const bool jhl = UTIL_JhlParticleSystem();
+
+	MESSAGE_BEGIN(MSG_PVS, jhl ? gmsgTempEntity : SVC_TEMPENTITY, position);
+	WRITE_BYTE(TE_BREAKMODEL);
+	WRITE_COORD_VECTOR(position);
+	WRITE_COORD_VECTOR(size);
+	WRITE_COORD_VECTOR(velocity);
+	WRITE_BYTE(random); // × 10 units/s
+	WRITE_SHORT(model);
+	WRITE_BYTE(count);
+	WRITE_BYTE(life);
+	WRITE_BYTE(flags);
+
+	if (jhl)
+		WRITE_BYTE(multiplier);
+
+	MESSAGE_END();
 }
 
 /**

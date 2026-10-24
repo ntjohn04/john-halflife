@@ -16,6 +16,7 @@
 #include "cbase.h"
 #include "func_break.h"
 #include "explode.h"
+#include "jhl_effects.h"
 
 bool CBreakable::KeyValue(KeyValueData* pkvd)
 {
@@ -644,39 +645,47 @@ void CBreakable::Die()
 	}
 
 	vecSpot = pev->origin + (pev->mins + pev->maxs) * 0.5;
-	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, vecSpot);
-	WRITE_BYTE(TE_BREAKMODEL);
+	// johnhalflife: explosive breakables' shards are 7 times as many and last like gibs (jhl_debris.cpp).
+	if (Explodable())
+	{
+		UTIL_JhlBreakModel(vecSpot, pev->size, vecVelocity, 10, m_idShard, 0, 25, cFlag, 7);
+	}
+	else
+	{
+		MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, vecSpot);
+		WRITE_BYTE(TE_BREAKMODEL);
 
-	// position
-	WRITE_COORD(vecSpot.x);
-	WRITE_COORD(vecSpot.y);
-	WRITE_COORD(vecSpot.z);
+		// position
+		WRITE_COORD(vecSpot.x);
+		WRITE_COORD(vecSpot.y);
+		WRITE_COORD(vecSpot.z);
 
-	// size
-	WRITE_COORD(pev->size.x);
-	WRITE_COORD(pev->size.y);
-	WRITE_COORD(pev->size.z);
+		// size
+		WRITE_COORD(pev->size.x);
+		WRITE_COORD(pev->size.y);
+		WRITE_COORD(pev->size.z);
 
-	// velocity
-	WRITE_COORD(vecVelocity.x);
-	WRITE_COORD(vecVelocity.y);
-	WRITE_COORD(vecVelocity.z);
+		// velocity
+		WRITE_COORD(vecVelocity.x);
+		WRITE_COORD(vecVelocity.y);
+		WRITE_COORD(vecVelocity.z);
 
-	// randomization
-	WRITE_BYTE(10);
+		// randomization
+		WRITE_BYTE(10);
 
-	// Model
-	WRITE_SHORT(m_idShard); // model id#
+		// Model
+		WRITE_SHORT(m_idShard); // model id#
 
-	// # of shards
-	WRITE_BYTE(0); // let client decide
+		// # of shards
+		WRITE_BYTE(0); // let client decide
 
-	// duration
-	WRITE_BYTE(25); // 2.5 seconds
+		// duration
+		WRITE_BYTE(25); // 2.5 seconds
 
-	// flags
-	WRITE_BYTE(cFlag);
-	MESSAGE_END();
+		// flags
+		WRITE_BYTE(cFlag);
+		MESSAGE_END();
+	}
 
 	float size = pev->size.x;
 	if (size < pev->size.y)

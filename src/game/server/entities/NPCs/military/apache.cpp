@@ -196,40 +196,9 @@ void CApache::DyingThink()
 		MESSAGE_END();
 
 		Vector vecSpot = pev->origin + (pev->mins + pev->maxs) * 0.5;
-		MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, vecSpot);
-		WRITE_BYTE(TE_BREAKMODEL);
-
-		// position
-		WRITE_COORD(vecSpot.x);
-		WRITE_COORD(vecSpot.y);
-		WRITE_COORD(vecSpot.z);
-
-		// size
-		WRITE_COORD(400);
-		WRITE_COORD(400);
-		WRITE_COORD(132);
-
-		// velocity
-		WRITE_COORD(pev->velocity.x);
-		WRITE_COORD(pev->velocity.y);
-		WRITE_COORD(pev->velocity.z);
-
-		// randomization
-		WRITE_BYTE(50);
-
-		// Model
-		WRITE_SHORT(m_iBodyGibs); // model id#
-
-		// # of shards
-		WRITE_BYTE(UTIL_JhlParticleSystem() ? RANDOM_LONG(4, 8) : 4); // let client decide
-
-		// duration
-		WRITE_BYTE(30); // 3.0 seconds
-
-		// flags
-
-		WRITE_BYTE(BREAK_METAL);
-		MESSAGE_END();
+		// johnhalflife: through UTIL_JhlBreakModel, so with jhl_fx_particlesystem the debris lasts like gibs.
+		UTIL_JhlBreakModel(Vector(vecSpot.x, vecSpot.y, vecSpot.z), Vector(400, 400, 132), Vector(pev->velocity.x, pev->velocity.y, pev->velocity.z),
+			50, m_iBodyGibs, UTIL_JhlParticleSystem() ? RANDOM_LONG(4, 8) : 4, 30, BREAK_METAL);
 
 		// don't stop it we touch a entity
 		pev->flags &= ~FL_ONGROUND;
@@ -310,40 +279,9 @@ void CApache::DyingThink()
 
 		// gibs
 		vecSpot = pev->origin + (pev->mins + pev->maxs) * 0.5;
-		MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, vecSpot);
-		WRITE_BYTE(TE_BREAKMODEL);
-
-		// position
-		WRITE_COORD(vecSpot.x);
-		WRITE_COORD(vecSpot.y);
-		WRITE_COORD(vecSpot.z + 64);
-
-		// size
-		WRITE_COORD(400);
-		WRITE_COORD(400);
-		WRITE_COORD(128);
-
-		// velocity
-		WRITE_COORD(0);
-		WRITE_COORD(0);
-		WRITE_COORD(200);
-
-		// randomization
-		WRITE_BYTE(30);
-
-		// Model
-		WRITE_SHORT(m_iBodyGibs); // model id#
-
-		// # of shards
-		WRITE_BYTE(200);
-
-		// duration
-		WRITE_BYTE(200); // 10.0 seconds
-
-		// flags
-
-		WRITE_BYTE(BREAK_METAL);
-		MESSAGE_END();
+		// johnhalflife: through UTIL_JhlBreakModel, so with jhl_fx_particlesystem the debris lasts like gibs.
+		UTIL_JhlBreakModel(Vector(vecSpot.x, vecSpot.y, vecSpot.z + 64), Vector(400, 400, 128), Vector(0, 0, 200),
+			30, m_iBodyGibs, 200, 200, BREAK_METAL);
 
 		SetThink(&CApache::SUB_Remove);
 		pev->nextthink = gpGlobals->time + 0.1;

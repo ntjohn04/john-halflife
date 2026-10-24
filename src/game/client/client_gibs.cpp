@@ -21,6 +21,7 @@
 #include "pm_defs.h"
 #include "pmtrace.h"
 #include "networking/ClientUserMessages.h"
+#include "jhl_debris.h"
 #include "jhl_settings.h"
 
 enum class GibState
@@ -42,7 +43,7 @@ constexpr int MaxUsesPerGibPiece = 3;		   // Each gib model piece at most this m
 constexpr int MaxUsesPerGibPieceLarge = 4;	   // or this many for large aliens, which have only 4 pieces (16 gibs).
 constexpr int SoundingGibsPerDeath = 4;		   // Gibs that make bounce sounds,
 constexpr int BounceSoundsPerGib = 3;		   // each on its first bounces only.
-constexpr float JhlGibLife = 60;			   // Seconds on the ground before fading (the giblife cvar otherwise).
+constexpr float JhlGibLife = JhlDebrisLife;   // Seconds on the ground before fading (the giblife cvar otherwise).
 constexpr float JhlGibScaleVariation = 0.15f;  // Size +-15%.
 constexpr float JhlGibSpeedVariation = 0.2f;   // Speed +-20%.
 constexpr float JhlGibSidewaysSpread = 0.7f;   // Random sideways direction, +-0.7 (vanilla 0.25).
@@ -553,6 +554,15 @@ static TEMPENTITY* EV_TFC_CreateGib(const char* modelName, int body, byte bloodC
 	ent->entity.curstate.solid = SOLID_NOT;
 	ent->entity.curstate.playerclass = int(GibState::WaitTillLand);
 	ent->entity.curstate.iuser1 = bloodColor;
+
+	// Long-lived, so they count against the debris budget, which fades the oldest early.
+	if (JhlParticleSystemEnabled())
+	{
+		JhlDebris_Track(ent, [](TEMPENTITY* gib)
+			{
+			if (gib->entity.curstate.playerclass < int(GibState::StartFadeOut))
+				gib->entity.curstate.playerclass = int(GibState::StartFadeOut); });
+	}
 
 	return ent;
 }

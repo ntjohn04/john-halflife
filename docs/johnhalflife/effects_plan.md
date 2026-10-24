@@ -143,6 +143,29 @@ Changes:
   each time, so the trail is built from single drops instead. Respects `violence_hblood`/`violence_ablood`. Engine particles have one fixed
   size (no size field), so the drops can't grow or shrink; small shrinking `blood.spr` sprites would be the way.
 
+## Debris (gibs and shards)
+
+The engine has 500 temp entities for every effect (both engines: "Overflow %d temporary ents!"); when they're
+gone, new effects (shells, smoke, sparks, gibs) silently don't appear. Debris that lasts `JhlDebrisLife` (60 s;
+`jhl_debris.cpp`) counts against a shared budget of 250: past it, the oldest pieces fade out early. NPC gibs and
+the shards below are tracked (a serial in `curstate.iuser3`; the engine clears temp entities when it reuses them).
+
+Shards (`TE_BREAKMODEL`): the engine makes `count` (0: (x·y + y·z + x·z) / 432 of the size, at most 100) at random
+points in the box, flying `velocity` ± `random` × 10 (up only: 0 to that), half gravity, colliding, fading, 200 in
+256 tumbling, glass/`BREAK_TRANS` translucent at 128, living `life` / 10 + 0-1 s. `UTIL_JhlBreakModel` sends it
+through the SDK's own temp entity message instead with `jhl_fx_particlesystem` on, plus a count multiplier, and
+the client (`JhlDebris_ParseBreakModel`) makes the same shards for 60 s, up to 200:
+
+| Debris | Vanilla | Now |
+|---|---|---|
+| Explosive breakables (barrels, crates, pushables) | by size (a barrel ~9), 2.5 s | 7× (a barrel ~63), 60 s |
+| Apache falling, every 0.2 s | 4, 3 s | 4-8, 60 s |
+| Apache crash | 200 asked, 100 made (engine cap), 20 s | 200, 60 s |
+| Osprey falling, every 0.2 s | 8, 20 s | 8-16, 60 s |
+| Osprey crash | 128 asked, 100 made, 20 s | 128, 60 s |
+| Other breakables (glass, crates, vents) | by size, 2.5 s | unchanged (a big pane would be ~280 for a minute) |
+| NPC gibs | (see Gibs) | unchanged: 7×, 60 s, now in the budget |
+
 ## Explosions (in progress)
 
 Vanilla, from Valve's source and the engine (`hw.dll`; the SDK's client `R_Explosion` in `SoundSystem.cpp`

@@ -536,40 +536,9 @@ void COsprey::DyingThink()
 
 
 		vecSpot = pev->origin + (pev->mins + pev->maxs) * 0.5;
-		MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, vecSpot);
-		WRITE_BYTE(TE_BREAKMODEL);
-
-		// position
-		WRITE_COORD(vecSpot.x);
-		WRITE_COORD(vecSpot.y);
-		WRITE_COORD(vecSpot.z);
-
-		// size
-		WRITE_COORD(800);
-		WRITE_COORD(800);
-		WRITE_COORD(132);
-
-		// velocity
-		WRITE_COORD(pev->velocity.x);
-		WRITE_COORD(pev->velocity.y);
-		WRITE_COORD(pev->velocity.z);
-
-		// randomization
-		WRITE_BYTE(50);
-
-		// Model
-		WRITE_SHORT(m_iTailGibs); // model id#
-
-		// # of shards
-		WRITE_BYTE(UTIL_JhlParticleSystem() ? RANDOM_LONG(8, 16) : 8); // let client decide
-
-		// duration
-		WRITE_BYTE(200); // 10.0 seconds
-
-		// flags
-
-		WRITE_BYTE(BREAK_METAL);
-		MESSAGE_END();
+		// johnhalflife: through UTIL_JhlBreakModel, so with jhl_fx_particlesystem the debris lasts like gibs.
+		UTIL_JhlBreakModel(Vector(vecSpot.x, vecSpot.y, vecSpot.z), Vector(800, 800, 132), Vector(pev->velocity.x, pev->velocity.y, pev->velocity.z),
+			50, m_iTailGibs, UTIL_JhlParticleSystem() ? RANDOM_LONG(8, 16) : 8, 200, BREAK_METAL);
 
 
 
@@ -642,40 +611,9 @@ void COsprey::DyingThink()
 
 		// gibs
 		vecSpot = pev->origin + (pev->mins + pev->maxs) * 0.5;
-		MESSAGE_BEGIN(MSG_PAS, SVC_TEMPENTITY, vecSpot);
-		WRITE_BYTE(TE_BREAKMODEL);
-
-		// position
-		WRITE_COORD(vecSpot.x);
-		WRITE_COORD(vecSpot.y);
-		WRITE_COORD(vecSpot.z + 64);
-
-		// size
-		WRITE_COORD(800);
-		WRITE_COORD(800);
-		WRITE_COORD(128);
-
-		// velocity
-		WRITE_COORD(m_velocity.x);
-		WRITE_COORD(m_velocity.y);
-		WRITE_COORD(fabs(m_velocity.z) * 0.25);
-
-		// randomization
-		WRITE_BYTE(40);
-
-		// Model
-		WRITE_SHORT(m_iBodyGibs); // model id#
-
-		// # of shards
-		WRITE_BYTE(128);
-
-		// duration
-		WRITE_BYTE(200); // 10.0 seconds
-
-		// flags
-
-		WRITE_BYTE(BREAK_METAL);
-		MESSAGE_END();
+		// johnhalflife: through UTIL_JhlBreakModel, so with jhl_fx_particlesystem the debris lasts like gibs.
+		UTIL_JhlBreakModel(Vector(vecSpot.x, vecSpot.y, vecSpot.z + 64), Vector(800, 800, 128), Vector(m_velocity.x, m_velocity.y, fabs(m_velocity.z) * 0.25),
+			40, m_iBodyGibs, 128, 200, BREAK_METAL);
 
 		UTIL_Remove(this);
 	}

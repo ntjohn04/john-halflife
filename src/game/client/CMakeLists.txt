@@ -111,6 +111,8 @@ target_sources(client PRIVATE
 	interpolation.h
 	fx_test.cpp
 	fx_test.h
+	jhl_debris.cpp
+	jhl_debris.h
 	jhl_explosions.cpp
 	jhl_explosions.h
 	jhl_settings.cpp
