@@ -123,7 +123,12 @@ constexpr int SparkShowersMax = 10;
 constexpr int SparkShowersForEveryKind = 3; // From this many, there's always a flyer and a dropper.
 constexpr float SparkIntervalMin = 0.07f;
 constexpr float SparkIntervalMax = 0.11f;
-constexpr float SparkBounce = 0.5f;
+// The client's temp entity physics halves this again for anything with gravity: 1 keeps half the speed per bounce,
+// near vanilla's 0.6 in the air.
+constexpr float SparkBounce = 1;
+
+// How far (units) from the expected distance a surface can be and still count as the one an explosion hit.
+constexpr float SurfaceMatchTolerance = 12;
 constexpr int SparkStreaksMin = 6; // Per burst.
 constexpr int SparkStreaksMax = 12;
 constexpr int SparkStreakSpeedMin = 150;
@@ -314,26 +319,51 @@ void SparkShowerThink(TEMPENTITY* ent, float frametime, float currenttime)
 		ent->die = currenttime;
 }
 
-// Which way the surface an explosion hit faces, as far as the client can tell: up off a floor, away from a wall, down
-// off a ceiling; zero in mid-air (as vanilla's trace that hits nothing).
+// The normal of the surface an explosion hit, as far as the client can tell; zero in mid-air (as vanilla's trace that
+// hits nothing). Explosions are placed (dmg - 24) * 0.6 units out of what they hit, which is scale * 10 + 15.6, so
+// of the surfaces around (down, up and 8 ways around), it's the one at the distance closest to that. The nearest
+// surface isn't always it: a wall hit low down has the floor closer.
 Vector SurfaceNormal(const Vector& origin, float scale)
 {
-	const float range = scale * 10 + 48;
+	const float offset = scale * 10 + 15.6f;
+	const float range = offset * 1.5f + 16; // Room for hitting a surface at an angle to the 8 directions.
 
-	if (Vector floor; FindFloor(origin, scale, floor))
-		return {0, 0, 1};
+	Vector directions[10] = {{0, 0, -1}, {0, 0, 1}};
 
-	if (const Vector away = AwayFromWalls(origin, range); away != g_vecZero)
-		return away;
+	for (int i = 0; i < 8; ++i)
+	{
+		const float angle = i * 0.7853982f; // 45 degrees.
+		directions[2 + i] = {std::cos(angle), std::sin(angle), 0};
+	}
 
-	pmtrace_t tr;
+	Vector normal = g_vecZero;
+	float bestMismatch = SurfaceMatchTolerance;
+
 	gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(0, 1);
 	gEngfuncs.pEventAPI->EV_PushPMStates();
 	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
-	gEngfuncs.pEventAPI->EV_PlayerTrace(origin, origin + Vector{0, 0, range}, PM_WORLD_ONLY, -1, &tr);
+
+	for (const Vector& direction : directions)
+	{
+		pmtrace_t tr;
+		gEngfuncs.pEventAPI->EV_PlayerTrace(origin, origin + direction * range, PM_WORLD_ONLY, -1, &tr);
+
+		if (tr.fraction >= 1)
+			continue;
+
+		// The distance straight out from the surface, whichever way the trace met it.
+		const float distance = std::fabs(DotProduct(tr.endpos - origin, tr.plane.normal));
+
+		if (const float mismatch = std::fabs(distance - offset); mismatch < bestMismatch)
+		{
+			bestMismatch = mismatch;
+			normal = tr.plane.normal;
+		}
+	}
+
 	gEngfuncs.pEventAPI->EV_PopPMStates();
 
-	return tr.fraction < 1 ? Vector{0, 0, -1} : g_vecZero;
+	return normal;
 }
 
 // Spark showers as vanilla's spark_shower throws them, each with its own values.

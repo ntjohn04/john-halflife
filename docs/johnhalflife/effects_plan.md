@@ -192,8 +192,10 @@ dying down 30% a second. Random roll.
 Opposing Force's mortar; thrown off the surface at 200-300 ±100 sideways +200 up, half gravity, a `TE_SPARKS`
 burst every 0.1 s for 0.5-1.5 s: 8 streaks at ±200, a `richo1` flash of scale 0.5-1). With
 `jhl_fx_particlesystem` on, grenades and `env_explosion` (with a fireball, sparks allowed) send
-`TE_EXPLFLAG_JHL_SPARKS` instead and the client throws them (not in water; the surface's direction found by
-traces, as the lingering smoke's): 0-10 showers, each one of three kinds (from 3 showers, at least one flyer
+`TE_EXPLFLAG_JHL_SPARKS` instead and the client throws them (not in water). The surface hit is found by
+tracing down, up and 8 ways around: the one whose distance best matches where explosions are placed off what
+they hit (scale × 10 + 15.6, within 12 units), with its real normal; not simply the nearest, since a wall hit low
+down has the floor closer. 0-10 showers, each one of three kinds (from 3 showers, at least one flyer
 and one dropper) with its own values from the kind's ranges:
 
 | Kind | Share | Off the surface | Up | Life | Gravity | Cone |
@@ -202,7 +204,7 @@ and one dropper) with its own values from the kind's ranges:
 | Vanilla-like | 40% | 200-300 | 150-250 | 0.5-1.5 s | half | 0.5 |
 | Dropper | 30% | 50-150 | 0-100 | 0.4-1.2 s | full | 0.9 |
 
-All: a burst every 0.07-0.11 s, bounce 0.5; each burst 6-12 streaks at ±150-300 (per shower) and a flash up to
+All: a burst every 0.07-0.11 s, keeping half their speed per bounce; each burst 6-12 streaks at ±150-300 (per shower) and a flash up to
 0.4-1 (half that to that). Opposing Force's mortar keeps vanilla's.
 
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
