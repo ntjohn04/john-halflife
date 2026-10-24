@@ -648,7 +648,9 @@ static float V_EgonDriftAmount(float now)
 		return StartAmount + (1 - StartAmount) * ramp;
 	}
 
-	if (g_EgonStopTime >= 0 && now - g_EgonStopTime < FadeTime)
+	// Only after it stopped: the client clock restarts on a new map, and a stop time from the last one would make this
+	// huge (the view swinging round in circles).
+	if (g_EgonStopTime >= 0 && now >= g_EgonStopTime && now - g_EgonStopTime < FadeTime)
 	{
 		return g_EgonStopAmount * (1 - (now - g_EgonStopTime) / FadeTime);
 	}
@@ -679,8 +681,8 @@ static void V_AddEgonDrift(ref_params_t* pparams)
 {
 	const float now = gEngfuncs.GetClientTime();
 
-	// Don't keep drifting through death or a new map (the client clock restarts).
-	if (g_EgonFireStart >= 0 && (pparams->health <= 0 || now < g_EgonFireStart))
+	// Don't keep drifting, or fading out, through death or a new map (the client clock restarts).
+	if ((g_EgonFireStart >= 0 && (pparams->health <= 0 || now < g_EgonFireStart)) || now < g_EgonStopTime)
 	{
 		g_EgonFireStart = -1;
 		g_EgonStopTime = -1;
