@@ -357,6 +357,21 @@ The displacer's victims get no blood pool (combat.cpp: its ball kills them witho
 * Energy balls (`controller_energy_ball`, in volleys): where they hit, lighter: a warm light of 100 units over
   0.5 s, sparks as above but off walls a shower only a quarter of the time.
 
+**Nihilanth** (`nihilanth.cpp`):
+
+* Zap balls (`nhth1`, 11 frames; within 256 units of their target, one zap: `laserbeam`, width 2, noise 0.2,
+  (64,196,255), 0.3 s): a strand, width 0.8 noise 1.0 ±25% brightness 102; where it hits, and where a ball bursts
+  on touching something first (`ZapImpactEffects`): a blue-violet light (140,150,255) of 200 units shrinking away
+  over 1.5 s, sparks by what it hit as the vortigaunt's zap.
+* Shield spheres around its head (`muzzleflash3`): one frame, so static by design (the code has `flare6` and
+  `xspark4` commented out).
+* Teleport balls play all 25 of `exit1`'s frames (vanilla 20); the green balls of its death play them too
+  (vanilla: none).
+* Death (every 0.1 s while it rises spinning to the top, until the map takes over: a bolt from a random head, eye
+  or hand attachment to the wall that way, `laserbeam`, width 10, noise 1.2, (64,128,255), 0.5 s, and a green
+  `exit1` ball shot up at 600): kept reserved, a strand on each bolt (width 4, noise 2.0 ±25%, brightness 102), a
+  light where it lands (150 units, (100,140,255), 0.5 s), and a spark burst there one time in three.
+
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 
 * Falling: vanilla sends one `zerogxplode` every 0.2 s at a random point under the hull (scale 3-5.9, 12 fps),

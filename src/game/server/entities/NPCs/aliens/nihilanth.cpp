@@ -15,6 +15,7 @@
 
 #include "cbase.h"
 #include "nodes.h"
+#include "jhl_effects.h"
 
 #define N_SCALE 15
 #define N_SPHERES 20
@@ -37,6 +38,19 @@ public:
 	void AbsorbInit();
 	void TeleportInit(CNihilanth* pOwner, CBaseEntity* pEnemy, CBaseEntity* pTarget, CBaseEntity* pTouch);
 	void GreenBallInit();
+
+	/**
+	 *	@brief johnhalflife: plays a green ball's exit1.spr (25 frames) at 10 fps, as the teleport balls do (vanilla's
+	 *	stay on the first frame).
+	 */
+	void GreenBallThink();
+
+	/**
+	 *	@brief johnhalflife: where a zap ball's zap hit or it burst: a big blue-violet light shrinking away over 1.5 s,
+	 *	and sparks by what it hit (a player whose suit lost charge to it 2-3 showers, a player it went straight into
+	 *	or a creature none, a wall one half the time).
+	 */
+	void ZapImpactEffects(const Vector& position, CBaseEntity* hit, float armorBefore);
 	void ZapInit(CBaseEntity* pEnemy);
 
 	void HoverThink();
@@ -81,6 +95,7 @@ DEFINE_FIELD(m_flIdealVel, FIELD_FLOAT),
 	DEFINE_FUNCTION(RemoveTouch),
 	DEFINE_FUNCTION(BounceTouch),
 	DEFINE_FUNCTION(ZapTouch),
+	DEFINE_FUNCTION(GreenBallThink),
 	// DEFINE_FUNCTION(SphereUse),
 	END_DATAMAP();
 
@@ -559,6 +574,34 @@ void CNihilanth::DyingThink()
 	WRITE_BYTE(255); // brightness
 	WRITE_BYTE(10);	 // speed
 	MESSAGE_END();
+
+	// johnhalflife (kept reserved: one of these every 0.1 s): a thin, wild, dim strand on the bolt; where it lands, a
+	// light, and sparks one time in three.
+	if (UTIL_JhlParticleSystem() && tr.flFraction < 1.0)
+	{
+		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
+		WRITE_BYTE(TE_BEAMENTPOINT);
+		WRITE_SHORT(entindex() + 0x1000 * iAttachment);
+		WRITE_COORD_VECTOR(tr.vecEndPos);
+		WRITE_SHORT(g_sModelIndexLaser);
+		WRITE_BYTE(0);											  // frame start
+		WRITE_BYTE(10);											  // framerate
+		WRITE_BYTE(5);											  // life
+		WRITE_BYTE(40);											  // width
+		WRITE_BYTE(std::min(255, static_cast<int>(200 * RANDOM_FLOAT(0.75f, 1.25f)))); // noise
+		WRITE_BYTE(64);											  // r, g, b
+		WRITE_BYTE(128);										  // r, g, b
+		WRITE_BYTE(255);										  // r, g, b
+		WRITE_BYTE(102);										  // brightness
+		WRITE_BYTE(10);											  // speed
+		MESSAGE_END();
+
+		const Vector landing = tr.vecEndPos + tr.vecPlaneNormal * 8;
+		UTIL_JhlDynamicLight(landing, 150, 100, 140, 255, 0.5f, 0);
+
+		if (RANDOM_LONG(0, 2) == 0)
+			UTIL_JhlSparkShowers(landing, 0);
+	}
 
 	GetAttachment(0, vecSrc, vecAngles);
 	CNihilanthHVR* pEntity = (CNihilanthHVR*)Create("nihilanth_energy_ball", vecSrc, pev->angles, this);
@@ -1470,6 +1513,8 @@ void CNihilanthHVR::ZapThink()
 		UTIL_TraceLine(pev->origin, m_hEnemy->Center(), dont_ignore_monsters, edict(), &tr);
 
 		CBaseEntity* pEntity = CBaseEntity::Instance(tr.pHit);
+		const float armorBefore = pEntity ? pEntity->pev->armorvalue : 0;
+
 		if (pEntity != nullptr && 0 != pEntity->pev->takedamage)
 		{
 			ClearMultiDamage();
@@ -1495,6 +1540,29 @@ void CNihilanthHVR::ZapThink()
 		WRITE_BYTE(255); // brightness
 		WRITE_BYTE(10);	 // speed
 		MESSAGE_END();
+
+		// johnhalflife: a thin, wild, dim strand (as the vortigaunt's), and the impact's light and sparks.
+		if (UTIL_JhlParticleSystem())
+		{
+			MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
+			WRITE_BYTE(TE_BEAMENTPOINT);
+			WRITE_SHORT(entindex());
+			WRITE_COORD_VECTOR(tr.vecEndPos);
+			WRITE_SHORT(g_sModelIndexLaser);
+			WRITE_BYTE(0);											  // frame start
+			WRITE_BYTE(10);											  // framerate
+			WRITE_BYTE(3);											  // life
+			WRITE_BYTE(8);											  // width
+			WRITE_BYTE(static_cast<int>(100 * RANDOM_FLOAT(0.75f, 1.25f))); // noise
+			WRITE_BYTE(64);											  // r, g, b
+			WRITE_BYTE(196);										  // r, g, b
+			WRITE_BYTE(255);										  // r, g, b
+			WRITE_BYTE(102);										  // brightness
+			WRITE_BYTE(10);											  // speed
+			MESSAGE_END();
+
+			ZapImpactEffects(tr.vecEndPos, pEntity, armorBefore);
+		}
 
 		EmitAmbientSound(tr.vecEndPos, "weapons/electro4.wav", 0.5, ATTN_NORM, 0, RANDOM_LONG(140, 160));
 
@@ -1527,8 +1595,13 @@ void CNihilanthHVR::ZapTouch(CBaseEntity* pOther)
 {
 	EmitAmbientSound(pev->origin, "weapons/electro4.wav", 1.0, ATTN_NORM, 0, RANDOM_LONG(90, 95));
 
+	const Vector impact = pev->origin - pev->velocity.Normalize() * 4;
+	const float armorBefore = pOther->pev->armorvalue;
+
 	RadiusDamage(this, this, 50, DMG_SHOCK);
 	pev->velocity = pev->velocity * 0;
+
+	ZapImpactEffects(impact, pOther, armorBefore);
 
 	/*
 	for (int i = 0; i < 10; i++)
@@ -1579,6 +1652,34 @@ void CNihilanthHVR::GreenBallInit()
 	SetModel("sprites/exit1.spr");
 
 	SetTouch(&CNihilanthHVR::RemoveTouch);
+
+	if (UTIL_JhlParticleSystem())
+	{
+		SetThink(&CNihilanthHVR::GreenBallThink);
+		pev->nextthink = gpGlobals->time + 0.1;
+	}
+}
+
+void CNihilanthHVR::GreenBallThink()
+{
+	pev->frame = (static_cast<int>(pev->frame) + 1) % 25;
+	pev->nextthink = gpGlobals->time + 0.1;
+}
+
+void CNihilanthHVR::ZapImpactEffects(const Vector& position, CBaseEntity* hit, float armorBefore)
+{
+	if (!UTIL_JhlParticleSystem())
+		return;
+
+	int showers = 0;
+
+	if (hit && hit->IsPlayer())
+		showers = hit->pev->armorvalue < armorBefore ? RANDOM_LONG(2, 3) : 0;
+	else if (!hit || hit->IsBSPModel())
+		showers = RANDOM_LONG(0, 1);
+
+	UTIL_JhlSparkShowers(position, showers);
+	UTIL_JhlDynamicLight(position, 200, 140, 150, 255, 1.5f, 200 / 1.5f);
 }
 
 void CNihilanthHVR::TeleportThink()
@@ -1623,7 +1724,8 @@ void CNihilanthHVR::TeleportThink()
 	WRITE_COORD(256); // decay
 	MESSAGE_END();
 
-	pev->frame = (int)(pev->frame + 1) % 20;
+	// johnhalflife: all of exit1.spr's 25 frames (vanilla stops at 20).
+	pev->frame = (int)(pev->frame + 1) % (UTIL_JhlParticleSystem() ? 25 : 20);
 }
 
 void CNihilanthHVR::AbsorbInit()
