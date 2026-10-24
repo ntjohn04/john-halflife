@@ -99,6 +99,7 @@ public:
 	Materials m_Material;
 	Explosions m_Explosion;
 	int m_idShard;
+	int m_idCrateWood = 0; // johnhalflife: wood thrown with a crate's content gibs (set in Precache; not saved).
 	float m_angle;
 	string_t m_iszGibModel;
 	string_t m_iszSpawnObject;

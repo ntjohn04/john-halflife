@@ -305,6 +305,19 @@ void CBreakable::Precache()
 
 	m_idShard = PrecacheModel(pGibName);
 
+	// johnhalflife: crates whose gibs are their contents (mil_, med_, tech_crategibs) also throw wood (Die).
+	m_idCrateWood = 0;
+
+	if (m_Material == matWood && !FStringNull(m_iszGibModel))
+	{
+		std::string gibModel = STRING(m_iszGibModel);
+		std::transform(gibModel.begin(), gibModel.end(), gibModel.begin(), [](unsigned char c)
+			{ return static_cast<char>(std::tolower(c)); });
+
+		if (gibModel.find("crategibs") != std::string::npos)
+			m_idCrateWood = PrecacheModel("models/woodgibs.mdl");
+	}
+
 	// Only allow items to be spawned.
 	if (!FStringNull(m_iszSpawnObject) && !g_ItemDictionary->Find(STRING(m_iszSpawnObject)))
 	{
@@ -645,14 +658,34 @@ void CBreakable::Die()
 	}
 
 	vecSpot = pev->origin + (pev->mins + pev->maxs) * 0.5;
+
+	// The engine's shard count for this size (its surface area over 432).
+	const float engineShards = (pev->size.x * pev->size.y + pev->size.y * pev->size.z + pev->size.z * pev->size.x) / 432;
+
 	// johnhalflife: explosive breakables throw 2.5 times the engine's shards (by size; a barrel about 20), at most 40,
 	// flying far more every way, lasting like gibs (jhl_debris.cpp).
 	if (ExplodesWhenBroken())
 	{
-		const float engineShards = (pev->size.x * pev->size.y + pev->size.y * pev->size.z + pev->size.z * pev->size.x) / 432;
 		const int shards = std::clamp(static_cast<int>(engineShards * 2.5f), 1, 40);
 
 		UTIL_JhlBreakModel(vecSpot, pev->size, vecVelocity + Vector(0, 0, 150), 35, m_idShard, shards, 25, cFlag);
+	}
+	// Glass: 1.5 times the shards, at most 60; wood (crates): as many, and for crates whose gibs are their contents,
+	// half as many wood pieces again (4-16); both lasting like gibs.
+	else if (UTIL_JhlParticleSystem() && m_Material == matGlass)
+	{
+		const int shards = std::clamp(static_cast<int>(engineShards * 1.5f), 1, 60);
+		UTIL_JhlBreakModel(vecSpot, pev->size, vecVelocity, 10, m_idShard, shards, 25, cFlag);
+	}
+	else if (UTIL_JhlParticleSystem() && m_Material == matWood)
+	{
+		UTIL_JhlBreakModel(vecSpot, pev->size, vecVelocity, 10, m_idShard, 0, 25, cFlag);
+
+		if (m_idCrateWood != 0)
+		{
+			const int wood = std::clamp(static_cast<int>(engineShards * 0.5f), 4, 16);
+			UTIL_JhlBreakModel(vecSpot, pev->size, vecVelocity, 10, m_idCrateWood, wood, 25, BREAK_WOOD);
+		}
 	}
 	else
 	{
@@ -690,6 +723,10 @@ void CBreakable::Die()
 		WRITE_BYTE(cFlag);
 		MESSAGE_END();
 	}
+
+	// johnhalflife: computers short out in a few spark showers.
+	if (UTIL_JhlParticleSystem() && m_Material == matComputer)
+		UTIL_JhlSparkShowers(vecSpot, RANDOM_LONG(3, 6));
 
 	float size = pev->size.x;
 	if (size < pev->size.y)

@@ -22,6 +22,7 @@
 #include "networking/ClientUserMessages.h"
 
 #include "jhl_debris.h"
+#include "jhl_explosions.h"
 #include "sound/ClientSoundReplacementSystem.h"
 #include "sound/ISoundSystem.h"
 
@@ -864,6 +865,10 @@ static void MsgFunc_TempEntity(const char* name, BufferReader& reader)
 
 	case TE_BREAKMODEL:
 		JhlDebris_ParseBreakModel(reader);
+		break;
+
+	case TE_SPARKS:
+		JhlExplosion_ParseSparkShowers(reader);
 		break;
 	}
 }

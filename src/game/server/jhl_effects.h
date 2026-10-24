@@ -49,6 +49,19 @@ void UTIL_JhlExplosionShake(const Vector& origin, float scale);
 void UTIL_JhlExplosionBubbles(const Vector& origin, float scale);
 
 /**
+ *	@brief Spark showers, as explosions throw them (the client's, jhl_explosions.cpp), going up from a point: TE_SPARKS
+ *	through the SDK's own temp entity message (position, then the number of showers).
+ */
+inline void UTIL_JhlSparkShowers(const Vector& position, int count)
+{
+	MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, position);
+	WRITE_BYTE(TE_SPARKS);
+	WRITE_COORD_VECTOR(position);
+	WRITE_BYTE(count);
+	MESSAGE_END();
+}
+
+/**
  *	@brief TE_BREAKMODEL (breakable shards, helicopter debris). With jhl_fx_particlesystem on, it goes through the SDK's
  *	own temp entity message and the client makes the shards (jhl_debris.cpp): lasting 60 seconds like gibs,
  *	@p multiplier times the count, counted against its debris budget. Otherwise the engine's, as vanilla.

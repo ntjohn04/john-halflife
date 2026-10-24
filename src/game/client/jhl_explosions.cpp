@@ -24,6 +24,7 @@
 #include "jhl_explosion.h"
 #include "jhl_explosions.h"
 #include "jhl_settings.h"
+#include "parsemsg.h"
 #include "pm_defs.h"
 #include "pm_materials.h"
 #include "pmtrace.h"
@@ -472,7 +473,8 @@ Surface FindSurface(const Vector& origin, float scale)
 	return surface;
 }
 
-void SparkShowers(const Vector& origin, const Surface& surface)
+// @param showers How many, or -1 for an explosion's (by the surface's material).
+void SparkShowers(const Vector& origin, const Surface& surface, int showers = -1)
 {
 	if (surface.Water)
 		return;
@@ -480,7 +482,8 @@ void SparkShowers(const Vector& origin, const Surface& surface)
 	Vector normal = surface.Normal;
 
 	const int most = SparkShowersMax(surface.Material);
-	const int count = std::max(gEngfuncs.pfnRandomLong(SparkShowersMin, most), gEngfuncs.pfnRandomLong(SparkShowersMin, most));
+	const int count = showers >= 0 ? showers
+								   : std::max(gEngfuncs.pfnRandomLong(SparkShowersMin, most), gEngfuncs.pfnRandomLong(SparkShowersMin, most));
 
 	if (count == 0)
 		return;
@@ -743,6 +746,23 @@ void FallingFireball(const Vector& origin, int model, float scale)
 		Random(0, 360));
 }
 } // namespace
+
+void JhlExplosion_ParseSparkShowers(BufferReader& reader)
+{
+	const Vector origin = reader.ReadCoordVector();
+	const int count = reader.ReadByte();
+
+	if (!JhlParticleSystemEnabled())
+		return;
+
+	Surface surface;
+	surface.Normal = {0, 0, 1};
+
+	if (Vector point = origin; gEngfuncs.PM_PointContents(point, nullptr) == CONTENTS_WATER)
+		surface.Water = true;
+
+	SparkShowers(origin, surface, count);
+}
 
 bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float framerate, int flags)
 {

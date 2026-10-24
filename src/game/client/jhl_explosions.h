@@ -22,6 +22,14 @@
  */
 bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float framerate, int flags);
 
+class BufferReader;
+
+/**
+ *	@brief Spark showers as explosions throw them, going up from a point (UTIL_JhlSparkShowers: broken computers): the
+ *	SDK's own temp entity message's TE_SPARKS, the position and then how many.
+ */
+void JhlExplosion_ParseSparkShowers(BufferReader& reader);
+
 /**
  *	@brief A big, faint smoke cloud that lingers after an explosion's vanilla smoke (steam1, which the server sends
  *	0.3 s in: 20 units up, rising 30 units/s for 1.3 s, about fireball scale × 43 units wide). Widths are per unit of
