@@ -512,7 +512,7 @@ struct DebrisModel
 	float Scale;
 };
 
-constexpr DebrisModel ConcreteDebris[] = {{"models/concretegibs.mdl", 1.1f}, {"models/cindergibs.mdl", 0.75f}};
+constexpr DebrisModel ConcreteDebris[] = {{"models/concretegibs.mdl", 1.1f}};
 constexpr DebrisModel DirtDebris[] = {{"models/rockgibs.mdl", 1.6f}};
 constexpr DebrisModel MetalDebris[] = {{"models/metalplategibs.mdl", 0.45f}, {"models/metalgibs.mdl", 0.7f}, {"models/chromegibs.mdl", 0.8f}};
 constexpr DebrisModel VentDebris[] = {{"models/ventgibs.mdl", 0.55f}};

@@ -176,7 +176,7 @@ they don't use the map's model precache slots. Base scales make a typical piece 
 
 | Material | Models (scale) | Bounce sounds |
 |---|---|---|
-| Concrete, unknown (brush entities) | `concretegibs` (1.1), `cindergibs` (0.75) | concrete |
+| Concrete, unknown (brush entities) | `concretegibs` (1.1); not `cindergibs`, whose cinder blocks don't fit roads and plain concrete | concrete |
 | Dirt, Xen ground and shell | `rockgibs` (1.6) | concrete |
 | Metal | `metalplategibs` (0.45), `metalgibs` (0.7), `chromegibs` (0.8) | metal |
 | Vent | `ventgibs` (0.55) | metal |
