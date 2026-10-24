@@ -321,6 +321,20 @@ a player it went straight into or a creature none, a wall one half the time).
   1.5 s, sparks as above, and Opposing Force's `weapons/shock_impact.wav` pitched down to 80-95.
 * Its death beams (to what's near, noise 128-192, 0.6 s): strands width 12 noise 210, faint lights 0.6 s.
 
+**Displacer** (Opposing Force):
+
+* The ball (`CDisplacerBall`, `exit1.spr`; re-aims 2 beams at what's near every 0.05 s, to surfaces dark green
+  width 30 noise 80, to creatures white): strands width 12 noise 210 (100 to creatures) brightness 102 following
+  them, and every other re-aim a faint green light (80,170,30) of 72 units where they touch, 0.15 s. It already
+  has its own light and sounds.
+* The ball's sprite is the Lambda Core portals' (`exit1.spr`, 25 frames; c3a2b/c/f's `env_sprite`s play it at
+  40 fps), but vanilla never steps its frame (the reconstructed Opposing Force code doesn't either), so it showed
+  frame 0 only. It now plays at 40 fps (`Animate`).
+* The spin-up arcs between the prongs (client `EV_FireDisplacer`: `lgtning`, width 1, noise 0.6, brightness 0.75,
+  dark green, 1 s): a strand on each, width 0.4, noise 1.5 ±25%, brightness 0.3 (faint: at the player's eye).
+* Its impact ring (`disp_ring`, `TE_BEAMCYLINDER`): left for a pass over every ring (the houndeye's, the
+  helicopters' crash rings, `func_mortar`'s).
+
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 
 * Falling: vanilla sends one `zerogxplode` every 0.2 s at a random point under the hull (scale 3-5.9, 12 fps),

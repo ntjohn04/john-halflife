@@ -20,6 +20,7 @@
 #include "UserMessages.h"
 
 #include "CDisplacerBall.h"
+#include "jhl_effects.h"
 
 namespace
 {
@@ -240,6 +241,7 @@ void CDisplacerBall::FlyThink()
 {
 	ArmBeam(-1);
 	ArmBeam(1);
+	Animate();
 	pev->nextthink = gpGlobals->time + 0.05;
 }
 
@@ -249,8 +251,19 @@ void CDisplacerBall::FlyThink2()
 
 	ArmBeam(-1);
 	ArmBeam(1);
+	Animate();
 
 	pev->nextthink = gpGlobals->time + 0.05;
+}
+
+void CDisplacerBall::Animate()
+{
+	if (!UTIL_JhlParticleSystem())
+		return;
+
+	// Every think is 0.05 s.
+	const float frames = static_cast<float>(MODEL_FRAMES(pev->modelindex));
+	pev->frame = std::fmod(pev->frame + 40 * 0.05f, std::max(1.f, frames));
 }
 
 void CDisplacerBall::FizzleThink()
@@ -331,6 +344,15 @@ void CDisplacerBall::ClearBeams()
 		}
 	}
 
+	for (auto& strand : m_pStrands)
+	{
+		if (strand)
+		{
+			UTIL_Remove(strand);
+			strand = nullptr;
+		}
+	}
+
 	m_uiBeams = 0;
 
 	pev->skin = 0;
@@ -392,6 +414,18 @@ void CDisplacerBall::ArmBeam(int iSide)
 		m_pBeam[m_uiBeams]->SetColor(96, 128, 16);
 		m_pBeam[m_uiBeams]->SetBrightness(255);
 		m_pBeam[m_uiBeams]->SetNoise(80);
+	}
+
+	// johnhalflife: as the vortigaunt's beams, a thin, wild, dimmer strand, and every other re-aim a faint green light
+	// where it touches (it re-aims 40 times a second).
+	if (UTIL_JhlParticleSystem())
+	{
+		CBeam* beam = m_pBeam[m_uiBeams];
+		m_pStrands[m_uiBeams] = UTIL_JhlBeamStrand(static_cast<CBeam*>(static_cast<CBaseEntity*>(m_pStrands[m_uiBeams])),
+			beam, 12, beam->GetNoise() > 40 ? 210 : 100, 102);
+
+		if ((m_iArmBeamCount++ % 2) == 0)
+			UTIL_JhlDynamicLight(tr.vecEndPos + tr.vecPlaneNormal * 8, 72, 80, 170, 30, 0.15f, 0);
 	}
 
 	++m_uiBeams;

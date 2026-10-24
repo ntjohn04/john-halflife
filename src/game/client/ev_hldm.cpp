@@ -65,6 +65,7 @@ static int g_tracerCount[MAX_PLAYERS];
 
 #include "pm_shared.h"
 #include "weapon_effects.h"
+#include "jhl_settings.h"
 
 void V_PunchAxis(int axis, float punch);
 bool V_WeaponRecoil(float pitchMin, float pitchMax, float jitter, float spring, float damping);
@@ -1929,6 +1930,18 @@ void EV_FireDisplacer(event_args_t* args)
 				1,
 				1, 60 * 0.01, 190 / 255.0, 30, 0, 10,
 				96 / 255.0, 128 / 255.0, 16 / 255.0);
+
+			// johnhalflife: as the vortigaunt's beams, a thin, wild, dim strand on each arc (kept faint: it's at
+			// the player's eye).
+			if (JhlParticleSystemEnabled())
+			{
+				gEngfuncs.pEfxAPI->R_BeamEnts(
+					args->entindex | (iStartAttach << 12), args->entindex | (iEndAttach << 12),
+					gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/lgtning.spr"),
+					1,
+					0.4f, 1.5f * gEngfuncs.pfnRandomFloat(0.75f, 1.25f), 0.3f, 30, 0, 10,
+					96 / 255.0, 128 / 255.0, 16 / 255.0);
+			}
 		}
 
 		break;
