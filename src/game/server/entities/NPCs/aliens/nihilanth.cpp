@@ -667,14 +667,17 @@ void CNihilanth::DyingThink()
 				MESSAGE_END();
 			}
 
-			// One on 3 of 4 thinks (every 0.1 s), from around and outside its head (it's some 600 units across), thrown
-			// outward to rain down the chamber, living 3 times an explosion's showers to fall all the way: about 900 of
-			// the engine's particles at a time (more ran out of them).
-			const float angle = RANDOM_FLOAT(0, 6.2831853f);
-			const Vector outward{std::cos(angle), std::sin(angle), 0};
-			const Vector start = head + outward * RANDOM_FLOAT(350, 650) + Vector(0, 0, RANDOM_FLOAT(-150, 150));
-			if (RANDOM_LONG(0, 3) != 0)
-				UTIL_JhlSparkShowers(start, 1, 3, (outward + Vector(0, 0, 0.3f)).Normalize());
+			// Two every think (0.1 s), from around and outside its head (it's some 600 units across), thrown outward to
+			// rain down the chamber, living 3 times an explosion's showers to fall all the way. Each with big flashes
+			// (temp entities, 1-2) and few streaks (particles, 1-3 a burst; more showers with full streaks ran the engine
+			// out of particles): about 80 showers, 600 particles, 170 of the 500 temp entities at a time.
+			for (int i = 0; i < 2; ++i)
+			{
+				const float angle = RANDOM_FLOAT(0, 6.2831853f);
+				const Vector outward{std::cos(angle), std::sin(angle), 0};
+				const Vector start = head + outward * RANDOM_FLOAT(350, 650) + Vector(0, 0, RANDOM_FLOAT(-150, 150));
+				UTIL_JhlSparkShowers(start, 1, 3, (outward + Vector(0, 0, 0.3f)).Normalize(), 2, 3);
+			}
 		}
 	}
 

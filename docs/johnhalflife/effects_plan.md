@@ -375,12 +375,13 @@ The displacer's victims get no blood pool (combat.cpp: its ball kills them witho
   (`TE_BEAMFOLLOW`, width 3, 0.5 s, (60,220,90), 110). A rumble (screen shake, everyone) at amplitude 1 while it
   rises, building to 6 over the 3 s after it reaches the top.
 * Its finale (the 4 s after it reaches the top, as the map's ending plays its ~20 `Fexplo1` flashes around it):
-  more of those flashes (`TE_SPRITE` `Fexplo1`, scale 12-18, every 0.15-0.4 s, about 15), and on 3 of 4 thinks
-  (every 0.1 s) a spark shower from 350-650 units out around its head (it's some 600 across, so nearer ones were
-  hidden inside it) and -150 to 150 up, thrown outward and a little up to rain down the chamber, living 3 times an
-  explosion's (`UTIL_JhlSparkShowers` sends the showers' life and the direction they're thrown): about 900 of the
-  engine's particles at a time. A rain of ember specks as well ran the engine out of particles ("Not enough free
-  particles", and no sparks), so there is none.
+  more of those flashes (`TE_SPRITE` `Fexplo1`, scale 12-18, every 0.15-0.4 s, about 15), and every 0.1 s two spark
+  showers from 350-650 units out around its head (it's some 600 across, so nearer ones were hidden inside it) and
+  -150 to 150 up, thrown outward and a little up to rain down the chamber, living 3 times an explosion's, with big
+  flashes (up to 2, half that to that; temp entities) and few streaks (1-3 a burst; particles). `UTIL_JhlSparkShowers`
+  sends the showers' life, direction, biggest flash and most streaks. About 80 showers, 600 particles and 170 of the
+  engine's 500 temp entities at a time. A rain of ember specks, then showers with full streaks, ran the engine out of
+  particles ("Not enough free particles"), hence this balance.
 * c4a3's finale strikes two wide green `env_beam`s at random every half second (`end_greenbeams`, width 15, and
   `end_greenbeams2`, width 25.5; (24,150,40), 0.5 s): vanilla, kept as is. A change to map beams (`env_beam`,
   `env_laser`) must leave scripted set-piece beams like these alone.

@@ -354,7 +354,7 @@ namespace
 {
 
 // A spark shower bursting as it flies (entity.baseline: scale, next burst; framerate, time left; fuser1, interval;
-// rendermode, streak speed; fuser2, biggest flash).
+// rendermode, streak speed; fuser2, biggest flash; iuser1, most streaks a burst, or 0 for SparkStreaksMin-Max).
 void SparkShowerThink(TEMPENTITY* ent, float frametime, float currenttime)
 {
 	auto& state = ent->entity.baseline;
@@ -363,8 +363,9 @@ void SparkShowerThink(TEMPENTITY* ent, float frametime, float currenttime)
 		return;
 
 	Vector origin = ent->entity.origin;
-	gEngfuncs.pEfxAPI->R_SparkStreaks(origin, gEngfuncs.pfnRandomLong(SparkStreaksMin, SparkStreaksMax), -state.rendermode,
-		state.rendermode);
+	const int streaks = state.iuser1 > 0 ? gEngfuncs.pfnRandomLong(1, state.iuser1)
+										 : gEngfuncs.pfnRandomLong(SparkStreaksMin, SparkStreaksMax);
+	gEngfuncs.pEfxAPI->R_SparkStreaks(origin, streaks, -state.rendermode, state.rendermode);
 
 	// The engine's own bursts use a copy of richo1 that maps don't precache; load it as a HUD sprite.
 	if (const HSPRITE flash = gEngfuncs.pfnSPR_Load("sprites/richo1.spr"); flash > 0)
@@ -492,7 +493,9 @@ Surface FindSurface(const Vector& origin, float scale)
 
 // @param showers How many, or -1 for an explosion's (by the surface's material).
 // @param lifeScale Times each shower's life.
-void SparkShowers(const Vector& origin, const Surface& surface, int showers = -1, float lifeScale = 1)
+// @param flashMax, streaksMax Each shower's biggest flash and most streaks a burst, or 0 for an explosion's.
+void SparkShowers(const Vector& origin, const Surface& surface, int showers = -1, float lifeScale = 1, float flashMax = 0,
+	int streaksMax = 0)
 {
 	if (surface.Water)
 		return;
@@ -544,7 +547,8 @@ void SparkShowers(const Vector& origin, const Surface& surface, int showers = -1
 		ent->entity.baseline.framerate = life;
 		ent->entity.baseline.fuser1 = interval;
 		ent->entity.baseline.rendermode = gEngfuncs.pfnRandomLong(SparkStreakSpeedMin, SparkStreakSpeedMax);
-		ent->entity.baseline.fuser2 = Random(SparkFlashMaxMin, SparkFlashMaxMax);
+		ent->entity.baseline.fuser2 = flashMax > 0 ? Random(flashMax * 0.5f, flashMax) : Random(SparkFlashMaxMin, SparkFlashMaxMax);
+		ent->entity.baseline.iuser1 = streaksMax;
 		ent->die = now + life + 1;
 	}
 }
@@ -775,6 +779,9 @@ void JhlExplosion_ParseSparkShowers(BufferReader& reader)
 	for (int i = 0; i < 3; ++i)
 		direction[i] = reader.ReadChar() / 100.f;
 
+	const float flashMax = reader.ReadByte() / 10.f;
+	const int streaksMax = reader.ReadByte();
+
 	// The engine's own burst, as vanilla.
 	if (!JhlParticleSystemEnabled())
 	{
@@ -800,7 +807,7 @@ void JhlExplosion_ParseSparkShowers(BufferReader& reader)
 		surface.Water = true;
 
 	// Lives as the server asks: shorter than an explosion's for sparking machinery or a computer shorting out.
-	SparkShowers(origin, surface, count, lifeScale);
+	SparkShowers(origin, surface, count, lifeScale, flashMax, streaksMax);
 }
 
 void JhlExplosion_RicochetSparks(const Vector& position, float scale)

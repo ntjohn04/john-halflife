@@ -79,7 +79,8 @@ inline void UTIL_JhlDynamicLight(const Vector& position, float radius, int r, in
  *	@brief Spark showers, as explosions throw them (the client's, jhl_explosions.cpp), going up from a point: TE_SPARKS
  *	through the SDK's own temp entity message (position, then the number of showers).
  */
-inline void UTIL_JhlSparkShowers(const Vector& position, int count, float lifeScale = 0.5f, const Vector& direction = Vector(0, 0, 1))
+inline void UTIL_JhlSparkShowers(const Vector& position, int count, float lifeScale = 0.5f, const Vector& direction = Vector(0, 0, 1),
+	float flashMax = 0, int streaksMax = 0)
 {
 	MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, position);
 	WRITE_BYTE(TE_SPARKS);
@@ -90,6 +91,10 @@ inline void UTIL_JhlSparkShowers(const Vector& position, int count, float lifeSc
 	// Which way they're thrown (as off a surface facing that way), hundredths.
 	for (int i = 0; i < 3; ++i)
 		WRITE_CHAR(std::clamp(static_cast<int>(direction[i] * 100), -100, 100));
+
+	// The showers' biggest flash (tenths) and most streaks a burst; 0: an explosion's (0.4-1, 6-12).
+	WRITE_BYTE(std::clamp(static_cast<int>(flashMax * 10), 0, 255));
+	WRITE_BYTE(std::clamp(streaksMax, 0, 255));
 
 	MESSAGE_END();
 }
