@@ -101,6 +101,23 @@ public:
 	 */
 	void LayerBeam(CBeam* beam, int width, int noise, int brightness, float glow = 0);
 
+	/**
+	 *	@brief johnhalflife: where the zap hit, once its damage is done: a green light, and sparks, by what it hit: a
+	 *	player whose suit took charge from it, a burst and 2-3 showers; a player it went straight into, or a
+	 *	creature, a burst; a wall, a burst and a shower half the time.
+	 */
+	void ZapHitEffects();
+
+	struct ZapHit
+	{
+		Vector Position;
+		EHANDLE Entity;
+		float ArmorBefore = 0;
+	};
+
+	ZapHit m_ZapHits[2];
+	int m_iZapHits = 0;
+
 	static constexpr int MaxLayerBeams = ISLAVE_MAX_BEAMS * 2;
 	CBeam* m_pLayerBeams[MaxLayerBeams]{};
 	float m_LayerGlow[MaxLayerBeams]{};
@@ -403,12 +420,15 @@ void CISlave::HandleAnimEvent(MonsterEvent_t* pEvent)
 
 		UTIL_MakeAimVectors(pev->angles);
 
+		m_iZapHits = 0;
 		ZapBeam(-1);
 		ZapBeam(1);
 
 		EmitSoundDyn(CHAN_WEAPON, "hassault/hw_shoot1.wav", 1, ATTN_NORM, 0, RANDOM_LONG(130, 160));
 		// StopSound(CHAN_WEAPON, "debris/zap4.wav");
 		ApplyMultiDamage(this, this);
+
+		ZapHitEffects();
 
 		m_flNextAttack = gpGlobals->time + RANDOM_FLOAT(0.5, 4.0);
 	}
@@ -692,7 +712,7 @@ void CISlave::ArmBeam(int side)
 	{
 		m_pBeam[m_iBeams]->SetNoise(60);
 		LayerBeam(m_pBeam[m_iBeams], 18, 210, 51, 0.8f);
-		UTIL_JhlDynamicLight(tr.vecEndPos + tr.vecPlaneNormal * 4, 40, 48, 96, 16, 1 / pev->framerate, 20);
+		UTIL_JhlDynamicLight(tr.vecEndPos + tr.vecPlaneNormal * 8, 72, 80, 170, 30, 1 / pev->framerate, 20);
 	}
 
 	m_iBeams++;
@@ -717,6 +737,29 @@ void CISlave::BeamGlow()
 		if (m_pLayerBeams[i] && m_LayerGlow[i] != 0)
 			m_pLayerBeams[i]->SetBrightness(std::min(255, static_cast<int>(b * m_LayerGlow[i])));
 	}
+}
+
+void CISlave::ZapHitEffects()
+{
+	for (int i = 0; i < m_iZapHits; ++i)
+	{
+		ZapHit& hit = m_ZapHits[i];
+		CBaseEntity* entity = hit.Entity;
+
+		int showers = 0;
+
+		if (entity && entity->IsPlayer())
+			showers = entity->pev->armorvalue < hit.ArmorBefore ? RANDOM_LONG(2, 3) : 0;
+		else if (!entity || entity->IsBSPModel())
+			showers = RANDOM_LONG(0, 1);
+
+		UTIL_JhlSparkShowers(hit.Position, showers);
+
+		// Twice the vanilla charging light's size, shrinking away over 1.5 s.
+		UTIL_JhlDynamicLight(hit.Position, 200, 120, 255, 64, 1.5f, 200 / 1.5f);
+	}
+
+	m_iZapHits = 0;
 }
 
 void CISlave::LayerBeam(CBeam* beam, int width, int noise, int brightness, float glow)
@@ -793,19 +836,22 @@ void CISlave::ZapBeam(int side)
 	m_pBeam[m_iBeams]->SetNoise(20);
 	m_pBeam[m_iBeams]->pev->spawnflags |= SF_BEAM_TEMPORARY; // Flag these to be destroyed on save/restore or level transition
 
-	// johnhalflife: a thin, wild, dimmer strand around it; where it hits, sparks and a short green light.
+	// johnhalflife: a thin, wild, dimmer strand around it.
 	LayerBeam(m_pBeam[m_iBeams], 20, 100, 102);
-
-	if (UTIL_JhlParticleSystem() && tr.flFraction < 1.0)
-	{
-		const Vector hit = tr.vecEndPos - vecAim * 2;
-		UTIL_JhlSparkShowers(hit, RANDOM_LONG(0, 1));
-		UTIL_JhlDynamicLight(hit, 100, 120, 255, 64, 0.3f, 300);
-	}
 
 	m_iBeams++;
 
 	pEntity = CBaseEntity::Instance(tr.pHit);
+
+	// Where it hits gets sparks and a light once the damage is done (ZapHitEffects), knowing whether a player's suit
+	// took it: their armor now, before it is.
+	if (UTIL_JhlParticleSystem() && tr.flFraction < 1.0 && m_iZapHits < static_cast<int>(std::size(m_ZapHits)))
+	{
+		ZapHit& hit = m_ZapHits[m_iZapHits++];
+		hit.Position = tr.vecEndPos - vecAim * 2;
+		hit.Entity = pEntity;
+		hit.ArmorBefore = pEntity ? pEntity->pev->armorvalue : 0;
+	}
 	if (pEntity != nullptr && 0 != pEntity->pev->takedamage)
 	{
 		pEntity->TraceAttack(this, GetSkillFloat("islave_dmg_zap"sv), vecAim, &tr, DMG_SHOCK);

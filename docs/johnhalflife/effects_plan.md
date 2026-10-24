@@ -297,9 +297,12 @@ one per hand width 30 noise 80): with `jhl_fx_particlesystem`, a thin, wild, dim
 * Zap: the vanilla beam, and a strand width 20 noise 100 brightness 102 (0.4).
 * Revive: the vanilla beam, and a strand width 12 noise 210 brightness 102 (0.4).
 * Each strand's noise ±25% per strike.
-* The charging beams light where they touch: 40 units, dim green (48,96,16), about 1 s, fading.
-* Where the zap hits: a spark burst (`UTIL_JhlSparkShowers`, a shower half the time) and a pale green light
-  (120,255,64), 100 units, fading over 0.3 s. (Vanilla lights only the vortigaunt, orange, as it starts charging.)
+* The charging beams light where they touch: 72 units, green (80,170,30), 8 units off the surface, about 1 s.
+* Where the zap hits, once its damage is done (`ZapHitEffects`): a pale green light (120,255,64), 200 units,
+  shrinking away evenly over 1.5 s (vanilla lights only the vortigaunt, orange, as it starts charging), and a
+  spark burst (`UTIL_JhlSparkShowers`) with showers by what it hit: a player whose suit lost charge to it 2-3 (the
+  suit taking it, as armor ricochets spark), a player it went straight into or a creature none, a wall one half
+  the time.
 
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 
