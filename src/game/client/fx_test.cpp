@@ -336,6 +336,7 @@ void Explosion(const Target& target, Params& p)
 	flags |= 0 == p.Int("sound", 1) ? TE_EXPLFLAG_NOSOUND : 0;
 	flags |= 0 == p.Int("particles", 1) ? TE_EXPLFLAG_NOPARTICLES : 0;
 	flags |= 0 != p.Int("rocket", 0) ? TE_EXPLFLAG_JHL_ROCKET : 0;
+	flags |= 0 != p.Int("sparks", 0) ? TE_EXPLFLAG_JHL_SPARKS : 0;
 	p.Print("explosion");
 
 	if (const int model = ModelIndex(name); model != 0)
@@ -735,6 +736,7 @@ void GrenadePreset(const Target& target, Params& p)
 	explosion.Set("scale", explosionScale);
 	explosion.Set("offset", offset);
 	explosion.Set("rocket", static_cast<float>(rocket));
+	explosion.Set("sparks", JhlParticleSystemEnabled() ? 1.f : 0.f);
 	Explosion(target, explosion);
 
 	Later(0.3f, [=]()
@@ -745,9 +747,13 @@ void GrenadePreset(const Target& target, Params& p)
 		gEngfuncs.Con_Printf("  (0.3 s later)\n");
 		Smoke(target, smoke); });
 
-	Params shower;
-	shower.Set("count", gEngfuncs.pfnRandomLong(0, 3));
-	Shower(target, shower);
+	// With jhl_fx_particlesystem on, the explosion throws its own (jhl_explosions.cpp).
+	if (!JhlParticleSystemEnabled())
+	{
+		Params shower;
+		shower.Set("count", gEngfuncs.pfnRandomLong(0, 3));
+		Shower(target, shower);
+	}
 
 	gEngfuncs.Con_Printf("  plus a scorch decal and a debris sound\n");
 }
@@ -764,6 +770,7 @@ void BarrelPreset(const Target& target, Params& p)
 	Params explosion;
 	explosion.Set("scale", scale);
 	explosion.Set("offset", offset);
+	explosion.Set("sparks", JhlParticleSystemEnabled() ? 1.f : 0.f);
 	Explosion(target, explosion);
 
 	Later(0.3f, [=]()
@@ -774,9 +781,12 @@ void BarrelPreset(const Target& target, Params& p)
 		gEngfuncs.Con_Printf("  (0.3 s later)\n");
 		Smoke(target, smoke); });
 
-	Params shower;
-	shower.Set("count", gEngfuncs.pfnRandomLong(0, 3));
-	Shower(target, shower);
+	if (!JhlParticleSystemEnabled())
+	{
+		Params shower;
+		shower.Set("count", gEngfuncs.pfnRandomLong(0, 3));
+		Shower(target, shower);
+	}
 }
 
 // A bullet or melee hit on a monster: SpawnBlood (CBaseMonster::TraceAttack), sized by the damage.
@@ -906,7 +916,7 @@ const std::vector<Command>& Commands()
 		{"apache", "time=4", ApachePreset},
 		{"vortzap", "", VortZapPreset},
 		{"sprite", "sprite= count= scale= alpha= render=alpha|add|glow|normal color=r,g,b fps= life= loop= offset= radius= speed= spread= up= gravity=0|1|2 fade= collide=", Sprite},
-		{"explosion", "sprite= scale= fps= offset= additive= light= sound= particles= rocket=", Explosion},
+		{"explosion", "sprite= scale= fps= offset= additive= light= sound= particles= rocket= sparks=", Explosion},
 		{"smoke", "sprite= scale= fps= offset=", Smoke},
 		{"lingersmoke", "scale=3 opacity=200 gray=75 life=10.5 start=85 end=340 rise=10 drift=40 delay=0 offset=45.6", LingeringSmoke},
 		{"sparks", "count=", Sparks},

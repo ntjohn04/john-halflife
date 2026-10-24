@@ -14,6 +14,7 @@
  ****/
 
 #include "hud.h"
+#include "com_model.h"
 #include "event_api.h"
 #include "jhl_explosion.h"
 #include "jhl_explosions.h"
@@ -98,6 +99,30 @@ constexpr float LingeringSmokeSpriteWidth = 64;
 constexpr float LingeringSmokeHeight = 20;
 constexpr float LingeringSmokeFadeIn = 0.05f; // Of its life.
 constexpr float LingeringSmokeDriftDecay = 0.3f; // Per second: drifting 40 units/s, it goes about 130 units.
+
+// Spark showers, instead of the server's spark_shower entities (vanilla: 0-3, thrown off the surface at 200-300
+// ±100 sideways +200 up, half gravity, sparking every 0.1 s for 0.5-1.5 s; each burst the engine's TE_SPARKS, 8
+// streaks at ±200 and a richo1 flash of scale 0.5-1). Each shower picks its own values from these ranges.
+constexpr int SparkShowersMin = 0;
+constexpr int SparkShowersMax = 10;
+constexpr float SparkSpeedMin = 50; // Off the surface.
+constexpr float SparkSpeedMax = 400;
+constexpr float SparkSpreadMin = 50; // Sideways, each way.
+constexpr float SparkSpreadMax = 150;
+constexpr float SparkUpMin = 100;
+constexpr float SparkUpMax = 250;
+constexpr float SparkLifeMin = 0.25f;
+constexpr float SparkLifeMax = 2.25f;
+constexpr float SparkIntervalMin = 0.07f;
+constexpr float SparkIntervalMax = 0.11f;
+constexpr float SparkFullGravityChance = 0.25f; // Otherwise half, as vanilla.
+constexpr float SparkBounce = 0.5f;
+constexpr int SparkStreaksMin = 6; // Per burst.
+constexpr int SparkStreaksMax = 12;
+constexpr int SparkStreakSpeedMin = 150;
+constexpr int SparkStreakSpeedMax = 300;
+constexpr float SparkFlashMaxMin = 0.4f; // Each shower's biggest flash; each flash is half that to that.
+constexpr float SparkFlashMaxMax = 1;
 
 float Random(float low, float high)
 {
@@ -255,6 +280,99 @@ bool JhlExplosion_LingeringSmoke(const Vector& origin, float scale, const JhlLin
 namespace
 {
 
+// A spark shower bursting as it flies (entity.baseline: scale, next burst; framerate, time left; fuser1, interval;
+// rendermode, streak speed; fuser2, biggest flash).
+void SparkShowerThink(TEMPENTITY* ent, float frametime, float currenttime)
+{
+	auto& state = ent->entity.baseline;
+
+	if (currenttime < state.scale)
+		return;
+
+	Vector origin = ent->entity.origin;
+	gEngfuncs.pEfxAPI->R_SparkStreaks(origin, gEngfuncs.pfnRandomLong(SparkStreaksMin, SparkStreaksMax), -state.rendermode,
+		state.rendermode);
+
+	// The engine's own bursts use a copy of richo1 that maps don't precache; load it as a HUD sprite.
+	if (const HSPRITE flash = gEngfuncs.pfnSPR_Load("sprites/richo1.spr"); flash > 0)
+	{
+		gEngfuncs.pEfxAPI->R_RicochetSprite(origin, const_cast<model_t*>(gEngfuncs.GetSpritePointer(flash)), 0.1f,
+			Random(state.fuser2 * 0.5f, state.fuser2));
+	}
+
+	state.scale = currenttime + state.fuser1;
+	state.framerate -= state.fuser1;
+
+	if (state.framerate <= 0)
+		ent->die = currenttime;
+}
+
+// Which way the surface an explosion hit faces, as far as the client can tell: up off a floor, away from a wall, down
+// off a ceiling; zero in mid-air (as vanilla's trace that hits nothing).
+Vector SurfaceNormal(const Vector& origin, float scale)
+{
+	const float range = scale * 10 + 48;
+
+	if (Vector floor; FindFloor(origin, scale, floor))
+		return {0, 0, 1};
+
+	if (const Vector away = AwayFromWalls(origin, range); away != g_vecZero)
+		return away;
+
+	pmtrace_t tr;
+	gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(0, 1);
+	gEngfuncs.pEventAPI->EV_PushPMStates();
+	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
+	gEngfuncs.pEventAPI->EV_PlayerTrace(origin, origin + Vector{0, 0, range}, PM_WORLD_ONLY, -1, &tr);
+	gEngfuncs.pEventAPI->EV_PopPMStates();
+
+	return tr.fraction < 1 ? Vector{0, 0, -1} : g_vecZero;
+}
+
+// Spark showers as vanilla's spark_shower throws them, each with its own values.
+void SparkShowers(const Vector& origin, float scale)
+{
+	if (Vector point = origin; gEngfuncs.PM_PointContents(point, nullptr) == CONTENTS_WATER)
+		return;
+
+	const int count = gEngfuncs.pfnRandomLong(SparkShowersMin, SparkShowersMax);
+
+	if (count == 0)
+		return;
+
+	const Vector normal = SurfaceNormal(origin, scale);
+	const float now = gEngfuncs.GetClientTime();
+
+	for (int i = 0; i < count; ++i)
+	{
+		TEMPENTITY* ent = gEngfuncs.pEfxAPI->CL_TempEntAllocNoModel(origin);
+
+		if (!ent)
+			return;
+
+		const float spread = Random(SparkSpreadMin, SparkSpreadMax);
+		Vector velocity = normal * Random(SparkSpeedMin, SparkSpeedMax);
+		velocity.x += Random(-spread, spread);
+		velocity.y += Random(-spread, spread);
+		velocity.z += (velocity.z >= 0 ? 1 : -1) * Random(SparkUpMin, SparkUpMax);
+
+		const float life = Random(SparkLifeMin, SparkLifeMax);
+		const float interval = Random(SparkIntervalMin, SparkIntervalMax);
+
+		ent->flags |= FTENT_NOMODEL | FTENT_CLIENTCUSTOM | FTENT_COLLIDEWORLD;
+		ent->flags |= Random(0, 1) < SparkFullGravityChance ? FTENT_GRAVITY : FTENT_SLOWGRAVITY;
+		ent->callback = SparkShowerThink;
+		ent->bounceFactor = SparkBounce;
+		ent->entity.baseline.origin = velocity;
+		ent->entity.baseline.scale = now + interval;
+		ent->entity.baseline.framerate = life;
+		ent->entity.baseline.fuser1 = interval;
+		ent->entity.baseline.rendermode = gEngfuncs.pfnRandomLong(SparkStreakSpeedMin, SparkStreakSpeedMax);
+		ent->entity.baseline.fuser2 = Random(SparkFlashMaxMin, SparkFlashMaxMax);
+		ent->die = now + life + 1;
+	}
+}
+
 // One of a falling helicopter's fireballs: the vanilla one or a round one, the same size and length.
 void FallingFireball(const Vector& origin, int model, float scale)
 {
@@ -301,6 +419,9 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 	SpawnFireball(origin + jitter, model, firstScale, JhlFramerate * Random(1 - Jitter, 1 + Jitter), 180, Random(0, 360));
 
 	JhlExplosion_LingeringSmoke(origin, scale * (rocket ? RocketScale : 1));
+
+	if ((flags & TE_EXPLFLAG_JHL_SPARKS) != 0)
+		SparkShowers(origin, scale);
 
 	// The second fireball: shaped for large explosions on a floor, round otherwise.
 	Vector floor;

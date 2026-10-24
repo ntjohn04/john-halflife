@@ -83,10 +83,17 @@ void CGrenade::Explode(TraceResult* pTrace, int bitsDamageType)
 
 	int iContents = UTIL_PointContents(effectOrigin);
 
+	// johnhalflife: the client throws the spark showers (jhl_explosions.cpp).
+	const bool clientSparks = UTIL_JhlParticleSystem() && iContents != CONTENTS_WATER;
+	int flags = ClassnameIs("rpg_rocket") ? TE_EXPLFLAG_JHL_ROCKET : TE_EXPLFLAG_NONE;
+
+	if (clientSparks)
+		flags |= TE_EXPLFLAG_JHL_SPARKS;
+
 	// This makes a dynamic light and the explosion sprites/sound
 	// Send to PAS because of the sound
 	UTIL_ExplosionEffect(effectOrigin, iContents != CONTENTS_WATER ? g_sModelIndexFireball : g_sModelIndexWExplosion,
-		(pev->dmg - 50) * .60, 15, ClassnameIs("rpg_rocket") ? TE_EXPLFLAG_JHL_ROCKET : TE_EXPLFLAG_NONE,
+		(pev->dmg - 50) * .60, 15, flags,
 		MSG_PAS, effectOrigin);
 
 	CSoundEnt::InsertSound(bits_SOUND_COMBAT, pev->origin, NORMAL_EXPLOSION_VOLUME, 3.0);
@@ -130,7 +137,7 @@ void CGrenade::Explode(TraceResult* pTrace, int bitsDamageType)
 	pev->velocity = g_vecZero;
 	pev->nextthink = gpGlobals->time + 0.3;
 
-	if (iContents != CONTENTS_WATER)
+	if (iContents != CONTENTS_WATER && !clientSparks)
 	{
 		int sparkCount = RANDOM_LONG(0, 3);
 		for (int i = 0; i < sparkCount; i++)

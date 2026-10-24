@@ -21,3 +21,9 @@
  *	never sees it.
  */
 constexpr int TE_EXPLFLAG_JHL_ROCKET = 128;
+
+/**
+ *	@brief johnhalflife TE_EXPLOSION flag: the explosion throws spark showers, which the client makes (instead of the
+ *	server's spark_shower entities) with jhl_fx_particlesystem on.
+ */
+constexpr int TE_EXPLFLAG_JHL_SPARKS = 64;

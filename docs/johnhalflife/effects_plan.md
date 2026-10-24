@@ -188,6 +188,16 @@ thins out (squared) the whole time it spreads, from 2× to 8× the vanilla puff'
 8-12 units/s and drifts ±40 units/s plus 40 away from walls within reach (8 horizontal traces), the drift
 dying down 30% a second. Random roll.
 
+**Spark showers:** vanilla's `spark_shower` (0-3 per explosion from `CGrenade::Explode`, `env_explosion` and
+Opposing Force's mortar; thrown off the surface at 200-300 ±100 sideways +200 up, half gravity, a `TE_SPARKS`
+burst every 0.1 s for 0.5-1.5 s: 8 streaks at ±200, a `richo1` flash of scale 0.5-1). With
+`jhl_fx_particlesystem` on, grenades and `env_explosion` (with a fireball, sparks allowed) send
+`TE_EXPLFLAG_JHL_SPARKS` instead and the client throws them (not in water; the surface's direction found by
+traces, as the lingering smoke's), each with its own values: 0-10 showers, 50-400 off the surface, ±50-150
+sideways, 100-250 up, 0.25-2.25 s, a burst every 0.07-0.11 s, half gravity (a quarter of them full), bounce 0.5;
+each burst 6-12 streaks at ±150-300 and a flash up to 0.4-1 (half that to that). Opposing Force's mortar keeps
+vanilla's.
+
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 
 * Falling: vanilla sends one `zerogxplode` every 0.2 s at a random point under the hull (scale 3-5.9, 12 fps),

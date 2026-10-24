@@ -21,6 +21,7 @@
 #include "cbase.h"
 #include "explode.h"
 #include "jhl_effects.h"
+#include "jhl_explosion.h"
 
 /**
  *	@brief Spark Shower
@@ -197,10 +198,14 @@ void CEnvExplosion::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE 
 		}
 	}
 
+	// johnhalflife: the client throws the spark showers (jhl_explosions.cpp), with the fireball.
+	const bool clientSparks = UTIL_JhlParticleSystem() && (pev->spawnflags & SF_ENVEXPLOSION_NOSPARKS) == 0 &&
+							  (pev->spawnflags & SF_ENVEXPLOSION_NOFIREBALL) == 0;
+
 	// draw fireball
 	UTIL_ExplosionEffect(pev->origin, g_sModelIndexFireball,
 		(pev->spawnflags & SF_ENVEXPLOSION_NOFIREBALL) == 0 ? static_cast<byte>(m_spriteScale) : 0,
-		15, TE_EXPLFLAG_NONE,
+		15, clientSparks ? TE_EXPLFLAG_JHL_SPARKS : TE_EXPLFLAG_NONE,
 		MSG_PAS, pev->origin);
 
 	// do damage
@@ -213,7 +218,7 @@ void CEnvExplosion::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE 
 	pev->nextthink = gpGlobals->time + 0.3;
 
 	// draw sparks
-	if ((pev->spawnflags & SF_ENVEXPLOSION_NOSPARKS) == 0)
+	if ((pev->spawnflags & SF_ENVEXPLOSION_NOSPARKS) == 0 && !clientSparks)
 	{
 		int sparkCount = RANDOM_LONG(0, 3);
 
