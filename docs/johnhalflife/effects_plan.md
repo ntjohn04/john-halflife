@@ -285,6 +285,18 @@ Apache, turrets, the loader, the G-Man, the worms, unbreakable glass; vanilla: a
 0.5-2 for 0.1 s and a ricochet sound, no sparks): through the SDK's message, the client adds 4-7 spark streaks
 (by scale) at ±100-180, set 2 units toward the viewer. Not aimed: `UTIL_Ricochet` doesn't get the bullet's direction.
 
+## Beams (in progress)
+
+**Vortigaunts** (`islave.cpp`; vanilla: `lgtning` beams, charging arm beams width 30 noise 80 dark green brightness
+64 ramping by beam count × 32 (BeamGlow), the zap one per hand width 50 noise 20 bright green 255, the revive
+one per hand width 30 noise 80): with `jhl_fx_particlesystem`, layers on each vanilla beam (`LayerBeam`, kept out
+of `m_pBeam` whose count sets the eye glow and the charging pitch):
+
+* Charging: noise 60 and 40 at 2× and 3× the ramp's brightness (with vanilla's noise 80 at 1×: 64, 128, 192
+  at first, brightening together).
+* Zap: a copy (thicker, brighter spots) and width 20 noise 40.
+* Revive: a copy and width 12 noise 100.
+
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 
 * Falling: vanilla sends one `zerogxplode` every 0.2 s at a random point under the hull (scale 3-5.9, 12 fps),

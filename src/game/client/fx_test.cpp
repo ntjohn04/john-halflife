@@ -892,10 +892,21 @@ void ApachePreset(const Target& target, Params& p)
 // A vortigaunt's zap: CISlave::ZapBeam and the light when it fires.
 void VortZapPreset(const Target& target, Params& p)
 {
-	p.Print("vortzap (CISlave: zap beam and its light; the beam's width is CBeam 50, matched by eye)");
+	p.Print("vortzap (CISlave: zap beam and its light; the beam's width is CBeam 50, matched by eye; with jhl_fx_particlesystem, a copy and a thin jagged one layered on it)");
 
 	Params beam;
 	Beam(target, beam);
+
+	if (JhlParticleSystemEnabled())
+	{
+		Params copy;
+		Beam(target, copy);
+
+		Params jagged;
+		jagged.Set("width", 2.f);
+		jagged.Set("noise", 0.4f);
+		Beam(target, jagged);
+	}
 
 	Params light;
 	light.Set("radius", 80.f);
