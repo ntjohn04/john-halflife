@@ -340,6 +340,17 @@ noise 0.75, brightness 0.75, cyan, 0.08 s) get a strand each, width 0.4, noise 1
 
 The displacer's victims get no blood pool (combat.cpp: its ball kills them without gibbing and takes them away).
 
+**Controller** (`controller.cpp`):
+
+* Head ball (`controller_head_ball`, `xspark4` at scale 2, homing; vanilla never steps its frame, though the energy
+  balls play the same sprite, and it precaches an unused `xspark1`): plays its 11 frames at 10 fps. Its haze fills
+  the 32 px frame to the edges, which at scale 2 shows as a faint square: not fixed yet.
+* Its zap (one `TE_BEAMENTPOINT`, `laserbeam`, width 2, noise 0, white, 0.3 s): brightness 220 (255), noise 0.05,
+  and a second, width 1 noise 0.35 ±25% brightness 100. Where it hits: a warm light (255,210,140) of 200 units
+  shrinking away over 1.5 s and sparks by what it hit, as the vortigaunt's zap.
+* Energy balls (`controller_energy_ball`, in volleys): where they hit, lighter: a warm light of 100 units over
+  0.5 s, sparks as above but off walls a shower only a quarter of the time.
+
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 
 * Falling: vanilla sends one `zerogxplode` every 0.2 s at a random point under the hull (scale 3-5.9, 12 fps),

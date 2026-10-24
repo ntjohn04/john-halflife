@@ -15,6 +15,7 @@
 
 #include "cbase.h"
 #include "squadmonster.h"
+#include "jhl_effects.h"
 
 #define CONTROLLER_AE_HEAD_OPEN 1
 #define CONTROLLER_AE_BALL_SHOOT 2
@@ -1110,6 +1111,11 @@ void CControllerHeadBall::HuntThink()
 
 	pev->renderamt -= 5;
 
+	// johnhalflife: plays its sprite as the energy balls do (the same sprite; vanilla shows the head ball's first frame
+	// only).
+	if (UTIL_JhlParticleSystem())
+		pev->frame = (static_cast<int>(pev->frame) + 1) % 11;
+
 	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
 	WRITE_BYTE(TE_ELIGHT);
 	WRITE_SHORT(entindex());	// entity, attachment
@@ -1141,12 +1147,17 @@ void CControllerHeadBall::HuntThink()
 		UTIL_TraceLine(pev->origin, m_hEnemy->Center(), dont_ignore_monsters, edict(), &tr);
 
 		CBaseEntity* pEntity = CBaseEntity::Instance(tr.pHit);
+		const float armorBefore = pEntity ? pEntity->pev->armorvalue : 0;
+
 		if (pEntity != nullptr && 0 != pEntity->pev->takedamage)
 		{
 			ClearMultiDamage();
 			pEntity->TraceAttack(m_hOwner, GetSkillFloat("controller_dmgzap"sv), pev->velocity, &tr, DMG_SHOCK);
 			ApplyMultiDamage(this, m_hOwner);
 		}
+
+		// johnhalflife: a little dimmer and not quite straight, with a thin, wild, dim strand (as the vortigaunt's).
+		const bool jhl = UTIL_JhlParticleSystem();
 
 		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
 		WRITE_BYTE(TE_BEAMENTPOINT);
@@ -1155,17 +1166,50 @@ void CControllerHeadBall::HuntThink()
 		WRITE_COORD(tr.vecEndPos.y);
 		WRITE_COORD(tr.vecEndPos.z);
 		WRITE_SHORT(g_sModelIndexLaser);
-		WRITE_BYTE(0);	 // frame start
-		WRITE_BYTE(10);	 // framerate
-		WRITE_BYTE(3);	 // life
-		WRITE_BYTE(20);	 // width
-		WRITE_BYTE(0);	 // noise
-		WRITE_BYTE(255); // r, g, b
-		WRITE_BYTE(255); // r, g, b
-		WRITE_BYTE(255); // r, g, b
-		WRITE_BYTE(255); // brightness
-		WRITE_BYTE(10);	 // speed
+		WRITE_BYTE(0);				  // frame start
+		WRITE_BYTE(10);				  // framerate
+		WRITE_BYTE(3);				  // life
+		WRITE_BYTE(20);				  // width
+		WRITE_BYTE(jhl ? 5 : 0);	  // noise
+		WRITE_BYTE(255);			  // r, g, b
+		WRITE_BYTE(255);			  // r, g, b
+		WRITE_BYTE(255);			  // r, g, b
+		WRITE_BYTE(jhl ? 220 : 255); // brightness
+		WRITE_BYTE(10);				  // speed
 		MESSAGE_END();
+
+		if (jhl)
+		{
+			MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
+			WRITE_BYTE(TE_BEAMENTPOINT);
+			WRITE_SHORT(entindex());
+			WRITE_COORD_VECTOR(tr.vecEndPos);
+			WRITE_SHORT(g_sModelIndexLaser);
+			WRITE_BYTE(0);											 // frame start
+			WRITE_BYTE(10);											 // framerate
+			WRITE_BYTE(3);											 // life
+			WRITE_BYTE(10);											 // width
+			WRITE_BYTE(static_cast<int>(35 * RANDOM_FLOAT(0.75f, 1.25f))); // noise
+			WRITE_BYTE(255);										 // r, g, b
+			WRITE_BYTE(255);										 // r, g, b
+			WRITE_BYTE(255);										 // r, g, b
+			WRITE_BYTE(100);										 // brightness
+			WRITE_BYTE(10);											 // speed
+			MESSAGE_END();
+
+			// Where it hits, as the vortigaunt's zap: a big warm light shrinking away over 1.5 s, and sparks by what it
+			// hit (a player whose suit lost charge 2-3 showers, a player it went straight into or a creature none, a
+			// wall one half the time).
+			int showers = 0;
+
+			if (pEntity && pEntity->IsPlayer())
+				showers = pEntity->pev->armorvalue < armorBefore ? RANDOM_LONG(2, 3) : 0;
+			else if (!pEntity || pEntity->IsBSPModel())
+				showers = RANDOM_LONG(0, 1);
+
+			UTIL_JhlSparkShowers(tr.vecEndPos, showers);
+			UTIL_JhlDynamicLight(tr.vecEndPos, 200, 255, 210, 140, 1.5f, 200 / 1.5f);
+		}
 
 		EmitAmbientSound(tr.vecEndPos, "weapons/electro4.wav", 0.5, ATTN_NORM, 0, RANDOM_LONG(140, 160));
 
@@ -1310,6 +1354,8 @@ void CControllerZapBall::AnimateThink()
 
 void CControllerZapBall::ExplodeTouch(CBaseEntity* pOther)
 {
+	const float armorBefore = pOther->pev->armorvalue;
+
 	if (0 != pOther->pev->takedamage)
 	{
 		TraceResult tr = UTIL_GetGlobalTrace();
@@ -1325,6 +1371,23 @@ void CControllerZapBall::ExplodeTouch(CBaseEntity* pOther)
 		ApplyMultiDamage(owner, owner);
 
 		EmitAmbientSound(tr.vecEndPos, "weapons/electro4.wav", 0.3, ATTN_NORM, 0, RANDOM_LONG(90, 99));
+	}
+
+	// johnhalflife: where it hits, lighter than the zap's (they come in volleys): a warm light shrinking away over
+	// 0.5 s, and sparks by what it hit (a player whose suit lost charge 2-3 showers, a player it went straight into
+	// or a creature none, a wall one a quarter of the time).
+	if (UTIL_JhlParticleSystem())
+	{
+		const Vector hit = pev->origin - pev->velocity.Normalize() * 4;
+		int showers = 0;
+
+		if (pOther->IsPlayer())
+			showers = pOther->pev->armorvalue < armorBefore ? RANDOM_LONG(2, 3) : 0;
+		else if (pOther->IsBSPModel())
+			showers = RANDOM_LONG(0, 3) == 0 ? 1 : 0;
+
+		UTIL_JhlSparkShowers(hit, showers);
+		UTIL_JhlDynamicLight(hit, 100, 255, 210, 140, 0.5f, 200);
 	}
 
 	UTIL_Remove(this);
