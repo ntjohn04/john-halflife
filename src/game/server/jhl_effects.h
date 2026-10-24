@@ -79,12 +79,28 @@ inline void UTIL_JhlDynamicLight(const Vector& position, float radius, int r, in
  *	@brief Spark showers, as explosions throw them (the client's, jhl_explosions.cpp), going up from a point: TE_SPARKS
  *	through the SDK's own temp entity message (position, then the number of showers).
  */
-inline void UTIL_JhlSparkShowers(const Vector& position, int count)
+inline void UTIL_JhlSparkShowers(const Vector& position, int count, float lifeScale = 0.5f)
 {
 	MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, position);
 	WRITE_BYTE(TE_SPARKS);
 	WRITE_COORD_VECTOR(position);
 	WRITE_BYTE(count);
+	WRITE_BYTE(std::clamp(static_cast<int>(lifeScale * 10), 1, 255)); // The showers' life, tenths of an explosion's.
+	MESSAGE_END();
+}
+
+/**
+ *	@brief A burst of ember specks (as explosions throw, jhl_explosions.cpp) from a point, spraying out at up to
+ *	@p speed units a second and drifting down for 2-4 s: TE_PARTICLEBURST through the SDK's own temp entity message
+ *	(position, count, speed / 4).
+ */
+inline void UTIL_JhlEmberBurst(const Vector& position, int count, float speed)
+{
+	MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, position);
+	WRITE_BYTE(TE_PARTICLEBURST);
+	WRITE_COORD_VECTOR(position);
+	WRITE_BYTE(std::clamp(count, 0, 255));
+	WRITE_BYTE(std::clamp(static_cast<int>(speed / 4), 0, 255));
 	MESSAGE_END();
 }
 

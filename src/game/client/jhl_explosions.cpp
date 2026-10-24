@@ -134,14 +134,17 @@ constexpr float SparkIntervalMax = 0.11f;
 constexpr float SparkBounce = 1;
 
 // Spark bursts (UTIL_Sparks: env_spark, buttons, beams, wires, computers... ; UTIL_JhlSparkShowers): the streaks and
-// flash differ each time; showers, if any, live this much as long as an explosion's.
+// flash differ each time; showers, if any, live as long as the server asks (half an explosion's for most).
 constexpr int SparkBurstStreaksMin = 4;
 constexpr int SparkBurstStreaksMax = 10;
 constexpr int SparkBurstSpeedMin = 120;
 constexpr int SparkBurstSpeedMax = 220;
 constexpr float SparkBurstFlashMin = 0.4f;
 constexpr float SparkBurstFlashMax = 1;
-constexpr float ComputerSparkLifeScale = 0.5f;
+
+// Ember bursts (UTIL_JhlEmberBurst: the Nihilanth's finale): how long each speck drifts.
+constexpr float EmberBurstLifeMin = 2;
+constexpr float EmberBurstLifeMax = 4;
 
 // Armor ricochets (UTIL_Ricochet, scale 0.5-2): a few streaks with vanilla's flash.
 constexpr int RicochetSparksMin = 4;
@@ -769,6 +772,7 @@ void JhlExplosion_ParseSparkShowers(BufferReader& reader)
 {
 	Vector origin = reader.ReadCoordVector();
 	const int count = reader.ReadByte();
+	const float lifeScale = reader.ReadByte() / 10.f;
 
 	// The engine's own burst, as vanilla.
 	if (!JhlParticleSystemEnabled())
@@ -794,8 +798,35 @@ void JhlExplosion_ParseSparkShowers(BufferReader& reader)
 	if (gEngfuncs.PM_PointContents(origin, nullptr) == CONTENTS_WATER)
 		surface.Water = true;
 
-	// Shorter than an explosion's: sparking machinery, a computer shorting out.
-	SparkShowers(origin, surface, count, ComputerSparkLifeScale);
+	// Lives as the server asks: shorter than an explosion's for sparking machinery or a computer shorting out.
+	SparkShowers(origin, surface, count, lifeScale);
+}
+
+void JhlExplosion_ParseEmberBurst(BufferReader& reader)
+{
+	const Vector origin = reader.ReadCoordVector();
+	const int count = reader.ReadByte();
+	const float speed = reader.ReadByte() * 4.f;
+
+	if (!JhlParticleSystemEnabled())
+		return;
+
+	const float now = gEngfuncs.GetClientTime();
+
+	for (int i = 0; i < count; ++i)
+	{
+		particle_t* ember = gEngfuncs.pEfxAPI->R_AllocParticle(nullptr);
+
+		if (!ember)
+			break;
+
+		ember->org = origin;
+		ember->vel = Vector{Random(-1, 1), Random(-1, 1), Random(-0.5f, 1)} * speed;
+		ember->color = static_cast<short>(EmberColors[gEngfuncs.pfnRandomLong(0, std::size(EmberColors) - 1)]);
+		gEngfuncs.pEfxAPI->R_GetPackedColor(&ember->packedColor, ember->color);
+		ember->type = pt_slowgrav; // Drifting down.
+		ember->die = now + Random(EmberBurstLifeMin, EmberBurstLifeMax);
+	}
 }
 
 void JhlExplosion_RicochetSparks(const Vector& position, float scale)

@@ -880,6 +880,10 @@ static void MsgFunc_TempEntity(const char* name, BufferReader& reader)
 	case TE_SPARKS:
 		JhlExplosion_ParseSparkShowers(reader);
 		break;
+
+	case TE_PARTICLEBURST:
+		JhlExplosion_ParseEmberBurst(reader);
+		break;
 	}
 }
 

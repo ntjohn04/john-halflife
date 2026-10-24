@@ -181,6 +181,8 @@ public:
 	// johnhalflife: when it reached the top dying, for the rumble building after (DyingThink). Not saved: 0 again on a
 	// load just restarts the build.
 	float m_flJhlDeadTime = 0;
+	float m_flJhlNextFlash = 0; // The next of the finale's extra flashes.
+	static constexpr float JhlFinaleTime = 4; // How long its finale's flashes and rain go on.
 
 	Vector m_vecGoal;
 
@@ -377,6 +379,7 @@ void CNihilanth::Precache()
 	PRECACHE_SOUND_ARRAY(pPainSounds);
 	PRECACHE_SOUND_ARRAY(pDeathSounds);
 	PrecacheSound("debris/beamstart7.wav");
+	PrecacheModel("sprites/Fexplo1.spr"); // johnhalflife: its finale's extra flashes.
 	PrecacheSound("weapons/electro4.wav"); // johnhalflife: crackles where its death bolts land.
 	PrecacheSound("weapons/electro5.wav");
 	PrecacheSound("weapons/electro6.wav");
@@ -629,6 +632,44 @@ void CNihilanth::DyingThink()
 
 		const float build = m_flJhlDeadTime == 0 ? 0 : std::min(1.f, (gpGlobals->time - m_flJhlDeadTime) / 3);
 		UTIL_ScreenShake(pev->origin, 1 + 5 * build, 40, 0.3f, 0);
+
+		// The finale, for its first seconds as the map's ending plays: more of the map's big flashes around its head,
+		// and a rain of long spark showers and ember specks.
+		if (m_flJhlDeadTime != 0 && gpGlobals->time - m_flJhlDeadTime < JhlFinaleTime)
+		{
+			Vector head, angles;
+			GetAttachment(0, head, angles);
+
+			const auto aroundHead = [&]()
+			{
+				Vector direction;
+
+				do
+				{
+					direction = Vector(RANDOM_FLOAT(-1, 1), RANDOM_FLOAT(-1, 1), RANDOM_FLOAT(-1, 1));
+				} while (DotProduct(direction, direction) > 1 || DotProduct(direction, direction) < 0.01f);
+
+				return head + direction.Normalize() * RANDOM_FLOAT(60, 300);
+			};
+
+			if (gpGlobals->time >= m_flJhlNextFlash)
+			{
+				m_flJhlNextFlash = gpGlobals->time + RANDOM_FLOAT(0.15f, 0.4f);
+
+				// As the map's end_tele_flashes (Fexplo1 at scale 15), sized 12-18.
+				const Vector flash = aroundHead();
+				MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
+				WRITE_BYTE(TE_SPRITE);
+				WRITE_COORD_VECTOR(flash);
+				WRITE_SHORT(g_engfuncs.pfnModelIndex("sprites/Fexplo1.spr"));
+				WRITE_BYTE(RANDOM_LONG(120, 180)); // scale * 10
+				WRITE_BYTE(255);				   // brightness
+				MESSAGE_END();
+			}
+
+			UTIL_JhlSparkShowers(aroundHead(), 2, 1.5f);
+			UTIL_JhlEmberBurst(aroundHead(), 25, 160);
+		}
 	}
 
 	GetAttachment(0, vecSrc, vecAngles);
