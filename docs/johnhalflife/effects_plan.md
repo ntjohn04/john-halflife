@@ -304,6 +304,23 @@ one per hand width 30 noise 80): with `jhl_fx_particlesystem`, a thin, wild, dim
   suit taking it, as armor ricochets spark), a player it went straight into or a creature none, a wall one half
   the time.
 
+**The vortigaunt's pattern** is the template for other beams: a thin, wild, dimmer strand on each
+(`UTIL_JhlBeamStrand`, effects.cpp: the beam's ends, type and color, its own width, noise ±25% each time,
+brightness; called again to follow a beam that moved), a faint light where small beams touch, and where an attack
+hits a big light shrinking away over 1.5 s with sparks by what it hit (a player whose suit lost charge 2-3 showers,
+a player it went straight into or a creature none, a wall one half the time).
+
+**Voltigore** (Opposing Force, `voltigore.cpp`; `lgtning`, purple):
+
+* Charging (3 beams converging where its ball forms, width 50 noise 20): strands width 20 noise 100 brightness
+  102, and a faint purple light (90,10,130) of 72 units where they meet, about 1 s.
+* The ball (`charged_bolt`, `blueflare2`), re-aiming 2 beams at what's near every 0.05 s (to surfaces width 30
+  noise 80, to creatures noise 20, reused): strands width 12 noise 210 (100 to creatures) brightness 102 following
+  them, and every other re-aim a faint purple light where they touch, 0.15 s.
+* Its impact (vanilla: a scorch, damage, silent): a purple light (200,60,255) of 200 units shrinking away over
+  1.5 s, sparks as above, and Opposing Force's `weapons/shock_impact.wav` pitched down to 80-95.
+* Its death beams (to what's near, noise 128-192, 0.6 s): strands width 12 noise 210, faint lights 0.6 s.
+
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 
 * Falling: vanilla sends one `zerogxplode` every 0.2 s at a random point under the hull (scale 3-5.9, 12 fps),

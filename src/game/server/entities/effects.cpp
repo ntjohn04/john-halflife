@@ -268,6 +268,38 @@ void CBeam::EntsInit(int startIndex, int endIndex)
 	RelinkBeam();
 }
 
+CBeam* UTIL_JhlBeamStrand(CBeam* strand, CBeam* beam, int width, int noise, int brightness)
+{
+	if (!beam)
+		return strand;
+
+	if (!strand)
+	{
+		strand = CBeam::BeamCreate(STRING(beam->pev->model), width);
+
+		if (!strand)
+			return nullptr;
+
+		strand->pev->spawnflags |= SF_BEAM_TEMPORARY; // Flag these to be destroyed on save/restore or level transition
+	}
+
+	// The beam's ends (start point and entity, end point and entity, with attachments), type and flags, color.
+	strand->pev->rendermode = beam->pev->rendermode;
+	strand->pev->origin = beam->pev->origin;
+	strand->pev->angles = beam->pev->angles;
+	strand->pev->sequence = beam->pev->sequence;
+	strand->pev->skin = beam->pev->skin;
+	strand->pev->rendercolor = beam->pev->rendercolor;
+	strand->SetScrollRate(beam->GetScrollRate());
+
+	strand->SetWidth(width);
+	strand->SetNoise(std::min(255, static_cast<int>(noise * RANDOM_FLOAT(0.75f, 1.25f))));
+	strand->SetBrightness(brightness);
+	strand->RelinkBeam();
+
+	return strand;
+}
+
 void CBeam::RelinkBeam()
 {
 	const Vector &startPos = GetStartPos(), &endPos = GetEndPos();

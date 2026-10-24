@@ -16,6 +16,8 @@
 #include "cbase.h"
 #include "squadmonster.h"
 #include "voltigore.h"
+#include "jhl_effects.h"
+#include "effects.h"
 
 class COFChargedBolt : public CBaseEntity
 {
@@ -51,6 +53,11 @@ public:
 	int m_iShowerSparks;
 	EntityHandle<CBeam> m_pBeam[VOLTIGORE_BEAM_COUNT];
 	int m_iBeams;
+
+	// johnhalflife: a strand on each beam (UTIL_JhlBeamStrand), and which of its beam re-aims lights where they touch
+	// (every other). Not saved: beams are temporary.
+	EntityHandle<CBeam> m_pStrands[VOLTIGORE_BEAM_COUNT];
+	int m_iArmBeamCount = 0;
 	CBaseAnimating* m_pAttachEnt;
 	int m_iAttachIdx;
 };
@@ -74,6 +81,7 @@ void COFChargedBolt::Precache()
 	PrecacheModel("sprites/blueflare2.spr");
 	PrecacheModel("sprites/lgtning.spr");
 	m_iShowerSparks = PrecacheModel("sprites/spark1.spr");
+	PrecacheSound("weapons/shock_impact.wav");
 }
 
 void COFChargedBolt::Spawn()
@@ -114,6 +122,15 @@ void COFChargedBolt::ClearBeams()
 		{
 			UTIL_Remove(pBeam);
 			pBeam = nullptr;
+		}
+	}
+
+	for (auto& strand : m_pStrands)
+	{
+		if (strand)
+		{
+			UTIL_Remove(strand);
+			strand = nullptr;
 		}
 	}
 
@@ -222,6 +239,16 @@ void COFChargedBolt::ArmBeam(int side)
 		pBeam->SetNoise(80);
 	}
 
+	// johnhalflife: as the vortigaunt's beams, a thin, wild, dimmer strand, and every other re-aim a faint purple
+	// light where it touches (it re-aims 40 times a second).
+	if (UTIL_JhlParticleSystem())
+	{
+		m_pStrands[m_iBeams] = UTIL_JhlBeamStrand(m_pStrands[m_iBeams], pBeam, 12, pBeam->GetNoise() > 40 ? 210 : 100, 102);
+
+		if ((m_iArmBeamCount++ % 2) == 0)
+			UTIL_JhlDynamicLight(tr.vecEndPos + tr.vecPlaneNormal * 8, 72, 90, 10, 130, 0.15f, 0);
+	}
+
 	++m_iBeams;
 }
 
@@ -248,6 +275,11 @@ void COFChargedBolt::ChargedBoltTouch(CBaseEntity* pOther)
 	SetTouch(nullptr);
 	SetThink(nullptr);
 
+	// johnhalflife: where it hits, a little back along its flight; and the armor of what it hit, to tell after the
+	// damage whether a player's suit took it.
+	const Vector impact = pev->origin - pev->velocity.Normalize() * 4;
+	const float armorBefore = pOther->pev->armorvalue;
+
 	if (pOther->pev->takedamage == DAMAGE_NO)
 	{
 		if (0 == strcmp("worldspawn", STRING(pOther->pev->classname)))
@@ -273,6 +305,23 @@ void COFChargedBolt::ChargedBoltTouch(CBaseEntity* pOther)
 	ClearMultiDamage();
 
 	RadiusDamage(pev->origin, this, pevOwner, GetSkillFloat("voltigore_dmg_beam"sv), 128.0, DMG_ALWAYSGIB | DMG_SHOCK);
+
+	// johnhalflife: as the vortigaunt's zap where it hits: a big purple light shrinking away over 1.5 s, sparks (a
+	// player whose suit lost charge 2-3 showers, a player it went straight into or a creature none, a wall one half
+	// the time), and a heavy electric crack (vanilla: silent).
+	if (UTIL_JhlParticleSystem())
+	{
+		int showers = 0;
+
+		if (pOther->IsPlayer())
+			showers = pOther->pev->armorvalue < armorBefore ? RANDOM_LONG(2, 3) : 0;
+		else if (pOther->IsBSPModel())
+			showers = RANDOM_LONG(0, 1);
+
+		UTIL_JhlSparkShowers(impact, showers);
+		UTIL_JhlDynamicLight(impact, 200, 200, 60, 255, 1.5f, 200 / 1.5f);
+		EmitSoundDyn(CHAN_WEAPON, "weapons/shock_impact.wav", 1, ATTN_NORM, 0, RANDOM_LONG(80, 95));
+	}
 
 	SetThink(&COFChargedBolt::ShutdownChargedBolt);
 	pev->nextthink = gpGlobals->time + 0.5;
@@ -843,8 +892,16 @@ void COFVoltigore::StartTask(const Task_t* pTask)
 			pBeam->SetBrightness(255);
 			pBeam->SetNoise(20);
 
+			// johnhalflife: as the vortigaunt's zap, a thin, wild, dimmer strand.
+			if (UTIL_JhlParticleSystem())
+				m_pStrands[m_iBeams] = UTIL_JhlBeamStrand(nullptr, pBeam, 20, 100, 102);
+
 			++m_iBeams;
 		}
+
+		// And a faint purple light where they meet, as the vortigaunt's charging beams.
+		if (UTIL_JhlParticleSystem())
+			UTIL_JhlDynamicLight(vecConverge, 72, 90, 10, 130, 1, 20);
 
 		if (CanUseRangeAttacks())
 		{
@@ -1041,6 +1098,15 @@ void COFVoltigore::ClearBeams()
 
 	m_iBeams = 0;
 
+	for (auto& strand : m_pStrands)
+	{
+		if (strand)
+		{
+			UTIL_Remove(strand);
+			strand = nullptr;
+		}
+	}
+
 	pev->skin = 0;
 
 	if (m_pChargedBolt)
@@ -1124,6 +1190,18 @@ void COFVoltigore::DeathGibThink()
 
 			pBeam->SetThink(&CBaseEntity::SUB_Remove);
 			pBeam->pev->nextthink = gpGlobals->time + 0.6;
+
+			// johnhalflife: a strand, gone with it, and a faint purple light where it touches.
+			if (UTIL_JhlParticleSystem())
+			{
+				if (CBeam* strand = UTIL_JhlBeamStrand(nullptr, pBeam, 12, 210, 102); strand)
+				{
+					strand->SetThink(&CBaseEntity::SUB_Remove);
+					strand->pev->nextthink = gpGlobals->time + 0.6;
+				}
+
+				UTIL_JhlDynamicLight(tr.vecEndPos + tr.vecPlaneNormal * 8, 72, 90, 10, 130, 0.6f, 0);
+			}
 		}
 
 		ClearMultiDamage();

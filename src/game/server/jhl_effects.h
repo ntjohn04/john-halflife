@@ -48,6 +48,16 @@ void UTIL_JhlExplosionShake(const Vector& origin, float scale);
  */
 void UTIL_JhlExplosionBubbles(const Vector& origin, float scale);
 
+class CBeam;
+
+/**
+ *	@brief johnhalflife's beam pattern (the vortigaunt's): a thin, wild, dimmer strand layered on a beam, with the
+ *	same ends, type, flags and color, its own @p width, @p noise (±25% each time) and @p brightness. Call it again
+ *	with the strand it returned to follow a beam that moved (effects.cpp). Temporary, as monsters' beams are.
+ *	@return The strand (@p strand, or a new one), or null if it couldn't be made.
+ */
+CBeam* UTIL_JhlBeamStrand(CBeam* strand, CBeam* beam, int width, int noise, int brightness);
+
 /**
  *	@brief A dynamic light (TE_DLIGHT): @p radius in units, @p life in seconds, fading @p decay units a second.
  */
