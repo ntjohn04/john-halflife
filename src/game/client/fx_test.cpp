@@ -433,10 +433,11 @@ void ShowerCallback(TEMPENTITY* ent, float frametime, float currenttime)
 	{
 		gEngfuncs.pEfxAPI->R_SparkStreaks(origin, custom.renderamt, -custom.rendermode, custom.rendermode);
 
-		if (const int flash = ModelIndex("sprites/richo1.spr"); flash != 0 && custom.skin > 0)
+		// The engine's own bursts use a copy of richo1 that maps don't precache; load it as a HUD sprite.
+		if (const HSPRITE flash = gEngfuncs.pfnSPR_Load("sprites/richo1.spr"); flash > 0 && custom.skin > 0)
 		{
 			const float scale = custom.skin / 100.f;
-			gEngfuncs.pEfxAPI->R_RicochetSprite(origin, gEngfuncs.hudGetModelByIndex(flash), 0.1f,
+			gEngfuncs.pEfxAPI->R_RicochetSprite(origin, const_cast<model_t*>(gEngfuncs.GetSpritePointer(flash)), 0.1f,
 				gEngfuncs.pfnRandomFloat(scale * 0.5f, scale));
 		}
 	}
