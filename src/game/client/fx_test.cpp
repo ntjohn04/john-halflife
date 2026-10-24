@@ -620,6 +620,46 @@ void Beam(const Target& target, Params& p)
 	}
 }
 
+// A ring (TE_BEAMCYLINDER, TE_BEAMTORUS, TE_BEAMDISK): a beam bent into a circle around a point, growing by its axis
+// length every second (the game sends radius / life to reach a radius as it dies). Units as the client takes them:
+// a message's width, noise, life and speed are tenths, hundredths, tenths and tenths of these.
+void Ring(const Target& target, Params& p)
+{
+	const auto type = p.String("type", "cylinder");
+	auto name = p.String("sprite", "sprites/shockwave.spr");
+	const float radius = p.Float("radius", 384);
+	const float life = std::max(0.05f, p.Float("life", 0.2f));
+	const float width = p.Float("width", 1.6f);
+	const float noise = p.Float("noise", 0);
+	const float brightness = p.Float("brightness", 1);
+	const Vector color = p.Color("color", {188, 220, 255});
+	const float fps = p.Float("fps", 0);
+	const float speed = p.Float("speed", 0);
+	const float offset = p.Float("offset", 16);
+	// up: lying flat, as the game's are; normal: facing out of the surface aimed at.
+	const bool up = p.String("axis", "up") != "normal";
+	p.Print("ring");
+
+	const int ringType = type == "torus" ? TE_BEAMTORUS : type == "disk" ? TE_BEAMDISK : TE_BEAMCYLINDER;
+
+	int model = gEngfuncs.pEventAPI->EV_FindModelIndex(name.c_str());
+
+	// Only sprites the map loaded can be used; the hornet gun's laserbeam always is.
+	if (model == 0)
+	{
+		gEngfuncs.Con_Printf("  (%s isn't loaded by this map; using sprites/laserbeam.spr)\n", name.c_str());
+		model = ModelIndex("sprites/laserbeam.spr");
+	}
+
+	if (model == 0)
+		return;
+
+	Vector center = target.Position + target.Normal * offset;
+	Vector axis = center + (up ? Vector{0, 0, 1} : target.Normal) * (radius / life);
+	gEngfuncs.pEfxAPI->R_BeamCirclePoints(ringType, center, axis, model, life, width, noise, brightness, speed, 0, fps,
+		color.x / 255, color.y / 255, color.z / 255);
+}
+
 // The engine's built-in particle effects (palette colors 0-255).
 void Particles(const Target& target, Params& p)
 {
@@ -915,6 +955,56 @@ void VortZapPreset(const Target& target, Params& p)
 	Light(lightTarget, light);
 }
 
+// A houndeye's blast (CHoundeye::SonicAttack): two rings, to its attack radius (384) and half of it, in 0.2 s,
+// colored by its squad's size.
+void HoundeyePreset(const Target& target, Params& p)
+{
+	const int squad = p.Int("squad", 1);
+	p.Print("houndeye (CHoundeye::SonicAttack: two TE_BEAMCYLINDERs, shockwave.spr, 16 up; squad=1-4 sets the color)");
+
+	const Vector color = squad == 2 ? Vector{101, 133, 221} : squad == 3 ? Vector{67, 85, 255} : squad == 4 ? Vector{62, 33, 211} : Vector{188, 220, 255};
+
+	for (const float radius : {384.f, 192.f})
+	{
+		Params ring;
+		ring.Set("radius", radius);
+		ring.Set("color", color);
+		Ring(target, ring);
+	}
+}
+
+// A helicopter's crash ring (CApache::DyingThink white.spr, COsprey::DyingThink rope.spr): axis 2000 over 0.4 s,
+// so 800 units; vanilla centers it on the wreck in the air.
+void HeliRingPreset(const Target& target, Params& p)
+{
+	const bool osprey = p.String("type", "apache") == "osprey";
+	p.Print("heliring (the Apache's and Osprey's crash TE_BEAMCYLINDER; type=apache|osprey)");
+
+	Params ring;
+	ring.Set("sprite", osprey ? "sprites/rope.spr" : "sprites/white.spr");
+	ring.Set("radius", 800.f);
+	ring.Set("life", 0.4f);
+	ring.Set("width", 3.2f);
+	ring.Set("color", {255, 255, 192});
+	ring.Set("brightness", 0.5f);
+	ring.Set("offset", 0.f);
+	Ring(target, ring);
+}
+
+// The displacer ball's impact ring (CDisplacerBall::BallTouch): axis 800 over 0.3 s, so 240 units, at the ball.
+void DisplacerRingPreset(const Target& target, Params& p)
+{
+	p.Print("dispring (CDisplacerBall::BallTouch: TE_BEAMCYLINDER, disp_ring.spr, white, at the ball)");
+
+	Params ring;
+	ring.Set("sprite", "sprites/disp_ring.spr");
+	ring.Set("radius", 240.f);
+	ring.Set("life", 0.3f);
+	ring.Set("color", {255, 255, 255});
+	ring.Set("offset", 8.f);
+	Ring(target, ring);
+}
+
 struct Command
 {
 	const char* Name;
@@ -934,6 +1024,9 @@ const std::vector<Command>& Commands()
 		{"sniperhit", "type=human|alien", SniperHitPreset},
 		{"apache", "time=4", ApachePreset},
 		{"vortzap", "", VortZapPreset},
+		{"houndeye", "squad=1-4", HoundeyePreset},
+		{"heliring", "type=apache|osprey", HeliRingPreset},
+		{"dispring", "", DisplacerRingPreset},
 		{"sprite", "sprite= count= scale= alpha= render=alpha|add|glow|normal color=r,g,b fps= life= loop= offset= radius= speed= spread= up= gravity=0|1|2 fade= collide=", Sprite},
 		{"explosion", "sprite= scale= fps= offset= additive= light= sound= particles= rocket= sparks= breakable=", Explosion},
 		{"smoke", "sprite= scale= fps= offset=", Smoke},
@@ -946,6 +1039,7 @@ const std::vector<Command>& Commands()
 		{"debris", "model= count= size= speed= spread= life= material=metal|wood|glass|flesh|concrete|none", Debris},
 		{"light", "radius= color=r,g,b life= decay= offset=", Light},
 		{"beam", "sprite= width= noise= brightness= color=r,g,b life= speed= fps=", Beam},
+		{"ring", "type=cylinder|torus|disk sprite= radius= life= width= noise= brightness= color=r,g,b fps= speed= offset= axis=up|normal", Ring},
 		{"particles", "type=burst|explosion|explosion2|blob|lava|teleport|implosion|effect size= color= life= length= radius= count=", Particles},
 		{"ricochet", "scale= sprite=", Ricochet},
 		{"gibs", "type=human|alien count= velocity=fraction|double|quadruple head= sound=", Gibs},

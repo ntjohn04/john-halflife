@@ -23,6 +23,9 @@ These reproduce an event with the original values. Each lists its parts, which a
 | `sniperhit` | `type=human\|alien` | An M40A1 hit on something that bleeds | **bloodstream** color 70 (yellow: 195), speed 150, aimed back at the shooter with the **full distance** as its direction, which stretches it into a long line; the normal hit blood (size 10 for the sniper's 100 damage) |
 | `apache` | `time=4` | An Apache crashing, every 0.1 s for the 4 s it falls | **explosion** at a random point ±150 sideways, 50–150 below, scale 3.0–5.9, fps 12; **smoke** at another, scale 10, fps 10; **debris** `metalplategibs_green.mdl`, 4 pieces, box 400×400×132, spread 50, life 3, metal |
 | `vortzap` | | A vortigaunt's attack | **beam** `lgtning.spr`, color 180,255,96, brightness 1, noise 20 (0.2 here); **light** radius 80, color 255,180,96, 1 s. The beam's width, CBeam 50, is matched by eye (5 here). |
+| `houndeye` | `squad=1` | A houndeye's blast | Two **rings** (cylinder) `shockwave.spr`, radius 384 and 192, 0.2 s, width 1.6, 16 up; color by squad size 1-4: 188,220,255 / 101,133,221 / 67,85,255 / 62,33,211. |
+| `heliring` | `type=apache` | A helicopter's crash ring | **ring** (cylinder) `white.spr` (Osprey `rope.spr`), radius 800, 0.4 s, width 3.2, color 255,255,192, brightness 0.5. |
+| `dispring` | | The displacer ball's impact ring | **ring** (cylinder) `disp_ring.spr`, radius 240, 0.3 s, width 1.6, white. |
 
 ## Primitives: one building block each
 
@@ -39,6 +42,7 @@ These reproduce an event with the original values. Each lists its parts, which a
 | `debris` | Model debris (`TE_BREAKMODEL`) | `model=models/metalplategibs.mdl count=8 size=32 speed=100 spread=100 life=3 material=metal` |
 | `light` | A dynamic light | `radius=200 color=255,180,96 life=1 decay=0 offset=8` |
 | `beam` | A beam from you to the target (`TE_BEAMPOINTS`) | `sprite=sprites/lgtning.spr width=5 noise=0.2 brightness=1 color=180,255,96 life=0.5 speed=0 fps=10` |
+| `ring` | A ring around the target, growing to its radius over its life (`TE_BEAMCYLINDER`, `TE_BEAMTORUS`, `TE_BEAMDISK`); a sprite the map didn't load falls back to `laserbeam.spr` | `type=cylinder sprite=sprites/shockwave.spr radius=384 life=0.2 width=1.6 noise=0 brightness=1 color=188,220,255 fps=0 speed=0 offset=16 axis=up` |
 | `particles` | The engine's built-in particle effects | `type=burst` (`size=16 color=0 life=1`), `explosion`, `explosion2` (`color=0 length=16`), `blob`, `lava`, `teleport`, `implosion` (`radius=64 count=32 life=1`), `effect` (`color=0 count=32`) |
 | `ricochet` | The engine ricochet flash and sound (`TE_ARMOR_RICOCHET`) | `scale=1 sprite=sprites/richo1.spr` |
 | `gibs` | The game's gibs | `type=human count=0 velocity=quadruple head=1 sound=1` (`count=0` uses `cl_gibcount`) |
