@@ -296,6 +296,10 @@ one per hand width 30 noise 80): with `jhl_fx_particlesystem`, a thin, wild, dim
   with it (BeamGlow).
 * Zap: the vanilla beam, and a strand width 20 noise 100 brightness 102 (0.4).
 * Revive: the vanilla beam, and a strand width 12 noise 210 brightness 102 (0.4).
+* Each strand's noise ±25% per strike.
+* The charging beams light where they touch: 40 units, dim green (48,96,16), about 1 s, fading.
+* Where the zap hits: a spark burst (`UTIL_JhlSparkShowers`, a shower half the time) and a pale green light
+  (120,255,64), 100 units, fading over 0.3 s. (Vanilla lights only the vortigaunt, orange, as it starts charging.)
 
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 

@@ -687,10 +687,12 @@ void CISlave::ArmBeam(int side)
 
 	// johnhalflife: a little smoother, with a thin, wild strand at 80% of its brightness, brightening with it as it
 	// charges (BeamGlow).
+	// And a faint light where it touches, so the surface shows even in the dark.
 	if (UTIL_JhlParticleSystem())
 	{
 		m_pBeam[m_iBeams]->SetNoise(60);
 		LayerBeam(m_pBeam[m_iBeams], 18, 210, 51, 0.8f);
+		UTIL_JhlDynamicLight(tr.vecEndPos + tr.vecPlaneNormal * 4, 40, 48, 96, 16, 1 / pev->framerate, 20);
 	}
 
 	m_iBeams++;
@@ -732,7 +734,7 @@ void CISlave::LayerBeam(CBeam* beam, int width, int noise, int brightness, float
 	layer->SetColor(static_cast<int>(beam->pev->rendercolor.x), static_cast<int>(beam->pev->rendercolor.y),
 		static_cast<int>(beam->pev->rendercolor.z));
 	layer->SetBrightness(brightness);
-	layer->SetNoise(noise);
+	layer->SetNoise(std::min(255, static_cast<int>(noise * RANDOM_FLOAT(0.75f, 1.25f)))); // Each strike its own.
 	layer->pev->spawnflags |= SF_BEAM_TEMPORARY;
 
 	m_pLayerBeams[m_iLayerBeams] = layer;
@@ -791,8 +793,15 @@ void CISlave::ZapBeam(int side)
 	m_pBeam[m_iBeams]->SetNoise(20);
 	m_pBeam[m_iBeams]->pev->spawnflags |= SF_BEAM_TEMPORARY; // Flag these to be destroyed on save/restore or level transition
 
-	// johnhalflife: a thin, wild, dimmer strand around it.
+	// johnhalflife: a thin, wild, dimmer strand around it; where it hits, sparks and a short green light.
 	LayerBeam(m_pBeam[m_iBeams], 20, 100, 102);
+
+	if (UTIL_JhlParticleSystem() && tr.flFraction < 1.0)
+	{
+		const Vector hit = tr.vecEndPos - vecAim * 2;
+		UTIL_JhlSparkShowers(hit, RANDOM_LONG(0, 1));
+		UTIL_JhlDynamicLight(hit, 100, 120, 255, 64, 0.3f, 300);
+	}
 
 	m_iBeams++;
 

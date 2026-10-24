@@ -49,6 +49,23 @@ void UTIL_JhlExplosionShake(const Vector& origin, float scale);
 void UTIL_JhlExplosionBubbles(const Vector& origin, float scale);
 
 /**
+ *	@brief A dynamic light (TE_DLIGHT): @p radius in units, @p life in seconds, fading @p decay units a second.
+ */
+inline void UTIL_JhlDynamicLight(const Vector& position, float radius, int r, int g, int b, float life, float decay)
+{
+	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, position);
+	WRITE_BYTE(TE_DLIGHT);
+	WRITE_COORD_VECTOR(position);
+	WRITE_BYTE(static_cast<int>(radius / 10)); // radius * 0.1
+	WRITE_BYTE(r);
+	WRITE_BYTE(g);
+	WRITE_BYTE(b);
+	WRITE_BYTE(static_cast<int>(life * 10)); // time * 10
+	WRITE_BYTE(static_cast<int>(decay / 10)); // decay * 0.1
+	MESSAGE_END();
+}
+
+/**
  *	@brief Spark showers, as explosions throw them (the client's, jhl_explosions.cpp), going up from a point: TE_SPARKS
  *	through the SDK's own temp entity message (position, then the number of showers).
  */
