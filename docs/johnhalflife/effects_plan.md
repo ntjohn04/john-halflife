@@ -386,6 +386,20 @@ The displacer's victims get no blood pool (combat.cpp: its ball kills them witho
   `end_greenbeams2`, width 25.5; (24,150,40), 0.5 s): vanilla, kept as is. A change to map beams (`env_beam`,
   `env_laser`) must leave scripted set-piece beams like these alone.
 
+**Map arcs** (`env_beam`, `env_lightning`; `CLightning`, effects.cpp): a beam is an electric arc (`JhlArc`) if it
+uses `lgtning.spr`, has noise 20 (0.2) or more and isn't a ring; each gets the vortigaunt's strand, width 0.4 of
+its own (at least 1), noise 2.5 times (±25% each strike, at most 255), brightness 0.4. Lasting beams get a lasting
+strand (`UTIL_JhlBeamStrand`, made in `Activate` for new maps and saves alike, on and off with the beam, removed
+with it); striking ones send a second strike each time (`SendStrike`, `SendZap`). Lasers, plasma, crystal and
+teleport beams (other sprites, or smooth), `env_laser` and c4a3's finale are left as vanilla by the rule.
+
+**Gene Worm** (Opposing Force, `geneworm.cpp`): the warp beams its spawn sphere strikes (`lgtning`, width 30, yellow,
+to creatures noise 20 brightness 255, to surfaces noise 80 brightness 192, 1 s): a strand each, width 12, noise 2.5
+times ±25%, brightness 0.4, gone with the beam.
+
+**Electrified wires** (Opposing Force, `CElectrifiedWire.cpp`; arcs between rope segments, `lgtning`, width 10,
+noise 80, white, 0.1 s): a strand each, width 4, noise 200 ±25%, brightness 102.
+
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 
 * Falling: vanilla sends one `zerogxplode` every 0.2 s at a random point under the hull (scale 3-5.9, 12 fps),

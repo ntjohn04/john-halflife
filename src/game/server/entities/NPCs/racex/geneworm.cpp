@@ -13,6 +13,7 @@
  *
  ****/
 #include "cbase.h"
+#include "jhl_effects.h"
 
 const int AE_GENEWORM_SPIT_START = 0;
 const int AE_GENEWORM_LAUNCH_SPAWN = 2;
@@ -531,6 +532,20 @@ void COFGeneWormSpawn::CreateWarpBeams(int side)
 
 	m_pBeam[m_iBeams]->SetThink(&CBeam::SUB_Remove);
 	m_pBeam[m_iBeams]->pev->nextthink = gpGlobals->time + 1;
+
+	// johnhalflife: the vortigaunt's strand on the arc, going with it.
+	if (UTIL_JhlParticleSystem())
+	{
+		CBeam* beam = m_pBeam[m_iBeams];
+
+		if (CBeam* strand = UTIL_JhlBeamStrand(nullptr, beam, 12, std::min(255, beam->GetNoise() * 5 / 2),
+				beam->GetBrightness() * 2 / 5);
+			strand)
+		{
+			strand->SetThink(&CBeam::SUB_Remove);
+			strand->pev->nextthink = beam->pev->nextthink;
+		}
+	}
 
 	++m_iBeams;
 }

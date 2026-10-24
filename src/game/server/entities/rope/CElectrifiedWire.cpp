@@ -17,6 +17,7 @@
 #include "CRopeSegment.h"
 
 #include "CElectrifiedWire.h"
+#include "jhl_effects.h"
 
 BEGIN_DATAMAP(CElectrifiedWire)
 DEFINE_FIELD(m_bIsActive, FIELD_BOOLEAN),
@@ -231,20 +232,28 @@ void CElectrifiedWire::DoLightning()
 		pSegment2 = GetSegments()[uiSegment2];
 	}
 
-	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
-	WRITE_BYTE(TE_BEAMENTS);
-	WRITE_SHORT(pSegment1->entindex());
-	WRITE_SHORT(pSegment2->entindex());
-	WRITE_SHORT(m_iLightningSprite);
-	WRITE_BYTE(0);
-	WRITE_BYTE(0);
-	WRITE_BYTE(1);
-	WRITE_BYTE(10);
-	WRITE_BYTE(80);
-	WRITE_BYTE(255);
-	WRITE_BYTE(255);
-	WRITE_BYTE(255);
-	WRITE_BYTE(255);
-	WRITE_BYTE(255);
-	MESSAGE_END();
+	// johnhalflife: and the vortigaunt's strand on the arc (thin, wild, dimmer).
+	const int passes = UTIL_JhlParticleSystem() ? 2 : 1;
+
+	for (int i = 0; i < passes; ++i)
+	{
+		const bool strand = i > 0;
+
+		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
+		WRITE_BYTE(TE_BEAMENTS);
+		WRITE_SHORT(pSegment1->entindex());
+		WRITE_SHORT(pSegment2->entindex());
+		WRITE_SHORT(m_iLightningSprite);
+		WRITE_BYTE(0);
+		WRITE_BYTE(0);
+		WRITE_BYTE(1);
+		WRITE_BYTE(strand ? 4 : 10);
+		WRITE_BYTE(strand ? std::min(255, static_cast<int>(200 * RANDOM_FLOAT(0.75f, 1.25f))) : 80);
+		WRITE_BYTE(255);
+		WRITE_BYTE(255);
+		WRITE_BYTE(255);
+		WRITE_BYTE(strand ? 102 : 255);
+		WRITE_BYTE(255);
+		MESSAGE_END();
+	}
 }

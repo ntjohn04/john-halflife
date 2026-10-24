@@ -403,6 +403,40 @@ public:
 
 	void BeamUpdateVars();
 
+	void UpdateOnRemove() override;
+
+	/**
+	 *	@brief johnhalflife (jhl_fx_particlesystem): whether this is an electric arc that gets the vortigaunt's strand
+	 *	(UTIL_JhlBeamStrand): lgtning.spr, noisy (0.2 or more), not a ring. Smooth beams (lasers, plasma, crystal and
+	 *	teleport beams, c4a3's finale) aren't.
+	 */
+	bool JhlArc();
+
+	// The strand's width, noise and brightness, from the beam's.
+	int JhlStrandWidth() const { return std::max(1, static_cast<int>(m_boltWidth * 0.4f)); }
+	int JhlStrandNoise() const { return std::min(255, static_cast<int>(m_noiseAmplitude * 2.5f)); }
+	int JhlStrandBrightness() const { return static_cast<int>(pev->renderamt * 0.4f); }
+
+	// A strike's strand noise, ±25% each strike (as UTIL_JhlBeamStrand's).
+	int JhlStrandStrikeNoise() const
+	{
+		return std::min(255, static_cast<int>(JhlStrandNoise() * RANDOM_FLOAT(0.75f, 1.25f)));
+	}
+
+	/**
+	 *	@brief A strike between two entities (TE_BEAMENTS, or with a point entity TE_BEAMENTPOINT or TE_BEAMPOINTS; the
+	 *	point entity must be @p end), with its width, noise and brightness.
+	 */
+	void SendStrike(CBaseEntity* start, CBaseEntity* end, int width, int noise, int brightness);
+
+	/**
+	 *	@brief A strike between two points (TE_BEAMPOINTS), with its width, noise and brightness.
+	 */
+	void SendZap(const Vector& vecSrc, const Vector& vecDest, int width, int noise, int brightness);
+
+	// A lasting arc's strand (not saved: temporary, made again in Activate).
+	EHANDLE m_hJhlStrand;
+
 	static CLightning* LightningCreate(const char* pSpriteName, int width)
 	{
 		auto lightning = g_EntityDictionary->Create<CLightning>("env_beam");
@@ -509,7 +543,45 @@ void CLightning::Precache()
 void CLightning::Activate()
 {
 	if (ServerSide())
+	{
 		BeamUpdateVars();
+
+		// johnhalflife: a lasting arc's strand, on and off with it (ToggleUse).
+		if (JhlArc())
+		{
+			if (CBeam* strand = UTIL_JhlBeamStrand(static_cast<CBeam*>(static_cast<CBaseEntity*>(m_hJhlStrand)), this,
+					JhlStrandWidth(), JhlStrandNoise(), JhlStrandBrightness());
+				strand)
+			{
+				strand->pev->effects = pev->effects;
+				m_hJhlStrand = strand;
+			}
+		}
+	}
+}
+
+void CLightning::UpdateOnRemove()
+{
+	if (CBaseEntity* strand = m_hJhlStrand; strand)
+	{
+		UTIL_Remove(strand);
+		m_hJhlStrand = nullptr;
+	}
+
+	CBeam::UpdateOnRemove();
+}
+
+bool CLightning::JhlArc()
+{
+	if (!UTIL_JhlParticleSystem() || m_noiseAmplitude < 20 || (pev->spawnflags & SF_BEAM_RING) != 0 ||
+		FStringNull(m_iszSpriteName))
+		return false;
+
+	std::string sprite = STRING(m_iszSpriteName);
+	std::transform(sprite.begin(), sprite.end(), sprite.begin(), [](unsigned char c)
+		{ return static_cast<char>(std::tolower(c)); });
+
+	return sprite.find("lgtning") != std::string::npos;
 }
 
 bool CLightning::KeyValue(KeyValueData* pkvd)
@@ -594,6 +666,9 @@ void CLightning::ToggleUse(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TY
 			pev->dmgtime = gpGlobals->time;
 		}
 	}
+
+	if (CBaseEntity* strand = m_hJhlStrand; strand)
+		strand->pev->effects = pev->effects;
 }
 
 void CLightning::StrikeUse(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE useType, float value)
@@ -668,57 +743,15 @@ void CLightning::StrikeThink()
 			}
 		}
 
-		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
-		if (IsPointEntity(pStart) || IsPointEntity(pEnd))
-		{
-			if (!IsPointEntity(pEnd)) // One point entity must be in pEnd
-			{
-				CBaseEntity* pTemp;
-				pTemp = pStart;
-				pStart = pEnd;
-				pEnd = pTemp;
-			}
-			if (!IsPointEntity(pStart)) // One sided
-			{
-				WRITE_BYTE(TE_BEAMENTPOINT);
-				WRITE_SHORT(pStart->entindex());
-				WRITE_COORD(pEnd->pev->origin.x);
-				WRITE_COORD(pEnd->pev->origin.y);
-				WRITE_COORD(pEnd->pev->origin.z);
-			}
-			else
-			{
-				WRITE_BYTE(TE_BEAMPOINTS);
-				WRITE_COORD(pStart->pev->origin.x);
-				WRITE_COORD(pStart->pev->origin.y);
-				WRITE_COORD(pStart->pev->origin.z);
-				WRITE_COORD(pEnd->pev->origin.x);
-				WRITE_COORD(pEnd->pev->origin.y);
-				WRITE_COORD(pEnd->pev->origin.z);
-			}
-		}
-		else
-		{
-			if ((pev->spawnflags & SF_BEAM_RING) != 0)
-				WRITE_BYTE(TE_BEAMRING);
-			else
-				WRITE_BYTE(TE_BEAMENTS);
-			WRITE_SHORT(pStart->entindex());
-			WRITE_SHORT(pEnd->entindex());
-		}
+		if ((IsPointEntity(pStart) || IsPointEntity(pEnd)) && !IsPointEntity(pEnd)) // One point entity must be in pEnd
+			std::swap(pStart, pEnd);
 
-		WRITE_SHORT(m_spriteTexture);
-		WRITE_BYTE(m_frameStart);			 // framestart
-		WRITE_BYTE((int)pev->framerate);	 // framerate
-		WRITE_BYTE((int)(m_life * 10.0));	 // life
-		WRITE_BYTE(m_boltWidth);			 // width
-		WRITE_BYTE(m_noiseAmplitude);		 // noise
-		WRITE_BYTE((int)pev->rendercolor.x); // r, g, b
-		WRITE_BYTE((int)pev->rendercolor.y); // r, g, b
-		WRITE_BYTE((int)pev->rendercolor.z); // r, g, b
-		WRITE_BYTE(pev->renderamt);			 // brightness
-		WRITE_BYTE(m_speed);				 // speed
-		MESSAGE_END();
+		SendStrike(pStart, pEnd, m_boltWidth, m_noiseAmplitude, pev->renderamt);
+
+		// johnhalflife: an arc's strand.
+		if (JhlArc())
+			SendStrike(pStart, pEnd, JhlStrandWidth(), JhlStrandStrikeNoise(), JhlStrandBrightness());
+
 		DoSparks(pStart->pev->origin, pEnd->pev->origin);
 		if (pev->dmg > 0)
 		{
@@ -758,9 +791,56 @@ void CLightning::DamageThink()
 	BeamDamage(&tr);
 }
 
-void CLightning::Zap(const Vector& vecSrc, const Vector& vecDest)
+void CLightning::SendStrike(CBaseEntity* pStart, CBaseEntity* pEnd, int width, int noise, int brightness)
 {
-#if 1
+	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
+	if (IsPointEntity(pStart) || IsPointEntity(pEnd))
+	{
+		if (!IsPointEntity(pStart)) // One sided
+		{
+			WRITE_BYTE(TE_BEAMENTPOINT);
+			WRITE_SHORT(pStart->entindex());
+			WRITE_COORD(pEnd->pev->origin.x);
+			WRITE_COORD(pEnd->pev->origin.y);
+			WRITE_COORD(pEnd->pev->origin.z);
+		}
+		else
+		{
+			WRITE_BYTE(TE_BEAMPOINTS);
+			WRITE_COORD(pStart->pev->origin.x);
+			WRITE_COORD(pStart->pev->origin.y);
+			WRITE_COORD(pStart->pev->origin.z);
+			WRITE_COORD(pEnd->pev->origin.x);
+			WRITE_COORD(pEnd->pev->origin.y);
+			WRITE_COORD(pEnd->pev->origin.z);
+		}
+	}
+	else
+	{
+		if ((pev->spawnflags & SF_BEAM_RING) != 0)
+			WRITE_BYTE(TE_BEAMRING);
+		else
+			WRITE_BYTE(TE_BEAMENTS);
+		WRITE_SHORT(pStart->entindex());
+		WRITE_SHORT(pEnd->entindex());
+	}
+
+	WRITE_SHORT(m_spriteTexture);
+	WRITE_BYTE(m_frameStart);			 // framestart
+	WRITE_BYTE((int)pev->framerate);	 // framerate
+	WRITE_BYTE((int)(m_life * 10.0));	 // life
+	WRITE_BYTE(width);					 // width
+	WRITE_BYTE(noise);					 // noise
+	WRITE_BYTE((int)pev->rendercolor.x); // r, g, b
+	WRITE_BYTE((int)pev->rendercolor.y); // r, g, b
+	WRITE_BYTE((int)pev->rendercolor.z); // r, g, b
+	WRITE_BYTE(brightness);				 // brightness
+	WRITE_BYTE(m_speed);				 // speed
+	MESSAGE_END();
+}
+
+void CLightning::SendZap(const Vector& vecSrc, const Vector& vecDest, int width, int noise, int brightness)
+{
 	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
 	WRITE_BYTE(TE_BEAMPOINTS);
 	WRITE_COORD(vecSrc.x);
@@ -773,14 +853,24 @@ void CLightning::Zap(const Vector& vecSrc, const Vector& vecDest)
 	WRITE_BYTE(m_frameStart);			 // framestart
 	WRITE_BYTE((int)pev->framerate);	 // framerate
 	WRITE_BYTE((int)(m_life * 10.0));	 // life
-	WRITE_BYTE(m_boltWidth);			 // width
-	WRITE_BYTE(m_noiseAmplitude);		 // noise
+	WRITE_BYTE(width);					 // width
+	WRITE_BYTE(noise);					 // noise
 	WRITE_BYTE((int)pev->rendercolor.x); // r, g, b
 	WRITE_BYTE((int)pev->rendercolor.y); // r, g, b
 	WRITE_BYTE((int)pev->rendercolor.z); // r, g, b
-	WRITE_BYTE(pev->renderamt);			 // brightness
+	WRITE_BYTE(brightness);				 // brightness
 	WRITE_BYTE(m_speed);				 // speed
 	MESSAGE_END();
+}
+
+void CLightning::Zap(const Vector& vecSrc, const Vector& vecDest)
+{
+#if 1
+	SendZap(vecSrc, vecDest, m_boltWidth, m_noiseAmplitude, pev->renderamt);
+
+	// johnhalflife: an arc's strand.
+	if (JhlArc())
+		SendZap(vecSrc, vecDest, JhlStrandWidth(), JhlStrandStrikeNoise(), JhlStrandBrightness());
 #else
 	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
 	WRITE_BYTE(TE_LIGHTNING);
