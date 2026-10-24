@@ -102,20 +102,27 @@ constexpr float LingeringSmokeDriftDecay = 0.3f; // Per second: drifting 40 unit
 
 // Spark showers, instead of the server's spark_shower entities (vanilla: 0-3, thrown off the surface at 200-300
 // ±100 sideways +200 up, half gravity, sparking every 0.1 s for 0.5-1.5 s; each burst the engine's TE_SPARKS, 8
-// streaks at ±200 and a richo1 flash of scale 0.5-1). Each shower picks its own values from these ranges.
+// streaks at ±200 and a richo1 flash of scale 0.5-1). Each shower is one of these kinds, so an explosion mixes
+// sparks that fly far, ones like vanilla's and ones that drop; then picks its own values from the kind's ranges.
+struct SparkKind
+{
+	float Chance;
+	float SpeedMin, SpeedMax; // Off the surface.
+	float UpMin, UpMax;		  // Added straight up (down off a ceiling).
+	float LifeMin, LifeMax;
+	bool FullGravity; // Otherwise half, as vanilla.
+	float Cone;		  // How far from the surface's direction it may leave: 0 straight out, 1 up to about 55 degrees.
+};
+
+constexpr SparkKind Flyer{0.3f, 350, 550, 150, 300, 1, 2.25f, false, 0.35f};
+constexpr SparkKind VanillaLike{0.4f, 200, 300, 150, 250, 0.5f, 1.5f, false, 0.5f};
+constexpr SparkKind Dropper{0.3f, 50, 150, 0, 100, 0.4f, 1.2f, true, 0.9f};
+
 constexpr int SparkShowersMin = 0;
 constexpr int SparkShowersMax = 10;
-constexpr float SparkSpeedMin = 50; // Off the surface.
-constexpr float SparkSpeedMax = 400;
-constexpr float SparkSpreadMin = 50; // Sideways, each way.
-constexpr float SparkSpreadMax = 150;
-constexpr float SparkUpMin = 100;
-constexpr float SparkUpMax = 250;
-constexpr float SparkLifeMin = 0.25f;
-constexpr float SparkLifeMax = 2.25f;
+constexpr int SparkShowersForEveryKind = 3; // From this many, there's always a flyer and a dropper.
 constexpr float SparkIntervalMin = 0.07f;
 constexpr float SparkIntervalMax = 0.11f;
-constexpr float SparkFullGravityChance = 0.25f; // Otherwise half, as vanilla.
 constexpr float SparkBounce = 0.5f;
 constexpr int SparkStreaksMin = 6; // Per burst.
 constexpr int SparkStreaksMax = 12;
@@ -340,7 +347,13 @@ void SparkShowers(const Vector& origin, float scale)
 	if (count == 0)
 		return;
 
-	const Vector normal = SurfaceNormal(origin, scale);
+	// In mid-air, vanilla's sparks go up (its trace's normal is zero, and they get the upward push).
+	Vector normal = SurfaceNormal(origin, scale);
+	const bool ceiling = normal.z < 0;
+
+	if (normal == g_vecZero)
+		normal = {0, 0, 1};
+
 	const float now = gEngfuncs.GetClientTime();
 
 	for (int i = 0; i < count; ++i)
@@ -350,17 +363,26 @@ void SparkShowers(const Vector& origin, float scale)
 		if (!ent)
 			return;
 
-		const float spread = Random(SparkSpreadMin, SparkSpreadMax);
-		Vector velocity = normal * Random(SparkSpeedMin, SparkSpeedMax);
-		velocity.x += Random(-spread, spread);
-		velocity.y += Random(-spread, spread);
-		velocity.z += (velocity.z >= 0 ? 1 : -1) * Random(SparkUpMin, SparkUpMax);
+		const SparkKind* kind;
 
-		const float life = Random(SparkLifeMin, SparkLifeMax);
+		if (count >= SparkShowersForEveryKind && i < 2)
+			kind = i == 0 ? &Flyer : &Dropper;
+		else if (const float roll = Random(0, 1); roll < Flyer.Chance)
+			kind = &Flyer;
+		else if (roll < Flyer.Chance + VanillaLike.Chance)
+			kind = &VanillaLike;
+		else
+			kind = &Dropper;
+
+		const Vector direction = (normal + Vector{Random(-1, 1), Random(-1, 1), Random(-1, 1)} * kind->Cone).Normalize();
+		Vector velocity = direction * Random(kind->SpeedMin, kind->SpeedMax);
+		velocity.z += (ceiling ? -1 : 1) * Random(kind->UpMin, kind->UpMax);
+
+		const float life = Random(kind->LifeMin, kind->LifeMax);
 		const float interval = Random(SparkIntervalMin, SparkIntervalMax);
 
 		ent->flags |= FTENT_NOMODEL | FTENT_CLIENTCUSTOM | FTENT_COLLIDEWORLD;
-		ent->flags |= Random(0, 1) < SparkFullGravityChance ? FTENT_GRAVITY : FTENT_SLOWGRAVITY;
+		ent->flags |= kind->FullGravity ? FTENT_GRAVITY : FTENT_SLOWGRAVITY;
 		ent->callback = SparkShowerThink;
 		ent->bounceFactor = SparkBounce;
 		ent->entity.baseline.origin = velocity;
