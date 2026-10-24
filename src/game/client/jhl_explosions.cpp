@@ -132,6 +132,9 @@ constexpr float SparkIntervalMax = 0.11f;
 // near vanilla's 0.6 in the air.
 constexpr float SparkBounce = 1;
 
+// Broken computers' showers (UTIL_JhlSparkShowers) live this much as long as an explosion's.
+constexpr float ComputerSparkLifeScale = 0.5f;
+
 // The specks and lights every explosion makes (instead of the engine's: 15 pure white specks, palette 254, ±32
 // sideways and 80-143 up, 2 s; a 200 unit flash for 0.01 s and a 150 unit orange glow over 1 s; the same for every
 // size). Embers: hot colors, more and wider for bigger explosions (scale over EmberScale, up to EmberMoreMax).
@@ -474,7 +477,8 @@ Surface FindSurface(const Vector& origin, float scale)
 }
 
 // @param showers How many, or -1 for an explosion's (by the surface's material).
-void SparkShowers(const Vector& origin, const Surface& surface, int showers = -1)
+// @param lifeScale Times each shower's life.
+void SparkShowers(const Vector& origin, const Surface& surface, int showers = -1, float lifeScale = 1)
 {
 	if (surface.Water)
 		return;
@@ -514,7 +518,7 @@ void SparkShowers(const Vector& origin, const Surface& surface, int showers = -1
 		Vector velocity = direction * speed;
 		velocity.z += (ceiling ? -1 : 1) * Random(SparkUpMin, SparkUpMax);
 
-		const float life = Random(SparkLifeMin, SparkLifeMax);
+		const float life = Random(SparkLifeMin, SparkLifeMax) * lifeScale;
 		const float interval = Random(SparkIntervalMin, SparkIntervalMax);
 
 		ent->flags |= FTENT_NOMODEL | FTENT_CLIENTCUSTOM | FTENT_COLLIDEWORLD;
@@ -761,7 +765,8 @@ void JhlExplosion_ParseSparkShowers(BufferReader& reader)
 	if (Vector point = origin; gEngfuncs.PM_PointContents(point, nullptr) == CONTENTS_WATER)
 		surface.Water = true;
 
-	SparkShowers(origin, surface, count);
+	// Shorter than an explosion's: a computer shorting out.
+	SparkShowers(origin, surface, count, ComputerSparkLifeScale);
 }
 
 bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float framerate, int flags)

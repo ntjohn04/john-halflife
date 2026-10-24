@@ -670,14 +670,14 @@ void CBreakable::Die()
 
 		UTIL_JhlBreakModel(vecSpot, pev->size, vecVelocity + Vector(0, 0, 150), 35, m_idShard, shards, 25, cFlag);
 	}
-	// Glass: 1.5 times the shards, at most 60; wood (crates): as many, and for crates whose gibs are their contents,
-	// half as many wood pieces again (4-16); both lasting like gibs.
+	// Glass: 1.5 times the shards, at most 60; everything else as many, and for crates whose gibs are their contents,
+	// half as many wood pieces again (4-16); all lasting like gibs.
 	else if (UTIL_JhlParticleSystem() && m_Material == matGlass)
 	{
 		const int shards = std::clamp(static_cast<int>(engineShards * 1.5f), 1, 60);
 		UTIL_JhlBreakModel(vecSpot, pev->size, vecVelocity, 10, m_idShard, shards, 25, cFlag);
 	}
-	else if (UTIL_JhlParticleSystem() && m_Material == matWood)
+	else if (UTIL_JhlParticleSystem())
 	{
 		UTIL_JhlBreakModel(vecSpot, pev->size, vecVelocity, 10, m_idShard, 0, 25, cFlag);
 
@@ -726,7 +726,7 @@ void CBreakable::Die()
 
 	// johnhalflife: computers short out in a few spark showers.
 	if (UTIL_JhlParticleSystem() && m_Material == matComputer)
-		UTIL_JhlSparkShowers(vecSpot, RANDOM_LONG(3, 6));
+		UTIL_JhlSparkShowers(vecSpot, RANDOM_LONG(2, 3));
 
 	float size = pev->size.x;
 	if (size < pev->size.y)

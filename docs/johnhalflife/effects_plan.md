@@ -164,9 +164,8 @@ the client (`JhlDebris_ParseBreakModel`) makes the same shards for 60 s, up to 2
 | Osprey falling, every 0.2 s | 8, 20 s | 8-16, 60 s |
 | Osprey crash | 128 asked, 100 made, 20 s | 128, 60 s |
 | Glass | by size, 2.5 s | 1.5× by size, at most 60, 60 s |
-| Wood (crates, boxes) | by size, 2.5 s | as many, 60 s; crates whose gibs are their contents (`mil_`, `med_`, `tech_crategibs`, which have no wood) also throw `woodgibs`, half as many (4-16) |
-| Computers | by size, 2.5 s | unchanged, plus 3-6 of the explosions' spark showers going up (`UTIL_JhlSparkShowers`: TE_SPARKS through the SDK's message, position and count) |
-| Other breakables (metal, vents, concrete, ceiling tiles...) | by size, 2.5 s | unchanged |
+| Every other breakable (wood, metal, computers, cabinets, signs, vents, tiles...) | by size, 2.5 s | as many, 60 s; of wood, crates whose gibs are their contents (`mil_`, `med_`, `tech_crategibs`, which have no wood) also throw `woodgibs`, half as many (4-16) |
+| Computers | by size, 2.5 s | as other breakables, plus 2-3 of the explosions' spark showers going up, living half as long (`UTIL_JhlSparkShowers`: TE_SPARKS through the SDK's message, position and count) |
 | NPC gibs | (see Gibs) | unchanged: 7×, 60 s, now in the budget |
 
 **Surface debris** (`SurfaceDebris`, `jhl_explosions.cpp`): every two-fireball explosion that hit a surface (not
