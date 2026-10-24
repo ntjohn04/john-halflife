@@ -134,7 +134,9 @@ constexpr float SparkBounce = 1;
 // The specks and lights every explosion makes (instead of the engine's: 15 pure white specks, palette 254, ±32
 // sideways and 80-143 up, 2 s; a 200 unit flash for 0.01 s and a 150 unit orange glow over 1 s; the same for every
 // size). Embers: hot colors, more and wider for bigger explosions (scale over EmberScale, up to EmberMoreMax).
-constexpr int EmberCount = 15;
+constexpr int EmberCountMin = 25; // A grenade's; up to EmberCountMore more for the biggest.
+constexpr int EmberCountMax = 35;
+constexpr int EmberCountMore = 15;
 constexpr float EmberScale = 3;
 constexpr float EmberMoreMax = 2.5f;
 constexpr int EmberColors[] = {252, 252, 253, 253, 254}; // Pale yellow, cream, some white.
@@ -644,7 +646,7 @@ void SurfaceDebris(const Surface& surface, float scale)
 	}
 }
 
-// An explosion's specks and lights, by its size (see EmberCount).
+// An explosion's specks and lights, by its size (see EmberCountMin).
 void EmbersAndLights(const Vector& origin, float scale, int flags, bool embers)
 {
 	const float more = std::clamp(scale / EmberScale, 1.f, EmberMoreMax);
@@ -652,7 +654,9 @@ void EmbersAndLights(const Vector& origin, float scale, int flags, bool embers)
 
 	if (embers && (flags & TE_EXPLFLAG_NOPARTICLES) == 0)
 	{
-		const int count = static_cast<int>(EmberCount * more);
+		// A grenade 25-35, an RPG rocket 30-40, a satchel 35-45, a mortar 40-50.
+		const int added = static_cast<int>(EmberCountMore * (more - 1) / (EmberMoreMax - 1));
+		const int count = gEngfuncs.pfnRandomLong(EmberCountMin + added, EmberCountMax + added);
 
 		for (int i = 0; i < count; ++i)
 		{

@@ -191,8 +191,8 @@ they don't use the map's model precache slots. Base scales make a typical piece 
 **Specks, lights, scorch, shake, underwater** (with `jhl_fx_particlesystem`; scales are the drawn fireball's, a
 grenade 3; RPG rockets 1.5×, explosive breakables 1.3×):
 
-* Specks: instead of the engine's 15 pure white (palette 254) ones, `EmbersAndLights` throws 15 × (scale / 3, 1 to
-  2.5) embers, pale yellow, cream and some white (252, 253, 254), 20-80 sideways (× √ that), 80-220 up, 1.5-2.5 s,
+* Specks: instead of the engine's 15 pure white (palette 254) ones, `EmbersAndLights` throws 25-35 embers (a grenade;
+  up to 15 more with size: an RPG rocket 30-40, a satchel 35-45, a mortar 40-50), pale yellow, cream and some white (252, 253, 254), 20-80 sideways (× √ that), 80-220 up, 1.5-2.5 s,
   drifting and falling as the engine's (`pt_blob2`). Not under water.
 * Lights: the engine's flash (200, 0.01 s) and orange glow (150, fading 200 a second) times scale / 3 (1 to 2), ±5%;
   the glow lasts until it has faded.
