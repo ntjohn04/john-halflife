@@ -292,10 +292,10 @@ Apache, turrets, the loader, the G-Man, the worms, unbreakable glass; vanilla: a
 one per hand width 30 noise 80): with `jhl_fx_particlesystem`, a thin, wild, dimmer strand layered on each
 (`LayerBeam`, kept out of `m_pBeam` whose count sets the eye glow and the charging pitch):
 
-* Charging: the vanilla beam at noise 60 (80), and a strand width 15 noise 210 at half its brightness, brightening
+* Charging: the vanilla beam at noise 60 (80), and a strand width 18 noise 210 at 80% of its brightness, brightening
   with it (BeamGlow).
 * Zap: the vanilla beam, and a strand width 20 noise 100 brightness 102 (0.4).
-* Revive: vanilla.
+* Revive: the vanilla beam, and a strand width 12 noise 210 brightness 102 (0.4).
 
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 

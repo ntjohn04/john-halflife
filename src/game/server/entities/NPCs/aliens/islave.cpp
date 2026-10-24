@@ -685,12 +685,12 @@ void CISlave::ArmBeam(int side)
 	m_pBeam[m_iBeams]->SetNoise(80);
 	m_pBeam[m_iBeams]->pev->spawnflags |= SF_BEAM_TEMPORARY; // Flag these to be destroyed on save/restore or level transition
 
-	// johnhalflife: a little smoother, with a thin, wild, half as bright strand brightening with it as it charges
-	// (BeamGlow).
+	// johnhalflife: a little smoother, with a thin, wild strand at 80% of its brightness, brightening with it as it
+	// charges (BeamGlow).
 	if (UTIL_JhlParticleSystem())
 	{
 		m_pBeam[m_iBeams]->SetNoise(60);
-		LayerBeam(m_pBeam[m_iBeams], 15, 210, 32, 0.5f);
+		LayerBeam(m_pBeam[m_iBeams], 18, 210, 51, 0.8f);
 	}
 
 	m_iBeams++;
@@ -758,6 +758,10 @@ void CISlave::WackBeam(int side, CBaseEntity* pEntity)
 	m_pBeam[m_iBeams]->SetBrightness(255);
 	m_pBeam[m_iBeams]->SetNoise(80);
 	m_pBeam[m_iBeams]->pev->spawnflags |= SF_BEAM_TEMPORARY; // Flag these to be destroyed on save/restore or level transition
+
+	// johnhalflife: as the zap, a thin, wild, dimmer strand around it.
+	LayerBeam(m_pBeam[m_iBeams], 12, 210, 102);
+
 	m_iBeams++;
 }
 
