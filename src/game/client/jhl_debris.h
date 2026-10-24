@@ -17,6 +17,7 @@
 
 class BufferReader;
 struct TEMPENTITY;
+struct model_t;
 
 // How long johnhalflife's debris (gibs, breakable shards) lies around before fading, in seconds.
 constexpr float JhlDebrisLife = 60;
@@ -35,3 +36,16 @@ void JhlDebris_Track(TEMPENTITY* ent, void (*expire)(TEMPENTITY* ent));
  *	as TE_BREAKMODEL, then a byte: how many times the engine's shard count to make.
  */
 void JhlDebris_ParseBreakModel(BufferReader& reader);
+
+/**
+ *	@brief A model to throw as debris: one the map loaded, or else loaded here by the client (gib models most maps
+ *	don't precache).
+ */
+model_t* JhlDebris_LoadModel(const char* name);
+
+/**
+ *	@brief Shards as the engine's R_BreakModel throws them (@p count of them, random points in the box, @p velocity ±
+ *	@p random, tumbling, half gravity; @p flags BREAK_*), lasting @p life seconds, counted against the budget.
+ */
+void JhlDebris_BreakModel(const Vector& position, const Vector& size, const Vector& velocity, float random, int count,
+	model_t* model, int flags, float life);

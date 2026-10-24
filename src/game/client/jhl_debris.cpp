@@ -17,6 +17,7 @@
 
 #include "hud.h"
 #include "com_model.h"
+#include "event_api.h"
 #include "jhl_debris.h"
 #include "parsemsg.h"
 #include "r_efx.h"
@@ -103,16 +104,27 @@ void JhlDebris_ParseBreakModel(BufferReader& reader)
 	const int flags = reader.ReadByte();
 	const int multiplier = std::max(1, reader.ReadByte());
 
-	model_t* model = gEngfuncs.hudGetModelByIndex(modelIndex);
-
-	if (!model)
-		return;
-
 	// As the engine's R_BreakModel: no count means one by the size (its surface area over 432), at most 100.
 	if (count == 0)
 		count = std::min(100, static_cast<int>((size.x * size.y + size.y * size.z + size.z * size.x) / 432));
 
-	count = std::min(MaxShards, count * multiplier);
+	JhlDebris_BreakModel(position, size, velocity, random, std::min(MaxShards, count * multiplier),
+		gEngfuncs.hudGetModelByIndex(modelIndex), flags, JhlDebrisLife);
+}
+
+model_t* JhlDebris_LoadModel(const char* name)
+{
+	if (const int index = gEngfuncs.pEventAPI->EV_FindModelIndex(name); index != 0)
+		return gEngfuncs.hudGetModelByIndex(index);
+
+	return IEngineStudio.Mod_ForName(name, 0);
+}
+
+void JhlDebris_BreakModel(const Vector& position, const Vector& size, const Vector& velocity, float random, int count,
+	model_t* model, int flags, float life)
+{
+	if (!model)
+		return;
 
 	const int type = flags & BREAK_TYPEMASK;
 	const int variations = Variations(model);
@@ -161,7 +173,7 @@ void JhlDebris_ParseBreakModel(BufferReader& reader)
 
 		shard->entity.baseline.origin = {velocity.x + gEngfuncs.pfnRandomFloat(-random, random),
 			velocity.y + gEngfuncs.pfnRandomFloat(-random, random), velocity.z + gEngfuncs.pfnRandomFloat(0, random)};
-		shard->die = now + JhlDebrisLife + gEngfuncs.pfnRandomFloat(0, 1);
+		shard->die = now + life + gEngfuncs.pfnRandomFloat(0, 1);
 
 		JhlDebris_Track(shard, ExpireShard);
 	}

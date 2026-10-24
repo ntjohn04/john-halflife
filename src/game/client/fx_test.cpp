@@ -26,6 +26,7 @@
 #include "hud.h"
 #include "fx_test.h"
 #include "client_gibs.h"
+#include "jhl_debris.h"
 #include "jhl_explosion.h"
 #include "jhl_explosions.h"
 #include "jhl_settings.h"
@@ -561,12 +562,17 @@ void Debris(const Target& target, Params& p)
 	const int material = Material(p.String("material", "metal"));
 	p.Print("debris");
 
-	if (const int model = ModelIndex(name); model != 0)
+	// Through johnhalflife's debris, which loads gib models the map didn't (as surface debris would need).
+	if (model_t* model = JhlDebris_LoadModel(name.c_str()); model)
 	{
 		Vector origin = target.Position + target.Normal * (size * 0.5f);
 		Vector box{size, size, size};
 		Vector velocity = target.Normal * speed;
-		gEngfuncs.pEfxAPI->R_BreakModel(origin, box, velocity, spread, life, count, model, static_cast<char>(material));
+		JhlDebris_BreakModel(origin, box, velocity, spread, count, model, material, life);
+	}
+	else
+	{
+		gEngfuncs.Con_Printf("jhl_fx_test: can't load %s\n", name.c_str());
 	}
 }
 
