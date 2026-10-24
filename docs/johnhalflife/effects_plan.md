@@ -273,6 +273,18 @@ it), 50-600 units/s skewed toward moderate (u^1.5, about 270 on average), plus 0
 ceiling), half or full gravity (50/50), 0.4-2.25 s, a burst every 0.07-0.11 s, keeping half their speed per
 bounce; each burst 6-12 streaks at ±150-300 and a flash up to 0.4-1 (half that to that). Opposing Force's mortar keeps vanilla's.
 
+**Spark bursts** (`UTIL_Sparks`: `env_spark`/`env_debris`, buttons that spark when off, `env_beam`/`env_laser` spark
+ends, shot computers and computer-textured walls, Opposing Force's electrified wires, damaged turrets, the Osprey
+hit, crossbow bolts, the Gene Worm, NPCs' "task failed" indicator; vanilla: the engine's `TE_SPARKS`, 8 streaks at
+±200 and a `richo1` flash of 0.5-1, the same every time): with `jhl_fx_particlesystem` they go through
+`UTIL_JhlSparkShowers` to the client, which makes 4-10 streaks at ±120-220 and a flash of 0.4-1, and now and then
+spark showers as explosions' (none 75%, one 20%, two 5%), living half as long. Kept reserved: it's scenery.
+
+**Armor ricochets** (`UTIL_Ricochet`: helmets of grunts and Barney, alien grunt armor, the Gargantua, Big Momma, the
+Apache, turrets, the loader, the G-Man, the worms, unbreakable glass; vanilla: a `richo1` glow of the given scale
+0.5-2 for 0.1 s and a ricochet sound, no sparks): through the SDK's message, the client adds 4-7 spark streaks
+(by scale) at ±100-180, set 2 units toward the viewer. Not aimed: `UTIL_Ricochet` doesn't get the bullet's direction.
+
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 
 * Falling: vanilla sends one `zerogxplode` every 0.2 s at a random point under the hull (scale 3-5.9, 12 fps),

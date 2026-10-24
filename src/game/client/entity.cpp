@@ -822,9 +822,19 @@ static void CL_ParseArmorRicochet(BufferReader& reader)
 	const Vector pos = reader.ReadCoordVector();
 	const float life = reader.ReadByte() * 0.1f;
 
-	const auto model = gEngfuncs.CL_LoadModel("sprites/richo1.spr", nullptr);
+	auto model = gEngfuncs.CL_LoadModel("sprites/richo1.spr", nullptr);
 
-	gEngfuncs.pEfxAPI->R_RicochetSprite(pos, model, 0.1, life);
+	// The engine's own ricochets use a copy of richo1 that maps don't precache; load it as a HUD sprite.
+	if (!model)
+	{
+		if (const HSPRITE flash = gEngfuncs.pfnSPR_Load("sprites/richo1.spr"); flash > 0)
+			model = const_cast<model_t*>(gEngfuncs.GetSpritePointer(flash));
+	}
+
+	if (model)
+		gEngfuncs.pEfxAPI->R_RicochetSprite(pos, model, 0.1, life);
+
+	JhlExplosion_RicochetSparks(pos, life);
 
 	R_RicochetSound(pos);
 }

@@ -1201,6 +1201,15 @@ void UTIL_ExplosionEffect(const Vector& explosionOrigin, int modelIndex, byte sc
 
 void UTIL_Sparks(const Vector& position)
 {
+	// johnhalflife: the client's sparks (jhl_explosions.cpp): a burst that varies, and now and then a short shower or two
+	// flying off (none 75%, one 20%, two 5%).
+	if (UTIL_JhlParticleSystem())
+	{
+		const int roll = RANDOM_LONG(0, 99);
+		UTIL_JhlSparkShowers(position, roll < 75 ? 0 : roll < 95 ? 1 : 2);
+		return;
+	}
+
 	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, position);
 	WRITE_BYTE(TE_SPARKS);
 	WRITE_COORD(position.x);
@@ -1212,7 +1221,8 @@ void UTIL_Sparks(const Vector& position)
 
 void UTIL_Ricochet(const Vector& position, float scale)
 {
-	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, position);
+	// johnhalflife: the same message through the SDK's own, where the client adds a few sparks (entity.cpp).
+	MESSAGE_BEGIN(MSG_PVS, UTIL_JhlParticleSystem() ? gmsgTempEntity : SVC_TEMPENTITY, position);
 	WRITE_BYTE(TE_ARMOR_RICOCHET);
 	WRITE_COORD(position.x);
 	WRITE_COORD(position.y);

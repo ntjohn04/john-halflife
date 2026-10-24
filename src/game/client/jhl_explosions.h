@@ -25,10 +25,16 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 class BufferReader;
 
 /**
- *	@brief Spark showers as explosions throw them, going up from a point (UTIL_JhlSparkShowers: broken computers): the
- *	SDK's own temp entity message's TE_SPARKS, the position and then how many.
+ *	@brief A spark burst, and spark showers as explosions throw them going up from a point (UTIL_JhlSparkShowers:
+ *	UTIL_Sparks, broken computers): the SDK's own temp entity message's TE_SPARKS, the position and then how many
+ *	showers.
  */
 void JhlExplosion_ParseSparkShowers(BufferReader& reader);
+
+/**
+ *	@brief A few sparks with an armor ricochet's flash (UTIL_Ricochet's @p scale, 0.5-2).
+ */
+void JhlExplosion_RicochetSparks(const Vector& position, float scale);
 
 /**
  *	@brief A big, faint smoke cloud that lingers after an explosion's vanilla smoke (steam1, which the server sends

@@ -30,6 +30,7 @@
 #include "pmtrace.h"
 #include "sound/MaterialSystem.h"
 #include "r_efx.h"
+#include "view.h"
 
 namespace
 {
@@ -132,8 +133,21 @@ constexpr float SparkIntervalMax = 0.11f;
 // near vanilla's 0.6 in the air.
 constexpr float SparkBounce = 1;
 
-// Broken computers' showers (UTIL_JhlSparkShowers) live this much as long as an explosion's.
+// Spark bursts (UTIL_Sparks: env_spark, buttons, beams, wires, computers... ; UTIL_JhlSparkShowers): the streaks and
+// flash differ each time; showers, if any, live this much as long as an explosion's.
+constexpr int SparkBurstStreaksMin = 4;
+constexpr int SparkBurstStreaksMax = 10;
+constexpr int SparkBurstSpeedMin = 120;
+constexpr int SparkBurstSpeedMax = 220;
+constexpr float SparkBurstFlashMin = 0.4f;
+constexpr float SparkBurstFlashMax = 1;
 constexpr float ComputerSparkLifeScale = 0.5f;
+
+// Armor ricochets (UTIL_Ricochet, scale 0.5-2): a few streaks with vanilla's flash.
+constexpr int RicochetSparksMin = 4;
+constexpr int RicochetSparksMax = 7;
+constexpr int RicochetSparkSpeedMin = 100;
+constexpr int RicochetSparkSpeedMax = 180;
 
 // The specks and lights every explosion makes (instead of the engine's: 15 pure white specks, palette 254, ±32
 // sideways and 80-143 up, 2 s; a 200 unit flash for 0.01 s and a 150 unit orange glow over 1 s; the same for every
@@ -753,20 +767,47 @@ void FallingFireball(const Vector& origin, int model, float scale)
 
 void JhlExplosion_ParseSparkShowers(BufferReader& reader)
 {
-	const Vector origin = reader.ReadCoordVector();
+	Vector origin = reader.ReadCoordVector();
 	const int count = reader.ReadByte();
 
+	// The engine's own burst, as vanilla.
 	if (!JhlParticleSystemEnabled())
+	{
+		gEngfuncs.pEfxAPI->R_SparkShower(origin);
 		return;
+	}
+
+	// A burst like the engine's (8 streaks at ±200, a richo1 flash of 0.5-1), different each time.
+	const int speed = gEngfuncs.pfnRandomLong(SparkBurstSpeedMin, SparkBurstSpeedMax);
+	gEngfuncs.pEfxAPI->R_SparkStreaks(origin, gEngfuncs.pfnRandomLong(SparkBurstStreaksMin, SparkBurstStreaksMax), -speed, speed);
+
+	// The engine's own bursts use a copy of richo1 that maps don't precache; load it as a HUD sprite.
+	if (const HSPRITE flash = gEngfuncs.pfnSPR_Load("sprites/richo1.spr"); flash > 0)
+	{
+		gEngfuncs.pEfxAPI->R_RicochetSprite(origin, const_cast<model_t*>(gEngfuncs.GetSpritePointer(flash)), 0.1f,
+			Random(SparkBurstFlashMin, SparkBurstFlashMax));
+	}
 
 	Surface surface;
 	surface.Normal = {0, 0, 1};
 
-	if (Vector point = origin; gEngfuncs.PM_PointContents(point, nullptr) == CONTENTS_WATER)
+	if (gEngfuncs.PM_PointContents(origin, nullptr) == CONTENTS_WATER)
 		surface.Water = true;
 
-	// Shorter than an explosion's: a computer shorting out.
+	// Shorter than an explosion's: sparking machinery, a computer shorting out.
 	SparkShowers(origin, surface, count, ComputerSparkLifeScale);
+}
+
+void JhlExplosion_RicochetSparks(const Vector& position, float scale)
+{
+	if (!JhlParticleSystemEnabled())
+		return;
+
+	// A little toward the viewer, so the armor they hit doesn't hide them.
+	Vector origin = position + (v_origin - position).Normalize() * 2;
+	const int speed = gEngfuncs.pfnRandomLong(RicochetSparkSpeedMin, RicochetSparkSpeedMax);
+	const int streaks = std::clamp(static_cast<int>(RicochetSparksMin + scale * 2), RicochetSparksMin, RicochetSparksMax);
+	gEngfuncs.pEfxAPI->R_SparkStreaks(origin, streaks, -speed, speed);
 }
 
 bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float framerate, int flags)
