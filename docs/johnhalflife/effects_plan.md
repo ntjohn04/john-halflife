@@ -375,10 +375,10 @@ The displacer's victims get no blood pool (combat.cpp: its ball kills them witho
   (`TE_BEAMFOLLOW`, width 3, 0.5 s, (60,220,90), 110). A rumble (screen shake, everyone) at amplitude 1 while it
   rises, building to 6 over the 3 s after it reaches the top.
 * Its finale (the 4 s after it reaches the top, as the map's ending plays its ~20 `Fexplo1` flashes around it):
-  more of those flashes (`TE_SPRITE` `Fexplo1`, scale 12-18, every 0.15-0.4 s, about 15), and every 0.1 s 2 long
-  spark showers (1.5× an explosion's life, `UTIL_JhlSparkShowers`) and a burst of 25 ember specks (`UTIL_JhlEmberBurst`:
-  `TE_PARTICLEBURST` through the SDK's message; up to 160 units/s, drifting down 2-4 s), each from a random point
-  60-300 units around its head. About 750 embers and 900 spark streaks at the peak, within the engine's particles.
+  more of those flashes (`TE_SPRITE` `Fexplo1`, scale 12-18, every 0.15-0.4 s, about 15), and every 0.1 s 1-2 long
+  spark showers (1.5× an explosion's life, `UTIL_JhlSparkShowers`, which now sends the showers' life) from a random
+  point 60-300 units around its head: about 900 of the engine's particles at a time. A rain of ember specks as well
+  ran the engine out of particles ("Not enough free particles", and no sparks), so there is none.
 * c4a3's finale strikes two wide green `env_beam`s at random every half second (`end_greenbeams`, width 15, and
   `end_greenbeams2`, width 25.5; (24,150,40), 0.5 s): vanilla, kept as is. A change to map beams (`env_beam`,
   `env_laser`) must leave scripted set-piece beams like these alone.

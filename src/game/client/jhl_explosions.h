@@ -30,13 +30,6 @@ class BufferReader;
  *	showers.
  */
 void JhlExplosion_ParseSparkShowers(BufferReader& reader);
-
-/**
- *	@brief A burst of ember specks from a point (UTIL_JhlEmberBurst: the Nihilanth's finale): the SDK's own temp entity
- *	message's TE_PARTICLEBURST, the position, how many, and speed / 4.
- */
-void JhlExplosion_ParseEmberBurst(BufferReader& reader);
-
 /**
  *	@brief A few sparks with an armor ricochet's flash (UTIL_Ricochet's @p scale, 0.5-2).
  */

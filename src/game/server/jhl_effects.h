@@ -90,21 +90,6 @@ inline void UTIL_JhlSparkShowers(const Vector& position, int count, float lifeSc
 }
 
 /**
- *	@brief A burst of ember specks (as explosions throw, jhl_explosions.cpp) from a point, spraying out at up to
- *	@p speed units a second and drifting down for 2-4 s: TE_PARTICLEBURST through the SDK's own temp entity message
- *	(position, count, speed / 4).
- */
-inline void UTIL_JhlEmberBurst(const Vector& position, int count, float speed)
-{
-	MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, position);
-	WRITE_BYTE(TE_PARTICLEBURST);
-	WRITE_COORD_VECTOR(position);
-	WRITE_BYTE(std::clamp(count, 0, 255));
-	WRITE_BYTE(std::clamp(static_cast<int>(speed / 4), 0, 255));
-	MESSAGE_END();
-}
-
-/**
  *	@brief TE_BREAKMODEL (breakable shards, helicopter debris). With jhl_fx_particlesystem on, it goes through the SDK's
  *	own temp entity message and the client makes the shards (jhl_debris.cpp): lasting 60 seconds like gibs,
  *	@p multiplier times the count, counted against its debris budget. Otherwise the engine's, as vanilla.

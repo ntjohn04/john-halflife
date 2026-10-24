@@ -634,7 +634,7 @@ void CNihilanth::DyingThink()
 		UTIL_ScreenShake(pev->origin, 1 + 5 * build, 40, 0.3f, 0);
 
 		// The finale, for its first seconds as the map's ending plays: more of the map's big flashes around its head,
-		// and a rain of long spark showers and ember specks.
+		// and a rain of long spark showers. (A rain of ember specks too used up the engine's particles.)
 		if (m_flJhlDeadTime != 0 && gpGlobals->time - m_flJhlDeadTime < JhlFinaleTime)
 		{
 			Vector head, angles;
@@ -667,8 +667,8 @@ void CNihilanth::DyingThink()
 				MESSAGE_END();
 			}
 
-			UTIL_JhlSparkShowers(aroundHead(), 2, 1.5f);
-			UTIL_JhlEmberBurst(aroundHead(), 25, 160);
+			// 1-2 every 0.1 s: about 900 of the engine's particles at a time, within its pool with room to spare.
+			UTIL_JhlSparkShowers(aroundHead(), RANDOM_LONG(1, 2), 1.5f);
 		}
 	}
 
