@@ -414,17 +414,35 @@ void Streaks(const Target& target, Params& p)
 }
 
 // A flying spark emitter like the game's spark_shower: thrown off the surface, sparking every 0.1 seconds while it
-// slows down.
+// slows down. Each burst is the engine's TE_SPARKS (8 streaks at ±200 and a richo1 flash, scale 0.5-1), or, with
+// any of streaks=, vel= or flash= given, the same built from its parts (baseline.renderamt, .rendermode, .skin:
+// streaks, velocity, flash scale × 100; baseline.fuser1: interval).
 void ShowerCallback(TEMPENTITY* ent, float frametime, float currenttime)
 {
 	if (currenttime < ent->entity.baseline.scale)
 		return;
 
 	Vector origin = ent->entity.origin;
-	gEngfuncs.pEfxAPI->R_SparkShower(origin);
+	const auto& custom = ent->entity.baseline;
 
-	ent->entity.baseline.scale = currenttime + 0.1f;
-	ent->entity.baseline.framerate -= 0.1f;
+	if (custom.renderamt == 0)
+	{
+		gEngfuncs.pEfxAPI->R_SparkShower(origin);
+	}
+	else
+	{
+		gEngfuncs.pEfxAPI->R_SparkStreaks(origin, custom.renderamt, -custom.rendermode, custom.rendermode);
+
+		if (const int flash = ModelIndex("sprites/richo1.spr"); flash != 0 && custom.skin > 0)
+		{
+			const float scale = custom.skin / 100.f;
+			gEngfuncs.pEfxAPI->R_RicochetSprite(origin, gEngfuncs.hudGetModelByIndex(flash), 0.1f,
+				gEngfuncs.pfnRandomFloat(scale * 0.5f, scale));
+		}
+	}
+
+	ent->entity.baseline.scale = currenttime + custom.fuser1;
+	ent->entity.baseline.framerate -= custom.fuser1;
 
 	if (ent->entity.baseline.framerate <= 0)
 	{
@@ -439,6 +457,14 @@ void Shower(const Target& target, Params& p)
 	const float speedMax = p.Float("speedmax", 300);
 	const float lifeMin = p.Float("lifemin", 0.5f);
 	const float lifeMax = p.Float("lifemax", 1.5f);
+	const int streaks = p.Int("streaks", 0);
+	const int streakSpeed = p.Int("vel", 200);
+	const float flash = p.Float("flash", 1);
+	const float interval = p.Float("interval", 0.1f);
+	const float spread = p.Float("spread", 100);
+	const float up = p.Float("up", 200);
+	const int gravity = p.Int("gravity", 1);
+	const bool custom = streaks > 0 || streakSpeed != 200 || flash != 1;
 	p.Print("shower");
 
 	for (int i = 0; i < count; ++i)
@@ -449,15 +475,21 @@ void Shower(const Target& target, Params& p)
 			continue;
 
 		Vector velocity = target.Normal * gEngfuncs.pfnRandomFloat(speedMin, speedMax);
-		velocity.x += Random(100);
-		velocity.y += Random(100);
-		velocity.z += velocity.z >= 0 ? 200 : -200;
+		velocity.x += Random(spread);
+		velocity.y += Random(spread);
+		velocity.z += velocity.z >= 0 ? up : -up;
 
-		ent->flags |= FTENT_NOMODEL | FTENT_CLIENTCUSTOM | FTENT_GRAVITY | FTENT_COLLIDEWORLD;
+		// spark_shower falls at half gravity.
+		ent->flags |= FTENT_NOMODEL | FTENT_CLIENTCUSTOM | FTENT_COLLIDEWORLD;
+		ent->flags |= gravity >= 2 ? FTENT_GRAVITY : gravity == 1 ? FTENT_SLOWGRAVITY : 0;
 		ent->callback = ShowerCallback;
 		ent->bounceFactor = 0.6f;
 		ent->entity.baseline.origin = velocity;
-		ent->entity.baseline.scale = gEngfuncs.GetClientTime() + 0.1f;
+		ent->entity.baseline.renderamt = custom ? (streaks > 0 ? streaks : 8) : 0;
+		ent->entity.baseline.rendermode = streakSpeed;
+		ent->entity.baseline.skin = static_cast<short>(flash * 100);
+		ent->entity.baseline.fuser1 = interval;
+		ent->entity.baseline.scale = gEngfuncs.GetClientTime() + interval;
 		ent->entity.baseline.framerate = gEngfuncs.pfnRandomFloat(lifeMin, lifeMax);
 		ent->die = gEngfuncs.GetClientTime() + lifeMax + 1;
 	}
@@ -878,7 +910,7 @@ const std::vector<Command>& Commands()
 		{"lingersmoke", "scale=3 opacity=200 gray=75 life=10.5 start=85 end=340 rise=10 drift=40 delay=0 offset=45.6", LingeringSmoke},
 		{"sparks", "count=", Sparks},
 		{"streaks", "count= vmin= vmax= offset=", Streaks},
-		{"shower", "count= speedmin= speedmax= lifemin= lifemax=", Shower},
+		{"shower", "count=1 speedmin=200 speedmax=300 spread=100 up=200 lifemin=0.5 lifemax=1.5 interval=0.1 gravity=1 streaks=8 vel=200 flash=1", Shower},
 		{"blood_sprite", "color= size= spray= drop=", Blood},
 		{"bloodstream", "color= speed= dir=normal|player|up length=<number>|dist", BloodStream},
 		{"debris", "model= count= size= speed= spread= life= material=metal|wood|glass|flesh|concrete|none", Debris},
