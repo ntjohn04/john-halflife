@@ -369,8 +369,13 @@ The displacer's victims get no blood pool (combat.cpp: its ball kills them witho
   (vanilla: none).
 * Death (every 0.1 s while it rises spinning to the top, until the map takes over: a bolt from a random head, eye
   or hand attachment to the wall that way, `laserbeam`, width 10, noise 1.2, (64,128,255), 0.5 s, and a green
-  `exit1` ball shot up at 600): kept reserved, a strand on each bolt (width 4, noise 2.0 ±25%, brightness 102), a
-  light where it lands (150 units, (100,140,255), 0.5 s), and a spark burst there one time in three.
+  `exit1` ball shot up at 600): kept reserved, a strand on each bolt (width 4, noise 2.0 ±25%, brightness 77), a
+  light where it lands (150 units, (100,140,255), 0.5 s), and there one time in three each a spark burst, a small
+  scorch (`{smscorch1`-`3`) and a crackle (`electro4`-`6`, 85-110). The green balls trail a faint green glow
+  (`TE_BEAMFOLLOW`, width 3, 0.5 s, (60,220,90), 110). A rumble (screen shake, everyone) at amplitude 1 while it
+  rises, building to 6 over the 3 s after it reaches the top.
+* c4a3's finale strikes two wide green `env_beam`s at random every half second (`end_greenbeams`, width 15, and
+  `end_greenbeams2`, width 25.5; (24,150,40), 0.5 s): the wider one is dropped (`CLightning::Spawn`).
 
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 

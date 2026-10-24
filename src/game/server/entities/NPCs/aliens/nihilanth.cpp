@@ -178,6 +178,10 @@ public:
 	float m_flMinZ;
 	float m_flMaxZ;
 
+	// johnhalflife: when it reached the top dying, for the rumble building after (DyingThink). Not saved: 0 again on a
+	// load just restarts the build.
+	float m_flJhlDeadTime = 0;
+
 	Vector m_vecGoal;
 
 	float m_flLastSeen;
@@ -373,6 +377,9 @@ void CNihilanth::Precache()
 	PRECACHE_SOUND_ARRAY(pPainSounds);
 	PRECACHE_SOUND_ARRAY(pDeathSounds);
 	PrecacheSound("debris/beamstart7.wav");
+	PrecacheSound("weapons/electro4.wav"); // johnhalflife: crackles where its death bolts land.
+	PrecacheSound("weapons/electro5.wav");
+	PrecacheSound("weapons/electro6.wav");
 }
 
 void CNihilanth::PainSound()
@@ -576,7 +583,7 @@ void CNihilanth::DyingThink()
 	MESSAGE_END();
 
 	// johnhalflife (kept reserved: one of these every 0.1 s): a thin, wild, dim strand on the bolt; where it lands, a
-	// light, and sparks one time in three.
+	// light, and one time in three each: sparks, a small scorch, a crackle.
 	if (UTIL_JhlParticleSystem() && tr.flFraction < 1.0)
 	{
 		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
@@ -592,7 +599,7 @@ void CNihilanth::DyingThink()
 		WRITE_BYTE(64);											  // r, g, b
 		WRITE_BYTE(128);										  // r, g, b
 		WRITE_BYTE(255);										  // r, g, b
-		WRITE_BYTE(102);										  // brightness
+		WRITE_BYTE(77);											  // brightness
 		WRITE_BYTE(10);											  // speed
 		MESSAGE_END();
 
@@ -601,6 +608,27 @@ void CNihilanth::DyingThink()
 
 		if (RANDOM_LONG(0, 2) == 0)
 			UTIL_JhlSparkShowers(landing, 0);
+
+		if (RANDOM_LONG(0, 2) == 0)
+			UTIL_DecalTrace(&tr, DECAL_SMALLSCORCH1 + RANDOM_LONG(0, 2));
+
+		if (RANDOM_LONG(0, 2) == 0)
+		{
+			static const char* const Crackles[] = {"weapons/electro4.wav", "weapons/electro5.wav", "weapons/electro6.wav"};
+			EmitAmbientSound(landing, Crackles[RANDOM_LONG(0, std::size(Crackles) - 1)], RANDOM_FLOAT(0.4f, 0.6f), ATTN_NORM, 0,
+				RANDOM_LONG(85, 110));
+		}
+	}
+
+	// johnhalflife: a rumble, faint while it rises, building over the 3 seconds after it reaches the top (when the
+	// map's ending starts).
+	if (UTIL_JhlParticleSystem())
+	{
+		if (pev->deadflag == DEAD_DEAD && m_flJhlDeadTime == 0)
+			m_flJhlDeadTime = gpGlobals->time;
+
+		const float build = m_flJhlDeadTime == 0 ? 0 : std::min(1.f, (gpGlobals->time - m_flJhlDeadTime) / 3);
+		UTIL_ScreenShake(pev->origin, 1 + 5 * build, 40, 0.3f, 0);
 	}
 
 	GetAttachment(0, vecSrc, vecAngles);
@@ -1653,10 +1681,23 @@ void CNihilanthHVR::GreenBallInit()
 
 	SetTouch(&CNihilanthHVR::RemoveTouch);
 
+	// johnhalflife: animated, with a faint green glow trailing it.
 	if (UTIL_JhlParticleSystem())
 	{
 		SetThink(&CNihilanthHVR::GreenBallThink);
 		pev->nextthink = gpGlobals->time + 0.1;
+
+		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
+		WRITE_BYTE(TE_BEAMFOLLOW);
+		WRITE_SHORT(entindex());
+		WRITE_SHORT(g_sModelIndexLaser);
+		WRITE_BYTE(5);	 // life * 10
+		WRITE_BYTE(30);	 // width * 10
+		WRITE_BYTE(60);	 // r, g, b
+		WRITE_BYTE(220); // r, g, b
+		WRITE_BYTE(90);	 // r, g, b
+		WRITE_BYTE(110); // brightness
+		MESSAGE_END();
 	}
 }
 
