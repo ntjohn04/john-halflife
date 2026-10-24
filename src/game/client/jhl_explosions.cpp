@@ -354,7 +354,8 @@ namespace
 {
 
 // A spark shower bursting as it flies (entity.baseline: scale, next burst; framerate, time left; fuser1, interval;
-// rendermode, streak speed; fuser2, biggest flash; iuser1, most streaks a burst, or 0 for SparkStreaksMin-Max).
+// rendermode, streak speed; fuser2, biggest flash; iuser1, most streaks a burst, or 0 for SparkStreaksMin-Max; iuser2,
+// flashes at full brightness).
 void SparkShowerThink(TEMPENTITY* ent, float frametime, float currenttime)
 {
 	auto& state = ent->entity.baseline;
@@ -370,8 +371,28 @@ void SparkShowerThink(TEMPENTITY* ent, float frametime, float currenttime)
 	// The engine's own bursts use a copy of richo1 that maps don't precache; load it as a HUD sprite.
 	if (const HSPRITE flash = gEngfuncs.pfnSPR_Load("sprites/richo1.spr"); flash > 0)
 	{
-		gEngfuncs.pEfxAPI->R_RicochetSprite(origin, const_cast<model_t*>(gEngfuncs.GetSpritePointer(flash)), 0.1f,
-			Random(state.fuser2 * 0.5f, state.fuser2));
+		auto model = const_cast<model_t*>(gEngfuncs.GetSpritePointer(flash));
+		const float scale = Random(state.fuser2 * 0.5f, state.fuser2);
+
+		if (state.iuser2 == 0)
+		{
+			gEngfuncs.pEfxAPI->R_RicochetSprite(origin, model, 0.1f, scale);
+		}
+		// Showers asking for their own flash size get it at full brightness, white: as R_RicochetSprite makes its
+		// flash (glow, the same size on screen at any distance, fading out over an eighth of a second, a random 45
+		// degree turn), which it draws at 200.
+		else if (TEMPENTITY* sprite = gEngfuncs.pEfxAPI->CL_TempEntAlloc(origin, model); sprite)
+		{
+			sprite->flags |= FTENT_FADEOUT;
+			sprite->die = currenttime;
+			sprite->fadeSpeed = 8;
+			sprite->entity.curstate.rendermode = kRenderGlow;
+			sprite->entity.curstate.renderfx = kRenderFxNoDissipation;
+			sprite->entity.curstate.renderamt = sprite->entity.baseline.renderamt = 255;
+			sprite->entity.curstate.rendercolor = {255, 255, 255};
+			sprite->entity.curstate.scale = scale;
+			sprite->entity.angles.z = gEngfuncs.pfnRandomLong(0, 7) * 45.f;
+		}
 	}
 
 	state.scale = currenttime + state.fuser1;
@@ -549,6 +570,7 @@ void SparkShowers(const Vector& origin, const Surface& surface, int showers = -1
 		ent->entity.baseline.rendermode = gEngfuncs.pfnRandomLong(SparkStreakSpeedMin, SparkStreakSpeedMax);
 		ent->entity.baseline.fuser2 = flashMax > 0 ? Random(flashMax * 0.5f, flashMax) : Random(SparkFlashMaxMin, SparkFlashMaxMax);
 		ent->entity.baseline.iuser1 = streaksMax;
+		ent->entity.baseline.iuser2 = flashMax > 0 ? 1 : 0; // Its own flash size: drawn at full brightness, white.
 		ent->die = now + life + 1;
 	}
 }

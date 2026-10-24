@@ -378,7 +378,7 @@ The displacer's victims get no blood pool (combat.cpp: its ball kills them witho
   more of those flashes (`TE_SPRITE` `Fexplo1`, scale 12-18, every 0.15-0.4 s, about 15), and every 0.1 s two spark
   showers from 350-650 units out around its head (it's some 600 across, so nearer ones were hidden inside it) and
   -150 to 150 up, thrown outward and a little up to rain down the chamber, living 3 times an explosion's, with big
-  flashes (up to 2, half that to that; temp entities) and few streaks (1-3 a burst; particles). `UTIL_JhlSparkShowers`
+  flashes (2-4; drawn as R_RicochetSprite does but at 255, white, where it draws 200; temp entities) and few streaks (1-3 a burst; particles). `UTIL_JhlSparkShowers`
   sends the showers' life, direction, biggest flash and most streaks. About 80 showers, 600 particles and 170 of the
   engine's 500 temp entities at a time. A rain of ember specks, then showers with full streaks, ran the engine out of
   particles ("Not enough free particles"), hence this balance.

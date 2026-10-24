@@ -668,15 +668,16 @@ void CNihilanth::DyingThink()
 			}
 
 			// Two every think (0.1 s), from around and outside its head (it's some 600 units across), thrown outward to
-			// rain down the chamber, living 3 times an explosion's showers to fall all the way. Each with big flashes
-			// (temp entities, 1-2) and few streaks (particles, 1-3 a burst; more showers with full streaks ran the engine
-			// out of particles): about 80 showers, 600 particles, 170 of the 500 temp entities at a time.
+			// rain down the chamber, living 3 times an explosion's showers to fall all the way. Each with big, bright
+			// flashes (temp entities, 2-4, white at full brightness) and few streaks (particles, 1-3 a burst; more
+			// showers with full streaks ran the engine out of particles): about 80 showers, 600 particles, 170 of the 500
+			// temp entities at a time.
 			for (int i = 0; i < 2; ++i)
 			{
 				const float angle = RANDOM_FLOAT(0, 6.2831853f);
 				const Vector outward{std::cos(angle), std::sin(angle), 0};
 				const Vector start = head + outward * RANDOM_FLOAT(350, 650) + Vector(0, 0, RANDOM_FLOAT(-150, 150));
-				UTIL_JhlSparkShowers(start, 1, 3, (outward + Vector(0, 0, 0.3f)).Normalize(), 2, 3);
+				UTIL_JhlSparkShowers(start, 1, 3, (outward + Vector(0, 0, 0.3f)).Normalize(), 4, 3);
 			}
 		}
 	}
