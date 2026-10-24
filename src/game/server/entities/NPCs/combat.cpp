@@ -696,8 +696,9 @@ void CBaseMonster::Killed(CBaseEntity* attacker, int iGib)
 		SetTouch(nullptr);
 		BecomeDead();
 
-		// Clients put a pool of blood under the body once it has fallen (client_gibs.cpp).
-		if (0 != gmsgBloodPool && BloodColor() != DONT_BLEED)
+		// Clients put a pool of blood under the body once it has fallen (client_gibs.cpp). Not for the displacer's
+		// victims, which it takes away whole.
+		if (0 != gmsgBloodPool && BloodColor() != DONT_BLEED && !(attacker && attacker->ClassnameIs("displacer_ball")))
 		{
 			MESSAGE_BEGIN(MSG_PVS, gmsgBloodPool, pev->origin);
 			WRITE_SHORT(entindex());

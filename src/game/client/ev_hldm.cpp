@@ -1995,6 +1995,18 @@ void EV_FireShockRifle(event_args_t* args)
 			0.08,
 			1, 75 * 0.01, 190 / 255.0, 30, 0, 10,
 			0, 253 / 255.0, 253 / 255.0);
+
+		// johnhalflife: as the vortigaunt's beams, a thin, wild, dim strand on each arc (kept faint: it's at the
+		// player's eye).
+		if (JhlParticleSystemEnabled())
+		{
+			gEngfuncs.pEfxAPI->R_BeamEnts(
+				args->entindex | 0x1000, args->entindex | ((uiIndex + 2) << 12),
+				gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/lgtning.spr"),
+				0.08,
+				0.4f, 1.8f * gEngfuncs.pfnRandomFloat(0.75f, 1.25f), 0.3f, 30, 0, 10,
+				0, 253 / 255.0, 253 / 255.0);
+		}
 	}
 }
 

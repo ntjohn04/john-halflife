@@ -335,6 +335,11 @@ a player it went straight into or a creature none, a wall one half the time).
 * Its impact ring (`disp_ring`, `TE_BEAMCYLINDER`): left for a pass over every ring (the houndeye's, the
   helicopters' crash rings, `func_mortar`'s).
 
+**Shock rifle** (Opposing Force): its 3 muzzle arcs each shot (client `EV_FireShockRifle`: `lgtning`, width 1,
+noise 0.75, brightness 0.75, cyan, 0.08 s) get a strand each, width 0.4, noise 1.8 ±25%, brightness 0.3.
+
+The displacer's victims get no blood pool (combat.cpp: its ball kills them without gibbing and takes them away).
+
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 
 * Falling: vanilla sends one `zerogxplode` every 0.2 s at a random point under the hull (scale 3-5.9, 12 fps),
