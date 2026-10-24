@@ -786,6 +786,13 @@ void CController::RunAI()
 			m_pBall[i]->SetTransparency(kRenderGlow, 255, 255, 255, 255, kRenderFxNoDissipation);
 			m_pBall[i]->SetAttachment(edict(), (i + 3));
 			m_pBall[i]->SetScale(1.0);
+
+			// johnhalflife: playing their frames as the energy balls do (vanilla creates them to animate, at 0 fps).
+			if (UTIL_JhlParticleSystem())
+			{
+				m_pBall[i]->pev->framerate = 10;
+				m_pBall[i]->TurnOn();
+			}
 		}
 
 		float t = m_iBallTime[i] - gpGlobals->time;

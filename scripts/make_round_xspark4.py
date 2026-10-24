@@ -4,7 +4,9 @@ so black is transparent; at the head ball's scale of 2 the haze, which fills the
 as a faint square.
 
 Every pixel's color is scaled by a soft circular falloff (full inside FULL_RADIUS, nothing past EDGE_RADIUS, from the
-frame's center) and mapped to the nearest color of the sprite's own palette; the palette and everything else is kept.
+frame's center) and mapped to the nearest color of the sprite's own palette. The palette has no black: its darkest
+colors, which the frames' background is (7,0,0), are lifted a lot by the engine's texture gamma, so the whole square
+showed faintly. Its last color (4,0,0) becomes black, and every pixel darker than BLACK_BELOW goes to it.
 
 Usage: python scripts/make_round_xspark4.py <path to Half-Life>/valve/sprites/xspark4.spr [preview.png]
 """
@@ -15,6 +17,8 @@ from pathlib import Path
 
 FULL_RADIUS = 9.0
 EDGE_RADIUS = 15.0
+BLACK_BELOW = 12  # Sum of red, green and blue.
+BLACK = 255  # The palette entry made black.
 
 
 def falloff(distance):
@@ -32,8 +36,12 @@ def main():
     frame_count = struct.unpack_from("<i", data, 28)[0]
     palette_count = struct.unpack_from("<h", data, 40)[0]
     palette = [tuple(data[42 + i * 3:45 + i * 3]) for i in range(palette_count)]
+    palette[BLACK] = (0, 0, 0)
+    data[42 + BLACK * 3:45 + BLACK * 3] = bytes(3)
 
     def nearest(color):
+        if sum(color) < BLACK_BELOW:
+            return BLACK
         return min(range(palette_count), key=lambda i: sum((a - b) ** 2 for a, b in zip(palette[i], color)))
 
     cache = {}
