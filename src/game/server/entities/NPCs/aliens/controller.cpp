@@ -195,6 +195,10 @@ void CController::Killed(CBaseEntity* attacker, int iGib)
 		m_pBall[1] = nullptr;
 	}
 
+	// johnhalflife: it shorts out, a spark burst and a shower or two.
+	if (UTIL_JhlParticleSystem())
+		UTIL_JhlSparkShowers(Center(), RANDOM_LONG(1, 2));
+
 	CSquadMonster::Killed(attacker, iGib);
 }
 
@@ -369,6 +373,7 @@ void CController::Precache()
 	PRECACHE_SOUND_ARRAY(pDeathSounds);
 
 	PrecacheModel("sprites/xspark4.spr");
+	PrecacheModel("sprites/xspark4_round.spr"); // johnhalflife: the head ball's (CControllerHeadBall::Spawn).
 
 	UTIL_PrecacheOther("controller_energy_ball");
 	UTIL_PrecacheOther("controller_head_ball");
@@ -1076,7 +1081,9 @@ void CControllerHeadBall::Spawn()
 	pev->movetype = MOVETYPE_FLY;
 	pev->solid = SOLID_BBOX;
 
-	SetModel("sprites/xspark4.spr");
+	// johnhalflife: xspark4 with its haze faded out round (scripts/make_round_xspark4.py): at this scale its haze, which
+	// fills the frames to their edges, showed as a faint square.
+	SetModel(UTIL_JhlParticleSystem() ? "sprites/xspark4_round.spr" : "sprites/xspark4.spr");
 	pev->rendermode = kRenderTransAdd;
 	pev->rendercolor.x = 255;
 	pev->rendercolor.y = 255;

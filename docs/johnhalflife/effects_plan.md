@@ -343,8 +343,11 @@ The displacer's victims get no blood pool (combat.cpp: its ball kills them witho
 **Controller** (`controller.cpp`):
 
 * Head ball (`controller_head_ball`, `xspark4` at scale 2, homing; vanilla never steps its frame, though the energy
-  balls play the same sprite, and it precaches an unused `xspark1`): plays its 11 frames at 10 fps. Its haze fills
-  the 32 px frame to the edges, which at scale 2 shows as a faint square: not fixed yet.
+  balls play the same sprite, and it precaches an unused `xspark1`): plays its 11 frames at 10 fps, and uses
+  `xspark4_round.spr` (`scripts/make_round_xspark4.py`, committed in `config/mod/sprites`): `xspark4` with its haze
+  faded out past a circle (full to 9 px from the center, nothing past 15), mapped to its own palette; the haze fills
+  the 32 px frames to their edges, which at scale 2 showed as a faint square.
+* A controller dying shorts out: a spark burst and 1-2 showers from its center.
 * Its zap (one `TE_BEAMENTPOINT`, `laserbeam`, width 2, noise 0, white, 0.3 s): brightness 220 (255), noise 0.05,
   and a second, width 1 noise 0.35 ±25% brightness 100. Where it hits: a warm light (255,210,140) of 200 units
   shrinking away over 1.5 s and sparks by what it hit, as the vortigaunt's zap.
