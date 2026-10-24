@@ -346,7 +346,10 @@ The displacer's victims get no blood pool (combat.cpp: its ball kills them witho
   balls play the same sprite, and it precaches an unused `xspark1`): plays its 11 frames at 10 fps, and uses
   `xspark4_round.spr` (`scripts/make_round_xspark4.py`, committed in `config/mod/sprites`): `xspark4` with its haze
   faded out past a circle (full to 9 px from the center, nothing past 15), mapped to its own palette; the haze fills
-  the 32 px frames to their edges, which at scale 2 showed as a faint square.
+  the 32 px frames to their edges. The visible square was really the background: the palette has no black, the
+  frames' background is (7,0,0), and the engine's texture gamma lifts that a lot; the last palette color (4,0,0)
+  is made black and everything darker than a sum of 12 goes to it. All the controller's balls use it (its hand
+  balls, head ball, energy balls; `ControllerBallSprite`), and the hand balls play at 10 fps (vanilla: 0).
 * A controller dying shorts out: a spark burst and 1-2 showers from its center.
 * Its zap (one `TE_BEAMENTPOINT`, `laserbeam`, width 2, noise 0, white, 0.3 s): brightness 220 (255), noise 0.05,
   and a second, width 1 noise 0.35 ±25% brightness 100. Where it hits: a warm light (255,210,140) of 200 units
