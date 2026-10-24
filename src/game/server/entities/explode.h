@@ -23,6 +23,11 @@
 #define SF_ENVEXPLOSION_NOSPARKS (1 << 5)	//!< don't make a scorch mark
 
 /**
+ *	@brief johnhalflife: marks an env_explosion as an explosive breakable's, which are drawn bigger.
+ */
+void ExplosionSetBreakable(CBaseEntity* explosion);
+
+/**
  *	@param breakable An explosive breakable's (johnhalflife draws those bigger).
  */
 void ExplosionCreate(const Vector& center, const Vector& angles, CBaseEntity* owner, int magnitude, bool doDamage,

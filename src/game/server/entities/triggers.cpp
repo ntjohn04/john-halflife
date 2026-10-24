@@ -278,6 +278,14 @@ private:
 
 LINK_ENTITY_TO_CLASS(multi_manager, CMultiManager);
 
+std::span<const string_t> MultiManagerTargets(CBaseEntity* entity)
+{
+	if (auto manager = dynamic_cast<CMultiManager*>(entity); manager)
+		return {manager->m_iTargetName, static_cast<std::size_t>(manager->m_cTargets)};
+
+	return {};
+}
+
 BEGIN_DATAMAP(CMultiManager)
 DEFINE_FIELD(m_cTargets, FIELD_INTEGER),
 	DEFINE_FIELD(m_index, FIELD_INTEGER),

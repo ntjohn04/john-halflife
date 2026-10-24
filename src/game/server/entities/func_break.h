@@ -78,7 +78,8 @@ public:
 
 	/**
 	 *	@brief johnhalflife: whether breaking this makes an explosion: its own (Explodable), or an env_explosion it
-	 *	targets (how most of Half-Life's barrels do it).
+	 *	targets, directly or through relays (how most of Half-Life's barrels do it). Those are marked as a
+	 *	breakable's (ExplosionSetBreakable), for when they're fired through a relay.
 	 */
 	bool ExplodesWhenBroken();
 	inline int ExplosionMagnitude() { return pev->impulse; }

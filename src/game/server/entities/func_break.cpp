@@ -735,21 +735,47 @@ void CBreakable::Die()
 	}
 }
 
+// triggers.cpp: the targets a multi_manager fires (none for anything else).
+std::span<const string_t> MultiManagerTargets(CBaseEntity* entity);
+
+// The env_explosions firing a target name sets off, directly or through relays (multi_manager, trigger_relay; c2a5's
+// barrels go through a multi_manager), up to a few relays deep.
+static void FindExplosions(string_t targetName, int relays, std::vector<CBaseEntity*>& explosions)
+{
+	if (FStringNull(targetName))
+		return;
+
+	for (CBaseEntity* target = nullptr; (target = UTIL_FindEntityByTargetname(target, STRING(targetName))) != nullptr;)
+	{
+		if (target->ClassnameIs("env_explosion"))
+		{
+			explosions.push_back(target);
+			continue;
+		}
+
+		if (relays <= 0)
+			continue;
+
+		if (target->ClassnameIs("trigger_relay"))
+			FindExplosions(target->pev->target, relays - 1, explosions);
+
+		for (const string_t managed : MultiManagerTargets(target))
+			FindExplosions(managed, relays - 1, explosions);
+	}
+}
+
 bool CBreakable::ExplodesWhenBroken()
 {
 	if (Explodable())
 		return true;
 
-	if (FStringNull(pev->target))
-		return false;
+	std::vector<CBaseEntity*> explosions;
+	FindExplosions(pev->target, 2, explosions);
 
-	for (CBaseEntity* target = nullptr; (target = UTIL_FindEntityByTargetname(target, STRING(pev->target))) != nullptr;)
-	{
-		if (target->ClassnameIs("env_explosion"))
-			return true;
-	}
+	for (CBaseEntity* explosion : explosions)
+		ExplosionSetBreakable(explosion);
 
-	return false;
+	return !explosions.empty();
 }
 
 bool CBreakable::IsBreakable()

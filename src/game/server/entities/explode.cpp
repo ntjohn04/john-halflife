@@ -258,6 +258,12 @@ void CEnvExplosion::Smoke()
 	}
 }
 
+void ExplosionSetBreakable(CBaseEntity* explosion)
+{
+	if (auto envExplosion = dynamic_cast<CEnvExplosion*>(explosion); envExplosion)
+		envExplosion->m_Breakable = true;
+}
+
 // HACKHACK -- create one of these and fake a keyvalue to get the right explosion setup
 void ExplosionCreate(const Vector& center, const Vector& angles, CBaseEntity* owner, int magnitude, bool doDamage,
 	bool breakable)
