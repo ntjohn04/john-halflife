@@ -375,7 +375,8 @@ The displacer's victims get no blood pool (combat.cpp: its ball kills them witho
   (`TE_BEAMFOLLOW`, width 3, 0.5 s, (60,220,90), 110). A rumble (screen shake, everyone) at amplitude 1 while it
   rises, building to 6 over the 3 s after it reaches the top.
 * c4a3's finale strikes two wide green `env_beam`s at random every half second (`end_greenbeams`, width 15, and
-  `end_greenbeams2`, width 25.5; (24,150,40), 0.5 s): the wider one is dropped (`CLightning::Spawn`).
+  `end_greenbeams2`, width 25.5; (24,150,40), 0.5 s): vanilla, kept as is. A change to map beams (`env_beam`,
+  `env_laser`) must leave scripted set-piece beams like these alone.
 
 **Helicopter deaths** (Apache, Osprey and the Black Ops versions):
 

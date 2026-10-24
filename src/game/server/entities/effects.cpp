@@ -458,15 +458,6 @@ void CLightning::Spawn()
 		SetThink(&CLightning::SUB_Remove);
 		return;
 	}
-
-	// johnhalflife: the Nihilanth's death on c4a3 ends with two wide green beams striking at random every half second,
-	// too much; only the narrower one is kept.
-	if (UTIL_JhlParticleSystem() && FStrEq(STRING(gpGlobals->mapname), "c4a3") &&
-		FStrEq(STRING(pev->targetname), "end_greenbeams2"))
-	{
-		UTIL_Remove(this);
-		return;
-	}
 	pev->solid = SOLID_NOT; // Remove model & collisions
 	Precache();
 
