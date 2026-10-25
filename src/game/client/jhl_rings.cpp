@@ -76,7 +76,7 @@ void JhlRings_ParseSpireRing(BufferReader& reader)
 	const float b = reader.ReadByte() / 255.f;
 	const float brightness = reader.ReadByte() / 255.f;
 	const float speed = reader.ReadByte() * 0.1f;
-	const float scale = reader.ReadByte() * 0.01f;
+	const float scale = reader.ReadShort() * 0.01f;
 
 	if (g_Rings.size() >= MaxRings)
 		return;

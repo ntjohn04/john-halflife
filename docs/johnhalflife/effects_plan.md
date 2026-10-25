@@ -432,7 +432,7 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
 * Xen spire rings (c4a1, and of3a1b, its copy: 3 ring `env_beam`s, `lgtning`, width 5, noise 1.2, (20,120,200), 150,
   each between two `func_train`s riding up opposite sides of a spire; the ring's diameter is the line between them):
   two strands around each: one 67% wider, width 0.7 (3.5), noise a steady 1.6, brightness 0.7 (105), only a little
-  under the ring; and one twice as wide, width 0.4, noise 2.5 times (at most 2.55) ±25%, brightness 0.4
+  under the ring; and a faint one 3.5 times as wide, width 0.5 (2.5), noise a steady 1.9, brightness 0.53 (80)
   (`JhlSpireRing`, `SendSpireRingStrand`). A ring between two entities has no radius of its own, so the client draws
   it (`jhl_rings.cpp`): a ring beam it moves every frame to the trains' midpoint ± its scale times half the line between
   them, kept alive a second at a time (it dies by itself when no longer tracked), dark while they're out of view,

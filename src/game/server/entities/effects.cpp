@@ -763,13 +763,14 @@ void CLightning::StrikeThink()
 			SendStrike(pStart, pEnd, JhlStrandWidth(), JhlStrandStrikeNoise(), JhlStrandBrightness());
 
 		// johnhalflife: a Xen spire ring's two (the client keeps them on them): one 67% wider, only a little under the
-		// ring (0.7 its width and brightness, noise a steady 1.6; c4a1's ring 1.2), and one twice as wide as an arc's
-		// strand (0.4 its width and brightness, noise 2.5 times ±25%).
+		// ring (0.7 its width and brightness, noise a steady 1.6; c4a1's ring 1.2), and a faint one 3.5 times as wide
+		// (half its width, 0.53 its brightness: 80, noise a steady 1.9).
 		if (JhlSpireRing() && !IsPointEntity(pStart) && !IsPointEntity(pEnd))
 		{
 			SendSpireRingStrand(pStart, pEnd, 167, std::max(1, static_cast<int>(m_boltWidth * 0.7f)), 160,
 				static_cast<int>(pev->renderamt * 0.7f));
-			SendSpireRingStrand(pStart, pEnd, 200, JhlStrandWidth(), JhlStrandStrikeNoise(), JhlStrandBrightness());
+			SendSpireRingStrand(pStart, pEnd, 350, std::max(1, static_cast<int>(m_boltWidth * 0.5f)), 190,
+				static_cast<int>(pev->renderamt * 0.53f));
 		}
 
 		DoSparks(pStart->pev->origin, pEnd->pev->origin);
@@ -911,7 +912,7 @@ void CLightning::SendSpireRingStrand(CBaseEntity* pStart, CBaseEntity* pEnd, int
 	WRITE_BYTE((int)pev->rendercolor.z); // r, g, b
 	WRITE_BYTE(brightness);				 // brightness
 	WRITE_BYTE(m_speed);				 // speed
-	WRITE_BYTE(scale);					 // scale, hundredths
+	WRITE_SHORT(scale);					 // scale, hundredths
 	MESSAGE_END();
 }
 
