@@ -27,9 +27,6 @@ public:
 	void SetYawSpeed() override;
 
 	bool HasHumanGibs() override { return true; }
-
-	// johnhalflife: its corpse gibs from 24: 3 9mm rounds, one from the .357, a single shotgun blast.
-	float JhlCorpseGibDamage() override { return 24; }
 };
 LINK_ENTITY_TO_CLASS(monster_rat, CRat);
 

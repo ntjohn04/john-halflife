@@ -46,6 +46,10 @@ public:
 
 	bool HasAlienGibs() override { return true; }
 
+	// johnhalflife: its corpse gibs from 120, big but worth shredding: two double shotgun blasts, 15 9mm rounds, 3 from
+	// the .357. Gibbing goes through Killed again, so it shorts out once more.
+	float JhlCorpseGibDamage() override { return 120; }
+
 	void Spawn() override;
 	void Precache() override;
 	void SetYawSpeed() override;

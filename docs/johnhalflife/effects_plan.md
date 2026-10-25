@@ -86,9 +86,10 @@ Changes:
 * Some corpses gib from bullet damage added up over hits (vanilla: only blasts, crushing, falls and clubs gib
   corpses; `JhlCorpseGibDamage`, `CBaseMonster::DeadTakeDamage`): headcrabs and baby crabs 48 (6 9mm rounds, 2 from
   the .357, a double shotgun blast), houndeyes and map-placed dead houndeyes 60 (a point-blank double blast, the most
-  a shotgun does: 12 pellets × 5; 8 9mm rounds, 2 from the .357); by size, rats 24 (3 9mm, one .357, a single
-  blast), shock roaches 48 (as headcrabs), pit drones 90 (a double blast and a single), bullsquids 120 (two double
-  blasts). Headshots count triple, as on the living.
+  a shotgun does: 12 pellets × 5; 8 9mm rounds, 2 from the .357); by size, shock roaches 48 (as headcrabs), pit
+  drones 90 (a double blast and a single), bullsquids 120 (two double blasts), and controllers 120 (big, but worth
+  shredding; gibbing goes through its Killed again, so it shorts out once more). Not rats: bullets don't hit them.
+  Headshots count triple, as on the living.
   `m_JhlCorpseDamage` is saved (an added field in the base monster's data map, so older saves still load).
 * 60 s on the ground before fading, instead of `giblife`.
 * Each gib ±15% size and ±20% speed, and a wider random sideways direction (±0.7 instead of ±0.25 per
