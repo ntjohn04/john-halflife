@@ -192,6 +192,7 @@ muzzle, so it crosses the view; otherwise at the game's tracer start.
   faint pale orange streak (255,200,120) at 0.2, width 1.1, 100 units long (near the vanilla tracer's faintness
   and length), 4000 units/s, starting 0-120 units down its path.
 * **Glock, revolver, Desert Eagle, sniper rifle** (semi-automatic; they had none): the MP5's streak on every shot, the
+  Glock's a little quicker and shorter (4250 units/s, 85 long), the
   hard-hitting revolver's and Desert Eagle's faster (5000 units/s), the sniper rifle's faster still (5500) and a
   little wider (1.19), starting 20-120 units out.
   The sniper rifle's starts where its muzzle shows on screen (its view model's attachment sits behind the player)

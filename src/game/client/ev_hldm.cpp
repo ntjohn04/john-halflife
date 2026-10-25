@@ -379,6 +379,9 @@ const JhlTracerStyle M249TracerStyle{{255, 60, 30}, 0.85f, 1.2f, 200, 4500, 22, 
 const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 120};
 const JhlTracerStyle HeavyTracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 5000, 120};
 
+// The Glock's: a pistol's, a little quicker and shorter than the MP5's.
+const JhlTracerStyle GlockTracerStyle{{255, 200, 120}, 0.2f, 1.1f, 85, 4250, 120};
+
 // The sniper rifle's, faster still and a little wider, never right at the muzzle.
 const JhlTracerStyle SniperTracerStyle = []
 {
@@ -476,7 +479,7 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 
 			const bool heavy = iBulletType == BULLET_PLAYER_357 || iBulletType == BULLET_PLAYER_EAGLE;
 			JhlTracer_Fire(jhlTracerSrc, end, m249 ? M249TracerStyle : shotgun ? ShotgunTracerStyle : heavy ? HeavyTracerStyle :
-				iBulletType == BULLET_PLAYER_762 ? SniperTracerStyle : MP5TracerStyle);
+				iBulletType == BULLET_PLAYER_762 ? SniperTracerStyle : iBulletType == BULLET_PLAYER_9MM ? GlockTracerStyle : MP5TracerStyle);
 
 			// Only the MP5 had tracers of its own, and keeps them.
 			if (iBulletType != BULLET_PLAYER_MP5)
