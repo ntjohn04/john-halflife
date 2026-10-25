@@ -380,7 +380,7 @@ const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 180}
 // The shotgun's: a few of each shot's pellets (3-4 single, 6-8 double), fainter and shorter than the MP5's so the fan
 // stays in the background, hinting at the spread and at the double shot's extra pellets. EV_HLDM_FireBullets gives
 // the next g_ShotgunTracers pellets one.
-const JhlTracerStyle ShotgunTracerStyle{{255, 200, 120}, 0.15f, 1.f, 70, 4000, 120};
+const JhlTracerStyle ShotgunTracerStyle{{255, 200, 120}, 0.15f, 1.f, 70, 4000, 55};
 static int g_ShotgunTracers = 0;
 
 void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const Vector& forward, const Vector& right,

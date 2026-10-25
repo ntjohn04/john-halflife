@@ -193,6 +193,6 @@ muzzle, so it crosses the view; otherwise at the game's tracer start.
   and length), 4000 units/s, starting 0-180 units down its path.
 * **Shotgun** (a hint of the spread, in the background; it had none): a set number of each shot's pellets, 3-4 for a
   single shot and 6-8 for a double (the extra pellets show), each a pale orange streak (255,200,120) at 0.15, width
-  1, 70 units long, 4000 units/s, starting 0-120 units down its path.
+  1, 70 units long, 4000 units/s, starting 0-55 units down its path.
 
 `jhl_fx_test jhltracer` plays them with any settings; `jhl_fx_test tracer` plays the engine's.
