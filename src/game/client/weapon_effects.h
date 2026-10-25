@@ -31,6 +31,14 @@ void WeaponEffects_Initialize();
 void EV_GunMuzzleEffects(int pellets = 1);
 
 /**
+ *	@brief johnhalflife (jhl_fx_particlesystem): a faint light in the laser's color at an armed tripmine's emitter,
+ *	for a beam entity being added this frame (HUD_AddEntity). Only a tripmine's laser is lit: its beam exists only
+ *	while the mine is armed (CTripmineGrenade::MakeBeam, laserbeam.spr, (0,214,198) at 64).
+ */
+struct cl_entity_t;
+void TripmineLight(cl_entity_t* beam, const char* modelname);
+
+/**
  *	@brief EV_GunMuzzleEffects for the sniper rifle, whose view model attachment isn't at its muzzle:
  *	the muzzle is placed relative to the view instead, and more often leaves a wisp.
  */

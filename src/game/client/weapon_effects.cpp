@@ -16,6 +16,8 @@
 // Reserved takes on MMod's weapon effects, using engine particles, short lights and stock sprites:
 // bullet impacts and water splashes (see re/specs/bullet_impacts.md) and muzzle light and smoke.
 
+#include <cstring>
+
 #include "hud.h"
 #include "weapon_effects.h"
 #include "Exports.h"
@@ -24,8 +26,15 @@
 #include "dlight.h"
 #include "pm_materials.h"
 #include "parsemsg.h"
+#include "customentity.h"
+#include "jhl_settings.h"
+#include "view.h"
 #include "networking/ClientUserMessages.h"
 
+
+// Dynamic light keys for tripmine lights (TripmineLight), clear of the engine's entity-index keys.
+constexpr int TripmineLightKey = 8192;
+constexpr float TripmineLightDistance = 1024;
 
 static cvar_t* g_cl_bulletimpacts = nullptr;
 static cvar_t* g_cl_muzzleflash = nullptr;
@@ -238,6 +247,48 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance, float wisp
 			wisp->entity.curstate.framerate = framerate;
 			wisp->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
 		}
+	}
+}
+
+void TripmineLight(cl_entity_t* beam, const char* modelname)
+{
+	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "sprites/laserbeam.spr"))
+	{
+		return;
+	}
+
+	const auto& state = beam->curstate;
+
+	// Its laser, a beam between two points: no other beam is this color and brightness.
+	if ((state.rendermode & 0x0F) != BEAM_POINTS || state.rendercolor.r != 0 || state.rendercolor.g != 214 ||
+		state.rendercolor.b != 198 || state.renderamt != 64)
+	{
+		return;
+	}
+
+	// It starts at the mine's origin, its emitter, 8 units off the wall; the light sits just in front of it.
+	const Vector start = state.origin;
+	const Vector end = state.angles;
+	const Vector direction = (end - start).Normalize();
+
+	// Only mines near the view: the engine has 32 dynamic lights, and one this faint can't be seen from further.
+	if ((start - v_origin).Length() > TripmineLightDistance)
+	{
+		return;
+	}
+
+	// Kept on a frame at a time, one per beam (keyed past the entity lights the engine keys by entity index).
+	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(TripmineLightKey + beam->index); light)
+	{
+		// As faint as the small energy beams' lights where they touch (the vortigaunt's charge): 72 units, the laser's
+		// color at 80%.
+		light->origin = start + direction * 2;
+		light->radius = 72;
+		light->color.r = 0;
+		light->color.g = 171;
+		light->color.b = 158;
+		light->die = gEngfuncs.GetClientTime() + 0.05f;
+		light->decay = 0;
 	}
 }
 

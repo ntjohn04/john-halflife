@@ -24,6 +24,7 @@
 #include "jhl_debris.h"
 #include "jhl_explosions.h"
 #include "jhl_rings.h"
+#include "weapon_effects.h"
 #include "sound/ClientSoundReplacementSystem.h"
 #include "sound/ISoundSystem.h"
 
@@ -48,8 +49,11 @@ int DLLEXPORT HUD_AddEntity(int type, cl_entity_t* ent, const char* modelname)
 	{
 	case ET_NORMAL:
 		break;
-	case ET_PLAYER:
 	case ET_BEAM:
+		// johnhalflife: an armed tripmine's light.
+		TripmineLight(ent, modelname);
+		break;
+	case ET_PLAYER:
 	case ET_TEMPENTITY:
 	case ET_FRAGMENTED:
 	default:

@@ -148,3 +148,13 @@ so it doesn't drift across the magnified view.
   * 6 puffs blasted backward.
   * A billow of large, slow puffs that start behind the shoulders and roll forward past the shooter into
     view, lasting about 2 seconds: two positions per side, three of the four used each shot.
+
+### Tripmine light
+`jhl_fx_particlesystem`
+
+An armed tripmine lights the wall around it: a faint light in its laser's color at 80% (0,171,158), 72 units,
+2 units in front of its emitter (the laser's start, the mine's origin, 8 units off the wall), as faint as the small
+energy beams' lights. Found on the client from the mine's laser beam entity (`laserbeam.spr`, (0,214,198) at 64,
+`TripmineLight` from `HUD_AddEntity`), which exists only while the mine is armed, so it comes on with the laser,
+goes with it, and comes back on a loaded game. Kept on a frame at a time; only mines within 1024 units of the view,
+to leave the engine's 32 dynamic lights for everything else. Nothing is sent over the network.
