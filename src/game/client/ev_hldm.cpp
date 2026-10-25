@@ -370,12 +370,24 @@ void EV_HLDM_DecalGunshot(pmtrace_t* pTrace, int iBulletType)
 }
 
 // johnhalflife's tracers (jhl_tracers.cpp). The M249's are real tracer rounds, one in 3: a saturated red streak with
-// a shorter, thinner white-hot core in it (less like a laser), mostly right out of the barrel. The MP5 keeps its vanilla tracer every 2nd round (almost invisible in
-// first person) and adds a faint pale orange streak to it, as feedback on where its rounds go rather than a tracer
-// round.
+// a shorter, thinner white-hot core in it (less like a laser), mostly right out of the barrel. The MP5 keeps its
+// vanilla tracer every 2nd round (almost invisible in first person) and adds a faint pale orange streak to it, as
+// feedback on where its rounds go rather than a tracer round; the semi-automatic guns (Glock, revolver, Desert Eagle,
+// sniper rifle) have the same streak on every shot.
 constexpr int M249TracerFrequency = 3;
 const JhlTracerStyle M249TracerStyle{{255, 60, 30}, 0.85f, 1.2f, 200, 4500, 22, {255, 225, 180}, 1, 0.9f, 130, true};
-const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 180};
+const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 105};
+
+static bool IsSemiAutoTracer(int bulletType)
+{
+	return bulletType == BULLET_PLAYER_9MM || bulletType == BULLET_PLAYER_357 || bulletType == BULLET_PLAYER_EAGLE ||
+		   bulletType == BULLET_PLAYER_762;
+}
+
+static bool IsViewZoomed()
+{
+	return gHUD.m_iFOV != 0 && gHUD.m_iFOV < static_cast<int>(CVAR_GET_FLOAT("default_fov"));
+}
 
 // The shotgun's: a few of each shot's pellets (3-4 single, 6-8 double), as the MP5's but starting nearer, so the fan
 // stays in the background, hinting at the spread and at the double shot's extra pellets. EV_HLDM_FireBullets gives
@@ -389,12 +401,22 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 	int i;
 	const bool player = idx >= 1 && idx <= gEngfuncs.GetMaxClients();
 
-	// johnhalflife: the shotgun's pellet streaks, a set number a shot rather than one round in so many.
+	// johnhalflife: the shotgun's pellet streaks, a set number a shot rather than one round in so many; the
+	// semi-automatic guns' on every shot (they had no tracers, nor a counter for them).
+	int unused = 0;
+
 	if (iBulletType == BULLET_PLAYER_BUCKSHOT && g_ShotgunTracers > 0)
 	{
 		--g_ShotgunTracers;
 		iTracerFreq = 1;
 	}
+	else if (IsSemiAutoTracer(iBulletType) && JhlParticleSystemEnabled())
+	{
+		iTracerFreq = 1;
+	}
+
+	if (!tracerCount)
+		tracerCount = &unused;
 
 	if (iTracerFreq != 0 && ((*tracerCount)++ % iTracerFreq) == 0)
 	{
@@ -415,23 +437,36 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 			vecTracerSrc = vecSrc;
 		}
 
-		// johnhalflife: the M249's, MP5's and shotgun's tracers; in first person from the gun's muzzle, so they cross the
-		// view instead of flying straight away from it.
-		if (const bool m249 = iBulletType == BULLET_PLAYER_556, shotgun = iBulletType == BULLET_PLAYER_BUCKSHOT;
-			(m249 || shotgun || iBulletType == BULLET_PLAYER_MP5) && JhlParticleSystemEnabled())
+		// johnhalflife: the M249's, MP5's, shotgun's and semi-automatics' tracers; in first person from the gun's muzzle,
+		// so they cross the view instead of flying straight away from it.
+		if (const bool m249 = iBulletType == BULLET_PLAYER_556, shotgun = iBulletType == BULLET_PLAYER_BUCKSHOT,
+			semiAuto = IsSemiAutoTracer(iBulletType);
+			(m249 || shotgun || semiAuto || iBulletType == BULLET_PLAYER_MP5) && JhlParticleSystemEnabled())
 		{
 			Vector jhlTracerSrc = vecTracerSrc;
+			const bool firstPerson = EV_IsLocal(idx) && 0 == CL_IsThirdPerson();
 
-			if (cl_entity_t* viewModel = gEngfuncs.GetViewModel();
-				EV_IsLocal(idx) && 0 == CL_IsThirdPerson() && viewModel && viewModel->attachment[0] != g_vecZero)
+			if (iBulletType == BULLET_PLAYER_762 && firstPerson)
 			{
+				// Scoped, it would fly down the magnified view (as its smoke is skipped there); otherwise from where its
+				// muzzle shows on screen, as its view model's attachment sits behind the player (EV_SniperMuzzleEffects).
+				if (IsViewZoomed())
+					return;
+
+				const Vector up = CrossProduct(right, forward);
+				jhlTracerSrc = vecSrc + forward * 30 + right * 5 - up * 5;
+			}
+			else if (cl_entity_t* viewModel = gEngfuncs.GetViewModel();
+					 firstPerson && !IsViewZoomed() && viewModel && viewModel->attachment[0] != g_vecZero)
+			{
+				// Zoomed (the revolver's scope), the view model isn't drawn and its attachment is stale.
 				jhlTracerSrc = viewModel->attachment[0];
 			}
 
 			JhlTracer_Fire(jhlTracerSrc, end, m249 ? M249TracerStyle : shotgun ? ShotgunTracerStyle : MP5TracerStyle);
 
-			// The M249 and shotgun had none; the MP5 keeps its own as well.
-			if (m249 || shotgun)
+			// Only the MP5 had tracers of its own, and keeps them.
+			if (iBulletType != BULLET_PLAYER_MP5)
 				return;
 		}
 

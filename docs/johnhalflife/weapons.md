@@ -190,7 +190,10 @@ muzzle, so it crosses the view; otherwise at the game's tracer start.
   itself, and its blood shows there.
 * **MP5** (feedback on where its rounds go, not tracer rounds): on top of its vanilla tracer, every 2nd round, a
   faint pale orange streak (255,200,120) at 0.2, width 1.1, 100 units long (near the vanilla tracer's faintness
-  and length), 4000 units/s, starting 0-180 units down its path.
+  and length), 4000 units/s, starting 0-105 units down its path.
+* **Glock, revolver, Desert Eagle, sniper rifle** (semi-automatic; they had none): the MP5's streak on every shot.
+  The sniper rifle's starts where its muzzle shows on screen (its view model's attachment sits behind the player)
+  and is skipped while scoped; the revolver's, scoped, starts at the game's tracer start.
 * **Shotgun** (a hint of the spread, in the background; it had none): a set number of each shot's pellets, 3-4 for a
   single shot and 6-8 for a double (the extra pellets show), each as the MP5's streak (255,200,120 at 0.2, width
   1.1, 100 units long, 4000 units/s) but starting 0-55 units down its path.
