@@ -375,7 +375,7 @@ void EV_HLDM_DecalGunshot(pmtrace_t* pTrace, int iBulletType)
 // round.
 constexpr int M249TracerFrequency = 3;
 const JhlTracerStyle M249TracerStyle{{255, 60, 30}, 1, 1.2f, 200, 4500, 22};
-const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 350};
+const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 180};
 
 void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const Vector& forward, const Vector& right,
 	int iBulletType, int iTracerFreq, int* tracerCount)

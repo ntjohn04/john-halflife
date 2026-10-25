@@ -179,6 +179,6 @@ muzzle, so it crosses the view; otherwise at the game's tracer start.
   mostly right out of the barrel.
 * **MP5** (feedback on where its rounds go, not tracer rounds): on top of its vanilla tracer, every 2nd round, a
   faint pale orange streak (255,200,120) at 0.2, width 1.1, 100 units long (near the vanilla tracer's faintness
-  and length), 4000 units/s, starting 0-350 units down its path.
+  and length), 4000 units/s, starting 0-180 units down its path.
 
 `jhl_fx_test jhltracer` plays them with any settings; `jhl_fx_test tracer` plays the engine's.
