@@ -374,7 +374,7 @@ void EV_HLDM_DecalGunshot(pmtrace_t* pTrace, int iBulletType)
 // first person) and adds a faint pale orange streak to it, as feedback on where its rounds go rather than a tracer
 // round.
 constexpr int M249TracerFrequency = 3;
-const JhlTracerStyle M249TracerStyle{{255, 60, 30}, 0.85f, 1.2f, 200, 4500, 22, {255, 225, 180}, 1, 0.9f, 130};
+const JhlTracerStyle M249TracerStyle{{255, 60, 30}, 0.85f, 1.2f, 200, 4500, 22, {255, 225, 180}, 1, 0.9f, 130, true};
 const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 180};
 
 void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const Vector& forward, const Vector& right,

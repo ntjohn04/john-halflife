@@ -36,6 +36,10 @@ struct JhlTracerStyle
 	float CoreBrightness = 1;
 	float CoreWidth = 1;
 	float CoreLength = 0;
+
+	// Whether it throws a burning speck where it hits: skipping off up and to the side, slowly, twirling, falling
+	// gently and fading (in its colors, Color around CoreColor), as a tracer round's burning compound does.
+	bool ImpactSpeck = false;
 };
 
 /**

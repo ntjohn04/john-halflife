@@ -178,7 +178,11 @@ muzzle, so it crosses the view; otherwise at the game's tracer start.
   1.2, 200 units long (seen nearly end-on it looks a few feet), 4500 units/s, starting 0-22 units down its path, so
   mostly right out of the barrel; with a white-hot core in it (255,225,180) at full brightness, width 0.9, 130 units
   long, centered on the streak and shrinking with it as it grows out and goes in. Both are additive, so it reads as
-  a hot center with a red edge rather than a laser.
+  a hot center with a red edge rather than a laser. Where each hits, a burning speck skips off: a red glow
+  (`hotglow` at 0.08) around a white-hot one (0.04), off the surface (a short trace finds its facing), up and to one
+  side with a little of the tracer's way along it, falling at a fifth of gravity while twirling in 3-unit circles
+  about twice a second, fading over the last half of 1-1.6 s. Its path is worked out each frame, so the two stay
+  together.
 * **MP5** (feedback on where its rounds go, not tracer rounds): on top of its vanilla tracer, every 2nd round, a
   faint pale orange streak (255,200,120) at 0.2, width 1.1, 100 units long (near the vanilla tracer's faintness
   and length), 4000 units/s, starting 0-180 units down its path.

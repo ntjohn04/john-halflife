@@ -20,6 +20,8 @@
 #include "com_model.h"
 #include "event_api.h"
 #include "r_efx.h"
+#include "pm_defs.h"
+#include "pmtrace.h"
 #include "jhl_tracers.h"
 
 namespace
@@ -33,7 +35,98 @@ struct Tracer
 	float Distance;
 	JhlTracerStyle Style;
 	double StartTime;
+	bool Hit = false; // Its head has reached the end (and thrown its speck).
 };
+
+// A tracer's burning speck (ThrowSpeck): its path, worked out each frame from where and how it was thrown, so its two
+// sprites (outline and core) stay exactly together. vuser1 where, vuser2 how fast, fuser1 when, fuser2 how long it
+// lives, fuser3 where in its twirl it starts.
+constexpr float SpeckGravity = 160;		// Units/s², about a fifth of the world's: it drifts down.
+constexpr float SpeckTwirlRadius = 3;
+constexpr float SpeckTwirlSpeed = 13; // Radians a second: about 2 turns.
+constexpr float SpeckFade = 0.5f;	  // Of its life, at the end.
+
+void SpeckThink(TEMPENTITY* ent, float frametime, float currenttime)
+{
+	auto& state = ent->entity.curstate;
+	const float t = currenttime - state.fuser1;
+	const float life = std::max(0.01f, state.fuser2);
+
+	const float angle = state.fuser3 + t * SpeckTwirlSpeed;
+	const Vector twirl{std::cos(angle) * SpeckTwirlRadius, std::sin(angle) * SpeckTwirlRadius, 0};
+
+	ent->entity.origin = state.vuser1 + state.vuser2 * t - Vector{0, 0, 0.5f * SpeckGravity * t * t} + twirl;
+
+	const float left = std::clamp((1 - t / life) / SpeckFade, 0.f, 1.f);
+	state.renderamt = static_cast<int>(ent->entity.baseline.renderamt * left);
+}
+
+void ThrowSpeck(const Vector& hit, const Vector& direction, const JhlTracerStyle& style, double time)
+{
+	const int sprite = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/hotglow.spr");
+
+	if (sprite == 0)
+		return;
+
+	// The surface's facing, from a short trace across where it hit (back along its way if there's nothing there).
+	pmtrace_t tr;
+	gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(0, 1);
+	gEngfuncs.pEventAPI->EV_PushPMStates();
+	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
+	Vector from = hit - direction * 8;
+	Vector to = hit + direction * 8;
+	gEngfuncs.pEventAPI->EV_PlayerTrace(from, to, PM_WORLD_ONLY, -1, &tr);
+	gEngfuncs.pEventAPI->EV_PopPMStates();
+
+	const Vector normal = tr.fraction < 1 ? Vector{tr.plane.normal} : -direction;
+
+	// Off the surface, up, and to one side along it, keeping a little of the tracer's way along it (a glancing skip).
+	Vector side = CrossProduct(normal, Vector{0, 0, 1});
+
+	if (side.Length() < 0.1f)
+	{
+		const float a = gEngfuncs.pfnRandomFloat(0, 6.2831853f);
+		side = {std::cos(a), std::sin(a), 0};
+	}
+
+	side = side.Normalize() * (gEngfuncs.pfnRandomLong(0, 1) != 0 ? 1.f : -1.f);
+	const Vector along = direction - normal * DotProduct(direction, normal);
+
+	const Vector velocity = normal * gEngfuncs.pfnRandomFloat(40, 80) + side * gEngfuncs.pfnRandomFloat(30, 70) +
+							Vector{0, 0, gEngfuncs.pfnRandomFloat(80, 140)} + along * 30;
+
+	const Vector origin = hit + normal * 2;
+	const float life = gEngfuncs.pfnRandomFloat(1, 1.6f);
+	const float phase = gEngfuncs.pfnRandomFloat(0, 6.2831853f);
+
+	// The red outline around a white-hot core, as the tracer.
+	const struct
+	{
+		Vector Color;
+		float Scale;
+	} layers[] = {{style.Color, 0.08f}, {style.CoreColor, 0.04f}};
+
+	for (const auto& layer : layers)
+	{
+		Vector position = origin;
+		Vector still{0, 0, 0};
+		TEMPENTITY* speck = gEngfuncs.pEfxAPI->R_TempSprite(position, still, layer.Scale, sprite, kRenderTransAdd,
+			kRenderFxNone, 1, life, 0);
+
+		if (!speck)
+			continue;
+
+		speck->flags |= FTENT_CLIENTCUSTOM;
+		speck->callback = SpeckThink;
+		speck->entity.curstate.rendercolor = {static_cast<byte>(layer.Color.x), static_cast<byte>(layer.Color.y),
+			static_cast<byte>(layer.Color.z)};
+		speck->entity.curstate.vuser1 = origin;
+		speck->entity.curstate.vuser2 = velocity;
+		speck->entity.curstate.fuser1 = static_cast<float>(time);
+		speck->entity.curstate.fuser2 = life;
+		speck->entity.curstate.fuser3 = phase;
+	}
+}
 
 // A machine gun fires about 15 a second and each lives well under a second.
 constexpr std::size_t MaxTracers = 64;
@@ -123,6 +216,14 @@ void JhlTracers_Update(double time)
 		const float flown = static_cast<float>(time - tracer.StartTime) * tracer.Style.Speed;
 		const float head = std::min(flown, tracer.Distance);
 		const float tail = std::clamp(flown - tracer.Style.Length, 0.f, tracer.Distance);
+
+		if (!tracer.Hit && flown >= tracer.Distance)
+		{
+			tracer.Hit = true;
+
+			if (tracer.Style.ImpactSpeck)
+				ThrowSpeck(tracer.Start + tracer.Direction * tracer.Distance, tracer.Direction, tracer.Style, time);
+		}
 
 		// Reached the end: gone (the engine frees them).
 		if (tail >= tracer.Distance)
