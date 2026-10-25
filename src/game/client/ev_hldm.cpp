@@ -373,10 +373,11 @@ void EV_HLDM_DecalGunshot(pmtrace_t* pTrace, int iBulletType)
 // a shorter, thinner white-hot core in it (less like a laser), mostly right out of the barrel. The MP5 keeps its
 // vanilla tracer every 2nd round (almost invisible in first person) and adds a faint pale orange streak to it, as
 // feedback on where its rounds go rather than a tracer round; the semi-automatic guns (Glock, revolver, Desert Eagle,
-// sniper rifle) have the same streak on every shot.
+// sniper rifle) have the same streak on every shot, the hard-hitting ones' faster.
 constexpr int M249TracerFrequency = 3;
 const JhlTracerStyle M249TracerStyle{{255, 60, 30}, 0.85f, 1.2f, 200, 4500, 22, {255, 225, 180}, 1, 0.9f, 130, true};
-const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 105};
+const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 120};
+const JhlTracerStyle HeavyTracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 5000, 120};
 
 static bool IsSemiAutoTracer(int bulletType)
 {
@@ -463,7 +464,8 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 				jhlTracerSrc = viewModel->attachment[0];
 			}
 
-			JhlTracer_Fire(jhlTracerSrc, end, m249 ? M249TracerStyle : shotgun ? ShotgunTracerStyle : MP5TracerStyle);
+			const bool heavy = iBulletType == BULLET_PLAYER_357 || iBulletType == BULLET_PLAYER_EAGLE || iBulletType == BULLET_PLAYER_762;
+			JhlTracer_Fire(jhlTracerSrc, end, m249 ? M249TracerStyle : shotgun ? ShotgunTracerStyle : heavy ? HeavyTracerStyle : MP5TracerStyle);
 
 			// Only the MP5 had tracers of its own, and keeps them.
 			if (iBulletType != BULLET_PLAYER_MP5)
