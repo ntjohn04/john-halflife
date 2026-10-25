@@ -39,6 +39,7 @@
 #include "vgui_TeamFortressViewport.h"
 
 #include "particleman.h"
+#include "jhl_rings.h"
 
 extern bool g_ResetMousePosition;
 
@@ -150,6 +151,9 @@ int DLLEXPORT Initialize(cl_enginefunc_t* pEnginefuncs, int iVersion)
 int DLLEXPORT HUD_VidInit()
 {
 	g_Client.VidInit();
+
+	// johnhalflife: a new map frees the engine's beams.
+	JhlRings_Reset();
 
 	VGui_Startup();
 

@@ -412,6 +412,16 @@ public:
 	 */
 	bool JhlArc();
 
+	/**
+	 *	@brief johnhalflife (jhl_fx_particlesystem): whether this is one of the Xen spires' rings (c4a1's, and of3a1b's,
+	 *	its copy), which get a strand 40% wider around them (SendSpireRingStrand). Only these maps: other ring beams
+	 *	(c4a1b's machines, of6a5's Gene Worm orbs) are left as they are.
+	 */
+	bool JhlSpireRing();
+
+	// The strand's ring, between the same entities' midpoint and its scale (the client's, jhl_rings.cpp).
+	void SendSpireRingStrand(CBaseEntity* start, CBaseEntity* end);
+
 	// The strand's width, noise and brightness, from the beam's.
 	int JhlStrandWidth() const { return std::max(1, static_cast<int>(m_boltWidth * 0.4f)); }
 	int JhlStrandNoise() const { return std::min(255, static_cast<int>(m_noiseAmplitude * 2.5f)); }
@@ -752,6 +762,10 @@ void CLightning::StrikeThink()
 		if (JhlArc())
 			SendStrike(pStart, pEnd, JhlStrandWidth(), JhlStrandStrikeNoise(), JhlStrandBrightness());
 
+		// johnhalflife: a Xen spire ring's (the client keeps it on them).
+		if (JhlSpireRing() && !IsPointEntity(pStart) && !IsPointEntity(pEnd))
+			SendSpireRingStrand(pStart, pEnd);
+
 		DoSparks(pStart->pev->origin, pEnd->pev->origin);
 		if (pev->dmg > 0)
 		{
@@ -860,6 +874,38 @@ void CLightning::SendZap(const Vector& vecSrc, const Vector& vecDest, int width,
 	WRITE_BYTE((int)pev->rendercolor.z); // r, g, b
 	WRITE_BYTE(brightness);				 // brightness
 	WRITE_BYTE(m_speed);				 // speed
+	MESSAGE_END();
+}
+
+bool CLightning::JhlSpireRing()
+{
+	if (!UTIL_JhlParticleSystem() || (pev->spawnflags & SF_BEAM_RING) == 0)
+		return false;
+
+	std::string map = STRING(gpGlobals->mapname);
+	std::transform(map.begin(), map.end(), map.begin(), [](unsigned char c)
+		{ return static_cast<char>(std::tolower(c)); });
+
+	return map == "c4a1" || map == "of3a1b";
+}
+
+void CLightning::SendSpireRingStrand(CBaseEntity* pStart, CBaseEntity* pEnd)
+{
+	MESSAGE_BEGIN(MSG_BROADCAST, gmsgTempEntity);
+	WRITE_BYTE(TE_BEAMRING);
+	WRITE_SHORT(pStart->entindex());
+	WRITE_SHORT(pEnd->entindex());
+	WRITE_SHORT(m_spriteTexture);
+	WRITE_BYTE(m_frameStart);			 // framestart
+	WRITE_BYTE((int)pev->framerate);	 // framerate
+	WRITE_BYTE(JhlStrandWidth());		 // width
+	WRITE_BYTE(JhlStrandStrikeNoise());	 // noise
+	WRITE_BYTE((int)pev->rendercolor.x); // r, g, b
+	WRITE_BYTE((int)pev->rendercolor.y); // r, g, b
+	WRITE_BYTE((int)pev->rendercolor.z); // r, g, b
+	WRITE_BYTE(JhlStrandBrightness());	 // brightness
+	WRITE_BYTE(m_speed);				 // speed
+	WRITE_BYTE(14);						 // scale, tenths: 40% wider
 	MESSAGE_END();
 }
 

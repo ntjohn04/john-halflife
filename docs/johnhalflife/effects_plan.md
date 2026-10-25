@@ -429,6 +429,13 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
   life (`JhlSprite_PlayOnce`) and fading over the last 60%.
 * Displacer: particles pulled in to the impact (`TE_IMPLOSION`, radius 200, 32, 0.3 s), sent 0.4 s in
   (`ImplodeThink`; multiplayer 0.1 s) so they end as the ball goes (0.7 s; multiplayer 0.4 s).
+* Xen spire rings (c4a1, and of3a1b, its copy: 3 ring `env_beam`s, `lgtning`, width 5, noise 1.2, (20,120,200), 150,
+  each between two `func_train`s riding up opposite sides of a spire; the ring's diameter is the line between them):
+  a strand around each, 40% wider, width 0.4, noise 2.5 times (at most 2.55) ±25%, brightness 0.4
+  (`JhlSpireRing`, `SendSpireRingStrand`). A ring between two entities has no radius of its own, so the client draws
+  it (`jhl_rings.cpp`): a ring beam it moves every frame to the trains' midpoint ± 1.4 times half the line between
+  them, kept alive a second at a time (it dies by itself when no longer tracked), dark while they're out of view,
+  forgotten on a new map. Only these maps: c4a1b's ring beams (on machines) and of6a5's Gene Worm orbs are left alone.
 * Trial, explosions (`jhl_fx_explosionblob`, on by default, not saved): the engine's blob explosion
   (`R_BlobExplosion`, rebuilt as `JhlExplosion_Blob` to take a count) on generic explosions, 64 particles (a
   sixteenth of its 1024), large ones 256 (a quarter; more ran a few satchels out of particles).

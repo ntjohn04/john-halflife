@@ -23,6 +23,7 @@
 
 #include "jhl_debris.h"
 #include "jhl_explosions.h"
+#include "jhl_rings.h"
 #include "sound/ClientSoundReplacementSystem.h"
 #include "sound/ISoundSystem.h"
 
@@ -361,6 +362,9 @@ void DLLEXPORT HUD_TempEntUpdate(
 	int (*Callback_AddVisibleEntity)(cl_entity_t* pEntity),
 	void (*Callback_TempEntPlaySound)(TEMPENTITY* pTemp, float damp))
 {
+	// johnhalflife: the Xen spire rings' strands onto their entities, before the engine draws beams.
+	JhlRings_Update(client_time);
+
 	// Use our own temp ent list instead.
 	ppTempEntFree = &gpTempEntFree;
 	ppTempEntActive = &gpTempEntActive;
@@ -904,6 +908,10 @@ static void MsgFunc_TempEntity(const char* name, BufferReader& reader)
 
 	case TE_SMOKE:
 		JhlExplosion_ParseGroundDust(reader);
+		break;
+
+	case TE_BEAMRING:
+		JhlRings_ParseSpireRing(reader);
 		break;
 	}
 }
