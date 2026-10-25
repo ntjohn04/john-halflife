@@ -83,9 +83,11 @@ Changes:
   ichthyosaur) 4 uses per piece, 16 gibs; headcrab the vanilla 4; baby crab 1 half-size gib; rat 2 gibs at a
   third of the size, no skull (it has human gibs); barnacle 2 per gib it coughs up (8 as it dies: 4 events in its
   death animation). Each gib still leaves up to 5 blood decals as it bounces.
-* Headcrab and baby crab corpses gib after 6 bullets (vanilla: only blasts, crushing, falls and clubs gib
-  corpses). Counted per bullet as each hits (`CHeadCrab::TraceAttack`), so a close shotgun blast's pellets count
-  one by one; `m_JhlCorpseHits` is saved (an added field in an existing data map, so older saves still load).
+* Some corpses gib from bullet damage added up over hits (vanilla: only blasts, crushing, falls and clubs gib
+  corpses; `JhlCorpseGibDamage`, `CBaseMonster::DeadTakeDamage`): headcrabs and baby crabs 48 (6 9mm rounds, 2 from
+  the .357, a double shotgun blast), houndeyes and map-placed dead houndeyes 60 (a point-blank double blast, the most
+  a shotgun does: 12 pellets × 5; 8 9mm rounds, 2 from the .357). Headshots count triple, as on the living.
+  `m_JhlCorpseDamage` is saved (an added field in the base monster's data map, so older saves still load).
 * 60 s on the ground before fading, instead of `giblife`.
 * Each gib ±15% size and ±20% speed, and a wider random sideways direction (±0.7 instead of ±0.25 per
   horizontal axis), so gibs fan out instead of flying one way when a blast is level with the body. Vanilla's model renderer ignores scale; `StudioSetUpTransform` now applies it

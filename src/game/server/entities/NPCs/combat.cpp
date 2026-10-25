@@ -1043,6 +1043,19 @@ bool CBaseMonster::DeadTakeDamage(CBaseEntity* inflictor, CBaseEntity* attacker,
 
 #endif
 
+	// johnhalflife: enough bullet damage gibs some corpses (JhlCorpseGibDamage).
+	if ((bitsDamageType & DMG_BULLET) != 0 && JhlCorpseGibDamage() > 0 && UTIL_JhlParticleSystem())
+	{
+		m_JhlCorpseDamage += flDamage;
+
+		if (m_JhlCorpseDamage >= JhlCorpseGibDamage())
+		{
+			pev->health = -50;
+			Killed(attacker, GIB_ALWAYS);
+			return false;
+		}
+	}
+
 	// kill the corpse if enough damage was done to destroy the corpse and the damage is of a type that is allowed to destroy the corpse.
 	if ((bitsDamageType & DMG_GIB_CORPSE) != 0)
 	{

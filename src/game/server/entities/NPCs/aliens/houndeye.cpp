@@ -83,6 +83,10 @@ public:
 
 	bool HasAlienGibs() override { return true; }
 
+	// johnhalflife: its corpse gibs from 60 bullet damage: a point-blank double shotgun blast, 8 9mm rounds, 2 from the
+	// .357.
+	float JhlCorpseGibDamage() override { return 60; }
+
 	bool CanRecruit(CSquadMonster* recruit) override
 	{
 		return recruit->ClassnameIs(GetClassname());
@@ -1257,6 +1261,10 @@ public:
 	void Spawn() override;
 
 	bool HasAlienGibs() override { return true; }
+
+	// johnhalflife: its corpse gibs from 60 bullet damage: a point-blank double shotgun blast, 8 9mm rounds, 2 from the
+	// .357.
+	float JhlCorpseGibDamage() override { return 60; }
 
 	bool KeyValue(KeyValueData* pkvd) override;
 

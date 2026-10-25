@@ -801,6 +801,15 @@ public:
 	 */
 	bool DeadTakeDamage(CBaseEntity* inflictor, CBaseEntity* attacker, float flDamage, int bitsDamageType);
 
+	/**
+	 *	@brief johnhalflife (jhl_fx_particlesystem): how much bullet damage gibs this monster's corpse, added up over
+	 *	hits (vanilla: bullets never gib corpses), or 0 for never.
+	 */
+	virtual float JhlCorpseGibDamage() { return 0; }
+
+	// Bullet damage its corpse has taken (JhlCorpseGibDamage).
+	float m_JhlCorpseDamage = 0;
+
 	void RadiusDamage(CBaseEntity* inflictor, CBaseEntity* attacker, float flDamage,
 		int bitsDamageType, EntityClassification iClassIgnore = ENTCLASS_NONE);
 	void RadiusDamage(Vector vecSrc, CBaseEntity* inflictor, CBaseEntity* attacker, float flDamage,

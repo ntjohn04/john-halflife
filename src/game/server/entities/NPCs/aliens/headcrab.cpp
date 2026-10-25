@@ -14,7 +14,6 @@
  ****/
 
 #include "cbase.h"
-#include "jhl_effects.h"
 
 #define HC_AE_JUMPATTACK (2)
 
@@ -93,13 +92,11 @@ public:
 	bool CheckRangeAttack1(float flDot, float flDist) override;
 	bool CheckRangeAttack2(float flDot, float flDist) override;
 	bool TakeDamage(CBaseEntity* inflictor, CBaseEntity* attacker, float flDamage, int bitsDamageType) override;
-	void TraceAttack(CBaseEntity* attacker, float flDamage, Vector vecDir, TraceResult* ptr, int bitsDamageType) override;
 
 	bool HasAlienGibs() override { return true; }
 
-	// johnhalflife (jhl_fx_particlesystem): bullets that have hit its corpse; enough of them gib it.
-	static constexpr int JhlCorpseGibHits = 6;
-	int m_JhlCorpseHits = 0;
+	// johnhalflife: its corpse gibs from 48 bullet damage: 6 9mm rounds, 2 from the .357, a double shotgun blast.
+	float JhlCorpseGibDamage() override { return 48; }
 
 	virtual float GetDamageAmount() { return GetSkillFloat("headcrab_dmg_bite"sv); }
 	virtual int GetVoicePitch() { return 100; }
@@ -116,7 +113,6 @@ public:
 
 BEGIN_DATAMAP(CHeadCrab)
 DEFINE_FUNCTION(LeapTouch),
-	DEFINE_FIELD(m_JhlCorpseHits, FIELD_INTEGER),
 	END_DATAMAP();
 
 LINK_ENTITY_TO_CLASS(monster_headcrab, CHeadCrab);
@@ -402,24 +398,7 @@ bool CHeadCrab::TakeDamage(CBaseEntity* inflictor, CBaseEntity* attacker, float 
 	if ((bitsDamageType & DMG_ACID) != 0)
 		flDamage = 0;
 
-	// johnhalflife: a corpse shot enough times gibs (vanilla: only blasts, crushing, falls and clubs gib corpses).
-	// Bullets are counted as each hits (TraceAttack): a shotgun blast's pellets all come in one TakeDamage.
-	if (pev->deadflag == DEAD_DEAD && m_JhlCorpseHits >= JhlCorpseGibHits && UTIL_JhlParticleSystem())
-	{
-		pev->health = -50;
-		Killed(attacker, GIB_ALWAYS);
-		return false;
-	}
-
 	return CBaseMonster::TakeDamage(inflictor, attacker, flDamage, bitsDamageType);
-}
-
-void CHeadCrab::TraceAttack(CBaseEntity* attacker, float flDamage, Vector vecDir, TraceResult* ptr, int bitsDamageType)
-{
-	if (pev->deadflag == DEAD_DEAD && (bitsDamageType & DMG_BULLET) != 0)
-		++m_JhlCorpseHits;
-
-	CBaseMonster::TraceAttack(attacker, flDamage, vecDir, ptr, bitsDamageType);
 }
 
 #define CRAB_ATTN_IDLE (float)1.5

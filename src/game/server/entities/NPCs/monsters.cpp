@@ -33,6 +33,7 @@
 // to just pick a new one when we start up again.
 BEGIN_DATAMAP(CBaseMonster)
 DEFINE_FIELD(m_hEnemy, FIELD_EHANDLE),
+	DEFINE_FIELD(m_JhlCorpseDamage, FIELD_FLOAT),
 	DEFINE_FIELD(m_hTargetEnt, FIELD_EHANDLE),
 	DEFINE_ARRAY(m_hOldEnemy, FIELD_EHANDLE, MAX_OLD_ENEMIES),
 	DEFINE_ARRAY(m_vecOldEnemy, FIELD_POSITION_VECTOR, MAX_OLD_ENEMIES),
