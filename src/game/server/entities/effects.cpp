@@ -414,7 +414,7 @@ public:
 
 	/**
 	 *	@brief johnhalflife (jhl_fx_particlesystem): whether this is one of the Xen spires' rings (c4a1's, and of3a1b's,
-	 *	its copy), which get a strand 40% wider around them (SendSpireRingStrand). Only these maps: other ring beams
+	 *	its copy), which get a strand 55% wider around them (SendSpireRingStrand). Only these maps: other ring beams
 	 *	(c4a1b's machines, of6a5's Gene Worm orbs) are left as they are.
 	 */
 	bool JhlSpireRing();
@@ -899,13 +899,14 @@ void CLightning::SendSpireRingStrand(CBaseEntity* pStart, CBaseEntity* pEnd)
 	WRITE_BYTE(m_frameStart);			 // framestart
 	WRITE_BYTE((int)pev->framerate);	 // framerate
 	WRITE_BYTE(JhlStrandWidth());		 // width
-	WRITE_BYTE(JhlStrandStrikeNoise());	 // noise
+	// Calmer and brighter than an arc's strand, still under the ring: noise 2.2 ±25% (c4a1's ring 1.2), half as bright.
+	WRITE_BYTE(std::min(255, static_cast<int>(220 * RANDOM_FLOAT(0.75f, 1.25f)))); // noise
 	WRITE_BYTE((int)pev->rendercolor.x); // r, g, b
 	WRITE_BYTE((int)pev->rendercolor.y); // r, g, b
 	WRITE_BYTE((int)pev->rendercolor.z); // r, g, b
-	WRITE_BYTE(JhlStrandBrightness());	 // brightness
+	WRITE_BYTE(static_cast<int>(pev->renderamt * 0.5f)); // brightness
 	WRITE_BYTE(m_speed);				 // speed
-	WRITE_BYTE(14);						 // scale, tenths: 40% wider
+	WRITE_BYTE(155);					 // scale, hundredths: 55% wider
 	MESSAGE_END();
 }
 
