@@ -37,6 +37,22 @@ struct JhlTracerStyle
 void JhlTracer_Fire(const Vector& start, const Vector& end, const JhlTracerStyle& style);
 
 /**
+ *	@brief Registers the tuning cvars (jhl_tracer_color, _brightness, _width, _length, _speed, _freq), temporary:
+ *	the M249's tracers (and, for now, the MP5's) are played from them while their look is chosen.
+ */
+void JhlTracers_Initialize();
+
+/**
+ *	@brief The tracer style from the tuning cvars.
+ */
+JhlTracerStyle JhlTracers_TuningStyle();
+
+/**
+ *	@brief One round in this many is a tracer, from jhl_tracer_freq (at least 1).
+ */
+int JhlTracers_TuningFrequency();
+
+/**
  *	@brief Moves the tracers along (HUD_TempEntUpdate, before the engine draws beams).
  */
 void JhlTracers_Update(double time);

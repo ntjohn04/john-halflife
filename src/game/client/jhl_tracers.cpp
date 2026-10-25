@@ -13,6 +13,7 @@
  *
  ****/
 
+#include <cstdio>
 #include <vector>
 
 #include "hud.h"
@@ -39,7 +40,41 @@ constexpr std::size_t MaxTracers = 64;
 
 std::vector<Tracer> g_Tracers;
 double g_LastTime = 0;
+
+cvar_t* g_TracerColor = nullptr;
+cvar_t* g_TracerBrightness = nullptr;
+cvar_t* g_TracerWidth = nullptr;
+cvar_t* g_TracerLength = nullptr;
+cvar_t* g_TracerSpeed = nullptr;
+cvar_t* g_TracerFrequency = nullptr;
 } // namespace
+
+void JhlTracers_Initialize()
+{
+	// Not saved: while tuning, they start from the M249's values each launch.
+	g_TracerColor = gEngfuncs.pfnRegisterVariable("jhl_tracer_color", "255 60 30", 0);
+	g_TracerBrightness = gEngfuncs.pfnRegisterVariable("jhl_tracer_brightness", "1", 0);
+	g_TracerWidth = gEngfuncs.pfnRegisterVariable("jhl_tracer_width", "1.2", 0);
+	g_TracerLength = gEngfuncs.pfnRegisterVariable("jhl_tracer_length", "32", 0);
+	g_TracerSpeed = gEngfuncs.pfnRegisterVariable("jhl_tracer_speed", "4500", 0);
+	g_TracerFrequency = gEngfuncs.pfnRegisterVariable("jhl_tracer_freq", "3", 0);
+}
+
+JhlTracerStyle JhlTracers_TuningStyle()
+{
+	JhlTracerStyle style;
+	std::sscanf(g_TracerColor->string, "%f %f %f", &style.Color.x, &style.Color.y, &style.Color.z);
+	style.Brightness = g_TracerBrightness->value;
+	style.Width = g_TracerWidth->value;
+	style.Length = g_TracerLength->value;
+	style.Speed = g_TracerSpeed->value;
+	return style;
+}
+
+int JhlTracers_TuningFrequency()
+{
+	return std::max(1, static_cast<int>(g_TracerFrequency->value));
+}
 
 void JhlTracer_Fire(const Vector& start, const Vector& end, const JhlTracerStyle& style)
 {

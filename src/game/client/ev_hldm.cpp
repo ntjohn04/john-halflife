@@ -369,16 +369,22 @@ void EV_HLDM_DecalGunshot(pmtrace_t* pTrace, int iBulletType)
 	}
 }
 
-// johnhalflife: the M249's tracer rounds (one in M249TracerFrequency): saturated red, a streak 32 units long at 4500
-// units a second, slower than the engine's 6000 so it can be followed.
+// johnhalflife: the M249's tracer rounds, played from the jhl_tracer_* tuning cvars (jhl_tracers.cpp) while their
+// look is chosen: saturated red, a streak 32 units long at 4500 units a second, one round in 3. Any nonzero frequency
+// turns them on; the cvar sets it.
 constexpr int M249TracerFrequency = 3;
-const JhlTracerStyle M249TracerStyle{{255, 60, 30}, 1, 1.2f, 32, 4500};
 
 void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const Vector& forward, const Vector& right,
 	int iBulletType, int iTracerFreq, int* tracerCount)
 {
 	int i;
 	const bool player = idx >= 1 && idx <= gEngfuncs.GetMaxClients();
+
+	// johnhalflife: the M249's tracers, and for now (temporary, to see them with less recoil) the MP5's too.
+	const bool jhlTracer = (iBulletType == BULLET_PLAYER_556 || iBulletType == BULLET_PLAYER_MP5) && JhlParticleSystemEnabled();
+
+	if (jhlTracer && iTracerFreq != 0)
+		iTracerFreq = JhlTracers_TuningFrequency();
 
 	if (iTracerFreq != 0 && ((*tracerCount)++ % iTracerFreq) == 0)
 	{
@@ -399,9 +405,9 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 			vecTracerSrc = vecSrc;
 		}
 
-		// johnhalflife: the M249's tracer rounds, bright red streaks; in first person from the gun's muzzle, so they
-		// cross the view instead of flying straight away from it.
-		if (iBulletType == BULLET_PLAYER_556 && JhlParticleSystemEnabled())
+		// johnhalflife: in first person from the gun's muzzle, so they cross the view instead of flying straight away
+		// from it.
+		if (jhlTracer)
 		{
 			if (cl_entity_t* viewModel = gEngfuncs.GetViewModel();
 				EV_IsLocal(idx) && 0 == CL_IsThirdPerson() && viewModel && viewModel->attachment[0] != g_vecZero)
@@ -409,7 +415,7 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 				vecTracerSrc = viewModel->attachment[0];
 			}
 
-			JhlTracer_Fire(vecTracerSrc, end, M249TracerStyle);
+			JhlTracer_Fire(vecTracerSrc, end, JhlTracers_TuningStyle());
 			return;
 		}
 
