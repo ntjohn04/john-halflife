@@ -674,6 +674,50 @@ void Ring(const Target& target, Params& p)
 		color.x / 255, color.y / 255, color.z / 255);
 }
 
+// Tracer rounds from just below your eyes to the target: the engine's tracer (color=-1, as the MP5's: tracerred,
+// tracergreen, tracerblue, tracerlength, tracerspeed) or a tracer particle in one of the engine's 12 tracer colors
+// (0 white, 1 red, 2 green, 3 blue, 4 the cvars', 5 yellow-orange 255,167,17, 6 255,130,90, 7 blue 55,60,144,
+// 8 255,130,90, 9 255,140,90, 10 200,130,90, 11 255,120,70). count rounds, every interval seconds, spread degrees.
+void Tracer(const Target& target, Params& p)
+{
+	const int color = p.Int("color", 11);
+	const float length = p.Float("length", 0.8f);
+	const float speed = p.Float("speed", 6000);
+	const int count = p.Int("count", 1);
+	const float interval = p.Float("interval", 0.067f);
+	const float spread = p.Float("spread", 0);
+	p.Print("tracer");
+
+	Vector right, up;
+	{
+		Vector forward;
+		AngleVectors(v_angles, forward, right, up);
+	}
+
+	const Vector start = target.Eye + target.Forward * 16 + right * 2 - Vector{0, 0, 4};
+	const float distance = (target.Position - start).Length();
+
+	for (int i = 0; i < count; ++i)
+	{
+		Later(i * interval, [=]()
+			{
+			const float s = spread * 3.14159265f / 180;
+			Vector direction = (target.Position - start).Normalize() + right * gEngfuncs.pfnRandomFloat(-s, s) + up * gEngfuncs.pfnRandomFloat(-s, s);
+			direction = direction.Normalize();
+			Vector from = start;
+			Vector end = start + direction * distance;
+
+			if (color < 0)
+			{
+				gEngfuncs.pEfxAPI->R_TracerEffect(from, end);
+				return;
+			}
+
+			Vector velocity = direction * speed;
+			gEngfuncs.pEfxAPI->R_UserTracerParticle(from, velocity, distance / speed, color, length, 0, nullptr); });
+	}
+}
+
 // The engine's built-in particle effects (palette colors 0-255).
 void Particles(const Target& target, Params& p)
 {
@@ -1120,6 +1164,7 @@ const std::vector<Command>& Commands()
 		{"debris", "model= count= size= speed= spread= life= material=metal|wood|glass|flesh|concrete|none", Debris},
 		{"light", "radius= color=r,g,b life= decay= offset=", Light},
 		{"beam", "sprite= width= noise= brightness= color=r,g,b life= speed= fps=", Beam},
+		{"tracer", "color=-1|0-11 length=0.8 speed=6000 count=1 interval=0.067 spread=0", Tracer},
 		{"ring", "type=cylinder|torus|disk sprite= radius= life= width= noise= brightness= color=r,g,b fps= speed= offset= axis=up|normal", Ring},
 		{"particles", "type=burst|explosion|explosion2|blob|lava|teleport|implosion|effect size= color= life= length= radius= count=", Particles},
 		{"ricochet", "scale= sprite=", Ricochet},
