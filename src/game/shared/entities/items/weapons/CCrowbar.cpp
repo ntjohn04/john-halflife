@@ -84,6 +84,7 @@ void CCrowbar::PrimaryAttack()
 void CCrowbar::Smack()
 {
 	DecalGunshot(&m_trHit, BULLET_PLAYER_CROWBAR);
+	MeleeImpactSpark(&m_trHit);
 }
 
 void CCrowbar::SwingAgain()

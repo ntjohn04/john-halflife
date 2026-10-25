@@ -273,6 +273,7 @@ void CKnife::SwingAgain()
 void CKnife::Smack()
 {
 	DecalGunshot(&m_trHit, BULLET_PLAYER_CROWBAR);
+	MeleeImpactSpark(&m_trHit);
 }
 
 bool CKnife::GetWeaponInfo(WeaponInfo& info)

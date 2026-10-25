@@ -106,6 +106,7 @@ void CPipewrench::SecondaryAttack()
 void CPipewrench::Smack()
 {
 	DecalGunshot(&m_trHit, BULLET_PLAYER_CROWBAR);
+	MeleeImpactSpark(&m_trHit);
 }
 
 void CPipewrench::SwingAgain()
@@ -445,6 +446,9 @@ void CPipewrench::BigSwing()
 
 			// delay the decal a bit
 			m_trHit = tr;
+
+			// johnhalflife: no decal from a big swing (below), but a spark now and then off metal.
+			MeleeImpactSpark(&m_trHit);
 		}
 
 		m_pPlayer->m_iWeaponVolume = flVol * PIPEWRENCH_WALLHIT_VOLUME;

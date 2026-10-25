@@ -307,6 +307,7 @@ void AddMultiDamage(CBaseEntity* inflictor, CBaseEntity* pEntity, float flDamage
 void SpawnBlood(Vector vecSpot, int bloodColor, float flDamage) {}
 int DamageDecal(CBaseEntity* pEntity, int bitsDamageType) { return 0; }
 void DecalGunshot(TraceResult* pTrace, int iBulletType) {}
+void MeleeImpactSpark(TraceResult* pTrace) {}
 void EjectBrass(const Vector& vecOrigin, const Vector& vecVelocity, float rotation, int model, int soundtype) {}
 bool CBasePlayerWeapon::KeyValue(KeyValueData* pkvd) { return false; }
 float CBasePlayerWeapon::GetNextAttackDelay(float flTime) { return flTime; }

@@ -623,6 +623,11 @@ void AddMultiDamage(CBaseEntity* inflictor, CBaseEntity* pEntity, float flDamage
 void DecalGunshot(TraceResult* pTrace, int iBulletType);
 
 /**
+ *	@brief Server only: a melee weapon's strike on a wall (where its decal goes) sparks now and then on metal.
+ */
+void MeleeImpactSpark(TraceResult* pTrace);
+
+/**
  *	@brief Server only: tells nearby clients to draw a splash if a bullet fired from @p start to @p end entered water.
  */
 void SendBulletWaterSplash(const Vector& start, const Vector& end);

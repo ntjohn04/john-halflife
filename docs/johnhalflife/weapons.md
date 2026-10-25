@@ -104,6 +104,10 @@ On top of the stock decal, specks and ricochet:
 The player's bullets are handled in the client weapon events. Bullets fired by the server (NPCs, mounted
 guns) send a `BulletHit` message from `DecalGunshot`.
 
+Melee strikes on metal (crowbar, knife, wrench) spark like a bullet does about 35% of the time
+(`MeleeImpactSpark`, with `jhl_fx_particlesystem` too): with the decal, 0.2 s into the swing, or at once for the
+wrench's big swing, which has no decal. Other surfaces keep the sound and decal only.
+
 ### Water splashes
 `jhl_fx_bulletimpacts`
 

@@ -22,6 +22,7 @@
 #include "GameLibrary.h"
 #include "weapons.h"
 #include "UserMessages.h"
+#include "jhl_effects.h"
 
 void ClearMultiDamage()
 {
@@ -70,14 +71,9 @@ int DamageDecal(CBaseEntity* pEntity, int bitsDamageType)
 
 // Lets nearby clients add their bullet impact effects (weapon_effects.cpp) for bullets fired on the server.
 // The player's own bullets get theirs from the client-side weapon events instead.
-static void SendBulletImpact(TraceResult* pTrace, CBaseEntity* pEntity)
+// The material of the surface a trace hit (concrete if it can't be found).
+static char TraceTextureType(TraceResult* pTrace, CBaseEntity* pEntity)
 {
-	// Sending an unregistered message is a fatal engine error.
-	if (0 == gmsgBulletImpact)
-	{
-		return;
-	}
-
 	char textureType = CHAR_TEX_CONCRETE;
 
 	edict_t* hit = pEntity ? pEntity->edict() : CBaseEntity::World->edict();
@@ -90,6 +86,17 @@ static void SendBulletImpact(TraceResult* pTrace, CBaseEntity* pEntity)
 		textureType = g_MaterialSystem.FindTextureType(g_MaterialSystem.StripTexturePrefix(textureName));
 	}
 
+	return textureType;
+}
+
+static void SendBulletImpact(TraceResult* pTrace, CBaseEntity* pEntity, char textureType)
+{
+	// Sending an unregistered message is a fatal engine error.
+	if (0 == gmsgBulletImpact)
+	{
+		return;
+	}
+
 	MESSAGE_BEGIN(MSG_PVS, gmsgBulletImpact, pTrace->vecEndPos);
 	WRITE_COORD_VECTOR(pTrace->vecEndPos);
 	WRITE_CHAR(static_cast<int>(pTrace->vecPlaneNormal.x * 127));
@@ -97,6 +104,37 @@ static void SendBulletImpact(TraceResult* pTrace, CBaseEntity* pEntity)
 	WRITE_CHAR(static_cast<int>(pTrace->vecPlaneNormal.z * 127));
 	WRITE_BYTE(textureType);
 	MESSAGE_END();
+}
+
+static void SendBulletImpact(TraceResult* pTrace, CBaseEntity* pEntity)
+{
+	SendBulletImpact(pTrace, pEntity, TraceTextureType(pTrace, pEntity));
+}
+
+void MeleeImpactSpark(TraceResult* pTrace)
+{
+	// johnhalflife: a melee weapon striking metal now and then sparks, as a bullet hitting metal does (the client's
+	// metal bullet impact: a few small streaks and a very short warm flash).
+	constexpr float SparkChance = 0.35f;
+
+	if (!UTIL_JhlParticleSystem() || pTrace->flFraction >= 1.0 || RANDOM_FLOAT(0, 1) >= SparkChance)
+		return;
+
+	CBaseEntity* pEntity = CBaseEntity::Instance(pTrace->pHit);
+	const char textureType = TraceTextureType(pTrace, pEntity);
+
+	switch (textureType)
+	{
+	case CHAR_TEX_METAL:
+	case CHAR_TEX_VENT:
+	case CHAR_TEX_GRATE:
+	case CHAR_TEX_COMPUTER:
+		SendBulletImpact(pTrace, pEntity, textureType);
+		break;
+
+	default:
+		break;
+	}
 }
 
 static bool IsLiquid(const Vector& position)
