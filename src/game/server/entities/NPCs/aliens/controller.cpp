@@ -47,7 +47,7 @@ public:
 	bool HasAlienGibs() override { return true; }
 
 	// johnhalflife: its corpse gibs from 120, big but worth shredding: two double shotgun blasts, 15 9mm rounds, 3 from
-	// the .357. Gibbing goes through Killed again, so it shorts out once more.
+	// the .357.
 	float JhlCorpseGibDamage() override { return 120; }
 
 	void Spawn() override;
@@ -209,8 +209,8 @@ void CController::Killed(CBaseEntity* attacker, int iGib)
 		m_pBall[1] = nullptr;
 	}
 
-	// johnhalflife: it shorts out, a spark burst and a shower or two.
-	if (UTIL_JhlParticleSystem())
+	// johnhalflife: it shorts out, a spark burst and a shower or two; once, not again when its corpse gibs.
+	if (UTIL_JhlParticleSystem() && pev->deadflag != DEAD_DEAD)
 		UTIL_JhlSparkShowers(Center(), RANDOM_LONG(1, 2));
 
 	CSquadMonster::Killed(attacker, iGib);

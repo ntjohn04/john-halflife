@@ -88,7 +88,7 @@ Changes:
   the .357, a double shotgun blast), houndeyes and map-placed dead houndeyes 60 (a point-blank double blast, the most
   a shotgun does: 12 pellets × 5; 8 9mm rounds, 2 from the .357); by size, shock roaches 48 (as headcrabs), pit
   drones 90 (a double blast and a single), bullsquids 120 (two double blasts), and controllers 120 (big, but worth
-  shredding; gibbing goes through its Killed again, so it shorts out once more). Not rats: bullets don't hit them.
+  shredding; it shorts out when it dies, not again when its corpse gibs). Not rats: bullets don't hit them.
   Headshots count triple, as on the living.
   `m_JhlCorpseDamage` is saved (an added field in the base monster's data map, so older saves still load).
 * 60 s on the ground before fading, instead of `giblife`.
