@@ -28,6 +28,14 @@ struct JhlTracerStyle
 	float Length = 200; // Seen nearly end-on, it looks a few feet long.
 	float Speed = 4500;
 	float StartOffsetMax = 180;
+
+	// A hotter core drawn inside the streak, centered on it and CoreLength / Length of it (shrinking with it as it grows
+	// out and goes in), or none if CoreLength is 0. Both are additive, so the core reads as a white-hot center with
+	// the streak's color around it.
+	Vector CoreColor{255, 225, 180};
+	float CoreBrightness = 1;
+	float CoreWidth = 1;
+	float CoreLength = 0;
 };
 
 /**

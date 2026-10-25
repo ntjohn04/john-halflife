@@ -27,6 +27,7 @@ namespace
 struct Tracer
 {
 	BEAM* Beam;
+	BEAM* Core; // Null if it has none.
 	Vector Start;
 	Vector Direction;
 	float Distance;
@@ -79,8 +80,34 @@ void JhlTracer_Fire(const Vector& muzzle, const Vector& end, const JhlTracerStyl
 		return;
 
 	beam->brightness = 0;
-	g_Tracers.push_back({beam, start, direction, distance, style, gEngfuncs.GetClientTime()});
+
+	BEAM* core = nullptr;
+
+	if (style.CoreLength > 0)
+	{
+		core = gEngfuncs.pEfxAPI->R_BeamPoints(from, to, sprite, 1, style.CoreWidth, 0, style.CoreBrightness, 0, 0, 0,
+			style.CoreColor.x / 255, style.CoreColor.y / 255, style.CoreColor.z / 255);
+
+		if (core)
+			core->brightness = 0;
+	}
+
+	g_Tracers.push_back({beam, core, start, direction, distance, style, gEngfuncs.GetClientTime()});
 }
+
+namespace
+{
+// Puts a beam between two distances down a tracer's path, at a brightness while it has any length.
+void PlaceBeam(BEAM* beam, const Tracer& tracer, float from, float to, float brightness, double time)
+{
+	beam->source = tracer.Start + tracer.Direction * from;
+	beam->target = tracer.Start + tracer.Direction * to;
+	beam->delta = beam->target - beam->source;
+	beam->brightness = to - from >= 1 ? brightness : 0;
+	beam->die = static_cast<float>(time) + 0.5f;
+	beam->flags |= FBEAM_ISACTIVE;
+}
+} // namespace
 
 void JhlTracers_Update(double time)
 {
@@ -97,21 +124,32 @@ void JhlTracers_Update(double time)
 		const float head = std::min(flown, tracer.Distance);
 		const float tail = std::clamp(flown - tracer.Style.Length, 0.f, tracer.Distance);
 
-		// Reached the end: gone (the engine frees it).
+		// Reached the end: gone (the engine frees them).
 		if (tail >= tracer.Distance)
 		{
-			tracer.Beam->die = static_cast<float>(time);
-			tracer.Beam->brightness = 0;
+			for (BEAM* beam : {tracer.Beam, tracer.Core})
+			{
+				if (beam)
+				{
+					beam->die = static_cast<float>(time);
+					beam->brightness = 0;
+				}
+			}
+
 			it = g_Tracers.erase(it);
 			continue;
 		}
 
-		tracer.Beam->source = tracer.Start + tracer.Direction * tail;
-		tracer.Beam->target = tracer.Start + tracer.Direction * head;
-		tracer.Beam->delta = tracer.Beam->target - tracer.Beam->source;
-		tracer.Beam->brightness = head - tail >= 1 ? tracer.Style.Brightness : 0;
-		tracer.Beam->die = static_cast<float>(time) + 0.5f;
-		tracer.Beam->flags |= FBEAM_ISACTIVE;
+		PlaceBeam(tracer.Beam, tracer, tail, head, tracer.Style.Brightness, time);
+
+		// The core: centered on the streak, the same share of it whether it's whole or growing out or going in.
+		if (tracer.Core)
+		{
+			const float half = (head - tail) * std::min(1.f, tracer.Style.CoreLength / std::max(1.f, tracer.Style.Length)) * 0.5f;
+			const float middle = (head + tail) * 0.5f;
+			PlaceBeam(tracer.Core, tracer, middle - half, middle + half, tracer.Style.CoreBrightness, time);
+		}
+
 		++it;
 	}
 }
