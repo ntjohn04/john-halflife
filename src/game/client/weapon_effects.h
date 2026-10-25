@@ -26,8 +26,9 @@ void WeaponEffects_Initialize();
 /**
  *	@brief A stronger, warmer muzzle light and a faint smoke wisp at the local player's view model muzzle.
  *	Call alongside EV_MuzzleFlash for firearms.
+ *	@param pellets A shotgun's: a chance of a wisp for each (others: one).
  */
-void EV_GunMuzzleEffects();
+void EV_GunMuzzleEffects(int pellets = 1);
 
 /**
  *	@brief EV_GunMuzzleEffects for the sniper rifle, whose view model attachment isn't at its muzzle:

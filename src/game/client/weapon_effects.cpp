@@ -41,9 +41,9 @@ static bool IsZoomed()
 	return gHUD.m_iFOV != 0 && gHUD.m_iFOV < static_cast<int>(CVAR_GET_FLOAT("default_fov"));
 }
 
-static void MuzzleEffectsAt(const Vector& position, float wispChance, float wispScale = 1, float wispAlpha = 0.1f);
+static void MuzzleEffectsAt(const Vector& position, float wispChance, float wispScale = 1, float wispAlpha = 0.1f, int rolls = 1);
 
-void EV_GunMuzzleEffects()
+void EV_GunMuzzleEffects(int pellets)
 {
 	// Zoomed in, the view model isn't drawn, so its attachment is stale and the effects would appear where the
 	// muzzle last was.
@@ -67,8 +67,8 @@ void EV_GunMuzzleEffects()
 		return;
 	}
 
-	// Now and then a wisp of smoke; real guns barely smoke.
-	MuzzleEffectsAt(muzzle, 0.3f);
+	// Now and then a wisp of smoke; real guns barely smoke. A shotgun's chance is per pellet, so it smokes more.
+	MuzzleEffectsAt(muzzle, 0.3f, 1, 0.1f, std::max(1, pellets));
 }
 
 void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, const Vector& right, const Vector& up)
@@ -178,7 +178,7 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 	}
 }
 
-static void MuzzleEffectsAt(const Vector& position, float wispChance, float wispScale, float wispAlpha)
+static void MuzzleEffectsAt(const Vector& position, float wispChance, float wispScale, float wispAlpha, int rolls)
 {
 	Vector muzzle = position;
 
@@ -194,12 +194,6 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance, float wisp
 		light->decay = light->radius * 12;
 	}
 
-	// A faint wisp of smoke drifting up from the muzzle.
-	if (gEngfuncs.pfnRandomFloat(0, 1) >= wispChance)
-	{
-		return;
-	}
-
 	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
 
 	if (modelIndex == 0)
@@ -207,17 +201,43 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance, float wisp
 		return;
 	}
 
-	Vector velocity{gEngfuncs.pfnRandomFloat(-4, 4), gEngfuncs.pfnRandomFloat(-4, 4), gEngfuncs.pfnRandomFloat(12, 20)};
+	// A faint wisp of smoke drifting up from the muzzle, with a chance for each roll (a shotgun's pellets).
+	bool first = true;
 
-	// Plays once and is removed on its last frame (see DustImpact).
-	TEMPENTITY* wisp = gEngfuncs.pEfxAPI->R_TempSprite(muzzle, velocity, gEngfuncs.pfnRandomFloat(0.08f, 0.12f) * wispScale,
-		modelIndex, kRenderTransAlpha, kRenderFxNone, wispAlpha, 2.0f, FTENT_SPRANIMATE);
-
-	if (wisp)
+	for (int i = 0; i < rolls; ++i)
 	{
-		wisp->entity.curstate.rendercolor = {190, 190, 190};
-		wisp->entity.curstate.framerate = 28;
-		wisp->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+		if (gEngfuncs.pfnRandomFloat(0, 1) >= wispChance)
+		{
+			continue;
+		}
+
+		Vector origin = muzzle;
+		Vector velocity{gEngfuncs.pfnRandomFloat(-4, 4), gEngfuncs.pfnRandomFloat(-4, 4), gEngfuncs.pfnRandomFloat(12, 20)};
+		float scale = gEngfuncs.pfnRandomFloat(0.08f, 0.12f) * wispScale;
+		float framerate = 28;
+
+		// Later wisps of the same shot spread out from the first, so they don't play over it: a little apart, drifting
+		// their own ways, some bigger and slower.
+		if (!first)
+		{
+			origin = origin + Vector{gEngfuncs.pfnRandomFloat(-2, 2), gEngfuncs.pfnRandomFloat(-2, 2), gEngfuncs.pfnRandomFloat(-1, 2)};
+			velocity = velocity + Vector{gEngfuncs.pfnRandomFloat(-6, 6), gEngfuncs.pfnRandomFloat(-6, 6), gEngfuncs.pfnRandomFloat(-4, 6)};
+			scale *= gEngfuncs.pfnRandomFloat(0.9f, 1.4f);
+			framerate = gEngfuncs.pfnRandomFloat(22, 30);
+		}
+
+		first = false;
+
+		// Plays once and is removed on its last frame (see DustImpact).
+		TEMPENTITY* wisp = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, scale,
+			modelIndex, kRenderTransAlpha, kRenderFxNone, wispAlpha, 2.0f, FTENT_SPRANIMATE);
+
+		if (wisp)
+		{
+			wisp->entity.curstate.rendercolor = {190, 190, 190};
+			wisp->entity.curstate.framerate = framerate;
+			wisp->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+		}
 	}
 }
 

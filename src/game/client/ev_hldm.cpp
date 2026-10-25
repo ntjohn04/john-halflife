@@ -650,7 +650,7 @@ void EV_FireShotGunDouble(event_args_t* args)
 	{
 		// Add muzzle flash to current weapon model
 		EV_MuzzleFlash();
-		EV_GunMuzzleEffects();
+		EV_GunMuzzleEffects(g_Skill.GetValue("shotgun_double_wide_spread") != 0 ? 8 : 12);
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(SHOTGUN_FIRE2, 0);
 		if (!EV_WeaponRecoil(RecoilShotgunDouble))
 			V_PunchAxis(0, -10.0);
@@ -706,7 +706,7 @@ void EV_FireShotGunSingle(event_args_t* args)
 	{
 		// Add muzzle flash to current weapon model
 		EV_MuzzleFlash();
-		EV_GunMuzzleEffects();
+		EV_GunMuzzleEffects(g_Skill.GetValue("shotgun_single_tight_spread") != 0 ? 4 : 6);
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(SHOTGUN_FIRE, 0);
 
 		if (!EV_WeaponRecoil(RecoilShotgunSingle))

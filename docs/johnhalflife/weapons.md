@@ -122,6 +122,9 @@ On the local player's firearm shots (not the gauss gun), on top of the engine's 
 
 * a stronger, warm light at the muzzle (~0.06 s), and
 * a faint wisp of the stock `steam1.spr` drifting up, on about 30% of shots.
+  The shotgun rolls that chance once per pellet (single 6, double 12; 4 and 8 with the multiplayer spreads), so
+  it smokes more, about 2 and 4 wisps a shot; every wisp after a shot's first starts up to 2 units off, drifts its
+  own way, is up to 1.4× bigger and plays at 22-30 fps, so they don't stack exactly.
 
 The muzzle position is the view model's first attachment. That is only valid while the view model is
 drawn, so the effects are skipped in third person and while zoomed.
