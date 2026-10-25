@@ -686,6 +686,9 @@ void Tracer(const Target& target, Params& p)
 	const int count = p.Int("count", 1);
 	const float interval = p.Float("interval", 0.067f);
 	const float spread = p.Float("spread", 0);
+	// eye: where the game's own tracers start (16 forward, 2 right, 4 down of the eye); muzzle: the view model's
+	// muzzle (its first attachment), so the streak crosses the view instead of flying straight away from it.
+	const bool muzzle = p.String("from", "eye") == "muzzle";
 	p.Print("tracer");
 
 	Vector right, up;
@@ -694,7 +697,12 @@ void Tracer(const Target& target, Params& p)
 		AngleVectors(v_angles, forward, right, up);
 	}
 
-	const Vector start = target.Eye + target.Forward * 16 + right * 2 - Vector{0, 0, 4};
+	Vector start = target.Eye + target.Forward * 16 + right * 2 - Vector{0, 0, 4};
+
+	if (cl_entity_t* viewModel = gEngfuncs.GetViewModel(); muzzle && viewModel && viewModel->attachment[0] != g_vecZero)
+	{
+		start = viewModel->attachment[0];
+	}
 	const float distance = (target.Position - start).Length();
 
 	for (int i = 0; i < count; ++i)
@@ -1164,7 +1172,7 @@ const std::vector<Command>& Commands()
 		{"debris", "model= count= size= speed= spread= life= material=metal|wood|glass|flesh|concrete|none", Debris},
 		{"light", "radius= color=r,g,b life= decay= offset=", Light},
 		{"beam", "sprite= width= noise= brightness= color=r,g,b life= speed= fps=", Beam},
-		{"tracer", "color=-1|0-11 length=0.8 speed=6000 count=1 interval=0.067 spread=0", Tracer},
+		{"tracer", "color=-1|0-11 length=0.8 speed=6000 count=1 interval=0.067 spread=0 from=eye|muzzle", Tracer},
 		{"ring", "type=cylinder|torus|disk sprite= radius= life= width= noise= brightness= color=r,g,b fps= speed= offset= axis=up|normal", Ring},
 		{"particles", "type=burst|explosion|explosion2|blob|lava|teleport|implosion|effect size= color= life= length= radius= count=", Particles},
 		{"ricochet", "scale= sprite=", Ricochet},
