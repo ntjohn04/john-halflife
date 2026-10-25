@@ -377,11 +377,24 @@ constexpr int M249TracerFrequency = 3;
 const JhlTracerStyle M249TracerStyle{{255, 60, 30}, 0.85f, 1.2f, 200, 4500, 22, {255, 225, 180}, 1, 0.9f, 130, true};
 const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 180};
 
+// The shotgun's: a few of each shot's pellets (3-4 single, 6-8 double), fainter and shorter than the MP5's so the fan
+// stays in the background, hinting at the spread and at the double shot's extra pellets. EV_HLDM_FireBullets gives
+// the next g_ShotgunTracers pellets one.
+const JhlTracerStyle ShotgunTracerStyle{{255, 200, 120}, 0.15f, 1.f, 70, 4000, 120};
+static int g_ShotgunTracers = 0;
+
 void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const Vector& forward, const Vector& right,
 	int iBulletType, int iTracerFreq, int* tracerCount)
 {
 	int i;
 	const bool player = idx >= 1 && idx <= gEngfuncs.GetMaxClients();
+
+	// johnhalflife: the shotgun's pellet streaks, a set number a shot rather than one round in so many.
+	if (iBulletType == BULLET_PLAYER_BUCKSHOT && g_ShotgunTracers > 0)
+	{
+		--g_ShotgunTracers;
+		iTracerFreq = 1;
+	}
 
 	if (iTracerFreq != 0 && ((*tracerCount)++ % iTracerFreq) == 0)
 	{
@@ -402,9 +415,10 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 			vecTracerSrc = vecSrc;
 		}
 
-		// johnhalflife: the M249's and MP5's tracers; in first person from the gun's muzzle, so they cross the view
-		// instead of flying straight away from it.
-		if (const bool m249 = iBulletType == BULLET_PLAYER_556; (m249 || iBulletType == BULLET_PLAYER_MP5) && JhlParticleSystemEnabled())
+		// johnhalflife: the M249's, MP5's and shotgun's tracers; in first person from the gun's muzzle, so they cross the
+		// view instead of flying straight away from it.
+		if (const bool m249 = iBulletType == BULLET_PLAYER_556, shotgun = iBulletType == BULLET_PLAYER_BUCKSHOT;
+			(m249 || shotgun || iBulletType == BULLET_PLAYER_MP5) && JhlParticleSystemEnabled())
 		{
 			Vector jhlTracerSrc = vecTracerSrc;
 
@@ -414,10 +428,10 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 				jhlTracerSrc = viewModel->attachment[0];
 			}
 
-			JhlTracer_Fire(jhlTracerSrc, end, m249 ? M249TracerStyle : MP5TracerStyle);
+			JhlTracer_Fire(jhlTracerSrc, end, m249 ? M249TracerStyle : shotgun ? ShotgunTracerStyle : MP5TracerStyle);
 
-			// The M249 had none; the MP5 keeps its own as well.
-			if (m249)
+			// The M249 and shotgun had none; the MP5 keeps its own as well.
+			if (m249 || shotgun)
 				return;
 		}
 
@@ -697,6 +711,8 @@ void EV_FireShotGunDouble(event_args_t* args)
 	EV_GetGunPosition(args, vecSrc, origin);
 	vecAiming = forward;
 
+	g_ShotgunTracers = JhlParticleSystemEnabled() ? gEngfuncs.pfnRandomLong(6, 8) : 0;
+
 	if (g_Skill.GetValue("shotgun_double_wide_spread") != 0)
 	{
 		EV_HLDM_FireBullets(idx, forward, right, up, 8, vecSrc, vecAiming, 2048, BULLET_PLAYER_BUCKSHOT, 0,
@@ -750,6 +766,8 @@ void EV_FireShotGunSingle(event_args_t* args)
 
 	EV_GetGunPosition(args, vecSrc, origin);
 	vecAiming = forward;
+
+	g_ShotgunTracers = JhlParticleSystemEnabled() ? gEngfuncs.pfnRandomLong(3, 4) : 0;
 
 	if (g_Skill.GetValue("shotgun_single_tight_spread") != 0)
 	{
