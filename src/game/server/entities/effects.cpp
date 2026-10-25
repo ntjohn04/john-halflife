@@ -414,7 +414,7 @@ public:
 
 	/**
 	 *	@brief johnhalflife (jhl_fx_particlesystem): whether this is one of the Xen spires' rings (c4a1's, and of3a1b's,
-	 *	its copy), which get a strand 55% wider around them (SendSpireRingStrand). Only these maps: other ring beams
+	 *	its copy), which get a strand 62% wider around them (SendSpireRingStrand). Only these maps: other ring beams
 	 *	(c4a1b's machines, of6a5's Gene Worm orbs) are left as they are.
 	 */
 	bool JhlSpireRing();
@@ -898,15 +898,16 @@ void CLightning::SendSpireRingStrand(CBaseEntity* pStart, CBaseEntity* pEnd)
 	WRITE_SHORT(m_spriteTexture);
 	WRITE_BYTE(m_frameStart);			 // framestart
 	WRITE_BYTE((int)pev->framerate);	 // framerate
-	WRITE_BYTE(JhlStrandWidth());		 // width
-	// Calmer and brighter than an arc's strand, still under the ring: noise 2.2 ±25% (c4a1's ring 1.2), half as bright.
-	WRITE_BYTE(std::min(255, static_cast<int>(220 * RANDOM_FLOAT(0.75f, 1.25f)))); // noise
-	WRITE_BYTE((int)pev->rendercolor.x); // r, g, b
-	WRITE_BYTE((int)pev->rendercolor.y); // r, g, b
-	WRITE_BYTE((int)pev->rendercolor.z); // r, g, b
-	WRITE_BYTE(static_cast<int>(pev->renderamt * 0.5f)); // brightness
-	WRITE_BYTE(m_speed);				 // speed
-	WRITE_BYTE(155);					 // scale, hundredths: 55% wider
+	// Only a little under the ring, unlike an arc's strand: 0.6 its width, 0.65 its brightness, noise a steady 1.8
+	// (c4a1's ring 1.2).
+	WRITE_BYTE(std::max(1, static_cast<int>(m_boltWidth * 0.6f))); // width
+	WRITE_BYTE(180);												// noise
+	WRITE_BYTE((int)pev->rendercolor.x);							// r, g, b
+	WRITE_BYTE((int)pev->rendercolor.y);							// r, g, b
+	WRITE_BYTE((int)pev->rendercolor.z);							// r, g, b
+	WRITE_BYTE(static_cast<int>(pev->renderamt * 0.65f));			// brightness
+	WRITE_BYTE(m_speed);											// speed
+	WRITE_BYTE(162);												// scale, hundredths: 62% wider
 	MESSAGE_END();
 }
 
