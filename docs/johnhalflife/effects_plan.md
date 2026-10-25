@@ -430,8 +430,8 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
 * Displacer: particles pulled in to the impact (`TE_IMPLOSION`, radius 200, 32, 0.3 s), sent 0.4 s in
   (`ImplodeThink`; multiplayer 0.1 s) so they end as the ball goes (0.7 s; multiplayer 0.4 s).
 * Trial, explosions (`jhl_fx_explosionblob`, on by default, not saved): the engine's blob explosion
-  (`R_BlobExplosion`, rebuilt as `JhlExplosion_Blob` to take a count) on generic explosions, 128 particles (an
-  eighth of its 1024), large ones 256 (a quarter; 256 and 614 ran a few satchels out of particles).
+  (`R_BlobExplosion`, rebuilt as `JhlExplosion_Blob` to take a count) on generic explosions, 64 particles (a
+  sixteenth of its 1024), large ones 256 (a quarter; more ran a few satchels out of particles).
 
 ## Testing
 
