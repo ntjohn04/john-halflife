@@ -87,6 +87,22 @@ inline void UTIL_JhlRingStrand(const Vector& center, const Vector& axis, int spr
 }
 
 /**
+ *	@brief Low dust puffs kicked out along the floor at @p position (the client's, jhl_explosions.cpp): TE_SMOKE through
+ *	the SDK's own temp entity message.
+ */
+inline void UTIL_JhlGroundDust(const Vector& position, int count)
+{
+	if (!UTIL_JhlParticleSystem())
+		return;
+
+	MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, position);
+	WRITE_BYTE(TE_SMOKE);
+	WRITE_COORD_VECTOR(position);
+	WRITE_BYTE(count);
+	MESSAGE_END();
+}
+
+/**
  *	@brief A dynamic light (TE_DLIGHT): @p radius in units, @p life in seconds, fading @p decay units a second.
  */
 inline void UTIL_JhlDynamicLight(const Vector& position, float radius, int r, int g, int b, float life, float decay)

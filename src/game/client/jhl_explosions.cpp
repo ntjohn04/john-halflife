@@ -894,6 +894,10 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 	SurfaceDebris(surface, scale);
 	EmbersAndLights(origin, scale * bigger, flags, true);
 
+	// Trial (jhl_fx_explosionblob): the engine's blob explosion, a quarter of its particles, 60% for large ones.
+	if ((flags & TE_EXPLFLAG_NOPARTICLES) == 0 && 0 != gEngfuncs.pfnGetCvarFloat("jhl_fx_explosionblob"))
+		JhlExplosion_Blob(origin, large ? 614 : 256);
+
 	// The second fireball: shaped for large explosions on a floor, round otherwise.
 	Vector floor;
 	const bool onFloor = FindFloor(origin, scale, floor);
@@ -953,4 +957,91 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 	}
 
 	return true;
+}
+
+void JhlExplosion_Blob(const Vector& origin, int count)
+{
+	// The engine's R_BlobExplosion (Quake's), with any count: half pt_blob (colors 66-71, swelling and slowing),
+	// half pt_blob2 (150-155, spreading flat), living 1 or 1.4 s.
+	const float now = gEngfuncs.GetClientTime();
+
+	for (int i = 0; i < count; ++i)
+	{
+		particle_t* particle = gEngfuncs.pEfxAPI->R_AllocParticle(nullptr);
+
+		if (!particle)
+			break;
+
+		particle->die = now + 1 + (gEngfuncs.pfnRandomLong(0, 1) != 0 ? 0.4f : 0);
+		particle->type = (i & 1) != 0 ? pt_blob : pt_blob2;
+		particle->color = static_cast<short>(((i & 1) != 0 ? 66 : 150) + gEngfuncs.pfnRandomLong(0, 5));
+		gEngfuncs.pEfxAPI->R_GetPackedColor(&particle->packedColor, particle->color);
+
+		for (int j = 0; j < 3; ++j)
+		{
+			particle->org[j] = origin[j] + gEngfuncs.pfnRandomLong(-16, 15);
+			particle->vel[j] = static_cast<float>(gEngfuncs.pfnRandomLong(-256, 255));
+		}
+	}
+}
+
+namespace
+{
+// A sprite playing its frames once over its life and fading out over the end of it (JhlSprite_PlayOnce):
+// fuser1 the start, fuser2 the life, fuser3 how much of the life it fades over, baseline.renderamt its alpha.
+void PlayOnceThink(TEMPENTITY* ent, float frametime, float currenttime)
+{
+	auto& state = ent->entity.curstate;
+	const float life = std::max(0.01f, state.fuser2);
+	const float t = std::clamp((currenttime - state.fuser1) / life, 0.f, 1.f);
+
+	state.frame = std::min(ent->frameMax, t * (ent->frameMax + 1));
+
+	const float fade = std::clamp(state.fuser3, 0.f, 1.f);
+	const float left = fade > 0 ? std::clamp((1 - t) / fade, 0.f, 1.f) : 1;
+	state.renderamt = static_cast<int>(ent->entity.baseline.renderamt * left);
+}
+} // namespace
+
+void JhlSprite_PlayOnce(TEMPENTITY* sprite, float life, float fade)
+{
+	sprite->flags &= ~(FTENT_SPRANIMATE | FTENT_SPRANIMATELOOP | FTENT_SPRCYCLE | FTENT_FADEOUT);
+	sprite->flags |= FTENT_CLIENTCUSTOM;
+	sprite->callback = PlayOnceThink;
+	sprite->entity.curstate.fuser1 = gEngfuncs.GetClientTime();
+	sprite->entity.curstate.fuser2 = life;
+	sprite->entity.curstate.fuser3 = fade;
+	sprite->entity.curstate.frame = 0;
+	sprite->die = gEngfuncs.GetClientTime() + life;
+}
+
+void JhlExplosion_ParseGroundDust(BufferReader& reader)
+{
+	const Vector origin = reader.ReadCoordVector();
+	const int count = reader.ReadByte();
+
+	if (!JhlParticleSystemEnabled())
+		return;
+
+	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
+
+	if (model == 0)
+		return;
+
+	// Low puffs kicked out along the floor: steam1 at 0.5, alpha 0.25, each playing once over 1.2 s and fading
+	// over the last 60% of it.
+	for (int i = 0; i < count; ++i)
+	{
+		Vector position = origin + Vector{Random(-48, 48), Random(-48, 48), 4};
+		Vector velocity{Random(-120, 120), Random(-120, 120), 10 + Random(-20, 20)};
+
+		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, 0.5f, model, kRenderTransAlpha,
+			kRenderFxNone, 0.25f, 1.2f, 0);
+
+		if (!puff)
+			continue;
+
+		puff->entity.angles.z = Random(0, 359);
+		JhlSprite_PlayOnce(puff, 1.2f, 0.6f);
+	}
 }

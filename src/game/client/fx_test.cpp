@@ -300,6 +300,8 @@ void Sprite(const Target& target, Params& p)
 	const int gravity = p.Int("gravity", 0);
 	const float fade = p.Float("fade", 0);
 	const bool collide = 0 != p.Int("collide", 0);
+	// Plays its frames once over its life (JhlSprite_PlayOnce), fading over the last fade (0-1) of it.
+	const bool once = 0 != p.Int("once", 0);
 	p.Print("sprite");
 
 	int flags = loop ? FTENT_SPRCYCLE : FTENT_SPRANIMATE;
@@ -329,6 +331,9 @@ void Sprite(const Target& target, Params& p)
 		sprite->entity.curstate.framerate = fps;
 		sprite->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
 		sprite->fadeSpeed = fade;
+
+		if (once)
+			JhlSprite_PlayOnce(sprite, life, fade);
 	}
 }
 
@@ -691,8 +696,14 @@ void Particles(const Target& target, Params& p)
 	}
 	else if (type == "blob")
 	{
+		// 1024: the engine's own; any other count, johnhalflife's copy of it (JhlExplosion_Blob).
+		const int count = p.Int("count", 1024);
 		p.Print("particles");
-		efx->R_BlobExplosion(origin);
+
+		if (count == 1024)
+			efx->R_BlobExplosion(origin);
+		else
+			JhlExplosion_Blob(origin, count);
 	}
 	else if (type == "lava")
 	{
@@ -999,9 +1010,24 @@ void HoundeyePreset(const Target& target, Params& p)
 		RingStrand(target, ring);
 	}
 
-	// With jhl_fx_particlesystem, a light in its color (and a light shake for players in reach, server only).
+	// With jhl_fx_particlesystem, a light in its color (and a light shake for players in reach, server only), and dust
+	// puffs along the floor (JhlExplosion_ParseGroundDust).
 	if (JhlParticleSystemEnabled())
 	{
+		Params dust;
+		dust.Set("sprite", "sprites/steam1.spr");
+		dust.Set("count", 8.f);
+		dust.Set("scale", 0.5f);
+		dust.Set("alpha", 0.25f);
+		dust.Set("radius", 48.f);
+		dust.Set("spread", 120.f);
+		dust.Set("up", 10.f);
+		dust.Set("life", 1.2f);
+		dust.Set("fade", 0.6f);
+		dust.Set("offset", 4.f);
+		dust.Set("once", 1.f);
+		Sprite(target, dust);
+
 		Params light;
 		light.Set("radius", 200.f);
 		light.Set("color", color);
@@ -1044,6 +1070,17 @@ void DisplacerRingPreset(const Target& target, Params& p)
 	ring.Set("offset", 8.f);
 	Ring(target, ring);
 	RingStrand(target, ring);
+
+	// With jhl_fx_particlesystem, particles pulled in to it (TE_IMPLOSION).
+	if (JhlParticleSystemEnabled())
+	{
+		Params implosion;
+		implosion.Set("type", "implosion");
+		implosion.Set("radius", 200.f);
+		implosion.Set("count", 32.f);
+		implosion.Set("life", 0.3f);
+		Particles(target, implosion);
+	}
 }
 
 struct Command
@@ -1068,7 +1105,7 @@ const std::vector<Command>& Commands()
 		{"houndeye", "squad=1-4", HoundeyePreset},
 		{"heliring", "type=apache|osprey", HeliRingPreset},
 		{"dispring", "", DisplacerRingPreset},
-		{"sprite", "sprite= count= scale= alpha= render=alpha|add|glow|normal color=r,g,b fps= life= loop= offset= radius= speed= spread= up= gravity=0|1|2 fade= collide=", Sprite},
+		{"sprite", "sprite= count= scale= alpha= render=alpha|add|glow|normal color=r,g,b fps= life= loop= offset= radius= speed= spread= up= gravity=0|1|2 fade= collide= once=", Sprite},
 		{"explosion", "sprite= scale= fps= offset= additive= light= sound= particles= rocket= sparks= breakable=", Explosion},
 		{"smoke", "sprite= scale= fps= offset=", Smoke},
 		{"lingersmoke", "scale=3 opacity=200 gray=75 life=10.5 start=85 end=340 rise=10 drift=40 delay=0 offset=45.6", LingeringSmoke},

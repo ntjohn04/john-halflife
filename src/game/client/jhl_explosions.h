@@ -60,3 +60,22 @@ struct JhlLingeringSmoke
  *	doesn't have it).
  */
 bool JhlExplosion_LingeringSmoke(const Vector& origin, float scale, const JhlLingeringSmoke& settings = {});
+
+/**
+ *	@brief The engine's blob explosion (R_BlobExplosion, Quake's tarbaby's) with @p count particles (the engine's: 1024).
+ */
+void JhlExplosion_Blob(const Vector& origin, int count);
+
+struct TEMPENTITY;
+
+/**
+ *	@brief Plays a temp entity sprite's frames once over @p life seconds (not looping, not dying early), fading out
+ *	over the last @p fade of it (0-1), from its baseline.renderamt.
+ */
+void JhlSprite_PlayOnce(TEMPENTITY* sprite, float life, float fade);
+
+/**
+ *	@brief Low dust puffs kicked out along the floor (a houndeye's blast): the SDK's own temp entity message's TE_SMOKE,
+ *	the position on the floor and how many.
+ */
+void JhlExplosion_ParseGroundDust(BufferReader& reader);

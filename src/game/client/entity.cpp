@@ -901,6 +901,10 @@ static void MsgFunc_TempEntity(const char* name, BufferReader& reader)
 	case TE_BEAMTORUS:
 		CL_ParseJhlRingStrand(reader);
 		break;
+
+	case TE_SMOKE:
+		JhlExplosion_ParseGroundDust(reader);
+		break;
 	}
 }
 

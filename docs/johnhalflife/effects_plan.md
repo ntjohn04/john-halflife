@@ -424,6 +424,13 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
 * Houndeye: also a light in its squad's color (200 units, shrinking away over 0.5 s; vanilla none) and a light
   screen shake for players within its attack radius (amplitude 3, 40, 0.5 s).
 * The displacer already sends its own impact light.
+* Houndeye: dust puffs kicked out along the floor under it (`UTIL_JhlGroundDust`, `TE_SMOKE` through the SDK's own
+  message): 8 `steam1` at 0.5, alpha 0.25, within 48 units, ±120 out, 1.2 s, each playing its frames once over its
+  life (`JhlSprite_PlayOnce`) and fading over the last 60%.
+* Displacer: particles pulled in to the impact (`TE_IMPLOSION`, radius 200, 32, 0.3 s).
+* Trial, explosions (`jhl_fx_explosionblob`, on by default, not saved): the engine's blob explosion
+  (`R_BlobExplosion`, rebuilt as `JhlExplosion_Blob` to take a count) on generic explosions, 256 particles (a
+  quarter of its 1024), large ones 614 (60%).
 
 ## Testing
 

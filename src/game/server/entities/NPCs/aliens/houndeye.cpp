@@ -578,6 +578,13 @@ void CHoundeye::SonicAttack()
 
 		UTIL_JhlDynamicLight(center, 200, static_cast<int>(color.x), static_cast<int>(color.y), static_cast<int>(color.z), 0.5f, 400);
 		UTIL_ScreenShake(pev->origin, 3, 40, 0.5f, HOUNDEYE_MAX_ATTACK_RADIUS);
+
+		// Dust kicked up off the floor under it.
+		TraceResult tr;
+		UTIL_TraceLine(pev->origin + Vector(0, 0, 8), pev->origin - Vector(0, 0, 32), ignore_monsters, edict(), &tr);
+
+		if (tr.flFraction < 1)
+			UTIL_JhlGroundDust(tr.vecEndPos, 8);
 	}
 
 	CBaseEntity* pEntity = nullptr;
