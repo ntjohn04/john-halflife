@@ -40,7 +40,7 @@ struct SpireRing
 	float Speed;
 };
 
-// c4a1 has three, of3a1b the same; a few to spare.
+// c4a1 has three rings, of3a1b the same, two strands each; a few to spare.
 constexpr std::size_t MaxRings = 16;
 
 // The strand is kept alive this far ahead each frame, so it dies by itself soon after it's no longer tracked.

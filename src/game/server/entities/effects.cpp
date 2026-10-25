@@ -414,13 +414,13 @@ public:
 
 	/**
 	 *	@brief johnhalflife (jhl_fx_particlesystem): whether this is one of the Xen spires' rings (c4a1's, and of3a1b's,
-	 *	its copy), which get a strand 62% wider around them (SendSpireRingStrand). Only these maps: other ring beams
+	 *	its copy), which get two strands around them (SendSpireRingStrand). Only these maps: other ring beams
 	 *	(c4a1b's machines, of6a5's Gene Worm orbs) are left as they are.
 	 */
 	bool JhlSpireRing();
 
-	// The strand's ring, between the same entities' midpoint and its scale (the client's, jhl_rings.cpp).
-	void SendSpireRingStrand(CBaseEntity* start, CBaseEntity* end);
+	// A strand ring around the same entities' midpoint, @p scale (hundredths) times as wide (the client's, jhl_rings.cpp).
+	void SendSpireRingStrand(CBaseEntity* start, CBaseEntity* end, int scale, int width, int noise, int brightness);
 
 	// The strand's width, noise and brightness, from the beam's.
 	int JhlStrandWidth() const { return std::max(1, static_cast<int>(m_boltWidth * 0.4f)); }
@@ -762,9 +762,15 @@ void CLightning::StrikeThink()
 		if (JhlArc())
 			SendStrike(pStart, pEnd, JhlStrandWidth(), JhlStrandStrikeNoise(), JhlStrandBrightness());
 
-		// johnhalflife: a Xen spire ring's (the client keeps it on them).
+		// johnhalflife: a Xen spire ring's two (the client keeps them on them): one 67% wider, only a little under the
+		// ring (0.7 its width and brightness, noise a steady 1.6; c4a1's ring 1.2), and one twice as wide as an arc's
+		// strand (0.4 its width and brightness, noise 2.5 times ±25%).
 		if (JhlSpireRing() && !IsPointEntity(pStart) && !IsPointEntity(pEnd))
-			SendSpireRingStrand(pStart, pEnd);
+		{
+			SendSpireRingStrand(pStart, pEnd, 167, std::max(1, static_cast<int>(m_boltWidth * 0.7f)), 160,
+				static_cast<int>(pev->renderamt * 0.7f));
+			SendSpireRingStrand(pStart, pEnd, 200, JhlStrandWidth(), JhlStrandStrikeNoise(), JhlStrandBrightness());
+		}
 
 		DoSparks(pStart->pev->origin, pEnd->pev->origin);
 		if (pev->dmg > 0)
@@ -889,7 +895,7 @@ bool CLightning::JhlSpireRing()
 	return map == "c4a1" || map == "of3a1b";
 }
 
-void CLightning::SendSpireRingStrand(CBaseEntity* pStart, CBaseEntity* pEnd)
+void CLightning::SendSpireRingStrand(CBaseEntity* pStart, CBaseEntity* pEnd, int scale, int width, int noise, int brightness)
 {
 	MESSAGE_BEGIN(MSG_BROADCAST, gmsgTempEntity);
 	WRITE_BYTE(TE_BEAMRING);
@@ -898,16 +904,14 @@ void CLightning::SendSpireRingStrand(CBaseEntity* pStart, CBaseEntity* pEnd)
 	WRITE_SHORT(m_spriteTexture);
 	WRITE_BYTE(m_frameStart);			 // framestart
 	WRITE_BYTE((int)pev->framerate);	 // framerate
-	// Only a little under the ring, unlike an arc's strand: 0.6 its width, 0.65 its brightness, noise a steady 1.8
-	// (c4a1's ring 1.2).
-	WRITE_BYTE(std::max(1, static_cast<int>(m_boltWidth * 0.6f))); // width
-	WRITE_BYTE(180);												// noise
-	WRITE_BYTE((int)pev->rendercolor.x);							// r, g, b
-	WRITE_BYTE((int)pev->rendercolor.y);							// r, g, b
-	WRITE_BYTE((int)pev->rendercolor.z);							// r, g, b
-	WRITE_BYTE(static_cast<int>(pev->renderamt * 0.65f));			// brightness
-	WRITE_BYTE(m_speed);											// speed
-	WRITE_BYTE(162);												// scale, hundredths: 62% wider
+	WRITE_BYTE(width);					 // width
+	WRITE_BYTE(noise);					 // noise
+	WRITE_BYTE((int)pev->rendercolor.x); // r, g, b
+	WRITE_BYTE((int)pev->rendercolor.y); // r, g, b
+	WRITE_BYTE((int)pev->rendercolor.z); // r, g, b
+	WRITE_BYTE(brightness);				 // brightness
+	WRITE_BYTE(m_speed);				 // speed
+	WRITE_BYTE(scale);					 // scale, hundredths
 	MESSAGE_END();
 }
 
