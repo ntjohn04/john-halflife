@@ -182,7 +182,8 @@ muzzle, so it crosses the view; otherwise at the game's tracer start.
   (`hotglow` at 0.08) around a white-hot one (0.04), off the surface (a short trace finds its facing), up and to one
   side with a little of the tracer's way along it, falling at a fifth of gravity while twirling in 3-unit circles
   about twice a second, fading over the last half of 1-1.6 s. Its path is worked out each frame, so the two stay
-  together.
+  together. Only off walls and brush entities (the trace ignores models): a tracer that hits a creature buries
+  itself, and its blood shows there.
 * **MP5** (feedback on where its rounds go, not tracer rounds): on top of its vanilla tracer, every 2nd round, a
   faint pale orange streak (255,200,120) at 0.2, width 1.1, 100 units long (near the vanilla tracer's faintness
   and length), 4000 units/s, starting 0-180 units down its path.

@@ -68,17 +68,22 @@ void ThrowSpeck(const Vector& hit, const Vector& direction, const JhlTracerStyle
 	if (sprite == 0)
 		return;
 
-	// The surface's facing, from a short trace across where it hit (back along its way if there's nothing there).
+	// The surface's facing, from a short trace across where it hit: the world and brush entities (walls, doors,
+	// crates), not models. A tracer that hit a creature buries itself; its blood is what shows there.
 	pmtrace_t tr;
 	gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(0, 1);
 	gEngfuncs.pEventAPI->EV_PushPMStates();
+	gEngfuncs.pEventAPI->EV_SetSolidPlayers(-1);
 	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
 	Vector from = hit - direction * 8;
 	Vector to = hit + direction * 8;
-	gEngfuncs.pEventAPI->EV_PlayerTrace(from, to, PM_WORLD_ONLY, -1, &tr);
+	gEngfuncs.pEventAPI->EV_PlayerTrace(from, to, PM_STUDIO_IGNORE, -1, &tr);
 	gEngfuncs.pEventAPI->EV_PopPMStates();
 
-	const Vector normal = tr.fraction < 1 ? Vector{tr.plane.normal} : -direction;
+	if (tr.fraction >= 1 || tr.startsolid)
+		return;
+
+	const Vector normal = tr.plane.normal;
 
 	// Off the surface, up, and to one side along it, keeping a little of the tracer's way along it (a glancing skip).
 	Vector side = CrossProduct(normal, Vector{0, 0, 1});
