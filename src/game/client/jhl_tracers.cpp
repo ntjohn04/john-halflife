@@ -46,13 +46,15 @@ void JhlTracer_Fire(const Vector& muzzle, const Vector& end, const JhlTracerStyl
 	if (style.Speed <= 0 || g_Tracers.size() >= MaxTracers)
 		return;
 
-	// Starting a random way down its path, never past half of it.
+	// Starting a random way down its path, never past half of it; or, for a negative maximum, back behind the muzzle,
+	// so it's already flying as it passes the gun and the whole of its way out shows.
 	const float pathLength = (end - muzzle).Length();
 
 	if (pathLength < 1)
 		return;
 
-	const float offset = std::min(gEngfuncs.pfnRandomFloat(0, std::max(0.f, style.StartOffsetMax)), pathLength * 0.5f);
+	float offset = gEngfuncs.pfnRandomFloat(std::min(0.f, style.StartOffsetMax), std::max(0.f, style.StartOffsetMax));
+	offset = std::min(offset, pathLength * 0.5f);
 	const Vector start = muzzle + (end - muzzle) * (offset / pathLength);
 
 	const Vector path = end - start;
@@ -68,10 +70,11 @@ void JhlTracer_Fire(const Vector& muzzle, const Vector& end, const JhlTracerStyl
 
 	const Vector direction = path / distance;
 
-	// Made where it starts (the engine won't make a beam out of view, as for another player's shot behind you); the
-	// update places it from the next frame.
-	Vector from = start;
-	Vector to = start + direction * std::min(style.Length, distance);
+	// Made at the muzzle, not where it starts: the engine won't make a beam out of view, and a start behind the muzzle
+	// is often behind the view (another player's shot behind you still isn't made). The update places it from the next
+	// frame.
+	Vector from = muzzle;
+	Vector to = muzzle + direction * std::min(style.Length, pathLength);
 	BEAM* beam = gEngfuncs.pEfxAPI->R_BeamPoints(from, to, sprite,
 		1, style.Width, 0, style.Brightness, 0, 0, 0, style.Color.x / 255, style.Color.y / 255, style.Color.z / 255);
 

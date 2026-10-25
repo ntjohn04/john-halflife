@@ -18,7 +18,8 @@
 /**
  *	@brief How a johnhalflife tracer looks: a streak @p Length units long flying @p Speed units a second, a beam
  *	(laserbeam.spr) @p Width wide in @p Color (0-255) at @p Brightness (0-1), starting a random 0 to
- *	@p StartOffsetMax units down its path (some come right out of the barrel, some further out).
+ *	@p StartOffsetMax units down its path (some come right out of the barrel, some further out), or for a negative
+ *	one that far back behind the muzzle (already flying as it passes the gun).
  */
 struct JhlTracerStyle
 {

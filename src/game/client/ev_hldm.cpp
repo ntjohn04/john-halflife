@@ -372,10 +372,11 @@ void EV_HLDM_DecalGunshot(pmtrace_t* pTrace, int iBulletType)
 // johnhalflife's tracers (jhl_tracers.cpp). The M249's are real tracer rounds, one in 3: saturated red, full
 // brightness, mostly right out of the barrel. The MP5 keeps its vanilla tracer every 2nd round (almost invisible in
 // first person) and adds a faint pale orange streak to it, as feedback on where its rounds go rather than a tracer
-// round.
+// round: close to the vanilla tracer's faintness and length, starting up to 350 units back so it's already flying
+// as it passes the gun.
 constexpr int M249TracerFrequency = 3;
 const JhlTracerStyle M249TracerStyle{{255, 60, 30}, 1, 1.2f, 200, 4500, 22};
-const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.35f, 1.1f, 150, 4000, 200};
+const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, -350};
 
 void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const Vector& forward, const Vector& right,
 	int iBulletType, int iTracerFreq, int* tracerCount)
