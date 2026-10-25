@@ -26,11 +26,18 @@ namespace
 {
 struct SpireRing
 {
-	BEAM* Beam;
+	BEAM* Beam; // Null until made: the engine won't make a beam out of view.
 	int StartEntity;
 	int EndEntity;
 	float Scale;
+	int Sprite;
+	int FrameStart;
+	float Framerate;
+	float Width;
+	float Noise;
+	float R, G, B;
 	float Brightness;
+	float Speed;
 };
 
 // c4a1 has three, of3a1b the same; a few to spare.
@@ -74,17 +81,10 @@ void JhlRings_ParseSpireRing(BufferReader& reader)
 	if (g_Rings.size() >= MaxRings)
 		return;
 
-	// A ring between two points the update moves; drawn as the map's own (TE_BEAMRING), not attached to the entities
-	// so the engine leaves its ends where they're put.
-	BEAM* beam = gEngfuncs.pEfxAPI->R_BeamPoints(Vector{0, 0, 0}, Vector{0, 0, 1}, sprite, KeepAlive, width, noise,
-		brightness, speed, static_cast<int>(frameStart), framerate, r, g, b);
+	gEngfuncs.Con_DPrintf("johnhalflife: spire ring strand between entities %d and %d\n", startEntity, endEntity);
 
-	if (!beam)
-		return;
-
-	beam->type = TE_BEAMRING;
-	beam->brightness = 0; // Until the update has placed it.
-	g_Rings.push_back({beam, startEntity, endEntity, scale, brightness});
+	g_Rings.push_back({nullptr, startEntity, endEntity, scale, sprite, static_cast<int>(frameStart), framerate, width,
+		noise, r, g, b, brightness, speed});
 }
 
 void JhlRings_Update(double time)
@@ -97,25 +97,45 @@ void JhlRings_Update(double time)
 
 	for (auto& ring : g_Rings)
 	{
-		ring.Beam->die = static_cast<float>(time) + KeepAlive;
+		if (ring.Beam)
+			ring.Beam->die = static_cast<float>(time) + KeepAlive;
 
 		cl_entity_t* start = ActiveEntity(ring.StartEntity);
 		cl_entity_t* end = ActiveEntity(ring.EndEntity);
 
 		if (!start || !end)
 		{
-			ring.Beam->brightness = 0;
+			if (ring.Beam)
+				ring.Beam->brightness = 0;
+
 			continue;
 		}
 
 		// Concentric with the map's ring (its diameter is the line between the two), Scale times as wide.
 		const Vector center = (start->origin + end->origin) * 0.5f;
 		const Vector half = (end->origin - start->origin) * (0.5f * ring.Scale);
+		Vector source = center - half;
+		Vector target = center + half;
 
-		ring.Beam->source = center - half;
-		ring.Beam->target = center + half;
-		ring.Beam->delta = ring.Beam->target - ring.Beam->source;
+		// A ring between two points this moves; drawn as the map's own (TE_BEAMRING), not attached to the entities so
+		// the engine leaves its ends where they're put. Made where it is, as the engine culls one made out of view.
+		if (!ring.Beam)
+		{
+			ring.Beam = gEngfuncs.pEfxAPI->R_BeamPoints(source, target, ring.Sprite, KeepAlive, ring.Width, ring.Noise,
+				ring.Brightness, ring.Speed, ring.FrameStart, ring.Framerate, ring.R, ring.G, ring.B);
+
+			if (!ring.Beam)
+				continue;
+
+			gEngfuncs.Con_DPrintf("johnhalflife: spire ring strand made, %.0f units across\n", (target - source).Length());
+			ring.Beam->type = TE_BEAMRING;
+		}
+
+		ring.Beam->source = source;
+		ring.Beam->target = target;
+		ring.Beam->delta = target - source;
 		ring.Beam->brightness = ring.Brightness;
+		ring.Beam->flags |= FBEAM_ISACTIVE;
 	}
 }
 
