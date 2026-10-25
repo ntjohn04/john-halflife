@@ -174,7 +174,9 @@ frame, growing out of the muzzle, flying as a streak of a set length at a set sp
 beams are clipped rather than skipped, so it shows from the muzzle on. In first person it starts at the view model's
 muzzle, so it crosses the view; otherwise at the game's tracer start.
 
-* **M249:** every 3rd round, saturated red (255,60,30), full brightness, width 1.2, 32 units long, 4500 units/s
-  (the M249 had no tracers).
+* **M249:** every 3rd round, saturated red (255,60,30), full brightness, width 1.2, 200 units long (seen nearly
+  end-on it looks a few feet), 4500 units/s, starting a random 0-180 units down its path, so some come right out of
+  the barrel and some further out (the M249 had no tracers). Being tuned with the `jhl_tracer_*` cvars (color,
+  brightness, width, length, speed, startoffset, freq); the MP5 fires them too for now.
 
 `jhl_fx_test jhltracer` plays them with any settings; `jhl_fx_test tracer` plays the engine's.
