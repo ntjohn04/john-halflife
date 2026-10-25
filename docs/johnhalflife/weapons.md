@@ -130,9 +130,9 @@ On the local player's firearm shots (not the gauss gun), on top of the engine's 
   it smokes more, about 2 and 4 wisps a shot; every wisp after a shot's first starts up to 2 units off, drifts its
   own way, is up to 1.4× bigger and plays at 22-30 fps, so they don't stack exactly.
   The M249's build with sustained fire (`EV_M249MuzzleEffects`, with `jhl_fx_particlesystem`): a heat of 0-1,
-  up a 25th a round and back to 0 after a pause over 0.25 s (tap fire stays cold). Cold, a touch over a gun's
-  (opacity 0.12, 1.05×); hot, opacity up to 0.2 and 1.15-1.3× at random; each up to 1.5 units off the muzzle so
-  they don't stack. Still on 30% of shots.
+  up a 25th a round and back to 0 after a pause over 0.25 s (tap fire stays cold). Cold, more than a gun's (40% of
+  shots, opacity 0.15, 1.1×); hot, 70% of shots, opacity up to 0.33 and 1.2-1.45× at random; each up to 1.5 units
+  off the muzzle so they don't stack.
 
 The muzzle position is the view model's first attachment. That is only valid while the view model is
 drawn, so the effects are skipped in third person and while zoomed.

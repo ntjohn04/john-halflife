@@ -115,10 +115,11 @@ void EV_M249MuzzleEffects()
 		return;
 	}
 
-	// A touch more than a gun's even cold; hot, more opaque (0.2) and bigger on average, varied (115-130%), and a
-	// little off the muzzle so wisps don't stack.
-	const float scale = 1.05f + heat * gEngfuncs.pfnRandomFloat(0.1f, 0.25f);
-	const float alpha = 0.12f + heat * 0.08f;
+	// More than a gun's even cold (40% of shots, opacity 0.15, 1.1x); hot, more often (70%), more opaque (0.33) and
+	// bigger on average, varied (120-145%); and a little off the muzzle so wisps don't stack.
+	const float chance = 0.4f + heat * 0.3f;
+	const float scale = 1.1f + heat * gEngfuncs.pfnRandomFloat(0.1f, 0.35f);
+	const float alpha = 0.15f + heat * 0.18f;
 	const Vector drift{gEngfuncs.pfnRandomFloat(-1.5f, 1.5f), gEngfuncs.pfnRandomFloat(-1.5f, 1.5f), gEngfuncs.pfnRandomFloat(-1.5f, 1.5f)};
 
 	if (!JhlParticleSystemEnabled())
@@ -127,7 +128,7 @@ void EV_M249MuzzleEffects()
 		return;
 	}
 
-	MuzzleEffectsAt(muzzle + drift, 0.3f, scale, alpha);
+	MuzzleEffectsAt(muzzle + drift, chance, scale, alpha);
 }
 
 void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, const Vector& right, const Vector& up)
