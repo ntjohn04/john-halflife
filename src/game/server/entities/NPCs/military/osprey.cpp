@@ -605,6 +605,9 @@ void COsprey::DyingThink()
 		WRITE_BYTE(0);	 // speed
 		MESSAGE_END();
 
+		// johnhalflife: the blast circle's strand.
+		UTIL_JhlRingStrand(pev->origin, pev->origin + Vector(0, 0, 2000), m_iSpriteTexture, 0.4f, 32, Vector(255, 255, 192), 128);
+
 		EmitSound(CHAN_STATIC, "weapons/mortarhit.wav", 1.0, 0.3);
 
 		RadiusDamage(pev->origin, this, this, 300, DMG_BLAST);

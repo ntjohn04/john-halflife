@@ -59,6 +59,34 @@ class CBeam;
 CBeam* UTIL_JhlBeamStrand(CBeam* strand, CBeam* beam, int width, int noise, int brightness);
 
 /**
+ *	@brief johnhalflife's ring strand (the displacer's is the model): a thin, noisy torus on a ring (TE_BEAMCYLINDER),
+ *	with the ring's @p center, @p axis end, @p sprite and @p color, living 20% longer than its @p life so it grows with
+ *	the ring to 20% further, 1.25 times its @p width (tenths), noise 0.5 ±25%, half its @p brightness. Through the
+ *	SDK's own temp entity message (the client's, entity.cpp), whose life is in hundredths: the engine's tenths would
+ *	round a houndeye's 0.24 s.
+ */
+inline void UTIL_JhlRingStrand(const Vector& center, const Vector& axis, int sprite, float life, int width,
+	const Vector& color, int brightness)
+{
+	if (!UTIL_JhlParticleSystem())
+		return;
+
+	MESSAGE_BEGIN(MSG_PAS, gmsgTempEntity, center);
+	WRITE_BYTE(TE_BEAMTORUS);
+	WRITE_COORD_VECTOR(center);
+	WRITE_COORD_VECTOR(axis);
+	WRITE_SHORT(sprite);
+	WRITE_SHORT(static_cast<int>(life * 1.2f * 100));								 // life, hundredths
+	WRITE_BYTE(std::clamp(static_cast<int>(width * 1.25f), 1, 255));				 // width, tenths
+	WRITE_BYTE(std::clamp(static_cast<int>(50 * RANDOM_FLOAT(0.75f, 1.25f)), 0, 255)); // noise, hundredths
+	WRITE_BYTE(static_cast<int>(color.x));
+	WRITE_BYTE(static_cast<int>(color.y));
+	WRITE_BYTE(static_cast<int>(color.z));
+	WRITE_BYTE(brightness / 2);
+	MESSAGE_END();
+}
+
+/**
  *	@brief A dynamic light (TE_DLIGHT): @p radius in units, @p life in seconds, fading @p decay units a second.
  */
 inline void UTIL_JhlDynamicLight(const Vector& position, float radius, int r, int g, int b, float life, float decay)

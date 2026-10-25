@@ -63,6 +63,15 @@ public:
 		}
 	}
 
+	// A value as set, without recording it (for effects derived from another's parameters).
+	float Value(const char* name, float defaultValue) const
+	{
+		if (auto it = m_Values.find(name); it != m_Values.end())
+			return static_cast<float>(std::atof(it->second.c_str()));
+
+		return defaultValue;
+	}
+
 	// Sets a value, as if it had been given on the command line (for presets).
 	Params& Set(const char* name, float value)
 	{
@@ -955,6 +964,23 @@ void VortZapPreset(const Target& target, Params& p)
 	Light(lightTarget, light);
 }
 
+// With jhl_fx_particlesystem, a ring's strand (UTIL_JhlRingStrand): a torus, 20% further over 20% longer, 1.25 times
+// as wide, noise 0.5 ±25%, half as bright.
+void RingStrand(const Target& target, const Params& ring)
+{
+	if (!JhlParticleSystemEnabled())
+		return;
+
+	Params strand = ring;
+	strand.Set("type", "torus");
+	strand.Set("radius", ring.Value("radius", 384) * 1.2f);
+	strand.Set("life", ring.Value("life", 0.2f) * 1.2f);
+	strand.Set("width", ring.Value("width", 1.6f) * 1.25f);
+	strand.Set("noise", 0.5f * gEngfuncs.pfnRandomFloat(0.75f, 1.25f));
+	strand.Set("brightness", ring.Value("brightness", 1) * 0.5f);
+	Ring(target, strand);
+}
+
 // A houndeye's blast (CHoundeye::SonicAttack): two rings, to its attack radius (384) and half of it, in 0.2 s,
 // colored by its squad's size.
 void HoundeyePreset(const Target& target, Params& p)
@@ -970,6 +996,19 @@ void HoundeyePreset(const Target& target, Params& p)
 		ring.Set("radius", radius);
 		ring.Set("color", color);
 		Ring(target, ring);
+		RingStrand(target, ring);
+	}
+
+	// With jhl_fx_particlesystem, a light in its color (and a light shake for players in reach, server only).
+	if (JhlParticleSystemEnabled())
+	{
+		Params light;
+		light.Set("radius", 200.f);
+		light.Set("color", color);
+		light.Set("life", 0.5f);
+		light.Set("decay", 400.f);
+		light.Set("offset", 16.f);
+		Light(target, light);
 	}
 }
 
@@ -989,6 +1028,7 @@ void HeliRingPreset(const Target& target, Params& p)
 	ring.Set("brightness", 0.5f);
 	ring.Set("offset", 0.f);
 	Ring(target, ring);
+	RingStrand(target, ring);
 }
 
 // The displacer ball's impact ring (CDisplacerBall::BallTouch): axis 800 over 0.3 s, so 240 units, at the ball.
@@ -1003,6 +1043,7 @@ void DisplacerRingPreset(const Target& target, Params& p)
 	ring.Set("color", {255, 255, 255});
 	ring.Set("offset", 8.f);
 	Ring(target, ring);
+	RingStrand(target, ring);
 }
 
 struct Command

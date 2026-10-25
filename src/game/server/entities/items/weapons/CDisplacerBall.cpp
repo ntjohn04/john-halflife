@@ -136,6 +136,9 @@ void CDisplacerBall::BallTouch(CBaseEntity* pOther)
 	WRITE_BYTE(0);	 // byte (scroll speed in 0.1's)
 	MESSAGE_END();
 
+	// johnhalflife: the ring's strand.
+	UTIL_JhlRingStrand(pev->origin, pev->origin + Vector(0, 0, 800), m_iTrail, 0.3f, 16, Vector(255, 255, 255), 255);
+
 	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
 	WRITE_BYTE(TE_DLIGHT);
 	WRITE_COORD_VECTOR(pev->origin); // coord, coord, coord (pos)

@@ -16,6 +16,7 @@
 #include "cbase.h"
 #include "nodes.h"
 #include "squadmonster.h"
+#include "jhl_effects.h"
 
 // houndeye does 20 points of damage spread over a sphere 384 units in diameter, and each additional
 // squad member increases the BASE damage by 110%, per the spec.
@@ -91,6 +92,9 @@ public:
 	 *	@brief writes a color vector to the network based on the size of the group.
 	 */
 	void WriteBeamColor();
+
+	// The blast's color, by the squad's size.
+	Vector BeamColor();
 
 	/**
 	 *	@brief overridden for houndeyes so that they try to get within half of their max attack radius
@@ -450,6 +454,15 @@ void CHoundeye::PainSound()
 
 void CHoundeye::WriteBeamColor()
 {
+	const Vector color = BeamColor();
+
+	WRITE_BYTE(static_cast<int>(color.x));
+	WRITE_BYTE(static_cast<int>(color.y));
+	WRITE_BYTE(static_cast<int>(color.z));
+}
+
+Vector CHoundeye::BeamColor()
+{
 	byte bRed, bGreen, bBlue;
 
 	if (InSquad())
@@ -488,9 +501,7 @@ void CHoundeye::WriteBeamColor()
 		bBlue = 255;
 	}
 
-	WRITE_BYTE(bRed);
-	WRITE_BYTE(bGreen);
-	WRITE_BYTE(bBlue);
+	return Vector(bRed, bGreen, bBlue);
 }
 
 void CHoundeye::SonicAttack()
@@ -554,6 +565,20 @@ void CHoundeye::SonicAttack()
 	WRITE_BYTE(0);	 // speed
 	MESSAGE_END();
 
+	// johnhalflife: a strand on each blast circle, a light in its color, and a light shake for those in reach.
+	if (UTIL_JhlParticleSystem())
+	{
+		const Vector center = pev->origin + Vector(0, 0, 16);
+		const Vector color = BeamColor();
+
+		for (const float radius : {static_cast<float>(HOUNDEYE_MAX_ATTACK_RADIUS), HOUNDEYE_MAX_ATTACK_RADIUS / 2.f})
+		{
+			UTIL_JhlRingStrand(center, center + Vector(0, 0, radius / .2), m_iSpriteTexture, 0.2f, 16, color, 255);
+		}
+
+		UTIL_JhlDynamicLight(center, 200, static_cast<int>(color.x), static_cast<int>(color.y), static_cast<int>(color.z), 0.5f, 400);
+		UTIL_ScreenShake(pev->origin, 3, 40, 0.5f, HOUNDEYE_MAX_ATTACK_RADIUS);
+	}
 
 	CBaseEntity* pEntity = nullptr;
 	// iterate on all entities in the vicinity.

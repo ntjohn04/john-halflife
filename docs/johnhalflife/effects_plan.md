@@ -410,6 +410,21 @@ noise 80, white, 0.1 s): a strand each, width 4, noise 200 ±25%, brightness 102
   and 200 gibs. Added: the `hexplo` mushroom cloud standing on the ground under the wreck (`UTIL_JhlCrashMushroom`,
   `TE_SPRITE` too, brightness 200; Apache scale 10, Osprey 18).
 
+## Rings (in progress)
+
+Every ring the game makes is a `TE_BEAMCYLINDER` (the houndeye's two, to 384 and 192 in 0.2 s, `shockwave`, by
+squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rope`; the displacer ball's impact, to
+240 in 0.3 s, `disp_ring`). `func_mortar_field`'s ring is compiled out in vanilla. Maps' ring `env_beam`s
+(c4a1, c4a1b, of3a1b `lgtning`; of6a5's Gene Worm orbs `sprite_c_1`) are separate, left for later.
+
+* Each cylinder gets a strand (`UTIL_JhlRingStrand`, the displacer's the model): a torus with its center, axis,
+  sprite and color, living 20% longer so it grows with it to 20% further, 1.25 times as wide (displacer 2), noise
+  0.5 ±25%, half as bright. Sent through the SDK's own temp entity message (`TE_BEAMTORUS`, entity.cpp), its life
+  in hundredths: the engine's tenths would round a houndeye's 0.24 s.
+* Houndeye: also a light in its squad's color (200 units, shrinking away over 0.5 s; vanilla none) and a light
+  screen shake for players within its attack radius (amplitude 3, 40, 0.5 s).
+* The displacer already sends its own impact light.
+
 ## Testing
 
 | Need | How |

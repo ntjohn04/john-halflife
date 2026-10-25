@@ -839,6 +839,23 @@ static void CL_ParseArmorRicochet(BufferReader& reader)
 	R_RicochetSound(pos);
 }
 
+// johnhalflife's ring strand (UTIL_JhlRingStrand): a torus, its life in hundredths.
+static void CL_ParseJhlRingStrand(BufferReader& reader)
+{
+	Vector center = reader.ReadCoordVector();
+	Vector axis = reader.ReadCoordVector();
+	const int sprite = reader.ReadShort();
+	const float life = reader.ReadShort() * 0.01f;
+	const float width = reader.ReadByte() * 0.1f;
+	const float noise = reader.ReadByte() * 0.01f;
+	const float r = reader.ReadByte() / 255.f;
+	const float g = reader.ReadByte() / 255.f;
+	const float b = reader.ReadByte() / 255.f;
+	const float brightness = reader.ReadByte() / 255.f;
+
+	gEngfuncs.pEfxAPI->R_BeamCirclePoints(TE_BEAMTORUS, center, axis, sprite, life, width, noise, brightness, 0, 0, 0, r, g, b);
+}
+
 static void MsgFunc_TempEntity(const char* name, BufferReader& reader)
 {
 	const int type = reader.ReadByte();
@@ -879,7 +896,12 @@ static void MsgFunc_TempEntity(const char* name, BufferReader& reader)
 
 	case TE_SPARKS:
 		JhlExplosion_ParseSparkShowers(reader);
-		break;	}
+		break;
+
+	case TE_BEAMTORUS:
+		CL_ParseJhlRingStrand(reader);
+		break;
+	}
 }
 
 static BEAM* g_TargetLaser = nullptr;
