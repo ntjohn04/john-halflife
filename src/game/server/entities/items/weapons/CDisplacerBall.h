@@ -35,6 +35,10 @@ public:
 	void ExplodeThink();
 	void KillThink();
 
+	// johnhalflife: its implosion (TE_IMPLOSION), timed to end as it goes.
+	void ImplodeThink();
+	static constexpr float ImplosionLife = 0.3f;
+
 	void InitBeams();
 
 	void ClearBeams();

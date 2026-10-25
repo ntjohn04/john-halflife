@@ -72,6 +72,7 @@ DEFINE_FUNCTION(BallTouch),
 	DEFINE_FUNCTION(FizzleThink),
 	DEFINE_FUNCTION(ExplodeThink),
 	DEFINE_FUNCTION(KillThink),
+	DEFINE_FUNCTION(ImplodeThink),
 	END_DATAMAP();
 
 LINK_ENTITY_TO_CLASS(displacer_ball, CDisplacerBall);
@@ -136,19 +137,8 @@ void CDisplacerBall::BallTouch(CBaseEntity* pOther)
 	WRITE_BYTE(0);	 // byte (scroll speed in 0.1's)
 	MESSAGE_END();
 
-	// johnhalflife: the ring's strand, and particles pulled in to it.
+	// johnhalflife: the ring's strand (and particles pulled in to it, ImplodeThink).
 	UTIL_JhlRingStrand(pev->origin, pev->origin + Vector(0, 0, 800), m_iTrail, 0.3f, 16, Vector(255, 255, 255), 255);
-
-	if (UTIL_JhlParticleSystem())
-	{
-		MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
-		WRITE_BYTE(TE_IMPLOSION);
-		WRITE_COORD_VECTOR(pev->origin);
-		WRITE_BYTE(200); // radius
-		WRITE_BYTE(32);	 // count
-		WRITE_BYTE(3);	 // life, tenths
-		MESSAGE_END();
-	}
 
 	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
 	WRITE_BYTE(TE_DLIGHT);
@@ -246,9 +236,33 @@ void CDisplacerBall::BallTouch(CBaseEntity* pOther)
 
 	SetOrigin(pev->origin);
 
-	SetThink(&CDisplacerBall::KillThink);
+	const float killDelay = g_pGameRules->IsMultiplayer() ? 0.2 : 0.5;
 
-	pev->nextthink = gpGlobals->time + (g_pGameRules->IsMultiplayer() ? 0.2 : 0.5);
+	// johnhalflife: particles pulled in to it, ending as it goes (KillThink, then ExplodeThink 0.2 s later).
+	if (UTIL_JhlParticleSystem())
+	{
+		SetThink(&CDisplacerBall::ImplodeThink);
+		pev->nextthink = gpGlobals->time + killDelay + 0.2f - ImplosionLife;
+	}
+	else
+	{
+		SetThink(&CDisplacerBall::KillThink);
+		pev->nextthink = gpGlobals->time + killDelay;
+	}
+}
+
+void CDisplacerBall::ImplodeThink()
+{
+	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
+	WRITE_BYTE(TE_IMPLOSION);
+	WRITE_COORD_VECTOR(pev->origin);
+	WRITE_BYTE(200);											// radius
+	WRITE_BYTE(32);												// count
+	WRITE_BYTE(static_cast<int>(ImplosionLife * 10));			// life, tenths
+	MESSAGE_END();
+
+	SetThink(&CDisplacerBall::KillThink);
+	pev->nextthink = gpGlobals->time + ImplosionLife - 0.2f;
 }
 
 void CDisplacerBall::FlyThink()

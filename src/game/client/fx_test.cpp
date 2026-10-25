@@ -1071,15 +1071,18 @@ void DisplacerRingPreset(const Target& target, Params& p)
 	Ring(target, ring);
 	RingStrand(target, ring);
 
-	// With jhl_fx_particlesystem, particles pulled in to it (TE_IMPLOSION).
+	// With jhl_fx_particlesystem, particles pulled in to it (TE_IMPLOSION), ending as the ball goes 0.7 s in.
 	if (JhlParticleSystemEnabled())
 	{
-		Params implosion;
-		implosion.Set("type", "implosion");
-		implosion.Set("radius", 200.f);
-		implosion.Set("count", 32.f);
-		implosion.Set("life", 0.3f);
-		Particles(target, implosion);
+		Later(0.4f, [=]()
+			{
+			Params implosion;
+			implosion.Set("type", "implosion");
+			implosion.Set("radius", 200.f);
+			implosion.Set("count", 32.f);
+			implosion.Set("life", 0.3f);
+			gEngfuncs.Con_Printf("  (0.4 s later)\n");
+			Particles(target, implosion); });
 	}
 }
 
