@@ -267,7 +267,7 @@ burst every 0.1 s for 0.5-1.5 s: 8 streaks at ±200, a `richo1` flash of scale 0
 tracing down, up and 8 ways around: the one whose distance best matches where explosions are placed off what
 they hit (scale × 10 + 15.6, within 12 units), with its real normal; not simply the nearest, since a wall hit low
 down has the floor closer. showers by the surface's material (as bullet impacts read it; metal, vents, grates, computers count as metal):
-0-8 off metal (the higher of two rolls), 0-3 off anything else or if unknown (mid-air, brush entities; one roll); each picking every
+0-8 off metal and 0-4 if unknown (mid-air, brush entities), the higher of two rolls; 0-3 off anything else, one roll; each picking every
 value on its own: leaving up to nearly along the surface (its direction plus a random scatter of 1.2, never into
 it), 50-600 units/s skewed toward moderate (u^1.5, about 270 on average), plus 0-300 straight up (down off a
 ceiling), half or full gravity (50/50), 0.4-2.25 s, a burst every 0.07-0.11 s, keeping half their speed per

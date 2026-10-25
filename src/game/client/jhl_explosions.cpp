@@ -113,12 +113,12 @@ constexpr float LingeringSmokeDriftDecay = 0.3f; // Per second: drifting 40 unit
 // ±100 sideways +200 up, half gravity, sparking every 0.1 s for 0.5-1.5 s; each burst the engine's TE_SPARKS, 8
 // streaks at ±200 and a richo1 flash of scale 0.5-1). Every shower picks each of its values on its own, so no two
 // fly alike.
-// Showers: 0 to the most for the surface's material; off metal the higher of two rolls (averaging about 5.5), off
-// anything else one (about 1.5, as vanilla's 0-3).
+// Showers: 0 to the most for the surface's material; off metal or an unknown surface the higher of two rolls
+// (averaging about 5.5 and 2.8), off anything else one (about 1.5, as vanilla's 0-3).
 constexpr int SparkShowersMin = 0;
 constexpr int SparkShowersMaxMetal = 8;
 constexpr int SparkShowersMaxOther = 3;
-constexpr int SparkShowersMaxUnknown = 3; // Mid-air, or a brush entity (their materials aren't known on the client).
+constexpr int SparkShowersMaxUnknown = 4; // Mid-air, or a brush entity (their materials aren't known on the client).
 constexpr float SparkSpeedMin = 50; // Off the surface; skewed (SparkSpeedSkew) so most are moderate, some fast.
 constexpr float SparkSpeedMax = 600;
 constexpr float SparkSpeedSkew = 1.5f;
@@ -537,7 +537,7 @@ void SparkShowers(const Vector& origin, const Surface& surface, int showers = -1
 	{
 		count = gEngfuncs.pfnRandomLong(SparkShowersMin, most);
 
-		if (IsMetal(surface.Material))
+		if (surface.Material == 0 || IsMetal(surface.Material))
 			count = std::max(count, static_cast<int>(gEngfuncs.pfnRandomLong(SparkShowersMin, most)));
 	}
 
