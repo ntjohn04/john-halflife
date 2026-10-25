@@ -40,6 +40,9 @@ struct JhlTracerStyle
 	// Whether it throws a burning speck where it hits: skipping off up and to the side, slowly, twirling, falling
 	// gently and fading (in its colors, Color around CoreColor), as a tracer round's burning compound does.
 	bool ImpactSpeck = false;
+
+	// The least way down its path it starts (StartOffsetMax the most).
+	float StartOffsetMin = 0;
 };
 
 /**

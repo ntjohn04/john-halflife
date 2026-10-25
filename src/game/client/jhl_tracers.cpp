@@ -151,7 +151,8 @@ void JhlTracer_Fire(const Vector& muzzle, const Vector& end, const JhlTracerStyl
 	if (pathLength < 1)
 		return;
 
-	const float offset = std::min(gEngfuncs.pfnRandomFloat(0, std::max(0.f, style.StartOffsetMax)), pathLength * 0.5f);
+	const float most = std::max(0.f, style.StartOffsetMax);
+	const float offset = std::min(gEngfuncs.pfnRandomFloat(std::clamp(style.StartOffsetMin, 0.f, most), most), pathLength * 0.5f);
 	const Vector start = muzzle + (end - muzzle) * (offset / pathLength);
 
 	const Vector path = end - start;

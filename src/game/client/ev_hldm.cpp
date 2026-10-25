@@ -379,6 +379,16 @@ const JhlTracerStyle M249TracerStyle{{255, 60, 30}, 0.85f, 1.2f, 200, 4500, 22, 
 const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 120};
 const JhlTracerStyle HeavyTracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 5000, 120};
 
+// The sniper rifle's, faster still and a little wider, never right at the muzzle.
+const JhlTracerStyle SniperTracerStyle = []
+{
+	JhlTracerStyle style = HeavyTracerStyle;
+	style.Speed = 5500;
+	style.Width = 1.19f;
+	style.StartOffsetMin = 20;
+	return style;
+}();
+
 static bool IsSemiAutoTracer(int bulletType)
 {
 	return bulletType == BULLET_PLAYER_9MM || bulletType == BULLET_PLAYER_357 || bulletType == BULLET_PLAYER_EAGLE ||
@@ -464,8 +474,9 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 				jhlTracerSrc = viewModel->attachment[0];
 			}
 
-			const bool heavy = iBulletType == BULLET_PLAYER_357 || iBulletType == BULLET_PLAYER_EAGLE || iBulletType == BULLET_PLAYER_762;
-			JhlTracer_Fire(jhlTracerSrc, end, m249 ? M249TracerStyle : shotgun ? ShotgunTracerStyle : heavy ? HeavyTracerStyle : MP5TracerStyle);
+			const bool heavy = iBulletType == BULLET_PLAYER_357 || iBulletType == BULLET_PLAYER_EAGLE;
+			JhlTracer_Fire(jhlTracerSrc, end, m249 ? M249TracerStyle : shotgun ? ShotgunTracerStyle : heavy ? HeavyTracerStyle :
+				iBulletType == BULLET_PLAYER_762 ? SniperTracerStyle : MP5TracerStyle);
 
 			// Only the MP5 had tracers of its own, and keeps them.
 			if (iBulletType != BULLET_PLAYER_MP5)
