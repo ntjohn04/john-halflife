@@ -31,6 +31,12 @@ void WeaponEffects_Initialize();
 void EV_GunMuzzleEffects(int pellets = 1);
 
 /**
+ *	@brief EV_GunMuzzleEffects for the M249: its wisps build with sustained fire (bigger, more opaque, a little apart),
+ *	back to a touch over a gun's when it stops.
+ */
+void EV_M249MuzzleEffects();
+
+/**
  *	@brief johnhalflife (jhl_fx_particlesystem): a faint light in the laser's color at an armed tripmine's emitter,
  *	for a beam entity being added this frame (HUD_AddEntity). Only a tripmine's laser is lit: its beam exists only
  *	while the mine is armed (CTripmineGrenade::MakeBeam, laserbeam.spr, (0,214,198) at 64).

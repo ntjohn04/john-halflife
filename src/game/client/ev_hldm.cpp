@@ -1884,7 +1884,7 @@ void EV_FireM249(event_args_t* args)
 	{
 		SetLocalBody(WEAPON_M249, iBody);
 		EV_MuzzleFlash();
-		EV_GunMuzzleEffects();
+		EV_M249MuzzleEffects();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(gEngfuncs.pfnRandomLong(0, 2) + M249_SHOOT1, iBody);
 		if (!EV_WeaponRecoil(RecoilM249))
 		{

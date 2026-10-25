@@ -52,32 +52,82 @@ static bool IsZoomed()
 
 static void MuzzleEffectsAt(const Vector& position, float wispChance, float wispScale = 1, float wispAlpha = 0.1f, int rolls = 1);
 
-void EV_GunMuzzleEffects(int pellets)
+// Where the view model's muzzle is, if muzzle effects should be drawn there now.
+static bool FindMuzzle(Vector& muzzle)
 {
 	// Zoomed in, the view model isn't drawn, so its attachment is stale and the effects would appear where the
 	// muzzle last was.
 	if (!MuzzleEffectsEnabled() || IsZoomed())
 	{
-		return;
+		return false;
 	}
 
 	cl_entity_t* viewModel = gEngfuncs.GetViewModel();
 
 	if (!viewModel || !viewModel->model)
 	{
-		return;
+		return false;
 	}
 
 	// The muzzle is the first attachment on the stock view models; it's set while the model is drawn.
-	Vector muzzle = viewModel->attachment[0];
+	muzzle = viewModel->attachment[0];
 
-	if (muzzle == g_vecZero)
+	return muzzle != g_vecZero;
+}
+
+void EV_GunMuzzleEffects(int pellets)
+{
+	Vector muzzle;
+
+	if (!FindMuzzle(muzzle))
 	{
 		return;
 	}
 
 	// Now and then a wisp of smoke; real guns barely smoke. A shotgun's chance is per pellet, so it smokes more.
 	MuzzleEffectsAt(muzzle, 0.3f, 1, 0.1f, std::max(1, pellets));
+}
+
+void EV_M249MuzzleEffects()
+{
+	// How hot it is from sustained fire, 0-1: up a 25th a round, back to 0 after a pause (tap fire stays cold).
+	constexpr float HeatPerRound = 1.f / 25;
+	constexpr float CoolAfter = 0.25f;
+
+	static float heat = 0;
+	static float lastShot = 0;
+
+	const float now = gEngfuncs.GetClientTime();
+
+	// A new map restarts the clock.
+	if (now < lastShot || now - lastShot > CoolAfter)
+	{
+		heat = 0;
+	}
+
+	lastShot = now;
+	heat = std::min(1.f, heat + HeatPerRound);
+
+	Vector muzzle;
+
+	if (!FindMuzzle(muzzle))
+	{
+		return;
+	}
+
+	// A touch more than a gun's even cold; hot, more opaque (0.2) and bigger on average, varied (115-130%), and a
+	// little off the muzzle so wisps don't stack.
+	const float scale = 1.05f + heat * gEngfuncs.pfnRandomFloat(0.1f, 0.25f);
+	const float alpha = 0.12f + heat * 0.08f;
+	const Vector drift{gEngfuncs.pfnRandomFloat(-1.5f, 1.5f), gEngfuncs.pfnRandomFloat(-1.5f, 1.5f), gEngfuncs.pfnRandomFloat(-1.5f, 1.5f)};
+
+	if (!JhlParticleSystemEnabled())
+	{
+		MuzzleEffectsAt(muzzle, 0.3f);
+		return;
+	}
+
+	MuzzleEffectsAt(muzzle + drift, 0.3f, scale, alpha);
 }
 
 void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, const Vector& right, const Vector& up)
