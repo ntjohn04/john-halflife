@@ -369,22 +369,19 @@ void EV_HLDM_DecalGunshot(pmtrace_t* pTrace, int iBulletType)
 	}
 }
 
-// johnhalflife: the M249's tracer rounds, played from the jhl_tracer_* tuning cvars (jhl_tracers.cpp) while their
-// look is chosen: saturated red, a streak 32 units long at 4500 units a second, one round in 3. Any nonzero frequency
-// turns them on; the cvar sets it.
+// johnhalflife's tracers (jhl_tracers.cpp). The M249's are real tracer rounds, one in 3: saturated red, full
+// brightness, mostly right out of the barrel. The MP5 keeps its vanilla tracer every 2nd round (almost invisible in
+// first person) and adds a faint pale orange streak to it, as feedback on where its rounds go rather than a tracer
+// round.
 constexpr int M249TracerFrequency = 3;
+const JhlTracerStyle M249TracerStyle{{255, 60, 30}, 1, 1.2f, 200, 4500, 22};
+const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.35f, 1.1f, 150, 4000, 200};
 
 void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const Vector& forward, const Vector& right,
 	int iBulletType, int iTracerFreq, int* tracerCount)
 {
 	int i;
 	const bool player = idx >= 1 && idx <= gEngfuncs.GetMaxClients();
-
-	// johnhalflife: the M249's tracers, and for now (temporary, to see them with less recoil) the MP5's too.
-	const bool jhlTracer = (iBulletType == BULLET_PLAYER_556 || iBulletType == BULLET_PLAYER_MP5) && JhlParticleSystemEnabled();
-
-	if (jhlTracer && iTracerFreq != 0)
-		iTracerFreq = JhlTracers_TuningFrequency();
 
 	if (iTracerFreq != 0 && ((*tracerCount)++ % iTracerFreq) == 0)
 	{
@@ -405,18 +402,23 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 			vecTracerSrc = vecSrc;
 		}
 
-		// johnhalflife: in first person from the gun's muzzle, so they cross the view instead of flying straight away
-		// from it.
-		if (jhlTracer)
+		// johnhalflife: the M249's and MP5's tracers; in first person from the gun's muzzle, so they cross the view
+		// instead of flying straight away from it.
+		if (const bool m249 = iBulletType == BULLET_PLAYER_556; (m249 || iBulletType == BULLET_PLAYER_MP5) && JhlParticleSystemEnabled())
 		{
+			Vector jhlTracerSrc = vecTracerSrc;
+
 			if (cl_entity_t* viewModel = gEngfuncs.GetViewModel();
 				EV_IsLocal(idx) && 0 == CL_IsThirdPerson() && viewModel && viewModel->attachment[0] != g_vecZero)
 			{
-				vecTracerSrc = viewModel->attachment[0];
+				jhlTracerSrc = viewModel->attachment[0];
 			}
 
-			JhlTracer_Fire(vecTracerSrc, end, JhlTracers_TuningStyle());
-			return;
+			JhlTracer_Fire(jhlTracerSrc, end, m249 ? M249TracerStyle : MP5TracerStyle);
+
+			// The M249 had none; the MP5 keeps its own as well.
+			if (m249)
+				return;
 		}
 
 		switch (iBulletType)
