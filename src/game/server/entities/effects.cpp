@@ -763,13 +763,13 @@ void CLightning::StrikeThink()
 			SendStrike(pStart, pEnd, JhlStrandWidth(), JhlStrandStrikeNoise(), JhlStrandBrightness());
 
 		// johnhalflife: a Xen spire ring's two (the client keeps them on them): one 67% wider, only a little under the
-		// ring (0.7 its width and brightness, noise a steady 1.6; c4a1's ring 1.2), and a faint one 3.5 times as wide
+		// ring (0.7 its width and brightness, noise a steady 1.6; c4a1's ring 1.2), and a faint one 2.55 times as wide
 		// (half its width, 0.53 its brightness: 80, noise a steady 1.9).
 		if (JhlSpireRing() && !IsPointEntity(pStart) && !IsPointEntity(pEnd))
 		{
 			SendSpireRingStrand(pStart, pEnd, 167, std::max(1, static_cast<int>(m_boltWidth * 0.7f)), 160,
 				static_cast<int>(pev->renderamt * 0.7f));
-			SendSpireRingStrand(pStart, pEnd, 350, std::max(1, static_cast<int>(m_boltWidth * 0.5f)), 190,
+			SendSpireRingStrand(pStart, pEnd, 255, std::max(1, static_cast<int>(m_boltWidth * 0.5f)), 190,
 				static_cast<int>(pev->renderamt * 0.53f));
 		}
 
