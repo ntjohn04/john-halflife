@@ -1059,3 +1059,33 @@ void JhlExplosion_ParseGroundDust(BufferReader& reader)
 		JhlSprite_PlayOnce(puff, 1.2f, 0.6f);
 	}
 }
+
+void JhlExplosion_ParseDisplacerSpecks(BufferReader& reader)
+{
+	const Vector origin = reader.ReadCoordVector();
+
+	if (!JhlParticleSystemEnabled())
+		return;
+
+	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/exit1.spr");
+
+	if (model == 0)
+		return;
+
+	// 4 tiny specks of the ball's own sprite (exit1 at 0.04, additive), scattered ±40 with a pop of 40 up, falling at
+	// half gravity onto what's below, each playing its frames once over 1.5 s and fading over the last 60%.
+	for (int i = 0; i < 4; ++i)
+	{
+		Vector position = origin + Vector{Random(-2, 2), Random(-2, 2), Random(-2, 2)};
+		Vector velocity{Random(-40, 40), Random(-40, 40), 40 + Random(-40, 40)};
+
+		TEMPENTITY* speck = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, 0.04f, model, kRenderTransAdd,
+			kRenderFxNone, 1, 1.5f, FTENT_SLOWGRAVITY | FTENT_COLLIDEWORLD);
+
+		if (!speck)
+			continue;
+
+		speck->entity.angles.z = Random(0, 359);
+		JhlSprite_PlayOnce(speck, 1.5f, 0.6f);
+	}
+}

@@ -79,3 +79,9 @@ void JhlSprite_PlayOnce(TEMPENTITY* sprite, float life, float fade);
  *	the position on the floor and how many.
  */
 void JhlExplosion_ParseGroundDust(BufferReader& reader);
+
+/**
+ *	@brief A few specks of a displacer ball left falling where it went (UTIL_JhlDisplacerSpecks): the SDK's own temp
+ *	entity message's TE_SPRITETRAIL, the position.
+ */
+void JhlExplosion_ParseDisplacerSpecks(BufferReader& reader);

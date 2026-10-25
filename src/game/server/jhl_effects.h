@@ -103,6 +103,21 @@ inline void UTIL_JhlGroundDust(const Vector& position, int count)
 }
 
 /**
+ *	@brief A few specks of a displacer ball left falling where it went (the client's, jhl_explosions.cpp):
+ *	TE_SPRITETRAIL through the SDK's own temp entity message, the position.
+ */
+inline void UTIL_JhlDisplacerSpecks(const Vector& position)
+{
+	if (!UTIL_JhlParticleSystem())
+		return;
+
+	MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, position);
+	WRITE_BYTE(TE_SPRITETRAIL);
+	WRITE_COORD_VECTOR(position);
+	MESSAGE_END();
+}
+
+/**
  *	@brief A dynamic light (TE_DLIGHT): @p radius in units, @p life in seconds, fading @p decay units a second.
  */
 inline void UTIL_JhlDynamicLight(const Vector& position, float radius, int r, int g, int b, float life, float decay)

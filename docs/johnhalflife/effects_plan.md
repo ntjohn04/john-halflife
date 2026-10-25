@@ -437,6 +437,10 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
   life (`JhlSprite_PlayOnce`) and fading over the last 60%.
 * Displacer: particles pulled in to the impact (`TE_IMPLOSION`, radius 200, 32, 0.3 s), sent 0.4 s in
   (`ImplodeThink`; multiplayer 0.1 s) so they end as the ball goes (0.7 s; multiplayer 0.4 s).
+* Displacer: as the ball goes (`ExplodeThink`, `FizzleThink`), 4 tiny specks of it left falling
+  (`UTIL_JhlDisplacerSpecks`, `TE_SPRITETRAIL` through the SDK's own message): `exit1` at 0.04, additive, from 8
+  units above its center (clear of a floor it hit; barely off it on a creature), ±2, scattered ±40 with a pop of 40
+  up, half gravity, landing on what's below, each playing its frames once over 1.5 s, fading over the last 60%.
 * Xen spire rings (c4a1, and of3a1b, its copy: 3 ring `env_beam`s, `lgtning`, width 5, noise 1.2, (20,120,200), 150,
   each between two `func_train`s riding up opposite sides of a spire; the ring's diameter is the line between them):
   two strands around each: one 67% wider, width 0.7 (3.5), noise a steady 1.6, brightness 0.7 (105), only a little

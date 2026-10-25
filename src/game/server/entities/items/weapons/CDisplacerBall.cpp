@@ -319,6 +319,9 @@ void CDisplacerBall::FizzleThink()
 
 	EmitSound(CHAN_WEAPON, "weapons/displacer_impact.wav", RANDOM_FLOAT(0.8, 0.9), ATTN_NORM);
 
+	// johnhalflife: a few specks of it left falling, from a little above its center (clear of a floor it hit).
+	UTIL_JhlDisplacerSpecks(pev->origin + Vector(0, 0, 8));
+
 	UTIL_Remove(this);
 }
 
@@ -335,6 +338,9 @@ void CDisplacerBall::ExplodeThink()
 	RadiusDamage(pev->origin, this, pOwner, pev->dmg, GetSkillFloat("plr_displacer_radius"sv), DMG_ALWAYSGIB | DMG_BLAST);
 
 	EmitSound(CHAN_WEAPON, "weapons/displacer_teleport.wav", RANDOM_FLOAT(0.8, 0.9), ATTN_NORM);
+
+	// johnhalflife: a few specks of it left falling, from a little above its center (clear of a floor it hit).
+	UTIL_JhlDisplacerSpecks(pev->origin + Vector(0, 0, 8));
 
 	UTIL_Remove(this);
 }
