@@ -419,8 +419,13 @@ public:
 	 */
 	bool JhlSpireRing();
 
-	// A strand ring around the same entities' midpoint, @p scale (hundredths) times as wide (the client's, jhl_rings.cpp).
-	void SendSpireRingStrand(CBaseEntity* start, CBaseEntity* end, int scale, int width, int noise, int brightness);
+	/**
+	 *	@brief A strand ring around the same entities' midpoint, @p scale (hundredths) times as wide, its texture
+	 *	scrolling @p speedScale times the ring's, trailing them by 0 to @p lagMax seconds and back every @p lagPeriod
+	 *	(the client's, jhl_rings.cpp).
+	 */
+	void SendSpireRingStrand(CBaseEntity* start, CBaseEntity* end, int scale, int width, int noise, int brightness,
+		float speedScale, float lagMax, float lagPeriod);
 
 	// The strand's width, noise and brightness, from the beam's.
 	int JhlStrandWidth() const { return std::max(1, static_cast<int>(m_boltWidth * 0.4f)); }
@@ -764,13 +769,15 @@ void CLightning::StrikeThink()
 
 		// johnhalflife: a Xen spire ring's two (the client keeps them on them): one 67% wider, only a little under the
 		// ring (0.7 its width and brightness, noise a steady 1.6; c4a1's ring 1.2), and a faint one 2.55 times as wide
-		// (half its width, 0.53 its brightness: 80, noise a steady 1.9).
+		// (half its width, 0.53 its brightness: 80, noise a steady 1.9). Each falls behind the ring by up to 0.12 s and
+		// catches up again, on its own period (2.3 s, 3.7 s), so the three line up and drift apart; and its texture
+		// flows at its own speed (0.7, 1.4 times the ring's).
 		if (JhlSpireRing() && !IsPointEntity(pStart) && !IsPointEntity(pEnd))
 		{
 			SendSpireRingStrand(pStart, pEnd, 167, std::max(1, static_cast<int>(m_boltWidth * 0.7f)), 160,
-				static_cast<int>(pev->renderamt * 0.7f));
+				static_cast<int>(pev->renderamt * 0.7f), 0.7f, 0.12f, 2.3f);
 			SendSpireRingStrand(pStart, pEnd, 255, std::max(1, static_cast<int>(m_boltWidth * 0.5f)), 190,
-				static_cast<int>(pev->renderamt * 0.53f));
+				static_cast<int>(pev->renderamt * 0.53f), 1.4f, 0.12f, 3.7f);
 		}
 
 		DoSparks(pStart->pev->origin, pEnd->pev->origin);
@@ -896,7 +903,8 @@ bool CLightning::JhlSpireRing()
 	return map == "c4a1" || map == "of3a1b";
 }
 
-void CLightning::SendSpireRingStrand(CBaseEntity* pStart, CBaseEntity* pEnd, int scale, int width, int noise, int brightness)
+void CLightning::SendSpireRingStrand(CBaseEntity* pStart, CBaseEntity* pEnd, int scale, int width, int noise, int brightness,
+	float speedScale, float lagMax, float lagPeriod)
 {
 	MESSAGE_BEGIN(MSG_BROADCAST, gmsgTempEntity);
 	WRITE_BYTE(TE_BEAMRING);
@@ -911,8 +919,10 @@ void CLightning::SendSpireRingStrand(CBaseEntity* pStart, CBaseEntity* pEnd, int
 	WRITE_BYTE((int)pev->rendercolor.y); // r, g, b
 	WRITE_BYTE((int)pev->rendercolor.z); // r, g, b
 	WRITE_BYTE(brightness);				 // brightness
-	WRITE_BYTE(m_speed);				 // speed
-	WRITE_SHORT(scale);					 // scale, hundredths
+	WRITE_BYTE(std::clamp(static_cast<int>(m_speed * speedScale), 0, 255)); // speed
+	WRITE_SHORT(scale);													  // scale, hundredths
+	WRITE_BYTE(static_cast<int>(lagMax * 100));							  // lag, hundredths
+	WRITE_BYTE(static_cast<int>(lagPeriod * 10));						  // its period, tenths
 	MESSAGE_END();
 }
 
