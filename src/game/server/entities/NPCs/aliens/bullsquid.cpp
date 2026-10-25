@@ -185,6 +185,9 @@ public:
 
 	bool HasAlienGibs() override { return true; }
 
+	// johnhalflife: its corpse gibs from 120, by its size: two double shotgun blasts, 15 9mm rounds, 3 from the .357.
+	float JhlCorpseGibDamage() override { return 120; }
+
 	/**
 	 *	@brief OVERRIDDEN for bullsquid because it needs to know explicitly when the last attempt to chase the enemy failed,
 	 *	since that impacts its attack choices.
