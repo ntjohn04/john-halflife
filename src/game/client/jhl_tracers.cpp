@@ -46,6 +46,7 @@ cvar_t* g_TracerBrightness = nullptr;
 cvar_t* g_TracerWidth = nullptr;
 cvar_t* g_TracerLength = nullptr;
 cvar_t* g_TracerSpeed = nullptr;
+cvar_t* g_TracerStartOffset = nullptr;
 cvar_t* g_TracerFrequency = nullptr;
 } // namespace
 
@@ -55,8 +56,9 @@ void JhlTracers_Initialize()
 	g_TracerColor = gEngfuncs.pfnRegisterVariable("jhl_tracer_color", "255 60 30", 0);
 	g_TracerBrightness = gEngfuncs.pfnRegisterVariable("jhl_tracer_brightness", "1", 0);
 	g_TracerWidth = gEngfuncs.pfnRegisterVariable("jhl_tracer_width", "1.2", 0);
-	g_TracerLength = gEngfuncs.pfnRegisterVariable("jhl_tracer_length", "32", 0);
+	g_TracerLength = gEngfuncs.pfnRegisterVariable("jhl_tracer_length", "200", 0);
 	g_TracerSpeed = gEngfuncs.pfnRegisterVariable("jhl_tracer_speed", "4500", 0);
+	g_TracerStartOffset = gEngfuncs.pfnRegisterVariable("jhl_tracer_startoffset", "180", 0);
 	g_TracerFrequency = gEngfuncs.pfnRegisterVariable("jhl_tracer_freq", "3", 0);
 }
 
@@ -68,6 +70,7 @@ JhlTracerStyle JhlTracers_TuningStyle()
 	style.Width = g_TracerWidth->value;
 	style.Length = g_TracerLength->value;
 	style.Speed = g_TracerSpeed->value;
+	style.StartOffsetMax = g_TracerStartOffset->value;
 	return style;
 }
 
@@ -76,12 +79,24 @@ int JhlTracers_TuningFrequency()
 	return std::max(1, static_cast<int>(g_TracerFrequency->value));
 }
 
-void JhlTracer_Fire(const Vector& start, const Vector& end, const JhlTracerStyle& style)
+void JhlTracer_Fire(const Vector& muzzle, const Vector& end, const JhlTracerStyle& style)
 {
+	if (style.Speed <= 0 || g_Tracers.size() >= MaxTracers)
+		return;
+
+	// Starting a random way down its path, never past half of it.
+	const float pathLength = (end - muzzle).Length();
+
+	if (pathLength < 1)
+		return;
+
+	const float offset = std::min(gEngfuncs.pfnRandomFloat(0, std::max(0.f, style.StartOffsetMax)), pathLength * 0.5f);
+	const Vector start = muzzle + (end - muzzle) * (offset / pathLength);
+
 	const Vector path = end - start;
 	const float distance = path.Length();
 
-	if (distance < 1 || style.Speed <= 0 || g_Tracers.size() >= MaxTracers)
+	if (distance < 1)
 		return;
 
 	const int sprite = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/laserbeam.spr");

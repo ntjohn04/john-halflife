@@ -737,6 +737,7 @@ void JhlTracer(const Target& target, Params& p)
 	style.Width = p.Float("width", style.Width);
 	style.Length = p.Float("length", style.Length);
 	style.Speed = p.Float("speed", style.Speed);
+	style.StartOffsetMax = p.Float("startoffset", style.StartOffsetMax);
 	const int count = p.Int("count", 1);
 	const float interval = p.Float("interval", 0.067f);
 	const float spread = p.Float("spread", 0);
@@ -1215,7 +1216,7 @@ const std::vector<Command>& Commands()
 		{"light", "radius= color=r,g,b life= decay= offset=", Light},
 		{"beam", "sprite= width= noise= brightness= color=r,g,b life= speed= fps=", Beam},
 		{"tracer", "color=-1|0-11 length=0.8 speed=6000 count=1 interval=0.067 spread=0 from=eye|muzzle", Tracer},
-		{"jhltracer", "color=255,60,30 brightness=1 width=1.2 length=32 speed=4500 count=1 interval=0.067 spread=0 from=muzzle|eye", JhlTracer},
+		{"jhltracer", "color=255,60,30 brightness=1 width=1.2 length=200 speed=4500 startoffset=180 count=1 interval=0.067 spread=0 from=muzzle|eye", JhlTracer},
 		{"ring", "type=cylinder|torus|disk sprite= radius= life= width= noise= brightness= color=r,g,b fps= speed= offset= axis=up|normal", Ring},
 		{"particles", "type=burst|explosion|explosion2|blob|lava|teleport|implosion|effect size= color= life= length= radius= count=", Particles},
 		{"ricochet", "scale= sprite=", Ricochet},

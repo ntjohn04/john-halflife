@@ -17,15 +17,17 @@
 
 /**
  *	@brief How a johnhalflife tracer looks: a streak @p Length units long flying @p Speed units a second, a beam
- *	(laserbeam.spr) @p Width wide in @p Color (0-255) at @p Brightness (0-1).
+ *	(laserbeam.spr) @p Width wide in @p Color (0-255) at @p Brightness (0-1), starting a random 0 to
+ *	@p StartOffsetMax units down its path (some come right out of the barrel, some further out).
  */
 struct JhlTracerStyle
 {
 	Vector Color{255, 60, 30};
 	float Brightness = 1;
 	float Width = 1.2f;
-	float Length = 32;
+	float Length = 200; // Seen nearly end-on, it looks a few feet long.
 	float Speed = 4500;
+	float StartOffsetMax = 180;
 };
 
 /**
@@ -37,7 +39,8 @@ struct JhlTracerStyle
 void JhlTracer_Fire(const Vector& start, const Vector& end, const JhlTracerStyle& style);
 
 /**
- *	@brief Registers the tuning cvars (jhl_tracer_color, _brightness, _width, _length, _speed, _freq), temporary:
+ *	@brief Registers the tuning cvars (jhl_tracer_color, _brightness, _width, _length, _speed,
+ *	_startoffset, _freq), temporary:
  *	the M249's tracers (and, for now, the MP5's) are played from them while their look is chosen.
  */
 void JhlTracers_Initialize();
