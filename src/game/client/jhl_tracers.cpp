@@ -22,6 +22,8 @@
 #include "r_efx.h"
 #include "pm_defs.h"
 #include "pmtrace.h"
+#include "parsemsg.h"
+#include "jhl_settings.h"
 #include "jhl_tracers.h"
 
 namespace
@@ -140,10 +142,99 @@ std::vector<Tracer> g_Tracers;
 double g_LastTime = 0;
 } // namespace
 
-void JhlTracer_Fire(const Vector& muzzle, const Vector& end, const JhlTracerStyle& style)
+const JhlTracerStyle& JhlTracers_Style(JhlTracerKind kind)
 {
-	if (style.Speed <= 0 || g_Tracers.size() >= MaxTracers)
+	// The MP5's keeps the vanilla tracer, almost invisible in first person, and adds a faint pale orange streak: feedback
+	// on where its rounds go rather than a tracer round. The semi-automatics' are the same on every shot, the
+	// hard-hitting ones faster; the shotgun's on a few pellets a shot. The M249's are real tracer rounds, one in 3: a
+	// saturated red streak with a shorter, thinner white-hot core (less like a laser), mostly right out of the barrel.
+	static const JhlTracerStyle mp5{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 120};
+	static const JhlTracerStyle glock{{255, 200, 120}, 0.2f, 1.1f, 85, 4250, 120};
+	static const JhlTracerStyle heavy{{255, 200, 120}, 0.2f, 1.1f, 100, 5000, 120};
+	static const JhlTracerStyle sniper = []
+	{
+		JhlTracerStyle style = heavy;
+		style.Speed = 5500;
+		style.Width = 1.19f;
+		style.StartOffsetMin = 20;
+		return style;
+	}();
+	static const JhlTracerStyle shotgun{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 55};
+	static const JhlTracerStyle m249{{255, 60, 30}, 0.85f, 1.2f, 200, 4500, 22, {255, 225, 180}, 1, 0.9f, 130, true};
+
+	switch (kind)
+	{
+	case JhlTracerKind::Glock: return glock;
+	case JhlTracerKind::Heavy: return heavy;
+	case JhlTracerKind::Sniper: return sniper;
+	case JhlTracerKind::Shotgun: return shotgun;
+	case JhlTracerKind::M249: return m249;
+	default: return mp5;
+	}
+}
+
+bool JhlTracersEnabled()
+{
+	return JhlParticleSystemEnabled() && 0 != gEngfuncs.pfnGetCvarFloat("jhl_fx_tracers");
+}
+
+void JhlTracers_ParseNpcTracer(BufferReader& reader)
+{
+	Vector start = reader.ReadCoordVector();
+	const Vector end = reader.ReadCoordVector();
+	const auto kind = static_cast<JhlTracerKind>(reader.ReadByte());
+
+	// The vanilla one, but the M249's is replaced by its red tracer rounds.
+	if (kind != JhlTracerKind::M249 || !JhlTracersEnabled())
+		gEngfuncs.pEfxAPI->R_TracerEffect(start, end);
+
+	if (JhlTracersEnabled())
+		JhlTracer_Fire(start, end, JhlTracers_Style(kind));
+}
+
+namespace
+{
+bool IsLiquid(Vector position)
+{
+	const int contents = gEngfuncs.PM_PointContents(position, nullptr);
+	return contents == CONTENTS_WATER || contents == CONTENTS_SLIME || contents == CONTENTS_LAVA;
+}
+
+// Into water, a tracer stops about a foot under it (bullets' paths go through water).
+constexpr float WaterCutDepth = 12;
+
+Vector CutAtWater(const Vector& start, const Vector& end)
+{
+	if (!IsLiquid(end) || IsLiquid(start))
+		return end;
+
+	// The surface, between the last point out of it and the first in it (as bullet splashes find it).
+	Vector outside = start;
+	Vector inside = end;
+
+	for (int i = 0; i < 12; ++i)
+	{
+		const Vector middle = (outside + inside) * 0.5f;
+
+		if (IsLiquid(middle))
+			inside = middle;
+		else
+			outside = middle;
+	}
+
+	const Vector direction = (end - start).Normalize();
+	const Vector cut = inside + direction * WaterCutDepth;
+
+	return (cut - start).Length() < (end - start).Length() ? cut : end;
+}
+} // namespace
+
+void JhlTracer_Fire(const Vector& muzzle, const Vector& hitEnd, const JhlTracerStyle& style)
+{
+	if (style.Speed <= 0 || g_Tracers.size() >= MaxTracers || !JhlTracersEnabled())
 		return;
+
+	const Vector end = CutAtWater(muzzle, hitEnd);
 
 	// Starting a random way down its path, never past half of it.
 	const float pathLength = (end - muzzle).Length();

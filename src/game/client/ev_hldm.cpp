@@ -369,28 +369,10 @@ void EV_HLDM_DecalGunshot(pmtrace_t* pTrace, int iBulletType)
 	}
 }
 
-// johnhalflife's tracers (jhl_tracers.cpp). The M249's are real tracer rounds, one in 3: a saturated red streak with
-// a shorter, thinner white-hot core in it (less like a laser), mostly right out of the barrel. The MP5 keeps its
-// vanilla tracer every 2nd round (almost invisible in first person) and adds a faint pale orange streak to it, as
-// feedback on where its rounds go rather than a tracer round; the semi-automatic guns (Glock, revolver, Desert Eagle,
-// sniper rifle) have the same streak on every shot, the hard-hitting ones' faster.
+// johnhalflife's tracers (jhl_tracers.cpp, JhlTracers_Style): the M249's are real tracer rounds, one in 3; the MP5
+// keeps its vanilla tracer every 2nd round and adds a faint streak; the semi-automatic guns (Glock, revolver, Desert
+// Eagle, sniper rifle) have one on every shot.
 constexpr int M249TracerFrequency = 3;
-const JhlTracerStyle M249TracerStyle{{255, 60, 30}, 0.85f, 1.2f, 200, 4500, 22, {255, 225, 180}, 1, 0.9f, 130, true};
-const JhlTracerStyle MP5TracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 120};
-const JhlTracerStyle HeavyTracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 5000, 120};
-
-// The Glock's: a pistol's, a little quicker and shorter than the MP5's.
-const JhlTracerStyle GlockTracerStyle{{255, 200, 120}, 0.2f, 1.1f, 85, 4250, 120};
-
-// The sniper rifle's, faster still and a little wider, never right at the muzzle.
-const JhlTracerStyle SniperTracerStyle = []
-{
-	JhlTracerStyle style = HeavyTracerStyle;
-	style.Speed = 5500;
-	style.Width = 1.19f;
-	style.StartOffsetMin = 20;
-	return style;
-}();
 
 static bool IsSemiAutoTracer(int bulletType)
 {
@@ -403,10 +385,8 @@ static bool IsViewZoomed()
 	return gHUD.m_iFOV != 0 && gHUD.m_iFOV < static_cast<int>(CVAR_GET_FLOAT("default_fov"));
 }
 
-// The shotgun's: a few of each shot's pellets (3-4 single, 6-8 double), as the MP5's but starting nearer, so the fan
-// stays in the background, hinting at the spread and at the double shot's extra pellets. EV_HLDM_FireBullets gives
-// the next g_ShotgunTracers pellets one.
-const JhlTracerStyle ShotgunTracerStyle{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 55};
+// The shotgun's: a few of each shot's pellets (3-4 single, 6-8 double), hinting at the spread and at the double
+// shot's extra pellets. EV_HLDM_FireBullets gives the next g_ShotgunTracers pellets one.
 static int g_ShotgunTracers = 0;
 
 void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const Vector& forward, const Vector& right,
@@ -424,7 +404,7 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 		--g_ShotgunTracers;
 		iTracerFreq = 1;
 	}
-	else if (IsSemiAutoTracer(iBulletType) && JhlParticleSystemEnabled())
+	else if (IsSemiAutoTracer(iBulletType) && JhlTracersEnabled())
 	{
 		iTracerFreq = 1;
 	}
@@ -455,7 +435,7 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 		// so they cross the view instead of flying straight away from it.
 		if (const bool m249 = iBulletType == BULLET_PLAYER_556, shotgun = iBulletType == BULLET_PLAYER_BUCKSHOT,
 			semiAuto = IsSemiAutoTracer(iBulletType);
-			(m249 || shotgun || semiAuto || iBulletType == BULLET_PLAYER_MP5) && JhlParticleSystemEnabled())
+			(m249 || shotgun || semiAuto || iBulletType == BULLET_PLAYER_MP5) && JhlTracersEnabled())
 		{
 			Vector jhlTracerSrc = vecTracerSrc;
 			const bool firstPerson = EV_IsLocal(idx) && 0 == CL_IsThirdPerson();
@@ -478,8 +458,13 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 			}
 
 			const bool heavy = iBulletType == BULLET_PLAYER_357 || iBulletType == BULLET_PLAYER_EAGLE;
-			JhlTracer_Fire(jhlTracerSrc, end, m249 ? M249TracerStyle : shotgun ? ShotgunTracerStyle : heavy ? HeavyTracerStyle :
-				iBulletType == BULLET_PLAYER_762 ? SniperTracerStyle : iBulletType == BULLET_PLAYER_9MM ? GlockTracerStyle : MP5TracerStyle);
+			const JhlTracerKind kind = m249						   ? JhlTracerKind::M249
+									   : shotgun					   ? JhlTracerKind::Shotgun
+									   : heavy						   ? JhlTracerKind::Heavy
+									   : iBulletType == BULLET_PLAYER_762 ? JhlTracerKind::Sniper
+									   : iBulletType == BULLET_PLAYER_9MM ? JhlTracerKind::Glock
+																		  : JhlTracerKind::MP5;
+			JhlTracer_Fire(jhlTracerSrc, end, JhlTracers_Style(kind));
 
 			// Only the MP5 had tracers of its own, and keeps them.
 			if (iBulletType != BULLET_PLAYER_MP5)
@@ -762,7 +747,7 @@ void EV_FireShotGunDouble(event_args_t* args)
 	EV_GetGunPosition(args, vecSrc, origin);
 	vecAiming = forward;
 
-	g_ShotgunTracers = JhlParticleSystemEnabled() ? gEngfuncs.pfnRandomLong(6, 8) : 0;
+	g_ShotgunTracers = JhlTracersEnabled() ? gEngfuncs.pfnRandomLong(6, 8) : 0;
 
 	if (g_Skill.GetValue("shotgun_double_wide_spread") != 0)
 	{
@@ -818,7 +803,7 @@ void EV_FireShotGunSingle(event_args_t* args)
 	EV_GetGunPosition(args, vecSrc, origin);
 	vecAiming = forward;
 
-	g_ShotgunTracers = JhlParticleSystemEnabled() ? gEngfuncs.pfnRandomLong(3, 4) : 0;
+	g_ShotgunTracers = JhlTracersEnabled() ? gEngfuncs.pfnRandomLong(3, 4) : 0;
 
 	if (g_Skill.GetValue("shotgun_single_tight_spread") != 0)
 	{
@@ -1993,7 +1978,7 @@ void EV_FireM249(event_args_t* args)
 		vecSrc, vecAiming,
 		8192.0,
 		BULLET_PLAYER_556,
-		JhlParticleSystemEnabled() ? M249TracerFrequency : 0, &g_tracerCount[args->entindex - 1],
+		JhlTracersEnabled() ? M249TracerFrequency : 0, &g_tracerCount[args->entindex - 1],
 		args->fparam1, args->fparam2);
 }
 

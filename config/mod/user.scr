@@ -132,6 +132,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"jhl_fx_tracers"
+	{
+		"JHL | Effects: tracers"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"jhl_hud_scale"
 	{
 		"JHL | HUD scale (0 = automatic)"

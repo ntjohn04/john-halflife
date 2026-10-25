@@ -117,6 +117,29 @@ inline void UTIL_JhlDisplacerSpecks(const Vector& position)
 	MESSAGE_END();
 }
 
+// The kinds of johnhalflife tracer (the client's JhlTracerKind, jhl_tracers.h: these must match).
+constexpr int JhlTracerMP5 = 0;
+constexpr int JhlTracerGlock = 1;
+constexpr int JhlTracerHeavy = 2;
+constexpr int JhlTracerSniper = 3;
+constexpr int JhlTracerShotgun = 4;
+constexpr int JhlTracerM249 = 5;
+
+/**
+ *	@brief An NPC's tracer through the SDK's own temp entity message (TE_TRACER: start, end, kind), in place of the
+ *	engine's: the client draws the vanilla one and johnhalflife's of @p kind on top (the M249's instead of it). Sent as
+ *	the vanilla one is, to those who can hear it.
+ */
+inline void UTIL_JhlTracer(const Vector& start, const Vector& end, int kind)
+{
+	MESSAGE_BEGIN(MSG_PAS, gmsgTempEntity, start);
+	WRITE_BYTE(TE_TRACER);
+	WRITE_COORD_VECTOR(start);
+	WRITE_COORD_VECTOR(end);
+	WRITE_BYTE(kind);
+	MESSAGE_END();
+}
+
 /**
  *	@brief A dynamic light (TE_DLIGHT): @p radius in units, @p life in seconds, fading @p decay units a second.
  */

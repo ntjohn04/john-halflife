@@ -164,7 +164,7 @@ goes with it, and comes back on a loaded game. Kept on a frame at a time; only m
 to leave the engine's 32 dynamic lights for everything else. Nothing is sent over the network.
 
 ### Tracers
-`jhl_fx_particlesystem`
+`jhl_fx_particlesystem` and `jhl_fx_tracers`
 
 Vanilla: the MP5 fires the engine's tracer every 2nd round (NPCs every 4th through the server's `TE_TRACER`; the
 friendly Opposing Force M249 grunt every 2nd; turrets and the Apache every round), from 16 forward, 2 right and 4
@@ -200,5 +200,13 @@ muzzle, so it crosses the view; otherwise at the game's tracer start.
 * **Shotgun** (a hint of the spread, in the background; it had none): a set number of each shot's pellets, 3-4 for a
   single shot and 6-8 for a double (the extra pellets show), each as the MP5's streak (255,200,120 at 0.2, width
   1.1, 100 units long, 4000 units/s) but starting 0-55 units down its path.
+* **NPCs:** the server sends their tracers through the SDK's own message (`UTIL_JhlTracer`, `TE_TRACER` with a kind)
+  in place of the engine's, as often as vanilla (the same number of messages): the client draws the vanilla tracer
+  and the matching streak on top (MP5s the MP5's, 9mm pistols the Glock's, the .357 and 12mm (turrets, the Apache) the
+  revolver's, shotguns the shotgun's, the Black Ops assassin's rifle the sniper rifle's). Opposing Force's friendly M249
+  grunt fires the M249's red tracer rounds instead of the vanilla one, one in 3 (vanilla every 2nd).
+
+Into water, a streak stops about a foot under the surface (found as bullet splashes find it, only when it ends in
+water). `jhl_fx_tracers` turns all of them off by itself, leaving the vanilla tracers.
 
 `jhl_fx_test jhltracer` plays them with any settings; `jhl_fx_test tracer` plays the engine's.

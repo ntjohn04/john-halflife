@@ -923,6 +923,10 @@ static void MsgFunc_TempEntity(const char* name, BufferReader& reader)
 	case TE_SPRITETRAIL:
 		JhlExplosion_ParseDisplacerSpecks(reader);
 		break;
+
+	case TE_TRACER:
+		JhlTracers_ParseNpcTracer(reader);
+		break;
 	}
 }
 

@@ -1387,6 +1387,30 @@ void CBaseEntity::FireBullets(unsigned int cShots, Vector vecSrc, Vector vecDirS
 	if (attacker == nullptr)
 		attacker = this; // the default attacker is ourselves
 
+	// johnhalflife: the kind of tracer the client draws on top of the vanilla one (UTIL_JhlTracer). Opposing Force's
+	// friendly M249 grunt fires the player's M249 tracer rounds, one in 3 (vanilla's every 2nd); the Black Ops
+	// assassin's 5.56 is its sniper rifle's.
+	const bool jhlTracers = UTIL_JhlParticleSystem();
+	int jhlTracerKind = JhlTracerMP5;
+
+	switch (iBulletType)
+	{
+	case BULLET_PLAYER_556:
+		jhlTracerKind = ClassnameIs("monster_human_grunt_ally") ? JhlTracerM249 : JhlTracerSniper;
+		break;
+	case BULLET_PLAYER_BUCKSHOT: jhlTracerKind = JhlTracerShotgun; break;
+	case BULLET_MONSTER_9MM:
+	case BULLET_PLAYER_9MM: jhlTracerKind = JhlTracerGlock; break;
+	case BULLET_PLAYER_357:
+	case BULLET_PLAYER_EAGLE:
+	case BULLET_PLAYER_762:
+	case BULLET_MONSTER_12MM: jhlTracerKind = JhlTracerHeavy; break;
+	default: break;
+	}
+
+	if (jhlTracers && jhlTracerKind == JhlTracerM249 && iTracerFreq != 0)
+		iTracerFreq = 3;
+
 	ClearMultiDamage();
 	gMultiDamage.type = DMG_BULLET | DMG_NEVERGIB;
 
@@ -1422,22 +1446,29 @@ void CBaseEntity::FireBullets(unsigned int cShots, Vector vecSrc, Vector vecDirS
 				vecTracerSrc = vecSrc;
 			}
 
-			switch (iBulletType)
+			if (jhlTracers)
 			{
-			case BULLET_MONSTER_MP5:
-			case BULLET_MONSTER_9MM:
-			case BULLET_MONSTER_12MM:
-			default:
-				MESSAGE_BEGIN(MSG_PAS, SVC_TEMPENTITY, vecTracerSrc);
-				WRITE_BYTE(TE_TRACER);
-				WRITE_COORD(vecTracerSrc.x);
-				WRITE_COORD(vecTracerSrc.y);
-				WRITE_COORD(vecTracerSrc.z);
-				WRITE_COORD(tr.vecEndPos.x);
-				WRITE_COORD(tr.vecEndPos.y);
-				WRITE_COORD(tr.vecEndPos.z);
-				MESSAGE_END();
-				break;
+				UTIL_JhlTracer(vecTracerSrc, tr.vecEndPos, jhlTracerKind);
+			}
+			else
+			{
+				switch (iBulletType)
+				{
+				case BULLET_MONSTER_MP5:
+				case BULLET_MONSTER_9MM:
+				case BULLET_MONSTER_12MM:
+				default:
+					MESSAGE_BEGIN(MSG_PAS, SVC_TEMPENTITY, vecTracerSrc);
+					WRITE_BYTE(TE_TRACER);
+					WRITE_COORD(vecTracerSrc.x);
+					WRITE_COORD(vecTracerSrc.y);
+					WRITE_COORD(vecTracerSrc.z);
+					WRITE_COORD(tr.vecEndPos.x);
+					WRITE_COORD(tr.vecEndPos.y);
+					WRITE_COORD(tr.vecEndPos.z);
+					MESSAGE_END();
+					break;
+				}
 			}
 		}
 		// do damage, paint decals

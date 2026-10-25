@@ -53,6 +53,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_fx_bulletimpacts", "1"},
 	{"jhl_fx_muzzleflash", "1"},
 	{"jhl_fx_particlesystem", "1"},
+	{"jhl_fx_tracers", "1"},
 	{"jhl_hud_scale", "1"},
 	{"crosshair_scale", "2"},
 	{"default_fov", "105"},
@@ -134,6 +135,9 @@ void JhlSettings_Initialize()
 {
 	// One switch for all of johnhalflife's particle system changes (see docs/johnhalflife/effects_plan.md).
 	g_ParticleSystem = gEngfuncs.pfnRegisterVariable("jhl_fx_particlesystem", "1", FCVAR_ARCHIVE);
+
+	// johnhalflife's tracers on their own (jhl_tracers.cpp); they also need the particle system.
+	gEngfuncs.pfnRegisterVariable("jhl_fx_tracers", "1", FCVAR_ARCHIVE);
 
 	// Archived, so it survives in config.cfg and the first launch values are only applied once per version.
 	g_RecommendedVersion = gEngfuncs.pfnRegisterVariable("jhl_recommended_version", "0", FCVAR_ARCHIVE);
