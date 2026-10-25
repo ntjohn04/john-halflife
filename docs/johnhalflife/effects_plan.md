@@ -285,7 +285,7 @@ Apache, turrets, the loader, the G-Man, the worms, unbreakable glass; vanilla: a
 0.5-2 for 0.1 s and a ricochet sound, no sparks): through the SDK's message, the client adds 4-7 spark streaks
 (by scale) at ±100-180, set 2 units toward the viewer. Not aimed: `UTIL_Ricochet` doesn't get the bullet's direction.
 
-## Beams (in progress)
+## Beams (done)
 
 **Vortigaunts** (`islave.cpp`; vanilla: `lgtning` beams, charging arm beams width 30 noise 80 dark green brightness
 64 ramping by beam count × 32 (BeamGlow), the zap one per hand width 50 noise 20 bright green 255, the revive
@@ -410,7 +410,7 @@ noise 80, white, 0.1 s): a strand each, width 4, noise 200 ±25%, brightness 102
   and 200 gibs. Added: the `hexplo` mushroom cloud standing on the ground under the wreck (`UTIL_JhlCrashMushroom`,
   `TE_SPRITE` too, brightness 200; Apache scale 10, Osprey 18).
 
-## Rings (in progress)
+## Rings (done)
 
 Every ring the game makes is a `TE_BEAMCYLINDER` (the houndeye's two, to 384 and 192 in 0.2 s, `shockwave`, by
 squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rope`; the displacer ball's impact, to
@@ -440,7 +440,7 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
   it (`jhl_rings.cpp`): a ring beam it moves every frame to the trains' midpoint ± its scale times half the line between
   them, kept alive a second at a time (it dies by itself when no longer tracked), dark while they're out of view,
   forgotten on a new map. Only these maps: c4a1b's ring beams (on machines) and of6a5's Gene Worm orbs are left alone.
-* Trial, explosions (`jhl_fx_explosionblob`, on by default, not saved): the engine's blob explosion
+* Explosions: the engine's blob explosion
   (`R_BlobExplosion`, rebuilt as `JhlExplosion_Blob` to take a count) on generic explosions, 64 particles (a
   sixteenth of its 1024), large ones 256 (a quarter; more ran a few satchels out of particles).
 

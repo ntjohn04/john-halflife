@@ -908,8 +908,8 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 	SurfaceDebris(surface, scale);
 	EmbersAndLights(origin, scale * bigger, flags, true);
 
-	// Trial (jhl_fx_explosionblob): the engine's blob explosion, a sixteenth of its particles, a quarter for large ones.
-	if ((flags & TE_EXPLFLAG_NOPARTICLES) == 0 && 0 != gEngfuncs.pfnGetCvarFloat("jhl_fx_explosionblob"))
+	// The engine's blob explosion, a sixteenth of its particles, a quarter for large ones (more ran a few satchels out).
+	if ((flags & TE_EXPLFLAG_NOPARTICLES) == 0)
 		JhlExplosion_Blob(origin, large ? 256 : 64);
 
 	// The second fireball: shaped for large explosions on a floor, round otherwise.

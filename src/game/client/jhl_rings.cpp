@@ -125,8 +125,6 @@ void JhlRings_ParseSpireRing(BufferReader& reader)
 	if (g_Rings.size() >= MaxRings)
 		return;
 
-	gEngfuncs.Con_DPrintf("johnhalflife: spire ring strand between entities %d and %d\n", startEntity, endEntity);
-
 	g_Rings.push_back({nullptr, startEntity, endEntity, scale, sprite, static_cast<int>(frameStart), framerate, width,
 		noise, r, g, b, brightness, speed, lagMax, lagPeriod, gEngfuncs.pfnRandomFloat(0, 1), {}});
 }
@@ -189,7 +187,6 @@ void JhlRings_Update(double time)
 			if (!ring.Beam)
 				continue;
 
-			gEngfuncs.Con_DPrintf("johnhalflife: spire ring strand made, %.0f units across\n", (target - source).Length());
 			ring.Beam->type = TE_BEAMRING;
 		}
 

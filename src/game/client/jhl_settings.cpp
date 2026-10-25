@@ -135,9 +135,6 @@ void JhlSettings_Initialize()
 	// One switch for all of johnhalflife's particle system changes (see docs/johnhalflife/effects_plan.md).
 	g_ParticleSystem = gEngfuncs.pfnRegisterVariable("jhl_fx_particlesystem", "1", FCVAR_ARCHIVE);
 
-	// Trial: the engine's blob explosion on generic explosions (jhl_explosions.cpp).
-	gEngfuncs.pfnRegisterVariable("jhl_fx_explosionblob", "1", 0);
-
 	// Archived, so it survives in config.cfg and the first launch values are only applied once per version.
 	g_RecommendedVersion = gEngfuncs.pfnRegisterVariable("jhl_recommended_version", "0", FCVAR_ARCHIVE);
 
