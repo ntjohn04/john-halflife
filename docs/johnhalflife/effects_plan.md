@@ -433,7 +433,7 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
   each between two `func_train`s riding up opposite sides of a spire; the ring's diameter is the line between them):
   two strands around each: one 67% wider, width 0.7 (3.5), noise a steady 1.6, brightness 0.7 (105), only a little
   under the ring; and a faint one 2.55 times as wide, width 0.5 (2.5), noise a steady 1.9, brightness 0.53 (80)
-  Each trails the ring by 0 to 0.12 s and back (the client keeps half a second of where the trains were), the
+  Each trails the ring by 0 to 0.19 s and back (the client keeps half a second of where the trains were), the
   secondary every 2.3 s and the tertiary every 3.7 s, so they line up and drift apart; their textures flow at 0.7 and
   1.4 times the ring's speed. A train jumping back to its path's start, they jump after it rather than sweep across.
   (`JhlSpireRing`, `SendSpireRingStrand`). A ring between two entities has no radius of its own, so the client draws

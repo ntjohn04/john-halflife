@@ -769,15 +769,15 @@ void CLightning::StrikeThink()
 
 		// johnhalflife: a Xen spire ring's two (the client keeps them on them): one 67% wider, only a little under the
 		// ring (0.7 its width and brightness, noise a steady 1.6; c4a1's ring 1.2), and a faint one 2.55 times as wide
-		// (half its width, 0.53 its brightness: 80, noise a steady 1.9). Each falls behind the ring by up to 0.12 s and
+		// (half its width, 0.53 its brightness: 80, noise a steady 1.9). Each falls behind the ring by up to 0.19 s and
 		// catches up again, on its own period (2.3 s, 3.7 s), so the three line up and drift apart; and its texture
 		// flows at its own speed (0.7, 1.4 times the ring's).
 		if (JhlSpireRing() && !IsPointEntity(pStart) && !IsPointEntity(pEnd))
 		{
 			SendSpireRingStrand(pStart, pEnd, 167, std::max(1, static_cast<int>(m_boltWidth * 0.7f)), 160,
-				static_cast<int>(pev->renderamt * 0.7f), 0.7f, 0.12f, 2.3f);
+				static_cast<int>(pev->renderamt * 0.7f), 0.7f, 0.19f, 2.3f);
 			SendSpireRingStrand(pStart, pEnd, 255, std::max(1, static_cast<int>(m_boltWidth * 0.5f)), 190,
-				static_cast<int>(pev->renderamt * 0.53f), 1.4f, 0.12f, 3.7f);
+				static_cast<int>(pev->renderamt * 0.53f), 1.4f, 0.19f, 3.7f);
 		}
 
 		DoSparks(pStart->pev->origin, pEnd->pev->origin);
