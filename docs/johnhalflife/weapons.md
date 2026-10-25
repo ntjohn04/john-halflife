@@ -158,3 +158,23 @@ energy beams' lights. Found on the client from the mine's laser beam entity (`la
 `TripmineLight` from `HUD_AddEntity`), which exists only while the mine is armed, so it comes on with the laser,
 goes with it, and comes back on a loaded game. Kept on a frame at a time; only mines within 1024 units of the view,
 to leave the engine's 32 dynamic lights for everything else. Nothing is sent over the network.
+
+### Tracers
+`jhl_fx_particlesystem`
+
+Vanilla: the MP5 fires the engine's tracer every 2nd round (NPCs every 4th through the server's `TE_TRACER`; the
+friendly Opposing Force M249 grunt every 2nd; turrets and the Apache every round), from 16 forward, 2 right and 4
+down of the eye to where the bullet hit, a short streak at the `tracer*` cvars' pale color. In first person it flies
+straight away from the view, so it's almost invisible; and the engine draws its streak (`tracerlength` times the
+speed) only once all of it is on screen, so a long one only appears far away. Those cvars color other engine
+streaks too, so they're left alone.
+
+johnhalflife's tracers (`jhl_tracers.cpp`, `JhlTracer_Fire`): a beam (`laserbeam.spr`) whose ends are moved every
+frame, growing out of the muzzle, flying as a streak of a set length at a set speed, shrinking into what was hit;
+beams are clipped rather than skipped, so it shows from the muzzle on. In first person it starts at the view model's
+muzzle, so it crosses the view; otherwise at the game's tracer start.
+
+* **M249:** every 3rd round, saturated red (255,60,30), full brightness, width 1.2, 32 units long, 4500 units/s
+  (the M249 had no tracers).
+
+`jhl_fx_test jhltracer` plays them with any settings; `jhl_fx_test tracer` plays the engine's.

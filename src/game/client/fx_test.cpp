@@ -30,6 +30,7 @@
 #include "jhl_explosion.h"
 #include "jhl_explosions.h"
 #include "jhl_settings.h"
+#include "jhl_tracers.h"
 #include "com_model.h"
 #include "event_api.h"
 #include "r_efx.h"
@@ -726,6 +727,47 @@ void Tracer(const Target& target, Params& p)
 	}
 }
 
+// johnhalflife's tracers (jhl_tracers.cpp): a beam streak that grows out of the muzzle, flies at its own speed and
+// length, and shrinks into the target. Defaults: the M249's. count rounds every interval, spread degrees.
+void JhlTracer(const Target& target, Params& p)
+{
+	JhlTracerStyle style;
+	style.Color = p.Color("color", style.Color);
+	style.Brightness = p.Float("brightness", style.Brightness);
+	style.Width = p.Float("width", style.Width);
+	style.Length = p.Float("length", style.Length);
+	style.Speed = p.Float("speed", style.Speed);
+	const int count = p.Int("count", 1);
+	const float interval = p.Float("interval", 0.067f);
+	const float spread = p.Float("spread", 0);
+	const bool muzzle = p.String("from", "muzzle") == "muzzle";
+	p.Print("jhltracer");
+
+	Vector right, up;
+	{
+		Vector forward;
+		AngleVectors(v_angles, forward, right, up);
+	}
+
+	Vector start = target.Eye + target.Forward * 16 + right * 2 - Vector{0, 0, 4};
+
+	if (cl_entity_t* viewModel = gEngfuncs.GetViewModel(); muzzle && viewModel && viewModel->attachment[0] != g_vecZero)
+	{
+		start = viewModel->attachment[0];
+	}
+
+	const float distance = (target.Position - start).Length();
+
+	for (int i = 0; i < count; ++i)
+	{
+		Later(i * interval, [=]()
+			{
+			const float s = spread * 3.14159265f / 180;
+			Vector direction = (target.Position - start).Normalize() + right * gEngfuncs.pfnRandomFloat(-s, s) + up * gEngfuncs.pfnRandomFloat(-s, s);
+			JhlTracer_Fire(start, start + direction.Normalize() * distance, style); });
+	}
+}
+
 // The engine's built-in particle effects (palette colors 0-255).
 void Particles(const Target& target, Params& p)
 {
@@ -1173,6 +1215,7 @@ const std::vector<Command>& Commands()
 		{"light", "radius= color=r,g,b life= decay= offset=", Light},
 		{"beam", "sprite= width= noise= brightness= color=r,g,b life= speed= fps=", Beam},
 		{"tracer", "color=-1|0-11 length=0.8 speed=6000 count=1 interval=0.067 spread=0 from=eye|muzzle", Tracer},
+		{"jhltracer", "color=255,60,30 brightness=1 width=1.2 length=32 speed=4500 count=1 interval=0.067 spread=0 from=muzzle|eye", JhlTracer},
 		{"ring", "type=cylinder|torus|disk sprite= radius= life= width= noise= brightness= color=r,g,b fps= speed= offset= axis=up|normal", Ring},
 		{"particles", "type=burst|explosion|explosion2|blob|lava|teleport|implosion|effect size= color= life= length= radius= count=", Particles},
 		{"ricochet", "scale= sprite=", Ricochet},

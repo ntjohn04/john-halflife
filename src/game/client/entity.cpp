@@ -24,6 +24,7 @@
 #include "jhl_debris.h"
 #include "jhl_explosions.h"
 #include "jhl_rings.h"
+#include "jhl_tracers.h"
 #include "weapon_effects.h"
 #include "sound/ClientSoundReplacementSystem.h"
 #include "sound/ISoundSystem.h"
@@ -368,6 +369,7 @@ void DLLEXPORT HUD_TempEntUpdate(
 {
 	// johnhalflife: the Xen spire rings' strands onto their entities, before the engine draws beams.
 	JhlRings_Update(client_time);
+	JhlTracers_Update(client_time);
 
 	// Use our own temp ent list instead.
 	ppTempEntFree = &gpTempEntFree;

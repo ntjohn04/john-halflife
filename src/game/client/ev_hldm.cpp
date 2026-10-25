@@ -66,6 +66,8 @@ static int g_tracerCount[MAX_PLAYERS];
 #include "pm_shared.h"
 #include "weapon_effects.h"
 #include "jhl_settings.h"
+#include "jhl_tracers.h"
+#include "Exports.h"
 
 void V_PunchAxis(int axis, float punch);
 bool V_WeaponRecoil(float pitchMin, float pitchMax, float jitter, float spring, float damping);
@@ -367,6 +369,11 @@ void EV_HLDM_DecalGunshot(pmtrace_t* pTrace, int iBulletType)
 	}
 }
 
+// johnhalflife: the M249's tracer rounds (one in M249TracerFrequency): saturated red, a streak 32 units long at 4500
+// units a second, slower than the engine's 6000 so it can be followed.
+constexpr int M249TracerFrequency = 3;
+const JhlTracerStyle M249TracerStyle{{255, 60, 30}, 1, 1.2f, 32, 4500};
+
 void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const Vector& forward, const Vector& right,
 	int iBulletType, int iTracerFreq, int* tracerCount)
 {
@@ -390,6 +397,20 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 		else
 		{
 			vecTracerSrc = vecSrc;
+		}
+
+		// johnhalflife: the M249's tracer rounds, bright red streaks; in first person from the gun's muzzle, so they
+		// cross the view instead of flying straight away from it.
+		if (iBulletType == BULLET_PLAYER_556 && JhlParticleSystemEnabled())
+		{
+			if (cl_entity_t* viewModel = gEngfuncs.GetViewModel();
+				EV_IsLocal(idx) && 0 == CL_IsThirdPerson() && viewModel && viewModel->attachment[0] != g_vecZero)
+			{
+				vecTracerSrc = viewModel->attachment[0];
+			}
+
+			JhlTracer_Fire(vecTracerSrc, end, M249TracerStyle);
+			return;
 		}
 
 		switch (iBulletType)
@@ -1895,7 +1916,7 @@ void EV_FireM249(event_args_t* args)
 		vecSrc, vecAiming,
 		8192.0,
 		BULLET_PLAYER_556,
-		0, nullptr,
+		JhlParticleSystemEnabled() ? M249TracerFrequency : 0, &g_tracerCount[args->entindex - 1],
 		args->fparam1, args->fparam2);
 }
 

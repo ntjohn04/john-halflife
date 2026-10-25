@@ -119,6 +119,8 @@ target_sources(client PRIVATE
 	jhl_rings.h
 	jhl_settings.cpp
 	jhl_settings.h
+	jhl_tracers.cpp
+	jhl_tracers.h
 	player_info.h
 	view.cpp
 	view.h

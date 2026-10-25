@@ -40,6 +40,7 @@
 
 #include "particleman.h"
 #include "jhl_rings.h"
+#include "jhl_tracers.h"
 
 extern bool g_ResetMousePosition;
 
@@ -154,6 +155,7 @@ int DLLEXPORT HUD_VidInit()
 
 	// johnhalflife: a new map frees the engine's beams.
 	JhlRings_Reset();
+	JhlTracers_Reset();
 
 	VGui_Startup();
 
