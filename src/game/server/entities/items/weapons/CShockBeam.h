@@ -37,10 +37,10 @@ private:
 	void Explode();
 
 public:
-	CBeam* m_pBeam1;
-	CBeam* m_pBeam2;
+	CBeam* m_pBeam1 = nullptr;
+	CBeam* m_pBeam2 = nullptr;
 
-	CSprite* m_pSprite;
+	CSprite* m_pSprite = nullptr;
 
 	int m_iBeams;
 };

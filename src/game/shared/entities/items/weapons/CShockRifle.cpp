@@ -207,9 +207,11 @@ void CShockRifle::PrimaryAttack()
 
 	auto pBeam = CShockBeam::CreateShockBeam(vecSrc, vecAnglesAim, m_pPlayer);
 
-	pBeam->m_pBeam1->SetOrigin(pBeam->pev->origin);
+	// johnhalflife: with the particle system the bolt has no beams of its own (CShockBeam::Spawn).
+	if (pBeam->m_pBeam1)
+		pBeam->m_pBeam1->SetOrigin(pBeam->pev->origin);
 
-	if (!g_pGameRules->IsMultiplayer())
+	if (!g_pGameRules->IsMultiplayer() && pBeam->m_pBeam2)
 	{
 		pBeam->m_pBeam2->SetOrigin(pBeam->pev->origin);
 	}
