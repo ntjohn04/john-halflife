@@ -50,6 +50,9 @@ void CHgun::Precache()
 	PrecacheModel(STRING(m_WorldModel));
 	PrecacheModel("models/p_hgun.mdl");
 
+	// johnhalflife: the spit it sprays as it fires (client ev_hldm.cpp).
+	PrecacheModel("sprites/hornet_spit.spr");
+
 	m_usHornetFire = PRECACHE_EVENT(1, "events/firehornet.sc");
 
 	UTIL_PrecacheOther("hornet");

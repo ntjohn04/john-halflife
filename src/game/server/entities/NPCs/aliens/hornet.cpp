@@ -25,6 +25,7 @@ LINK_ENTITY_TO_CLASS(hornet, CHornet);
 BEGIN_DATAMAP(CHornet)
 DEFINE_FIELD(m_flStopAttack, FIELD_TIME),
 	DEFINE_FIELD(m_iHornetType, FIELD_INTEGER),
+	DEFINE_FIELD(m_JhlColor, FIELD_INTEGER),
 	DEFINE_FIELD(m_flFlySpeed, FIELD_FLOAT),
 	DEFINE_FUNCTION(StartTrack),
 	DEFINE_FUNCTION(StartDart),
@@ -84,6 +85,9 @@ void CHornet::Spawn()
 		m_flFlySpeed = HORNET_ORANGE_SPEED;
 	}
 
+	// johnhalflife: its colour within its type (a separate roll, so the types stay as they were).
+	m_JhlColor = (m_iHornetType == HORNET_TYPE_RED ? JhlRed : JhlOrange) + RANDOM_LONG(0, 1);
+
 	SetModel("models/hornet.mdl");
 	SetSize(Vector(-4, -4, -4), Vector(4, 4, 4));
 
@@ -119,6 +123,10 @@ void CHornet::Precache()
 	PrecacheSound("hornet/ag_hornethit1.wav");
 	PrecacheSound("hornet/ag_hornethit2.wav");
 	PrecacheSound("hornet/ag_hornethit3.wav");
+
+	// johnhalflife: its dart splat (the bullsquid's spit hitting).
+	PrecacheSound("bullchicken/bc_spithit1.wav");
+	PrecacheSound("bullchicken/bc_spithit2.wav");
 
 	iHornetPuff = PrecacheModel("sprites/muz1.spr");
 	iHornetTrail = PrecacheModel("sprites/laserbeam.spr");
@@ -190,17 +198,31 @@ void CHornet::IgniteTrail()
 	WRITE_BYTE(10);			   // life
 	WRITE_BYTE(2);			   // width
 
-	switch (m_iHornetType)
+	// johnhalflife: its colour within its type: purple-red is ted's suggested colour above, yellow its orange's
+	// lighter side.
+	const int color = UTIL_JhlParticleSystem() ? m_JhlColor : (m_iHornetType == HORNET_TYPE_RED ? JhlRed : JhlOrange);
+
+	switch (color)
 	{
-	case HORNET_TYPE_RED:
+	case JhlRed:
 		WRITE_BYTE(179); // r, g, b
 		WRITE_BYTE(39);	 // r, g, b
 		WRITE_BYTE(14);	 // r, g, b
 		break;
-	case HORNET_TYPE_ORANGE:
+	case JhlPurple:
+		WRITE_BYTE(161); // r, g, b
+		WRITE_BYTE(25);	 // r, g, b
+		WRITE_BYTE(97);	 // r, g, b
+		break;
+	case JhlOrange:
 		WRITE_BYTE(255); // r, g, b
 		WRITE_BYTE(128); // r, g, b
 		WRITE_BYTE(0);	 // r, g, b
+		break;
+	default:
+		WRITE_BYTE(255); // r, g, b
+		WRITE_BYTE(200); // r, g, b
+		WRITE_BYTE(40);	 // r, g, b
 		break;
 	}
 
@@ -393,6 +415,22 @@ void CHornet::DieTouch(CBaseEntity* pOther)
 		// a light hit.
 		if (UTIL_JhlParticleSystem() && pOther->BloodColor() != DONT_BLEED)
 			SpawnBlood(pev->origin, pOther->BloodColor(), pev->dmg);
+	}
+
+	// johnhalflife: a dart that hits a wall splats on it, in its colour, with a small wet sound (the bullsquid's spit
+	// hitting, higher and quieter: it's small).
+	else if (UTIL_JhlParticleSystem() && pOther && (pOther->IsBSPModel() || pOther == CBaseEntity::World) && pev->velocity.Length() > 1)
+	{
+		const Vector direction = pev->velocity.Normalize();
+		TraceResult tr;
+		UTIL_TraceLine(pev->origin - direction * 8, pev->origin + direction * 16, ignore_monsters, edict(), &tr);
+
+		static const char* const Colors[] = {"red", "pur", "org", "yel"};
+		const std::string decal = fmt::format("{{hspit_{}{}", Colors[std::clamp(m_JhlColor, 0, 3)], RANDOM_LONG(1, 2));
+		UTIL_DecalTraceName(&tr, decal.c_str());
+
+		EmitSoundDyn(CHAN_VOICE, RANDOM_LONG(0, 1) != 0 ? "bullchicken/bc_spithit1.wav" : "bullchicken/bc_spithit2.wav", 0.5,
+			ATTN_NORM, 0, RANDOM_LONG(125, 140));
 	}
 
 	pev->modelindex = 0; // so will disappear for the 0.1 secs we wait until NEXTTHINK gets rid

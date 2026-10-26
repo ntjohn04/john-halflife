@@ -188,6 +188,12 @@ Vector UTIL_RandomBloodVector();
 bool UTIL_ShouldShowBlood(int bloodColor);
 void UTIL_BloodDecalTrace(TraceResult* pTrace, int bloodColor);
 void UTIL_DecalTrace(TraceResult* pTrace, int decalNumber);
+
+/**
+ *	@brief A decal by its name in decals.wad (one not in the game's decal list), where @p pTrace hit a BSP model;
+ *	nothing if decals.wad hasn't got it.
+ */
+void UTIL_DecalTraceName(TraceResult* pTrace, const char* name);
 void UTIL_PlayerDecalTrace(TraceResult* pTrace, int playernum, int decalNumber, bool bIsCustom);
 void UTIL_GunshotDecalTrace(TraceResult* pTrace, int decalNumber);
 void UTIL_ExplosionEffect(const Vector& explosionOrigin, int modelIndex, byte scale, int framerate, int flags,

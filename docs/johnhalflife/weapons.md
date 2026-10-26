@@ -295,5 +295,16 @@ the engine saturates into its bright, textured white-blue.
 * **Stings bleed:** a hornet that hits a creature deals its damage straight (`DieTouch`), past the code that would
   bleed, so vanilla shows nothing; now `SpawnBlood` at the hornet in the target's blood color, sized by its damage
   (a light hit).
-* **Spit:** each shot sprays 2-4 droplets of creature spittle (`tinyspit.spr`, yellow-green, the bullsquid's, pit
-  drone's and spore launcher's) out of the muzzle, falling (the engine's sprite spray, as theirs); first person.
+* **Spit:** each shot flings 3-5 small droplets of spittle in the gun's own brownish red out of the muzzle
+  (`hornet_spit.spr`: the bullsquid's `tinyspit` recoloured, an index-alpha sprite whose colour is its palette's last
+  entry, `scripts/make_hornet_spit.py`, committed in `config/mod/sprites`), at 0.2-0.3, forward 150-260, out ±70,
+  falling at full gravity onto what's below, each playing once over 0.6-0.9 s; first person.
+* **Colours:** each hornet type gets a second colour, its behaviour (speed, turning) unchanged: red-type hornets (40%)
+  red (179,39,14) or purple-red (161,25,97, ted's suggested colour in the code), orange-type (60%) orange (255,128,0)
+  or yellow (255,200,40), half each (`m_JhlColor`, saved): its trail.
+* **Dart splats:** a dart that hits a wall or brush entity splats on it in its colour (`{hspit_red1`/`2`, `pur`, `org`,
+  `yel`: the bullsquid's spit splats `{spit1`, `{spit2` recoloured, a decal's colour being its palette's last entry),
+  with the bullsquid's spit hitting (`bc_spithit1`/`2`) higher (125-140) and quieter (0.5). The engine reads one
+  `decals.wad`, so the install adds them to the installed one (`scripts/make_hornet_decals.py`, run by CMake when
+  Python is found; it keeps the Unified SDK's original as `decals_unified.wad` and starts from it each time, so
+  nothing of Valve's is committed). `UTIL_DecalTraceName` places a decal by name.

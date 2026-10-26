@@ -69,6 +69,7 @@ static int g_tracerCount[MAX_PLAYERS];
 #include "jhl_tracers.h"
 #include "jhl_egon.h"
 #include "jhl_gauss.h"
+#include "jhl_explosions.h"
 #include "Exports.h"
 
 void V_PunchAxis(int axis, float punch);
@@ -1746,19 +1747,30 @@ void EV_HornetGunFire(event_args_t* args)
 			V_PunchAxis(0, gEngfuncs.pfnRandomLong(0, 2));
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(HGUN_SHOOT, 0);
 
-		// johnhalflife: a living gun spits as it launches: a few droplets of creature spittle (tinyspit, the bullsquid's,
-		// pit drone's and spore launcher's) sprayed out of the muzzle, falling (the engine's sprite spray, as theirs).
+		// johnhalflife: a living gun spits as it launches: a few small droplets of spittle in its own brownish red
+		// (hornet_spit.spr: the bullsquid's tinyspit recoloured, scripts/make_hornet_spit.py) flung out of the muzzle,
+		// spreading, falling and landing.
 		cl_entity_t* viewModel = gEngfuncs.GetViewModel();
-		const int spit = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/tinyspit.spr");
+		const int spit = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/hornet_spit.spr");
 
 		if (JhlParticleSystemEnabled() && 0 == CL_IsThirdPerson() && viewModel && viewModel->attachment[0] != g_vecZero && spit != 0)
 		{
 			Vector forward, right, up;
 			AngleVectors(angles, forward, right, up);
 
-			Vector muzzle = viewModel->attachment[0];
-			Vector direction = forward + up * 0.2f;
-			gEngfuncs.pEfxAPI->R_Sprite_Spray(muzzle, direction, spit, gEngfuncs.pfnRandomLong(2, 4), 40, 30);
+			for (int i = 0, count = gEngfuncs.pfnRandomLong(3, 5); i < count; ++i)
+			{
+				Vector position = viewModel->attachment[0];
+				Vector velocity = forward * gEngfuncs.pfnRandomFloat(150, 260) + right * gEngfuncs.pfnRandomFloat(-70, 70) +
+								  up * gEngfuncs.pfnRandomFloat(-10, 70);
+				const float life = gEngfuncs.pfnRandomFloat(0.6f, 0.9f);
+
+				TEMPENTITY* droplet = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, gEngfuncs.pfnRandomFloat(0.2f, 0.3f), spit,
+					kRenderTransAlpha, kRenderFxNone, 1, life, FTENT_GRAVITY | FTENT_COLLIDEWORLD);
+
+				if (droplet)
+					JhlSprite_PlayOnce(droplet, life, 0.4f);
+			}
 		}
 	}
 

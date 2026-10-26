@@ -17,6 +17,14 @@
 
 #define HORNET_TYPE_RED 0
 #define HORNET_TYPE_ORANGE 1
+
+// johnhalflife: hornet colours (CHornet::m_JhlColor): a red-type hornet red or purple-red, an orange one orange or
+// yellow.
+constexpr int JhlRed = 0;
+constexpr int JhlPurple = 1;
+constexpr int JhlOrange = 2;
+constexpr int JhlYellow = 3;
+
 #define HORNET_RED_SPEED (float)600
 #define HORNET_ORANGE_SPEED (float)800
 #define HORNET_BUZZ_VOLUME (float)0.8
@@ -67,5 +75,9 @@ public:
 
 	float m_flStopAttack;
 	int m_iHornetType;
+
+	// johnhalflife (jhl_fx_particlesystem): its colour within its type, the same behaviour: a red hornet red or
+	// purple-red, an orange one orange or yellow (each half of its type). Its trail and its dart splat.
+	int m_JhlColor = 0;
 	float m_flFlySpeed;
 };

@@ -238,6 +238,16 @@ install(FILES
 # johnhalflife's settings dialog and menu text (docs/johnhalflife/README.md#settings).
 install(DIRECTORY config/mod/ DESTINATION .)
 
+# johnhalflife's hornet dart splats, added to the installed decals.wad (made from the player's own games when the
+# Unified SDK's assets were installed; see the script). Without Python they're left out and darts don't splat.
+find_package(Python3 COMPONENTS Interpreter)
+
+if (Python3_Interpreter_FOUND)
+	install(CODE "execute_process(COMMAND \"${Python3_EXECUTABLE}\" -I \"${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_hornet_decals.py\" \"\${CMAKE_INSTALL_PREFIX}\")")
+else()
+	message(WARNING "Python 3 wasn't found: the hornet gun's dart splats won't be added to decals.wad")
+endif()
+
 # Valve menu files used unchanged, copied from the player's own install (see the script).
 function(jhl_install_valve_menu target)
 	set(own "${ARGV1}")

@@ -1073,6 +1073,11 @@ void UTIL_DecalTrace(TraceResult* pTrace, int decalNumber)
 	DecalTraceIndex(pTrace, gDecals[decalNumber].index);
 }
 
+void UTIL_DecalTraceName(TraceResult* pTrace, const char* name)
+{
+	DecalTraceIndex(pTrace, DECAL_INDEX(name));
+}
+
 static void DecalTraceIndex(TraceResult* pTrace, int index)
 {
 	short entityIndex;
