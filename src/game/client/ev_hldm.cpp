@@ -70,6 +70,7 @@ static int g_tracerCount[MAX_PLAYERS];
 #include "jhl_egon.h"
 #include "jhl_gauss.h"
 #include "jhl_explosions.h"
+#include "dlight.h"
 #include "Exports.h"
 
 void V_PunchAxis(int axis, float punch);
@@ -2163,7 +2164,23 @@ void EV_FireShockRifle(event_args_t* args)
 	EV_PlaySound(args->entindex, args->origin, CHAN_WEAPON, "weapons/shock_fire.wav", 0.9, ATTN_NORM, 0, PITCH_NORM);
 
 	if (EV_IsLocal(args->entindex))
+	{
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(SHOCKRIFLE_FIRE, 0);
+
+		// johnhalflife: its impact's cyan light as a muzzle flash, 80 units, a brief 0.15 s.
+		if (cl_entity_t* viewModel = gEngfuncs.GetViewModel();
+			JhlParticleSystemEnabled() && 0 == CL_IsThirdPerson() && viewModel && viewModel->attachment[0] != g_vecZero)
+		{
+			if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)
+			{
+				light->origin = viewModel->attachment[0];
+				light->radius = 80;
+				light->color = {0, 253, 253};
+				light->die = gEngfuncs.GetClientTime() + 0.15f;
+				light->decay = 80 / 0.15f;
+			}
+		}
+	}
 
 	for (size_t uiIndex = 0; uiIndex < 3; ++uiIndex)
 	{

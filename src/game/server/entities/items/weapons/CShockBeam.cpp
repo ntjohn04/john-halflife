@@ -16,6 +16,7 @@
 #include "customentity.h"
 
 #include "CShockBeam.h"
+#include "jhl_effects.h"
 
 BEGIN_DATAMAP(CShockBeam)
 DEFINE_FIELD(m_pBeam1, FIELD_CLASSPTR),
@@ -234,6 +235,35 @@ void CShockBeam::Explode()
 	pev->owner = nullptr;
 
 	EmitSound(CHAN_WEAPON, "weapons/shock_impact.wav", RANDOM_FLOAT(0.8, 0.9), ATTN_NORM);
+
+	// johnhalflife: it crackles where it hits: a few short arcs off the impact in its cyan, 0.2-0.35 s each (their
+	// noise changes every frame, so they crackle while they last).
+	if (UTIL_JhlParticleSystem())
+	{
+		const int sprite = g_engfuncs.pfnModelIndex("sprites/lgtning.spr");
+
+		for (int i = 0, count = RANDOM_LONG(3, 4); i < count; ++i)
+		{
+			const Vector end = pev->origin + Vector(RANDOM_FLOAT(-1, 1), RANDOM_FLOAT(-1, 1), RANDOM_FLOAT(-1, 1)).Normalize() * RANDOM_FLOAT(12, 30);
+
+			MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
+			WRITE_BYTE(TE_BEAMPOINTS);
+			WRITE_COORD_VECTOR(pev->origin);
+			WRITE_COORD_VECTOR(end);
+			WRITE_SHORT(sprite);
+			WRITE_BYTE(0);						// framestart
+			WRITE_BYTE(10);						// framerate
+			WRITE_BYTE(RANDOM_LONG(2, 3));		// life, tenths
+			WRITE_BYTE(10);						// width, tenths
+			WRITE_BYTE(RANDOM_LONG(50, 80));	// noise, hundredths
+			WRITE_BYTE(0);						// r, g, b
+			WRITE_BYTE(253);
+			WRITE_BYTE(253);
+			WRITE_BYTE(200);					// brightness
+			WRITE_BYTE(30);						// speed
+			MESSAGE_END();
+		}
+	}
 }
 
 CShockBeam* CShockBeam::CreateShockBeam(const Vector& vecOrigin, const Vector& vecAngles, CBaseEntity* pOwner)
@@ -253,6 +283,12 @@ CShockBeam* CShockBeam::CreateShockBeam(const Vector& vecOrigin, const Vector& v
 	pBeam->Spawn();
 
 	pBeam->pev->owner = pOwner->edict();
+
+	// johnhalflife: it spins about its flight, 6 turns a second, swinging its crackle around its glow (its beams start
+	// at its model's side attachments); only how it looks, its box doesn't turn. Its wake (the client's,
+	// jhl_shockbeams.cpp) winds around its path.
+	if (UTIL_JhlParticleSystem())
+		pBeam->pev->avelocity.z = 6 * 360;
 
 	return pBeam;
 }

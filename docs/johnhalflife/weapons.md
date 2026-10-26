@@ -338,3 +338,21 @@ The hornet gun's flair is organic (blood, spit, splats) rather than energy, and 
   to the installed one (`scripts/make_hornet_decals.py`, run by CMake when Python is found; it keeps the Unified
   SDK's original as `decals_unified.wad` and starts from it each time, so nothing of Valve's is committed).
   `UTIL_DecalTraceName` places a decal by name.
+
+### Shock rifle
+`jhl_fx_particlesystem`
+
+The bolt (`CShockBeam`): a tiny chrome model (`shock_effect.mdl`, attachments 5 forward and 40 to either side) with
+a pale glow sprite (`flare3`, distorting) at its centre and two lightning beams (cyan, and a thin noisy pale yellow)
+from one side attachment to the other, fading toward the far end, so its crackle shows on one side of its glow.
+
+* **Spin:** it turns about its flight, 6 turns a second (`avelocity`), swinging its crackle around its glow; only
+  how it looks (its box doesn't turn).
+* **Wake** (`jhl_shockbeams.cpp`): two strands drawn on the client from where its two points have been, about 300
+  units (0.16 s) behind it, fading toward the tail and out after it hits: a smooth purplish one (170,110,220, 1.6 wide,
+  0.35) along its glow's path, and a jagged cyan one (0,253,253, 0.8, 0.6, the engine's random noise at 0.15, rerolled
+  every frame) along its crackle's end, which the spin winds around it. Its side attachment is worked out from its
+  angles (a studio model's pitch the other way round). 8 pieces a strand, up to 4 bolts at once.
+* **Muzzle light:** its impact's cyan (0,253,253), 80 units, a brief 0.15 s; first person.
+* **Impact crackle:** 3-4 short cyan arcs (`lgtning`, 12-30 units, noise 0.5-0.8, 0.2-0.3 s) off where it hits,
+  crackling while they last, besides its light, sparks and scorch.
