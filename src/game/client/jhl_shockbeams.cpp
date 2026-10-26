@@ -13,6 +13,7 @@
  *
  ****/
 
+#include <algorithm>
 #include <cstring>
 #include <deque>
 #include <vector>
@@ -28,12 +29,24 @@
 namespace
 {
 // Each strand: this many pieces, each this long in time (the wake is their product: about 300 units at its 2000 a
-// second), for up to MaxWakes bolts at once, to keep within the engine's beams; every bolt (up to MaxBolts) has its
-// glow and spark.
+// second), for up to MaxWakes bolts at once, the newest (to keep within the engine's beams); every bolt (up to
+// MaxBolts) has its glow and spark.
 constexpr int Pieces = 8;
 constexpr float PieceTime = 0.02f;
 constexpr std::size_t MaxBolts = 16;
 constexpr std::size_t MaxWakes = 4;
+
+// A bolt's wake fades out over WakeFadeTime (its glow and spark go on), done this long before the bolt MaxWakes after it
+// is fired (held fire: MaxWakes refires, shockrifle_fast's 0.1 s or its usual 0.2 s), so a new bolt never takes a wake
+// from one still showing: 0.6-0.7 s (about 100-117 feet) usually, 0.2-0.3 s (about 33-50 feet) fast.
+constexpr float WakeFadeTime = 0.1f;
+constexpr float WakeFadeMargin = 0.1f;
+
+float WakeFadeEnd()
+{
+	const float refire = g_Skill.GetValue("shockrifle_fast") != 0 ? 0.1f : 0.2f;
+	return MaxWakes * refire - WakeFadeMargin;
+}
 
 // Its glow and spark circle its path this far out, this many turns a second, the circle easing in (smoothstep) to
 // RadiusEnd over its first RadiusTime: 4 units by a medium-range hit (25 feet, about 300 units at its 2000 a second,
@@ -206,12 +219,29 @@ void JhlShockBeams_Update(double time)
 	g_LastTime = now;
 
 	const int sprite = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/laserbeam.spr");
-	std::size_t wakes = 0;
+
+	// The newest young bolts have wakes (the nearest: on a long shot the oldest are far off).
+	const float fadeEnd = WakeFadeEnd();
+	std::vector<const Bolt*> newest;
+
+	for (const auto& bolt : g_Bolts)
+	{
+		if (std::min(now, bolt.LastSeen) - bolt.FirstSeen < fadeEnd)
+			newest.push_back(&bolt);
+	}
+
+	std::sort(newest.begin(), newest.end(), [](const Bolt* a, const Bolt* b)
+		{ return a->FirstSeen > b->FirstSeen; });
+
+	if (newest.size() > MaxWakes)
+		newest.resize(MaxWakes);
 
 	for (auto it = g_Bolts.begin(); it != g_Bolts.end();)
 	{
 		Bolt& bolt = *it;
-		const bool wake = wakes++ < MaxWakes;
+		const float age = std::min(now, bolt.LastSeen) - bolt.FirstSeen;
+		const float young = std::clamp((fadeEnd - age) / WakeFadeTime, 0.f, 1.f);
+		const bool wake = young > 0 && std::find(newest.begin(), newest.end(), &bolt) != newest.end();
 
 		while (!bolt.History.empty() && bolt.History.front().Time < now - Pieces * PieceTime - 0.05f)
 			bolt.History.pop_front();
@@ -254,7 +284,14 @@ void JhlShockBeams_Update(double time)
 				Vector from, to;
 				BEAM*& beam = bolt.Beams[s][i];
 
-				if (!wake || sprite == 0 || !At(bolt, head - (i + 1) * PieceTime, s, from) || !At(bolt, head - i * PieceTime, s, to) ||
+				// Not one of the newest young: its beams freed for them (a bolt can have a wake again later).
+				if (!wake)
+				{
+					Kill(beam);
+					continue;
+				}
+
+				if (sprite == 0 || !At(bolt, head - (i + 1) * PieceTime, s, from) || !At(bolt, head - i * PieceTime, s, to) ||
 					(to - from).Length() < 0.5f)
 				{
 					if (beam)
@@ -263,8 +300,8 @@ void JhlShockBeams_Update(double time)
 					continue;
 				}
 
-				// Fading toward the tail, and out once it's gone.
-				const float brightness = strand.Brightness * (1 - static_cast<float>(i) / Pieces) * gone;
+				// Fading toward the tail, and out once it's gone or old.
+				const float brightness = strand.Brightness * (1 - static_cast<float>(i) / Pieces) * gone * young;
 
 				if (!beam)
 				{

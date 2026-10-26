@@ -2167,18 +2167,18 @@ void EV_FireShockRifle(event_args_t* args)
 	{
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(SHOCKRIFLE_FIRE, 0);
 
-		// johnhalflife: its impact's light as a muzzle flash, 80 units, a brief 0.15 s, in one of its two colours half the
-		// time each (its spark's cyan, its glow's purple), as its impacts.
+		// johnhalflife: its impact's light as a muzzle flash, as big as a firearm's (140-170 units), a brief 0.15 s, in one
+		// of its two colours half the time each (its spark's cyan, its glow's purple), as its impacts.
 		if (cl_entity_t* viewModel = gEngfuncs.GetViewModel();
 			JhlParticleSystemEnabled() && 0 == CL_IsThirdPerson() && viewModel && viewModel->attachment[0] != g_vecZero)
 		{
 			if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)
 			{
 				light->origin = viewModel->attachment[0];
-				light->radius = 80;
+				light->radius = gEngfuncs.pfnRandomFloat(140, 170);
 				light->color = gEngfuncs.pfnRandomLong(0, 1) != 0 ? color24{170, 110, 220} : color24{0, 253, 253};
 				light->die = gEngfuncs.GetClientTime() + 0.15f;
-				light->decay = 80 / 0.15f;
+				light->decay = light->radius / 0.15f;
 			}
 		}
 	}
