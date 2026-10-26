@@ -15,6 +15,7 @@
 
 #include "cbase.h"
 #include "hornet.h"
+#include "jhl_effects.h"
 
 int iHornetTrail;
 int iHornetPuff;
@@ -387,6 +388,11 @@ void CHornet::DieTouch(CBaseEntity* pOther)
 		}
 
 		pOther->TakeDamage(this, GetOwner(), pev->dmg, DMG_BULLET);
+
+		// johnhalflife: its sting draws blood (it deals its damage straight, past the code that would bleed), sized as
+		// a light hit.
+		if (UTIL_JhlParticleSystem() && pOther->BloodColor() != DONT_BLEED)
+			SpawnBlood(pev->origin, pOther->BloodColor(), pev->dmg);
 	}
 
 	pev->modelindex = 0; // so will disappear for the 0.1 secs we wait until NEXTTHINK gets rid

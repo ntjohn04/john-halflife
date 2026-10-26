@@ -288,3 +288,12 @@ the engine saturates into its bright, textured white-blue.
   primary 161 units (255,160,60), charged up to 299 units and whiter.
 * **Reflections:** a brief light where a beam reflects (anyone's), 72 units in the gun's orange, fading over 0.4 s;
   where it ends up hitting something, a slightly bigger and brighter one, 100 units (255,170,70), fading over 0.5 s.
+
+### Hornet gun
+`jhl_fx_particlesystem`
+
+* **Stings bleed:** a hornet that hits a creature deals its damage straight (`DieTouch`), past the code that would
+  bleed, so vanilla shows nothing; now `SpawnBlood` at the hornet in the target's blood color, sized by its damage
+  (a light hit).
+* **Spit:** each shot sprays 2-4 droplets of creature spittle (`tinyspit.spr`, yellow-green, the bullsquid's, pit
+  drone's and spore launcher's) out of the muzzle, falling (the engine's sprite spray, as theirs); first person.

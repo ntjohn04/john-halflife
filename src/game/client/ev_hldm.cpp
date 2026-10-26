@@ -1745,6 +1745,21 @@ void EV_HornetGunFire(event_args_t* args)
 		if (!EV_WeaponRecoil(RecoilHornetGun))
 			V_PunchAxis(0, gEngfuncs.pfnRandomLong(0, 2));
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(HGUN_SHOOT, 0);
+
+		// johnhalflife: a living gun spits as it launches: a few droplets of creature spittle (tinyspit, the bullsquid's,
+		// pit drone's and spore launcher's) sprayed out of the muzzle, falling (the engine's sprite spray, as theirs).
+		cl_entity_t* viewModel = gEngfuncs.GetViewModel();
+		const int spit = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/tinyspit.spr");
+
+		if (JhlParticleSystemEnabled() && 0 == CL_IsThirdPerson() && viewModel && viewModel->attachment[0] != g_vecZero && spit != 0)
+		{
+			Vector forward, right, up;
+			AngleVectors(angles, forward, right, up);
+
+			Vector muzzle = viewModel->attachment[0];
+			Vector direction = forward + up * 0.2f;
+			gEngfuncs.pEfxAPI->R_Sprite_Spray(muzzle, direction, spit, gEngfuncs.pfnRandomLong(2, 4), 40, 30);
+		}
 	}
 
 	switch (gEngfuncs.pfnRandomLong(0, 2))
