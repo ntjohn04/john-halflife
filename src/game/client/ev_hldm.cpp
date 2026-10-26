@@ -1748,19 +1748,23 @@ void EV_HornetGunFire(event_args_t* args)
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(HGUN_SHOOT, 0);
 
 		// johnhalflife: a living gun spits as it launches: a few small droplets of spittle in its own brownish red
-		// (hornet_spit.spr: the bullsquid's tinyspit recoloured, scripts/make_hornet_spit.py) flung out of the muzzle,
-		// spreading, falling and landing.
-		cl_entity_t* viewModel = gEngfuncs.GetViewModel();
+		// (hornet_spit.spr: the bullsquid's tinyspit recoloured, scripts/make_hornet_spit.py) flung out of its mouth,
+		// spreading, falling and landing. Its view model has no attachments, so from where the hornets launch (CHgun:
+		// 16 forward, 8 right, 12 down of the eyes).
 		const int spit = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/hornet_spit.spr");
 
-		if (JhlParticleSystemEnabled() && 0 == CL_IsThirdPerson() && viewModel && viewModel->attachment[0] != g_vecZero && spit != 0)
+		if (JhlParticleSystemEnabled() && 0 == CL_IsThirdPerson() && spit != 0)
 		{
 			Vector forward, right, up;
 			AngleVectors(angles, forward, right, up);
 
+			Vector eyes;
+			EV_GetGunPosition(args, eyes, origin);
+			const Vector mouth = eyes + forward * 16 + right * 8 - up * 12;
+
 			for (int i = 0, count = gEngfuncs.pfnRandomLong(3, 5); i < count; ++i)
 			{
-				Vector position = viewModel->attachment[0];
+				Vector position = mouth;
 				Vector velocity = forward * gEngfuncs.pfnRandomFloat(150, 260) + right * gEngfuncs.pfnRandomFloat(-70, 70) +
 								  up * gEngfuncs.pfnRandomFloat(-10, 70);
 				const float life = gEngfuncs.pfnRandomFloat(0.6f, 0.9f);

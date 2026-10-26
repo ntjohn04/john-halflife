@@ -21,10 +21,10 @@ import sys
 SHAPES = ["{spit1", "{spit2"]
 
 COLORS = {
-    "red": (110, 45, 35),
-    "pur": (95, 40, 60),
-    "org": (130, 85, 40),
-    "yel": (135, 115, 55),
+    "red": (90, 50, 42),
+    "pur": (80, 48, 55),
+    "org": (105, 80, 50),
+    "yel": (110, 98, 62),
 }
 
 # The shape's size within its texture.

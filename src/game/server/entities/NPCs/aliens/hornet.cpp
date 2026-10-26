@@ -210,9 +210,9 @@ void CHornet::IgniteTrail()
 		WRITE_BYTE(14);	 // r, g, b
 		break;
 	case JhlPurple:
-		WRITE_BYTE(140); // r, g, b
-		WRITE_BYTE(35);	 // r, g, b
-		WRITE_BYTE(60);	 // r, g, b
+		WRITE_BYTE(130); // r, g, b
+		WRITE_BYTE(42);	 // r, g, b
+		WRITE_BYTE(48);	 // r, g, b
 		break;
 	case JhlOrange:
 		WRITE_BYTE(255); // r, g, b

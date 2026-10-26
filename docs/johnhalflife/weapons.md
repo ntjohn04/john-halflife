@@ -295,15 +295,16 @@ the engine saturates into its bright, textured white-blue.
 * **Stings bleed:** a hornet that hits a creature deals its damage straight (`DieTouch`), past the code that would
   bleed, so vanilla shows nothing; now `SpawnBlood` at the hornet in the target's blood color, sized by its damage
   (a light hit).
-* **Spit:** each shot flings 3-5 small droplets of spittle in the gun's own brownish red out of the muzzle
+* **Spit:** each shot flings 3-5 small droplets of spittle in the gun's own brownish red out of its mouth (where the
+  hornets launch, 16 forward, 8 right, 12 down of the eyes: its view model has no attachments)
   (`hornet_spit.spr`: the bullsquid's `tinyspit` recoloured, an index-alpha sprite whose colour is its palette's last
   entry, `scripts/make_hornet_spit.py`, committed in `config/mod/sprites`), at 0.2-0.3, forward 150-260, out ±70,
   falling at full gravity onto what's below, each playing once over 0.6-0.9 s; first person.
 * **Colours:** each hornet type gets a second colour, its behaviour (speed, turning) unchanged: red-type hornets (40%)
-  red (179,39,14) or purple-red (140,35,60: ted's suggested colour in the code, 161,25,97, browner), orange-type (60%) orange (255,128,0)
+  red (179,39,14) or purple-red (130,42,48: ted's suggested colour in the code, 161,25,97, browner), orange-type (60%) orange (255,128,0)
   or yellow (255,200,40), half each (`m_JhlColor`, saved): its trail.
 * **Dart splats:** a dart that hits a wall or brush entity splats on it in its colour, muted and dark (organic, not
-  paint: red 110,45,35, purple-red 95,40,60, orange 130,85,40, yellow 135,115,55) and small (the shape at 75%)
+  paint: red 90,50,42, purple-red 80,48,55, orange 105,80,50, yellow 110,98,62) and small (the shape at 75%)
   (`{hspit_red1`/`2`, `pur`, `org`, `yel`: the bullsquid's spit splats `{spit1`, `{spit2` recoloured and shrunk, a
   decal's colour being its palette's last entry),
   with the bullsquid's spit hitting (`bc_spithit1`/`2`) higher (125-140) and quieter (0.5). The engine reads one
