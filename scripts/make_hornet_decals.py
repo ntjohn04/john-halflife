@@ -1,7 +1,7 @@
 """Adds the hornet gun's dart splats to an installed John Half-Life's decals.wad (johnhalflife, server hornet.cpp):
 Half-Life's bullsquid spit splats ({spit1, {spit2) in each hornet trail's colour, muted and darker (organic, not
 paint), and smaller (the shape at 75% in the middle of its 32x32: hornets are small), as {hspit_red1, {hspit_red2, and
-so on for pur(ple-red), org (orange) and yel(low).
+so on for pur(ple-red), org (orange), yel(low) and brn (light brown).
 
 A decal's pixels are alpha (0 clear) and its colour is the palette's last entry, so each recolour is a copy with a new
 name, that one entry changed and its pixels shrunk (its smaller mip levels made again from them).
@@ -25,6 +25,7 @@ COLORS = {
     "pur": (80, 48, 55),
     "org": (105, 80, 50),
     "yel": (110, 98, 62),
+    "brn": (100, 85, 65),
 }
 
 # The shape's size within its texture.

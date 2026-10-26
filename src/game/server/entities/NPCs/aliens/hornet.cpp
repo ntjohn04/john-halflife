@@ -86,7 +86,7 @@ void CHornet::Spawn()
 	}
 
 	// johnhalflife: its colour within its type (a separate roll, so the types stay as they were).
-	m_JhlColor = (m_iHornetType == HORNET_TYPE_RED ? JhlRed : JhlOrange) + RANDOM_LONG(0, 1);
+	m_JhlColor = m_iHornetType == HORNET_TYPE_RED ? JhlRed + RANDOM_LONG(0, 1) : JhlOrange + RANDOM_LONG(0, 2);
 
 	SetModel("models/hornet.mdl");
 	SetSize(Vector(-4, -4, -4), Vector(4, 4, 4));
@@ -219,10 +219,15 @@ void CHornet::IgniteTrail()
 		WRITE_BYTE(128); // r, g, b
 		WRITE_BYTE(0);	 // r, g, b
 		break;
-	default:
+	case JhlYellow:
 		WRITE_BYTE(255); // r, g, b
 		WRITE_BYTE(200); // r, g, b
 		WRITE_BYTE(40);	 // r, g, b
+		break;
+	default:
+		WRITE_BYTE(190); // r, g, b
+		WRITE_BYTE(140); // r, g, b
+		WRITE_BYTE(80);	 // r, g, b
 		break;
 	}
 
@@ -425,8 +430,8 @@ void CHornet::DieTouch(CBaseEntity* pOther)
 		TraceResult tr;
 		UTIL_TraceLine(pev->origin - direction * 8, pev->origin + direction * 16, ignore_monsters, edict(), &tr);
 
-		static const char* const Colors[] = {"red", "pur", "org", "yel"};
-		const std::string decal = fmt::format("{{hspit_{}{}", Colors[std::clamp(m_JhlColor, 0, 3)], RANDOM_LONG(1, 2));
+		static const char* const Colors[] = {"red", "pur", "org", "yel", "brn"};
+		const std::string decal = fmt::format("{{hspit_{}{}", Colors[std::clamp(m_JhlColor, 0, 4)], RANDOM_LONG(1, 2));
 		UTIL_DecalTraceName(&tr, decal.c_str());
 
 		EmitSoundDyn(CHAN_VOICE, RANDOM_LONG(0, 1) != 0 ? "bullchicken/bc_spithit1.wav" : "bullchicken/bc_spithit2.wav", 0.5,

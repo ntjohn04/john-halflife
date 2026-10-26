@@ -301,12 +301,14 @@ the engine saturates into its bright, textured white-blue.
   entry, `scripts/make_hornet_spit.py`, committed in `config/mod/sprites`), at 0.2-0.3, forward 150-260, out ±70,
   plus the player's own velocity (as ejected shells: running forward doesn't overtake it),
   falling at full gravity onto what's below, each playing once over 0.6-0.9 s; first person.
-* **Colours:** each hornet type gets a second colour, its behaviour (speed, turning) unchanged: red-type hornets (40%)
-  red (179,39,14) or purple-red (130,42,48: ted's suggested colour in the code, 161,25,97, browner), orange-type (60%) orange (255,128,0)
-  or yellow (255,200,40), half each (`m_JhlColor`, saved): its trail.
+* **Colours:** each hornet type gets more colours, its behaviour (speed, turning) unchanged: red-type hornets (40%)
+  red (179,39,14) or purple-red (130,42,48: ted's suggested colour in the code, 161,25,97, browner); orange-type
+  (60%) orange (255,128,0),
+  yellow (255,200,40) or light brown (190,140,80), so each colour is a fifth of all hornets (`m_JhlColor`, saved): its
+  trail.
 * **Dart splats:** a dart that hits a wall or brush entity splats on it in its colour, muted and dark (organic, not
-  paint: red 90,50,42, purple-red 80,48,55, orange 105,80,50, yellow 110,98,62) and small (the shape at 75%)
-  (`{hspit_red1`/`2`, `pur`, `org`, `yel`: the bullsquid's spit splats `{spit1`, `{spit2` recoloured and shrunk, a
+  paint: red 90,50,42, purple-red 80,48,55, orange 105,80,50, yellow 110,98,62, light brown 100,85,65) and small (the shape at 75%)
+  (`{hspit_red1`/`2`, `pur`, `org`, `yel`, `brn`: the bullsquid's spit splats `{spit1`, `{spit2` recoloured and shrunk, a
   decal's colour being its palette's last entry),
   with the bullsquid's spit hitting (`bc_spithit1`/`2`) higher (125-140) and quieter (0.5). The engine reads one
   `decals.wad`, so the install adds them to the installed one (`scripts/make_hornet_decals.py`, run by CMake when
