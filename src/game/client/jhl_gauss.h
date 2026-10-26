@@ -51,7 +51,7 @@ void JhlGauss_ImpactLight(const Vector& position);
 /**
  *	@brief A charged shot's afterimage along a stretch of its path, from @p from to @p to (the beam's @p sprite), by its
  *	@p charge (0-1): warm white, starting as a wavy line and dissipating, swirling, spreading and dimming as it goes,
- *	for 0.6 s (a tap) to 3 s (a full charge).
+ *	for 0.81 s (a tap) to 3.3 s (a full charge). Stretches under 16 units aren't drawn.
  */
 void JhlGauss_Afterimage(const Vector& from, const Vector& to, int sprite, float charge);
 

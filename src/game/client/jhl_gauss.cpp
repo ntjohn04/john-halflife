@@ -65,6 +65,14 @@ constexpr float AfterimageSpread = 0.8f;
 constexpr float AfterimageFadePower = 1.6f;
 constexpr std::size_t MaxAfterimages = 40;
 
+// Its swirl grows at the same rate whatever the charge (noise a second), so they all dissipate alike and a longer one
+// just gets further: a tap's barely starts to swirl, a full charge's reaches 0.4.
+constexpr float AfterimageSwirlRate = 0.103f;
+
+// Shorter stretches aren't drawn: a beam passes through creatures, tracing on from just past each hit and finding the
+// same one again, leaving a cluster of tiny stretches that would make a star of noise.
+constexpr float AfterimageMinLength = 16;
+
 std::vector<Afterimage> g_Afterimages;
 float g_AfterimageTime = 0;
 
@@ -284,14 +292,15 @@ void JhlGauss_ImpactLight(const Vector& position)
 
 void JhlGauss_Afterimage(const Vector& from, const Vector& to, int sprite, float charge)
 {
-	if (!JhlParticleSystemEnabled() || g_Afterimages.size() >= MaxAfterimages)
+	if (!JhlParticleSystemEnabled() || g_Afterimages.size() >= MaxAfterimages || (to - from).Length() < AfterimageMinLength)
 		return;
 
 	const float c = std::clamp(charge, 0.f, 1.f);
 
-	// A full charge's lasts far longer than a tap's (which is gone before the next can be fired): 0.6-3 s, weighted to
-	// the top; and it's brighter, wider and swirls more.
-	const float life = 0.6f + 2.4f * std::pow(c, 1.3f);
+	// A full charge's lasts far longer than a tap's (which is gone before the next can be fired): 0.81-3.3 s, weighted
+	// to the top; and it's brighter and wider.
+	const float life = 0.81f + 2.49f * std::pow(c, 1.3f);
+	const float noiseFrom = 0.03f + 0.03f * c;
 
 	Vector a = from;
 	Vector b = to;
@@ -304,8 +313,8 @@ void JhlGauss_Afterimage(const Vector& from, const Vector& to, int sprite, float
 	beam->flags |= FBEAM_SINENOISE;
 	beam->brightness = 0;
 
-	g_Afterimages.push_back({beam, gEngfuncs.GetClientTime(), life, 0.1f + 0.2f * c, 0.95f + 0.4f * c, 0.05f + 0.05f * c,
-		0.25f + 0.25f * c});
+	g_Afterimages.push_back({beam, gEngfuncs.GetClientTime(), life, 0.1f + 0.2f * c, 0.95f + 0.4f * c, noiseFrom,
+		noiseFrom + AfterimageSwirlRate * life});
 }
 
 void JhlGauss_Update(double time)
