@@ -58,8 +58,11 @@ void CShockBeam::Spawn()
 	// johnhalflife: the client draws its glow and its spark instead, circling its path 180 degrees apart, with their
 	// wakes a double helix (jhl_shockbeams.cpp); its crackle across it goes (it ran between its model's attachments,
 	// 80 units apart, which can't make a small circle).
+	// It's tagged renderamt 1 for the client (the barnacle grapple's tongue tip has the same model; renderamt does
+	// nothing for a model drawn normally).
 	if (UTIL_JhlParticleSystem())
 	{
+		pev->renderamt = 1;
 		pev->nextthink = gpGlobals->time + 0.01;
 		return;
 	}

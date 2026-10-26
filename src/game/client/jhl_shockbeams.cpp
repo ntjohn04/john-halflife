@@ -140,7 +140,9 @@ void Kill(BEAM*& beam)
 
 void JhlShockBeams_Track(cl_entity_t* entity, const char* modelname)
 {
-	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "models/shock_effect.mdl"))
+	// Tagged by the server (CShockBeam::Spawn): the barnacle grapple's tongue tip has the same model.
+	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "models/shock_effect.mdl") ||
+		entity->curstate.renderamt != 1)
 		return;
 
 	const float now = gEngfuncs.GetClientTime();
