@@ -18,6 +18,10 @@
 #include "UserMessages.h"
 
 #ifndef CLIENT_DLL
+#include "jhl_effects.h"
+#endif
+
+#ifndef CLIENT_DLL
 #define BOLT_AIR_VELOCITY 2000
 #define BOLT_WATER_VELOCITY 1000
 
@@ -367,6 +371,23 @@ void CCrossbow::FireBolt()
 		pBolt->pev->speed = BOLT_AIR_VELOCITY;
 	}
 	pBolt->pev->avelocity.z = 10;
+
+	// johnhalflife: a faint grey wake trailing the bolt (in the air; in water it leaves bubbles), with the tracers:
+	// thin and dim, 0.2 s of its flight long.
+	if (UTIL_JhlTracers() && m_pPlayer->pev->waterlevel != WaterLevel::Head)
+	{
+		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
+		WRITE_BYTE(TE_BEAMFOLLOW);
+		WRITE_SHORT(pBolt->entindex());
+		WRITE_SHORT(g_sModelIndexLaser);
+		WRITE_BYTE(2);	 // life * 10
+		WRITE_BYTE(10);	 // width * 10
+		WRITE_BYTE(170); // r, g, b
+		WRITE_BYTE(170); // r, g, b
+		WRITE_BYTE(170); // r, g, b
+		WRITE_BYTE(40);	 // brightness
+		MESSAGE_END();
+	}
 #endif
 
 	if (0 == GetMagazine1() && m_pPlayer->GetAmmoCountByIndex(m_iPrimaryAmmoType) <= 0)

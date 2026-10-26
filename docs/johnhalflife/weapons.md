@@ -213,6 +213,9 @@ finds it (`FireBullets`; the client doesn't set NPCs' attachments, leaving them 
 tracer; for players the client uses the player model's (`JhlTracers_MuzzleStart`). Either only when it's set (not at
 the origin) and within 96 units of the game's start. The vanilla tracer keeps its own start.
 
+The crossbow's bolt is a real projectile, so no streak: instead a faint grey wake follows it (`TE_BEAMFOLLOW` on the
+bolt, `laserbeam`, (170,170,170) at 40, width 1, 0.2 s of its flight, about 400 units), not underwater.
+
 Into water, a streak stops about a foot under the surface (found as bullet splashes find it, only when it ends in
 water). `jhl_fx_tracers` turns all of them off by itself, leaving the vanilla tracers.
 

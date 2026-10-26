@@ -117,6 +117,16 @@ inline void UTIL_JhlDisplacerSpecks(const Vector& position)
 	MESSAGE_END();
 }
 
+/**
+ *	@brief Whether johnhalflife's tracers are on: the particle system and the client's jhl_fx_tracers (read as
+ *	UTIL_JhlParticleSystem reads its cvar).
+ */
+inline bool UTIL_JhlTracers()
+{
+	const cvar_t* cvar = g_engfuncs.pfnCVarGetPointer("jhl_fx_tracers");
+	return UTIL_JhlParticleSystem() && (!cvar || cvar->value != 0);
+}
+
 // The kinds of johnhalflife tracer (the client's JhlTracerKind, jhl_tracers.h: these must match).
 constexpr int JhlTracerMP5 = 0;
 constexpr int JhlTracerGlock = 1;
