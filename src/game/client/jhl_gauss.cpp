@@ -14,8 +14,10 @@
  ****/
 
 #include <cmath>
+#include <vector>
 
 #include "hud.h"
+#include "beamdef.h"
 #include "com_model.h"
 #include "dlight.h"
 #include "event_api.h"
@@ -44,6 +46,27 @@ constexpr float OverchargeTime = 10;
 
 // The charge counts as stopped if it hears nothing for this long (a missed stop).
 constexpr float SpinTimeout = 0.5f;
+
+// A charged shot's afterimage (JhlGauss_Afterimage): a beam along a stretch of its path, worked out every frame as it
+// dissipates.
+struct Afterimage
+{
+	BEAM* Beam;
+	float Start;
+	float Life;
+	float Brightness;
+	float Width;
+	float NoiseFrom;
+	float NoiseTo;
+};
+
+// As it goes: it spreads this much wider, and its brightness eases out (lingering, then thinning away).
+constexpr float AfterimageSpread = 0.8f;
+constexpr float AfterimageFadePower = 1.6f;
+constexpr std::size_t MaxAfterimages = 40;
+
+std::vector<Afterimage> g_Afterimages;
+float g_AfterimageTime = 0;
 
 bool g_Charging = false;
 float g_Charge = 0;		   // 0-1.
@@ -259,9 +282,62 @@ void JhlGauss_ImpactLight(const Vector& position)
 	}
 }
 
+void JhlGauss_Afterimage(const Vector& from, const Vector& to, int sprite, float charge)
+{
+	if (!JhlParticleSystemEnabled() || g_Afterimages.size() >= MaxAfterimages)
+		return;
+
+	const float c = std::clamp(charge, 0.f, 1.f);
+
+	// A full charge's lasts far longer than a tap's (which is gone before the next can be fired): 0.6-3 s, weighted to
+	// the top; and it's brighter, wider and swirls more.
+	const float life = 0.6f + 2.4f * std::pow(c, 1.3f);
+
+	Vector a = from;
+	Vector b = to;
+	BEAM* beam = gEngfuncs.pEfxAPI->R_BeamPoints(a, b, sprite, life + 1, 0.95f, 0, 0.1f, 0, 0, 0, 255 / 255.0f, 196 / 255.0f,
+		136 / 255.0f);
+
+	if (!beam)
+		return;
+
+	beam->flags |= FBEAM_SINENOISE;
+	beam->brightness = 0;
+
+	g_Afterimages.push_back({beam, gEngfuncs.GetClientTime(), life, 0.1f + 0.2f * c, 0.95f + 0.4f * c, 0.05f + 0.05f * c,
+		0.25f + 0.25f * c});
+}
+
 void JhlGauss_Update(double time)
 {
 	const float now = static_cast<float>(time);
+
+	// The afterimages dissipate: dimming (easing out), spreading wider and swirling more (the sine noise turns by
+	// itself), until gone.
+	if (now < g_AfterimageTime)
+		g_Afterimages.clear();
+
+	g_AfterimageTime = now;
+
+	for (auto it = g_Afterimages.begin(); it != g_Afterimages.end();)
+	{
+		const float t = (now - it->Start) / it->Life;
+
+		if (t >= 1)
+		{
+			it->Beam->die = now;
+			it->Beam->brightness = 0;
+			it = g_Afterimages.erase(it);
+			continue;
+		}
+
+		it->Beam->brightness = it->Brightness * std::pow(1 - t, AfterimageFadePower);
+		it->Beam->width = it->Width * (1 + AfterimageSpread * t);
+		it->Beam->amplitude = it->NoiseFrom + (it->NoiseTo - it->NoiseFrom) * t;
+		it->Beam->die = now + 0.5f;
+		it->Beam->flags |= FBEAM_ISACTIVE;
+		++it;
+	}
 
 	if (!g_Charging)
 		return;
@@ -326,4 +402,6 @@ void JhlGauss_Reset()
 {
 	g_Charging = false;
 	g_Glow = nullptr;
+	g_Afterimages.clear();
+	g_AfterimageTime = 0;
 }

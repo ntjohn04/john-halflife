@@ -49,7 +49,14 @@ void JhlGauss_ReflectLight(const Vector& position);
 void JhlGauss_ImpactLight(const Vector& position);
 
 /**
- *	@brief Draws the charge (HUD_TempEntUpdate).
+ *	@brief A charged shot's afterimage along a stretch of its path, from @p from to @p to (the beam's @p sprite), by its
+ *	@p charge (0-1): warm white, starting as a wavy line and dissipating, swirling, spreading and dimming as it goes,
+ *	for 0.6 s (a tap) to 3 s (a full charge).
+ */
+void JhlGauss_Afterimage(const Vector& from, const Vector& to, int sprite, float charge);
+
+/**
+ *	@brief Draws the charge and the afterimages (HUD_TempEntUpdate).
  */
 void JhlGauss_Update(double time);
 

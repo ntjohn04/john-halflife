@@ -273,10 +273,12 @@ the engine saturates into its bright, textured white-blue.
 * **A lesser charge letting go:** a few of those sparks thrown out of the muzzle, more the more it held: 2 for the
   least, 7 just short of full (by the charge the spin events show; the predicted shot's damage can come in far over
   what was held, giving a tap a full charge's sparks). The muzzle flash scales by it too.
-* **Afterimage** (secondary only): the path it took, every reflection and wall, left glowing warm white like an
-  incandescent bulb (255,196,136), wavering (sine noise) and fading out (the engine's fade), more the more it was
-  charged: 0.98-1.2 wide (under the shot, more so charged), 0.12-0.22, over 0.35-0.8 s. In first person from the
-  muzzle it was fired from, not following the gun.
+* **Afterimage** (secondary only, `JhlGauss_Afterimage`): the path it took, every reflection and wall, left glowing
+  warm white like an incandescent bulb (255,196,136), worked out every frame as it dissipates: its brightness easing
+  out (lingering, then thinning away), spreading 80% wider, and its sine noise growing from a wavy line to a swirl
+  (turning by itself). By the charge c: 0.6-3 s (weighted to the top: a tap's is gone before the next can be fired),
+  0.1-0.3 bright, 0.95-1.35 wide, noise 0.05-0.1 growing to 0.25-0.5. In first person from the muzzle it was fired
+  from, not following the gun. (The engine's own beam fade-out didn't fade; it vanished.)
 * **A full charge letting go:** 8-12 of the unstable charge's sparks thrown out of the muzzle (forward 80-200, out
   ±110, up to 110), and 2-3 of the gun's own bouncing orbs (`TE_SPRITETRAIL` of `hotglow`, as at its impacts, 0.15-0.25).
 * **Muzzle light** when it fires (as the guns' muzzle light): the charge's light becomes it, so they don't clash;

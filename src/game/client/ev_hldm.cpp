@@ -1156,9 +1156,8 @@ void EV_FireGauss(event_args_t* args)
 			if (c > 0.5f)
 				drawLayer(width * 2, 0.25f * (c - 0.5f) / 0.5f, {255, 255, 255});
 
-			// Its afterimage: the path it took (reflections, walls) left glowing warm white, wavering and fading, more
-			// the more it was charged: 0.98-1.2 wide (under the shot, the more so charged), 0.12-0.22, over 0.35-0.8 s.
-			// From where it was fired, not following the gun.
+			// Its afterimage: the path it took (reflections, walls) left glowing warm white and dissipating, more the more
+			// it was charged (JhlGauss_Afterimage). From where it was fired, not following the gun.
 			Vector ghostFrom = vecSrc;
 
 			if (cl_entity_t* viewModel = gEngfuncs.GetViewModel();
@@ -1167,14 +1166,7 @@ void EV_FireGauss(event_args_t* args)
 				ghostFrom = viewModel->attachment[0];
 			}
 
-			Vector ghostTo = tr.endpos;
-
-			if (BEAM* ghost = gEngfuncs.pEfxAPI->R_BeamPoints(ghostFrom, ghostTo, m_iBeam, 0.35f + 0.45f * c, 0.95f + 0.25f * c,
-					0.15f + 0.1f * c, 0.12f + 0.1f * c, 0, 0, 0, 255 / 255.0f, 196 / 255.0f, 136 / 255.0f);
-				ghost)
-			{
-				ghost->flags |= FBEAM_FADEOUT | FBEAM_SINENOISE;
-			}
+			JhlGauss_Afterimage(ghostFrom, tr.endpos, m_iBeam, c);
 		}
 
 		fFirstBeam = false;
