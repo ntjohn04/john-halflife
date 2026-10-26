@@ -1765,8 +1765,9 @@ void EV_HornetGunFire(event_args_t* args)
 			for (int i = 0, count = gEngfuncs.pfnRandomLong(3, 5); i < count; ++i)
 			{
 				Vector position = mouth;
+				// Carrying the player's own motion, as ejected shells do, so running forward doesn't overtake it.
 				Vector velocity = forward * gEngfuncs.pfnRandomFloat(150, 260) + right * gEngfuncs.pfnRandomFloat(-70, 70) +
-								  up * gEngfuncs.pfnRandomFloat(-10, 70);
+								  up * gEngfuncs.pfnRandomFloat(-10, 70) + Vector{args->velocity};
 				const float life = gEngfuncs.pfnRandomFloat(0.6f, 0.9f);
 
 				TEMPENTITY* droplet = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, gEngfuncs.pfnRandomFloat(0.2f, 0.3f), spit,

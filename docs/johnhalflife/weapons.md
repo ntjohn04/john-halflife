@@ -299,6 +299,7 @@ the engine saturates into its bright, textured white-blue.
   hornets launch, 16 forward, 8 right, 12 down of the eyes: its view model has no attachments)
   (`hornet_spit.spr`: the bullsquid's `tinyspit` recoloured, an index-alpha sprite whose colour is its palette's last
   entry, `scripts/make_hornet_spit.py`, committed in `config/mod/sprites`), at 0.2-0.3, forward 150-260, out ±70,
+  plus the player's own velocity (as ejected shells: running forward doesn't overtake it),
   falling at full gravity onto what's below, each playing once over 0.6-0.9 s; first person.
 * **Colours:** each hornet type gets a second colour, its behaviour (speed, turning) unchanged: red-type hornets (40%)
   red (179,39,14) or purple-red (130,42,48: ted's suggested colour in the code, 161,25,97, browner), orange-type (60%) orange (255,128,0)
