@@ -25,6 +25,7 @@
 #include "jhl_egon.h"
 #include "jhl_explosions.h"
 #include "jhl_settings.h"
+#include "Exports.h"
 
 namespace
 {
@@ -228,11 +229,13 @@ void JhlEgon_Update(BEAM* beam, BEAM* beam2, const pmtrace_t& hit)
 		return;
 	}
 
-	// It starts on the gun: its view model's muzzle, where the engine starts it (its source is set as it's drawn, so
-	// not yet on the first frame).
+	// It starts on the gun, where the engine starts it: in first person its view model's muzzle (the beam's own start
+	// is only set as it's drawn, so not yet on the first frame); in third person the engine's start, on the player
+	// model's gun (the view model isn't drawn, so its muzzle stays where it last was).
 	Vector start = beam->source;
 
-	if (cl_entity_t* viewModel = gEngfuncs.GetViewModel(); viewModel && viewModel->attachment[0] != g_vecZero)
+	if (cl_entity_t* viewModel = gEngfuncs.GetViewModel();
+		0 == CL_IsThirdPerson() && viewModel && viewModel->attachment[0] != g_vecZero)
 		start = viewModel->attachment[0];
 
 	if (start == g_vecZero)
