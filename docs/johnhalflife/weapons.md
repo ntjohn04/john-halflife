@@ -244,3 +244,7 @@ the engine saturates into its bright, textured white-blue.
   muzzle out to the side and up, falling at half gravity, 0.4-0.7 s.
 * **Fizzle on release:** 4-6 blue specks (0.1) where it was hitting, scattered ±50 with a pop of 10-70 up, falling at
   half gravity onto what's below, each fading over the last 60% of 1-1.5 s.
+* **Lights while firing:** one each, moved every frame (a keyed dynamic light, kept alive a frame at a time, not
+  made and removed): a faint cyan glow around the player just above the feet (60,110,150), 160 units, and a brighter
+  one 8 units off the wall where it hits (100,180,230), 140 units flickering ±10%; both fade out over 0.25 s when it
+  stops. The specks' and flare's blue.

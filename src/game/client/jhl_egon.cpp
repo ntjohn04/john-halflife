@@ -19,6 +19,7 @@
 #include "beamdef.h"
 #include "com_model.h"
 #include "event_api.h"
+#include "dlight.h"
 #include "r_efx.h"
 #include "pm_defs.h"
 #include "pmtrace.h"
@@ -42,6 +43,17 @@ constexpr const char* SpeckSprite = "sprites/XSpark1.spr";
 constexpr float ScorchSpacing = 14;
 constexpr float ScorchInterval = 0.12f;
 
+// Lights while it fires: a faint cyan glow around the player (just above the feet, lighting the floor) and a brighter
+// one where it hits, flickering a little; each one light, moved every frame (its key), fading out when it stops.
+// Their colors are the specks' and flare's blue (XSpark1).
+constexpr int PlayerLightKey = 8192 + 4096;
+constexpr int ImpactLightKey = PlayerLightKey + 1;
+const color24 PlayerLightColor{60, 110, 150};
+const color24 ImpactLightColor{100, 180, 230};
+constexpr float PlayerLightRadius = 160;
+constexpr float ImpactLightRadius = 140;
+constexpr float LightFade = 0.25f;
+
 // Sparks leaking from the barrel, one every so often.
 constexpr float VentIntervalMin = 0.1f;
 constexpr float VentIntervalMax = 0.3f;
@@ -59,6 +71,8 @@ cvar_t* g_SpiralPieces = nullptr;
 Layer g_Layers[2];
 Vector g_Lagged; // Where the hit point was a moment ago (the curve's pull).
 Vector g_LastHit;
+Vector g_LastFeet;
+Vector g_LastImpactLight;
 bool g_Active = false;
 float g_LastTime = 0;
 Vector g_LastScorch;
@@ -187,6 +201,27 @@ void Scorch(const pmtrace_t& hit, float now)
 	g_NextScorch = now + ScorchInterval;
 }
 
+// Sets a keyed light (the same one each time: allocating a key gives it back cleared), on for @p life, fading by
+// @p decay units a second.
+void Light(int key, const Vector& origin, float radius, const color24& color, float life, float decay)
+{
+	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(key); light)
+	{
+		light->origin = origin;
+		light->radius = radius;
+		light->color = color;
+		light->die = gEngfuncs.GetClientTime() + life;
+		light->decay = decay;
+	}
+}
+
+// Where the player's feet are, a little above them.
+Vector Feet()
+{
+	cl_entity_t* player = gEngfuncs.GetLocalPlayer();
+	return player ? player->origin - Vector{0, 0, 24} : g_LastFeet;
+}
+
 // Now and then a spark of it leaking out of the barrel, flung out to the side.
 void Vent(const Vector& muzzle, float now)
 {
@@ -246,6 +281,7 @@ void JhlEgon_Update(BEAM* beam, BEAM* beam2, const pmtrace_t& hit)
 	if (!g_Active || now < g_LastTime)
 	{
 		g_Lagged = end;
+		g_LastImpactLight = end;
 		g_LastScorch = Vector{0, 0, 0};
 		g_NextScorch = 0;
 		g_NextVent = now + Random(VentIntervalMin, VentIntervalMax);
@@ -279,6 +315,15 @@ void JhlEgon_Update(BEAM* beam, BEAM* beam2, const pmtrace_t& hit)
 
 	Scorch(hit, now);
 	Vent(start, now);
+
+	g_LastFeet = Feet();
+	Light(PlayerLightKey, g_LastFeet, PlayerLightRadius, PlayerLightColor, 0.1f, 0);
+
+	if (hit.fraction < 1)
+	{
+		g_LastImpactLight = hit.endpos + Vector{hit.plane.normal} * 8;
+		Light(ImpactLightKey, g_LastImpactLight, ImpactLightRadius * Random(0.9f, 1.1f), ImpactLightColor, 0.1f, 0);
+	}
 }
 
 void JhlEgon_Stop()
@@ -290,6 +335,10 @@ void JhlEgon_Stop()
 
 	if (!JhlParticleSystemEnabled())
 		return;
+
+	// The lights fade out quickly.
+	Light(PlayerLightKey, g_LastFeet, PlayerLightRadius, PlayerLightColor, LightFade, PlayerLightRadius / LightFade);
+	Light(ImpactLightKey, g_LastImpactLight, ImpactLightRadius, ImpactLightColor, LightFade, ImpactLightRadius / LightFade);
 
 	// A few blue specks fizzling off where it was hitting, falling and fading.
 	for (int i = 0, count = gEngfuncs.pfnRandomLong(4, 6); i < count; ++i)
