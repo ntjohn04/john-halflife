@@ -34,6 +34,11 @@ public:
 	void Spawn() override;
 	void Precache() override;
 	void BubbleThink();
+
+	// johnhalflife: its faint grey wake, from a few feet out (not from the crossbow), then on as BubbleThink.
+	void WakeThink();
+	static constexpr float WakeDelay = 0.03f; // About 60 units at its speed in the air.
+
 	void BoltTouch(CBaseEntity* pOther);
 	void ExplodeThink();
 
@@ -45,6 +50,7 @@ private:
 
 BEGIN_DATAMAP(CCrossbowBolt)
 DEFINE_FUNCTION(BubbleThink),
+	DEFINE_FUNCTION(WakeThink),
 	DEFINE_FUNCTION(BoltTouch),
 	DEFINE_FUNCTION(ExplodeThink),
 	END_DATAMAP();
@@ -163,6 +169,26 @@ void CCrossbowBolt::BoltTouch(CBaseEntity* pOther)
 		SetThink(&CCrossbowBolt::ExplodeThink);
 		pev->nextthink = gpGlobals->time + 0.1;
 	}
+}
+
+void CCrossbowBolt::WakeThink()
+{
+	// Thin and dim, 0.2 s of its flight long.
+	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
+	WRITE_BYTE(TE_BEAMFOLLOW);
+	WRITE_SHORT(entindex());
+	WRITE_SHORT(g_sModelIndexLaser);
+	WRITE_BYTE(2);	 // life * 10
+	WRITE_BYTE(5);	 // width * 10
+	WRITE_BYTE(170); // r, g, b
+	WRITE_BYTE(170); // r, g, b
+	WRITE_BYTE(170); // r, g, b
+	WRITE_BYTE(20);	 // brightness
+	MESSAGE_END();
+
+	// Its first bubble check, as it would have had.
+	SetThink(&CCrossbowBolt::BubbleThink);
+	pev->nextthink = gpGlobals->time + 0.2 - WakeDelay;
 }
 
 void CCrossbowBolt::BubbleThink()
@@ -372,21 +398,12 @@ void CCrossbow::FireBolt()
 	}
 	pBolt->pev->avelocity.z = 10;
 
-	// johnhalflife: a faint grey wake trailing the bolt (in the air; in water it leaves bubbles), with the tracers:
-	// thin and dim, 0.2 s of its flight long.
+	// johnhalflife: a faint grey wake trailing the bolt (in the air; in water it leaves bubbles), with the tracers,
+	// from a few feet out (WakeThink).
 	if (UTIL_JhlTracers() && m_pPlayer->pev->waterlevel != WaterLevel::Head)
 	{
-		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
-		WRITE_BYTE(TE_BEAMFOLLOW);
-		WRITE_SHORT(pBolt->entindex());
-		WRITE_SHORT(g_sModelIndexLaser);
-		WRITE_BYTE(2);	 // life * 10
-		WRITE_BYTE(10);	 // width * 10
-		WRITE_BYTE(170); // r, g, b
-		WRITE_BYTE(170); // r, g, b
-		WRITE_BYTE(170); // r, g, b
-		WRITE_BYTE(40);	 // brightness
-		MESSAGE_END();
+		pBolt->SetThink(&CCrossbowBolt::WakeThink);
+		pBolt->pev->nextthink = gpGlobals->time + CCrossbowBolt::WakeDelay;
 	}
 #endif
 
