@@ -184,7 +184,7 @@ void JhlGauss_Fire(bool primary, float damage)
 	// it was charged.
 	if (Vector muzzle; FindMuzzle(muzzle))
 	{
-		const float radius = primary ? 140 : 140 + 120 * charge;
+		const float radius = (primary ? 140 : 140 + 120 * charge) * 1.15f;
 		const color24 color = primary ? color24{255, 160, 60} : color24{255, static_cast<byte>(170 + 60 * charge), static_cast<byte>(80 + 120 * charge)};
 		Light(muzzle, radius, color, 0.1f, radius * 8);
 	}
@@ -210,6 +210,22 @@ void JhlGauss_ReflectLight(const Vector& position)
 		light->color = {255, 140, 40};
 		light->die = gEngfuncs.GetClientTime() + 0.4f;
 		light->decay = 72 / 0.4f;
+	}
+}
+
+void JhlGauss_ImpactLight(const Vector& position)
+{
+	if (!JhlParticleSystemEnabled())
+		return;
+
+	// A little bigger and brighter than a reflection's, fading over 0.5 s.
+	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)
+	{
+		light->origin = position;
+		light->radius = 100;
+		light->color = {255, 170, 70};
+		light->die = gEngfuncs.GetClientTime() + 0.5f;
+		light->decay = 100 / 0.5f;
 	}
 }
 
@@ -251,8 +267,12 @@ void JhlGauss_Update(double time)
 
 	if (g_Glow)
 	{
-		g_Glow->entity.origin = muzzle;
-		g_Glow->entity.curstate.scale = (0.03f + 0.09f * g_Charge) * flicker;
+		// A little above the muzzle, so the barrel doesn't hide it while it's still small.
+		Vector forward, right, up;
+		AngleVectors(gHUD.m_vecAngles, forward, right, up);
+
+		g_Glow->entity.origin = muzzle + up * 2.5f;
+		g_Glow->entity.curstate.scale = (0.036f + 0.108f * g_Charge) * flicker;
 		g_Glow->entity.curstate.renderamt = static_cast<int>(255 * std::min(1.f, (0.3f + 0.5f * g_Charge) * flicker));
 		g_Glow->die = now + 0.2f;
 	}

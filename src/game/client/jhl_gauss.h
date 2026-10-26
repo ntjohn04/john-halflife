@@ -43,6 +43,11 @@ void JhlGauss_StopCharge();
 void JhlGauss_ReflectLight(const Vector& position);
 
 /**
+ *	@brief A beam hit something at @p position (anyone's): a light, a little bigger and brighter than a reflection's.
+ */
+void JhlGauss_ImpactLight(const Vector& position);
+
+/**
  *	@brief Draws the charge (HUD_TempEntUpdate).
  */
 void JhlGauss_Update(double time);

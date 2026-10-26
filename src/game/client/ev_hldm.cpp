@@ -1288,6 +1288,10 @@ void EV_FireGauss(event_args_t* args)
 			vecSrc = tr.endpos + forward;
 		}
 	}
+
+	// johnhalflife: a light where it ends up hitting something.
+	if (0 == tr.allsolid && tr.fraction < 1)
+		JhlGauss_ImpactLight(tr.endpos + Vector{tr.plane.normal} * 4);
 }
 //======================
 //	   GAUSS END
