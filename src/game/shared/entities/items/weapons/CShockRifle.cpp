@@ -21,6 +21,10 @@
 
 #include "CShockRifle.h"
 
+#ifndef CLIENT_DLL
+#include "jhl_effects.h"
+#endif
+
 BEGIN_DATAMAP(CShockRifle)
 // This isn't restored in the original
 DEFINE_FIELD(m_flRechargeTime, FIELD_TIME),
@@ -192,7 +196,7 @@ void CShockRifle::PrimaryAttack()
 	m_pPlayer->pev->effects |= EF_MUZZLEFLASH;
 
 #ifndef CLIENT_DLL
-	const Vector vecAnglesAim = m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle;
+	Vector vecAnglesAim = m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle;
 
 	UTIL_MakeVectors(vecAnglesAim);
 
@@ -204,6 +208,22 @@ void CShockRifle::PrimaryAttack()
 
 	// Update auto-aim
 	m_pPlayer->GetAutoaimVectorFromPoint(vecSrc, AUTOAIM_10DEGREES);
+
+	// johnhalflife: the bolt starts at the gun, off to the right and below the eye, and vanilla fires it parallel to the
+	// aim, so it lands that far right of and below the crosshair at any range; aim it from there at what the crosshair is
+	// on instead (at least 64 units out, so nothing close up turns it sharply).
+	if (UTIL_JhlParticleSystem())
+	{
+		const Vector eye = m_pPlayer->GetGunPosition();
+		TraceResult tr;
+		UTIL_TraceLine(eye, eye + gpGlobals->v_forward * 8192, dont_ignore_monsters, m_pPlayer->edict(), &tr);
+
+		const Vector target = (tr.vecEndPos - eye).Length() < 64 ? eye + gpGlobals->v_forward * 64 : tr.vecEndPos;
+
+		// Its angles the view's way round (pitch down positive), as CreateShockBeam takes them.
+		vecAnglesAim = UTIL_VecToAngles(target - vecSrc);
+		vecAnglesAim.x = -vecAnglesAim.x;
+	}
 
 	auto pBeam = CShockBeam::CreateShockBeam(vecSrc, vecAnglesAim, m_pPlayer);
 

@@ -287,15 +287,22 @@ void CShockBeam::Explode()
 		MESSAGE_END();
 	}
 
-	// johnhalflife: a cyan impact crackles: a few short arcs off it, 0.2-0.35 s each (their noise changes every frame,
-	// so they crackle while they last).
+	// johnhalflife: a cyan impact crackles: a few short arcs off it, 0.4-0.6 s each and 5-33% more (to the
+	// tenth; their noise changes every frame, so they crackle while they last), each impact's 10-35% bigger than the
+	// smallest (longer and wider), off the surface it hit rather than into it.
 	else if (jhl)
 	{
 		const int sprite = g_engfuncs.pfnModelIndex("sprites/lgtning.spr");
+		const float size = RANDOM_FLOAT(1.1f, 1.35f);
 
 		for (int i = 0, count = RANDOM_LONG(3, 4); i < count; ++i)
 		{
-			const Vector end = pev->origin + Vector(RANDOM_FLOAT(-1, 1), RANDOM_FLOAT(-1, 1), RANDOM_FLOAT(-1, 1)).Normalize() * RANDOM_FLOAT(12, 30);
+			Vector direction = Vector(RANDOM_FLOAT(-1, 1), RANDOM_FLOAT(-1, 1), RANDOM_FLOAT(-1, 1)).Normalize();
+
+			if (DotProduct(direction, m_JhlHitNormal) < 0)
+				direction = direction - m_JhlHitNormal * (2 * DotProduct(direction, m_JhlHitNormal));
+
+			const Vector end = pev->origin + direction * (RANDOM_FLOAT(12, 30) * size);
 
 			MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
 			WRITE_BYTE(TE_BEAMPOINTS);
@@ -304,8 +311,8 @@ void CShockBeam::Explode()
 			WRITE_SHORT(sprite);
 			WRITE_BYTE(0);						// framestart
 			WRITE_BYTE(10);						// framerate
-			WRITE_BYTE(RANDOM_LONG(2, 3));		// life, tenths
-			WRITE_BYTE(10);						// width, tenths
+			WRITE_BYTE(static_cast<int>(std::lround(RANDOM_LONG(4, 6) * RANDOM_FLOAT(1.05f, 1.33f)))); // life, tenths
+			WRITE_BYTE(static_cast<int>(10 * size)); // width, tenths
 			WRITE_BYTE(RANDOM_LONG(50, 80));	// noise, hundredths
 			WRITE_BYTE(0);						// r, g, b
 			WRITE_BYTE(253);
