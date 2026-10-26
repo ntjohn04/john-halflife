@@ -229,9 +229,10 @@ water). `jhl_fx_tracers` turns all of them off by itself, leaving the vanilla tr
   muzzle) to where it hits, the engine's own beams kept but unseen. The curve's middle pulls toward where the hit
   point was a moment ago (a copy of it that follows by `jhl_egon_bend` seconds, 0.08 by default, saved; 0 straight),
   so sweeping or strafing bows it behind the motion and holding still straightens it; the bow is at most 30% of the
-  beam's length. The hit point and the damage are the game's, unchanged. The engine's noise grows with a beam's
-  length (its strength and the spiral's turns) and the spiral starts at a phase, so each piece gets the whole beam's
-  strength for its length and continues the last one's spiral: strung together they spiral as the one beam does.
+  beam's length. The hit point and the damage are the game's, unchanged. Each piece draws the engine's noise over its
+  own length, the spiral's turns restarting on each, so the spiral beam is drawn in fewer, longer pieces
+  (`jhl_egon_spiralpieces`, 3 by default, 1-8, saved) than the smooth one (8). Scaling the pieces' noise to the whole
+  beam's length to continue one spiral across them didn't work: the noise went wild.
 * **Scorches:** small scorches (`{smscorch1`-`3`) where it burns walls and brush entities, not creatures, at least 14
   units apart and 0.12 s apart.
 * **Leaking sparks:** every 0.1-0.3 s a small blue speck (the gun's own flare, `XSpark1`, cyan-blue, at 0.06,

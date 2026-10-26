@@ -53,6 +53,7 @@ struct Layer
 };
 
 cvar_t* g_Bend = nullptr;
+cvar_t* g_SpiralPieces = nullptr;
 
 Layer g_Layers[2];
 Vector g_Lagged; // Where the hit point was a moment ago (the curve's pull).
@@ -102,28 +103,25 @@ void DrawLayer(Layer& layer, BEAM* source, const Vector& start, const Vector& co
 	// The engine's beam stays (its updates and lifetime are the game's), unseen.
 	source->brightness = 0;
 
-	// The pieces strung together should look like the one beam: the engine's noise grows with a beam's length (its
-	// strength and, for the spiral, its number of turns), and a beam's spiral starts at its phase (freq). So each piece
-	// gets the whole beam's strength for its length, and its spiral picks up where the last piece's left off.
-	Vector points[Segments + 1];
-	float lengths[Segments];
-	float total = 0;
+	// Each piece draws the engine's noise over its own length (the spiral's turns restart on each), so the spiral layer
+	// uses fewer, longer pieces (jhl_egon_spiralpieces) than the smooth one.
+	const bool spiral = (source->flags & FBEAM_SINENOISE) != 0;
+	const int pieces = spiral ? std::clamp(g_SpiralPieces ? static_cast<int>(g_SpiralPieces->value) : 3, 1, Segments) : Segments;
 
-	for (int i = 0; i <= Segments; ++i)
-		points[i] = Bezier(start, control, end, static_cast<float>(i) / Segments);
-
-	for (int i = 0; i < Segments; ++i)
+	for (int i = pieces; i < Segments; ++i)
 	{
-		lengths[i] = std::max(1.f, (points[i + 1] - points[i]).Length());
-		total += lengths[i];
+		if (BEAM*& unused = layer.Pieces[i]; unused)
+		{
+			unused->die = 0;
+			unused->brightness = 0;
+			unused = nullptr;
+		}
 	}
 
-	float along = 0;
-
-	for (int i = 0; i < Segments; ++i)
+	for (int i = 0; i < pieces; ++i)
 	{
-		Vector from = points[i];
-		Vector to = points[i + 1];
+		Vector from = Bezier(start, control, end, static_cast<float>(i) / pieces);
+		Vector to = Bezier(start, control, end, static_cast<float>(i + 1) / pieces);
 
 		BEAM*& piece = layer.Pieces[i];
 
@@ -142,12 +140,8 @@ void DrawLayer(Layer& layer, BEAM* source, const Vector& start, const Vector& co
 		piece->target = to;
 		piece->delta = to - from;
 		piece->brightness = layer.Brightness;
-		piece->amplitude = source->amplitude * (total / lengths[i]);
-		piece->freq = source->freq + 3.14159265f * along * 0.01f;
 		piece->die = now + 0.1f;
 		piece->flags |= FBEAM_ISACTIVE;
-
-		along += lengths[i];
 	}
 }
 
@@ -212,6 +206,9 @@ void JhlEgon_Initialize()
 {
 	// How long (seconds) the beam's pull lags behind where it hits: 0 straight, more a stronger bend.
 	g_Bend = gEngfuncs.pfnRegisterVariable("jhl_egon_bend", "0.08", FCVAR_ARCHIVE);
+
+	// How many pieces its spiral is drawn in along the bend (1-8): each restarts the spiral's turns.
+	g_SpiralPieces = gEngfuncs.pfnRegisterVariable("jhl_egon_spiralpieces", "3", FCVAR_ARCHIVE);
 }
 
 void JhlEgon_Update(BEAM* beam, BEAM* beam2, const pmtrace_t& hit)
