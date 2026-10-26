@@ -231,7 +231,7 @@ the engine saturates into its bright, textured white-blue.
 
 * **Dragged beam:** its two beams are drawn as 8 straight pieces each along a curve from the gun (its view model's
   muzzle) to where it hits, the engine's own beams kept but unseen. The curve's middle pulls toward where the hit
-  point was a moment ago (a copy of it that follows by `jhl_egon_bend` seconds, 0.08 by default, saved; 0 straight),
+  point was a moment ago (a copy of it that follows by `jhl_egon_bend` seconds, 0.1 by default, saved; 0 straight),
   so sweeping or strafing bows it behind the motion and holding still straightens it; the bow is at most 30% of the
   beam's length. The hit point and the damage are the game's, unchanged. Each piece draws the engine's noise over its
   own length, the spiral's turns restarting on each, so the spiral beam is drawn in fewer, longer pieces

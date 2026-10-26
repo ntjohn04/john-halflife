@@ -241,7 +241,7 @@ void Vent(const Vector& muzzle, float now)
 void JhlEgon_Initialize()
 {
 	// How long (seconds) the beam's pull lags behind where it hits: 0 straight, more a stronger bend.
-	g_Bend = gEngfuncs.pfnRegisterVariable("jhl_egon_bend", "0.08", FCVAR_ARCHIVE);
+	g_Bend = gEngfuncs.pfnRegisterVariable("jhl_egon_bend", "0.1", FCVAR_ARCHIVE);
 
 	// How many pieces its spiral is drawn in along the bend (1-8): each restarts the spiral's turns.
 	g_SpiralPieces = gEngfuncs.pfnRegisterVariable("jhl_egon_spiralpieces", "2", FCVAR_ARCHIVE);
