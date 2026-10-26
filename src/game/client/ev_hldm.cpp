@@ -1015,6 +1015,11 @@ void EV_StopPreviousGauss(int idx)
 
 extern float g_flApplyVel;
 
+// johnhalflife: the Gauss primary beam's core (EV_FireGauss): half its width, a pale hot orange, faint.
+constexpr float PrimaryCoreWidth = 0.5f;
+constexpr float PrimaryCoreBrightness = 0.35f;
+const Vector PrimaryCoreColor{255, 200, 110};
+
 void EV_FireGauss(event_args_t* args)
 {
 	int idx;
@@ -1065,6 +1070,11 @@ void EV_FireGauss(event_args_t* args)
 
 	vecDest = vecSrc + (8192 * forward);
 
+	// johnhalflife: the primary beam a little brighter (vanilla 128), with a thinner, slightly hotter core in it, so it
+	// isn't flat.
+	const bool primaryCore = m_fPrimaryFire && JhlParticleSystemEnabled();
+	const float primaryBrightness = primaryCore ? 153.0f : 128.0f;
+
 	if (EV_IsLocal(idx))
 	{
 		if (!EV_WeaponRecoil(RecoilGauss))
@@ -1113,13 +1123,19 @@ void EV_FireGauss(event_args_t* args)
 				0.1,
 				m_fPrimaryFire ? 1.0 : 2.5,
 				0.0,
-				(m_fPrimaryFire ? 128.0 : flDamage) / 255.0,
+				(m_fPrimaryFire ? primaryBrightness : flDamage) / 255.0,
 				0,
 				0,
 				0,
 				(m_fPrimaryFire ? 255 : 255) / 255.0,
 				(m_fPrimaryFire ? 128 : 255) / 255.0,
 				(m_fPrimaryFire ? 0 : 255) / 255.0);
+
+			if (primaryCore)
+			{
+				gEngfuncs.pEfxAPI->R_BeamEntPoint(idx | 0x1000, tr.endpos, m_iBeam, 0.1, PrimaryCoreWidth, 0.0, PrimaryCoreBrightness, 0, 0,
+					0, PrimaryCoreColor.x / 255, PrimaryCoreColor.y / 255, PrimaryCoreColor.z / 255);
+			}
 		}
 		else
 		{
@@ -1129,13 +1145,19 @@ void EV_FireGauss(event_args_t* args)
 				0.1,
 				m_fPrimaryFire ? 1.0 : 2.5,
 				0.0,
-				(m_fPrimaryFire ? 128.0 : flDamage) / 255.0,
+				(m_fPrimaryFire ? primaryBrightness : flDamage) / 255.0,
 				0,
 				0,
 				0,
 				(m_fPrimaryFire ? 255 : 255) / 255.0,
 				(m_fPrimaryFire ? 128 : 255) / 255.0,
 				(m_fPrimaryFire ? 0 : 255) / 255.0);
+
+			if (primaryCore)
+			{
+				gEngfuncs.pEfxAPI->R_BeamPoints(vecSrc, tr.endpos, m_iBeam, 0.1, PrimaryCoreWidth, 0.0, PrimaryCoreBrightness, 0, 0, 0,
+					PrimaryCoreColor.x / 255, PrimaryCoreColor.y / 255, PrimaryCoreColor.z / 255);
+			}
 		}
 
 		pEntity = gEngfuncs.pEventAPI->EV_GetPhysent(tr.ent);

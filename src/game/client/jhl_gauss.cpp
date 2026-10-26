@@ -267,11 +267,7 @@ void JhlGauss_Update(double time)
 
 	if (g_Glow)
 	{
-		// A little above the muzzle, so the barrel doesn't hide it while it's still small.
-		Vector forward, right, up;
-		AngleVectors(gHUD.m_vecAngles, forward, right, up);
-
-		g_Glow->entity.origin = muzzle + up * 2.5f;
+		g_Glow->entity.origin = muzzle;
 		g_Glow->entity.curstate.scale = (0.036f + 0.108f * g_Charge) * flicker;
 		g_Glow->entity.curstate.renderamt = static_cast<int>(255 * std::min(1.f, (0.3f + 0.5f * g_Charge) * flicker));
 		g_Glow->die = now + 0.2f;
