@@ -68,6 +68,7 @@ static int g_tracerCount[MAX_PLAYERS];
 #include "jhl_settings.h"
 #include "jhl_tracers.h"
 #include "jhl_egon.h"
+#include "jhl_gauss.h"
 #include "Exports.h"
 
 void V_PunchAxis(int axis, float punch);
@@ -993,6 +994,10 @@ void EV_SpinGauss(event_args_t* args)
 	iSoundState = 0 != args->bparam1 ? SND_CHANGE_PITCH : 0;
 
 	EV_PlaySound(idx, origin, CHAN_WEAPON, "ambience/pulsemachine.wav", 1.0, ATTN_NORM, iSoundState, pitch);
+
+	// johnhalflife: the charge you can see.
+	if (EV_IsLocal(idx))
+		JhlGauss_Spin(pitch);
 }
 
 /*
@@ -1039,8 +1044,16 @@ void EV_FireGauss(event_args_t* args)
 	if (0 != args->bparam2)
 	{
 		EV_StopPreviousGauss(idx);
+
+		if (EV_IsLocal(idx))
+			JhlGauss_StopCharge();
+
 		return;
 	}
+
+	// johnhalflife: the charge ends, its light flashing at the muzzle.
+	if (EV_IsLocal(idx))
+		JhlGauss_Fire(m_fPrimaryFire, flDamage);
 
 	//	Con_Printf( "Firing gauss with %f\n", flDamage );
 	EV_GetGunPosition(args, vecSrc, origin);
@@ -1153,6 +1166,9 @@ void EV_FireGauss(event_args_t* args)
 				vecDest = vecSrc + (8192.0 * forward);
 
 				gEngfuncs.pEfxAPI->R_TempSprite(tr.endpos, vec3_origin, 0.2, m_iGlow, kRenderGlow, kRenderFxNoDissipation, flDamage * n / 255.0, flDamage * n * 0.5 * 0.1, FTENT_FADEOUT);
+
+				// johnhalflife: a brief light where it reflects.
+				JhlGauss_ReflectLight(tr.endpos + Vector{tr.plane.normal} * 4);
 
 				Vector fwd;
 				fwd = tr.endpos + tr.plane.normal;

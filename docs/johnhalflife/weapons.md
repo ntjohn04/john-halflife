@@ -248,3 +248,20 @@ the engine saturates into its bright, textured white-blue.
   made and removed): a faint cyan glow around the player just above the feet (60,110,150), 160 units, and a brighter
   one 8 units off the wall where it hits (100,180,230), 140 units flickering ±10%; both fade out over 0.25 s when it
   stops. The specks' and flare's blue.
+
+### Gauss gun
+`jhl_fx_particlesystem` (`jhl_gauss.cpp`, the local player)
+
+* **A charge you can see**, from the spin events (their pitch, 110 as it starts to 250 at full charge, 4 s in single
+  player; the overcharge zaps 10 s after it started), in stages at the muzzle (the view model's; in third person the
+  player model's):
+  * From the start: a glow on the muzzle (`hotglow`, the gun's own orange, growing 0.03 to 0.12 and brightening) and
+    its light on the hands and around (one keyed light, 30 to 110 units, (255,140,40)).
+  * From a third of the charge: short arcs crackling off the muzzle (`smoke.spr`, the gun's beam sprite, 5-10
+    units, 0.05-0.12 s), 4 to 12 a second as it charges.
+  * At full charge, unstable: the arcs 20-30 a second, longer and wilder, the glow and light flickering, and sparks
+    spitting out of the muzzle (`hotglow` at 0.04, falling at half gravity onto what's below, 0.6-1 s), 3 to 9 a
+    second, more of everything as the overcharge nears.
+* **Muzzle light** when it fires (as the guns' muzzle light): the charge's light becomes it, so they don't clash;
+  primary 140 units (255,160,60), charged up to 260 units and whiter.
+* **Reflections:** a brief light where a beam reflects (anyone's), 72 units in the gun's orange, fading over 0.4 s.
