@@ -190,6 +190,16 @@ void CHornet::IgniteTrail()
 
 	*/
 
+	// johnhalflife: the client draws its trail (jhl_hornets.cpp), twirling while it hunts and straight once it commits:
+	// tagged with its colour (rendercolor) and its state (renderamt 1 hunting, 2 committed; a normal render mode ignores
+	// both).
+	if (UTIL_JhlParticleSystem())
+	{
+		pev->rendercolor = TrailColor();
+		pev->renderamt = 1;
+		return;
+	}
+
 	// trail
 	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
 	WRITE_BYTE(TE_BEAMFOLLOW);
@@ -224,6 +234,10 @@ Vector CHornet::TrailColor() const
 
 void CHornet::StrikeFlare()
 {
+	// Its client-drawn trail goes straight from here.
+	if (pev->renderamt == 1)
+		pev->renderamt = 2;
+
 	// johnhalflife: as it commits to its strike its trail flares: a wider glow in its colour and a hot core (its colour
 	// whitened), drawing only the straight line of its dive, with a shorter tail than its trail.
 	const Vector color = TrailColor();
@@ -456,6 +470,16 @@ void CHornet::DieTouch(CBaseEntity* pOther)
 
 		EmitSoundDyn(CHAN_VOICE, RANDOM_LONG(0, 1) != 0 ? "bullchicken/bc_spithit1.wav" : "bullchicken/bc_spithit2.wav", 0.5,
 			ATTN_NORM, 0, RANDOM_LONG(125, 140));
+	}
+
+	// johnhalflife: where it dies on something (a sting, a dart's splat; only ever once: it dies here; not when a
+	// homing one turns off a wall, which can be several times in a row), a small pop of its colour, as faint as the
+	// energy weapons' small lights (72 units), fading out over half a second: its trail's energy going.
+	if (UTIL_JhlParticleSystem())
+	{
+		const Vector color = TrailColor();
+		UTIL_JhlDynamicLight(pev->origin, 72, static_cast<int>(color.x), static_cast<int>(color.y), static_cast<int>(color.z), 0.5f,
+			72 / 0.5f);
 	}
 
 	pev->modelindex = 0; // so will disappear for the 0.1 secs we wait until NEXTTHINK gets rid

@@ -43,6 +43,7 @@
 #include "jhl_tracers.h"
 #include "jhl_egon.h"
 #include "jhl_gauss.h"
+#include "jhl_hornets.h"
 
 extern bool g_ResetMousePosition;
 
@@ -160,6 +161,7 @@ int DLLEXPORT HUD_VidInit()
 	JhlTracers_Reset();
 	JhlEgon_Reset();
 	JhlGauss_Reset();
+	JhlHornets_Reset();
 
 	VGui_Startup();
 

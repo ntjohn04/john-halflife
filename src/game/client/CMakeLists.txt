@@ -119,6 +119,8 @@ target_sources(client PRIVATE
 	jhl_explosions.h
 	jhl_gauss.cpp
 	jhl_gauss.h
+	jhl_hornets.cpp
+	jhl_hornets.h
 	jhl_rings.cpp
 	jhl_rings.h
 	jhl_settings.cpp

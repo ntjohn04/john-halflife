@@ -292,32 +292,49 @@ the engine saturates into its bright, textured white-blue.
 ### Hornet gun
 `jhl_fx_particlesystem`
 
+The hornet gun's flair is organic (blood, spit, splats) rather than energy, and its signature is its hornets' trails.
+
 * **Stings bleed:** a hornet that hits a creature deals its damage straight (`DieTouch`), past the code that would
   bleed, so vanilla shows nothing; now `SpawnBlood` at the hornet in the target's blood color, sized by its damage
   (a light hit).
-* **Spit:** each shot flings 3-5 small droplets of spittle in the gun's own brownish red out of its mouth (where the
-  hornets launch, 16 forward, 8 right, 12 down of the eyes: its view model has no attachments)
-  (`hornet_spit.spr`: the bullsquid's `tinyspit` recoloured, an index-alpha sprite whose colour is its palette's last
-  entry, `scripts/make_hornet_spit.py`, committed in `config/mod/sprites`), at 0.2-0.3, forward 150-260, out ±70,
-  plus the player's own velocity (as ejected shells: running forward doesn't overtake it),
-  falling at full gravity onto what's below, each playing once over 0.6-0.9 s; first person.
+* **Spit:** each shot flings 3-5 small droplets of spittle in the gun's own brownish red (110,42,30) out of its mouth:
+  where the hornets launch (16 forward, 8 right, 12 down of the eyes), since its view model has no attachments.
+  `hornet_spit.spr` is the bullsquid's `tinyspit` recoloured (an index-alpha sprite, whose colour is its palette's
+  last entry; `scripts/make_hornet_spit.py`, committed in `config/mod/sprites`). At 0.2-0.3, forward 150-260, out ±70,
+  plus the player's own velocity (as ejected shells: running forward doesn't overtake it), falling at full gravity
+  onto what's below, each playing once over 0.6-0.9 s; first person.
 * **Colours:** each hornet type gets more colours, its behaviour (speed, turning) unchanged: red-type hornets (40%)
   red (179,39,14) or purple-red (130,42,48: ted's suggested colour in the code, 161,25,97, browner); orange-type
-  (60%) orange (255,128,0),
-  yellow (255,200,40) or light brown (190,140,80), so each colour is a fifth of all hornets (`m_JhlColor`, saved): its
-  trail.
+  (60%) orange (255,128,0), yellow (255,200,40) or light brown (190,140,80); so each colour is a fifth of all hornets
+  (`m_JhlColor`, saved).
+* **Trails** (`jhl_hornets.cpp`): drawn by the client instead of the engine's follow beam (which can't twirl), from
+  the path each hornet flies; the server tags each hornet (`IgniteTrail`: `rendercolor` its colour, `renderamt` 1
+  hunting, 2 committed; a normal render mode ignores both) instead of sending the trail.
+  * A small corkscrew around its path while it hunts, laid down where it flew so it holds still: a turn every 0.24 s,
+    2.42 units out, both drifting smoothly at random (turning ±33% over about 0.9 s, radius ±42% over two cycles out
+    of step); width 1.2 at 0.5, 0.3 s long, dimming toward the tail and fading out when the hornet goes.
+  * In moods: a calm spell (0.6 s, loops half as big, turning 0.58 as fast: nearly a wave) and a flourish (0.45 s,
+    loops twice as big, turning 1.25 as fast: a showy twirl), each easing in and out on its own schedule (the first
+    0.3-1.5 s into the flight, as most hornets live under 2 s, then one every 0.8-1.8 s); a third of hornets leave
+    the gun calm, a third in a flourish. Its angle is its turning speed's integral, worked out the same for any point,
+    so the drift and spells never make it jump.
+  * Once it commits to a strike the twirl stops, unwinding into its straight dive.
+  * 8 pieces (0.0375 s each) for up to 10 hornets at once, to keep within the engine's beams; a turn needs about 5 of
+    them to stay round (faster loops alias into a zigzag, hence the flourish's 1.25). Any more hornets get the
+    engine's own follow trail in their colour instead (never none).
 * **Strike flare:** the hunt made visible. When a homing hornet commits to its strike (vanilla: lined up on its
   target within 300 units, it doubles its speed, buzzes and dives straight; single player), its trail flares: a
-  wider glow in its colour (width 0.4 against its trail's 0.2, 170) and a hot core (its colour whitened 55%, 0.2,
-  220), with a 0.4 s tail (its trail's 1 s), drawing only the straight line of the dive (`StrikeFlare`, two more
-  `TE_BEAMFOLLOW`s). It stings or expires after it, never hunting again, so the flare rides it to the end. (The
-  trail is the engine's follow beam, the ribbon of its own path: no noise to make it wispy, but hunting it wiggles
-  and on the strike it flies straight, so the flare marks the change.) Alien grunts' hornets flare too.
+  wider glow in its colour and a hot core (its colour whitened 55%), with a 0.4 s tail, drawing only the straight line
+  of the dive (`StrikeFlare`, two `TE_BEAMFOLLOW`s). Twirling while hunting, a hot straight line on the strike. It
+  stings or expires after it, never hunting again, so the flare rides it to the end. Alien grunts' hornets flare too.
+* **Death light:** where a hornet dies on something (a sting, a dart's splat; only ever once, not when a homing one
+  turns off a wall, which can be several times in a row), a small pop of its colour, as faint as the energy weapons'
+  small lights (72 units), fading out over 0.5 s.
 * **Dart splats:** a dart that hits a wall or brush entity splats on it in its colour, muted and dark (organic, not
-  paint: red 90,50,42, purple-red 80,48,55, orange 105,80,50, yellow 110,98,62, light brown 100,85,65) and small (the shape at 75%)
-  (`{hspit_red1`/`2`, `pur`, `org`, `yel`, `brn`: the bullsquid's spit splats `{spit1`, `{spit2` recoloured and shrunk, a
-  decal's colour being its palette's last entry),
-  with the bullsquid's spit hitting (`bc_spithit1`/`2`) higher (125-140) and quieter (0.5). The engine reads one
-  `decals.wad`, so the install adds them to the installed one (`scripts/make_hornet_decals.py`, run by CMake when
-  Python is found; it keeps the Unified SDK's original as `decals_unified.wad` and starts from it each time, so
-  nothing of Valve's is committed). `UTIL_DecalTraceName` places a decal by name.
+  paint: red 90,50,42, purple-red 80,48,55, orange 105,80,50, yellow 110,98,62, light brown 100,85,65) and small (the
+  shape at 75%), with the bullsquid's spit hitting (`bc_spithit1`/`2`) higher (125-140) and quieter (0.5). The decals
+  (`{hspit_red1`/`2`, `pur`, `org`, `yel`, `brn`) are the bullsquid's spit splats `{spit1`, `{spit2` recoloured and
+  shrunk (a decal's colour is its palette's last entry). The engine reads one `decals.wad`, so the install adds them
+  to the installed one (`scripts/make_hornet_decals.py`, run by CMake when Python is found; it keeps the Unified
+  SDK's original as `decals_unified.wad` and starts from it each time, so nothing of Valve's is committed).
+  `UTIL_DecalTraceName` places a decal by name.
