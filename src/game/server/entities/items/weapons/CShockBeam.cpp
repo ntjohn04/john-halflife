@@ -197,6 +197,9 @@ void CShockBeam::BallTouch(CBaseEntity* pOther)
 
 		UTIL_DecalTrace(&tr, DECAL_OFSCORCH1 + RANDOM_LONG(0, 2));
 
+		if (tr.flFraction < 1)
+			m_JhlHitNormal = tr.vecPlaneNormal;
+
 		MESSAGE_BEGIN(MSG_PAS, SVC_TEMPENTITY, pev->origin);
 		g_engfuncs.pfnWriteByte(TE_SPARKS);
 		g_engfuncs.pfnWriteCoord(pev->origin.x);
@@ -251,16 +254,30 @@ void CShockBeam::Explode()
 
 	EmitSound(CHAN_WEAPON, "weapons/shock_impact.wav", RANDOM_FLOAT(0.8, 0.9), ATTN_NORM);
 
-	// johnhalflife: a purple impact fizzles: 2-3 of its glow sprites (flare3, pinkish grey) thrown up off where it hit,
-	// falling and bouncing (the engine's sprite trail).
+	// johnhalflife: a purple impact fizzles: 3-4 of its glow sprites (flare3, pinkish grey) thrown up and out off where
+	// it hit, falling and bouncing (the engine's sprite trail). Out from the surface it hit, and from a little off it: a
+	// sprite that hits a wall stops dead on it, and on some walls ends up just inside, stuck there.
 	if (purple)
 	{
-		const Vector up = pev->origin + Vector(0, 0, 1);
+		Vector start = pev->origin;
+		Vector direction{0, 0, 1};
 
-		MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
+		if (m_JhlHitNormal != g_vecZero)
+		{
+			start = start + m_JhlHitNormal * 4;
+
+			if (const Vector out = m_JhlHitNormal + direction; out.Length() > 0.5f)
+				direction = out.Normalize();
+			else
+				direction = m_JhlHitNormal;
+		}
+
+		const Vector end = start + direction;
+
+		MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, start);
 		WRITE_BYTE(TE_SPRITETRAIL);
-		WRITE_COORD_VECTOR(pev->origin);
-		WRITE_COORD_VECTOR(up);
+		WRITE_COORD_VECTOR(start);
+		WRITE_COORD_VECTOR(end);
 		WRITE_SHORT(g_engfuncs.pfnModelIndex("sprites/flare3.spr"));
 		WRITE_BYTE(RANDOM_LONG(3, 4)); // count
 		WRITE_BYTE(8);				   // life, tenths

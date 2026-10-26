@@ -37,9 +37,9 @@ constexpr std::size_t MaxWakes = 4;
 
 // Its glow and spark circle its path this far out, this many turns a second, the circle easing in (smoothstep) to
 // RadiusEnd over its first RadiusTime: 4 units by a medium-range hit (25 feet, about 300 units at its 2000 a second,
-// 0.15 s), 3.25 by 35 feet (0.21 s). Half the bolts turn one way, half the other.
-constexpr float Radius = 7;
-constexpr float RadiusEnd = 3.25f;
+// 0.15 s), 3.3 by 35 feet (0.21 s). Half the bolts turn one way, half the other.
+constexpr float Radius = 6.85f;
+constexpr float RadiusEnd = 3.3f;
 constexpr float RadiusTime = 0.21f;
 constexpr float TurnsPerSecond = 3;
 
