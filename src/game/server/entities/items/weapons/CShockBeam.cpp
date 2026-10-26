@@ -262,7 +262,7 @@ void CShockBeam::Explode()
 		WRITE_COORD_VECTOR(pev->origin);
 		WRITE_COORD_VECTOR(up);
 		WRITE_SHORT(g_engfuncs.pfnModelIndex("sprites/flare3.spr"));
-		WRITE_BYTE(RANDOM_LONG(2, 3)); // count
+		WRITE_BYTE(RANDOM_LONG(3, 4)); // count
 		WRITE_BYTE(8);				   // life, tenths
 		WRITE_BYTE(1);				   // scale, tenths
 		WRITE_BYTE(8);				   // velocity along it, tens

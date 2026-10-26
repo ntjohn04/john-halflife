@@ -35,8 +35,11 @@ constexpr float PieceTime = 0.02f;
 constexpr std::size_t MaxBolts = 16;
 constexpr std::size_t MaxWakes = 4;
 
-// Its glow and spark circle its path this far out, this many turns a second.
+// Its glow and spark circle its path this far out, this many turns a second, the circle easing in to RadiusEnd over
+// its first RadiusTime (by a medium-range hit: about 300 units at its 2000 a second).
 constexpr float Radius = 7;
+constexpr float RadiusEnd = 4.2f;
+constexpr float RadiusTime = 0.15f;
 constexpr float TurnsPerSecond = 3;
 
 // The glow (vanilla's, flare3) and the spark (the gluon gun's flare, XSpark1: cyan-blue by itself, sparkling).
@@ -57,7 +60,7 @@ struct Strand
 };
 
 // The smooth purplish one along its glow's path, the jagged cyan one along its spark's.
-const Strand Strands[2] = {{{170, 110, 220}, 1.6f, 0.35f, 0}, {{0, 253, 253}, 0.8f, 0.6f, 0.15f}};
+const Strand Strands[2] = {{{170, 110, 220}, 1.6f, 0.5f, 0}, {{0, 253, 253}, 0.8f, 0.6f, 0.15f}};
 
 struct Sample
 {
@@ -68,6 +71,7 @@ struct Sample
 struct Bolt
 {
 	int Index;
+	float FirstSeen;
 	float LastSeen;
 	float Phase;
 	std::deque<Sample> History;
@@ -152,7 +156,7 @@ void JhlShockBeams_Track(cl_entity_t* entity, const char* modelname)
 		if (g_Bolts.size() >= MaxBolts)
 			return;
 
-		g_Bolts.push_back({entity->index, now, gEngfuncs.pfnRandomFloat(0, 6.2831853f), {}, {}, {}});
+		g_Bolts.push_back({entity->index, now, now, gEngfuncs.pfnRandomFloat(0, 6.2831853f), {}, {}, {}});
 		bolt = &g_Bolts.back();
 	}
 
@@ -162,7 +166,9 @@ void JhlShockBeams_Track(cl_entity_t* entity, const char* modelname)
 	Vector forward, right, up;
 	AngleVectors(Vector{-entity->angles.x, entity->angles.y, 0}, forward, right, up);
 	const float angle = bolt->Phase + 6.2831853f * TurnsPerSecond * now;
-	const Vector offset = (right * std::cos(angle) + up * std::sin(angle)) * Radius;
+	const float eased = std::clamp((now - bolt->FirstSeen) / RadiusTime, 0.f, 1.f);
+	const float radius = Radius + (RadiusEnd - Radius) * eased * eased * (3 - 2 * eased);
+	const Vector offset = (right * std::cos(angle) + up * std::sin(angle)) * radius;
 	const Vector points[2] = {entity->origin + offset, entity->origin - offset};
 
 	if (!bolt->Sprites[0])
