@@ -1165,6 +1165,11 @@ void EV_FireGauss(event_args_t* args)
 			{
 				ghostFrom = viewModel->attachment[0];
 			}
+			else if (fFirstBeam)
+			{
+				// Another player, or third person: from the player model's gun, as the tracers.
+				ghostFrom = JhlTracers_MuzzleStart(idx, vecSrc);
+			}
 
 			JhlGauss_Afterimage(ghostFrom, tr.endpos, m_iBeam, c);
 		}
