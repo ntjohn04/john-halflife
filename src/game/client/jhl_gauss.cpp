@@ -125,8 +125,9 @@ void Arc(const Vector& muzzle, bool unstable)
 		Random(0.5f, 0.8f), 0, 0, 0, 1, 0.75f, 0.4f);
 }
 
-// A spark of it spitting out of the muzzle, falling and fading (the gun's orange glow, small).
-void Spit(const Vector& muzzle)
+// A spark of it spitting out of the muzzle, falling and fading (the gun's orange glow, small); @p burst throws it
+// harder, as a full charge lets go.
+void Spit(const Vector& muzzle, bool burst = false)
 {
 	const int sprite = gEngfuncs.pEventAPI->EV_FindModelIndex(GlowSprite);
 
@@ -136,8 +137,9 @@ void Spit(const Vector& muzzle)
 	Vector forward, right, up;
 	AngleVectors(gHUD.m_vecAngles, forward, right, up);
 
+	const float spread = burst ? 110.f : 60.f;
 	Vector position = muzzle;
-	Vector velocity = forward * Random(30, 90) + right * Random(-60, 60) + up * Random(10, 60);
+	Vector velocity = forward * (burst ? Random(80, 200) : Random(30, 90)) + right * Random(-spread, spread) + up * Random(10, burst ? 110 : 60);
 	const float life = Random(0.6f, 1);
 
 	TEMPENTITY* spark = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, 0.04f, sprite, kRenderTransAdd, kRenderFxNone, 1,
@@ -175,10 +177,30 @@ void JhlGauss_Fire(bool primary, float damage)
 {
 	const float charge = primary ? 0.f : std::clamp(damage / 200, 0.f, 1.f);
 
+	const bool full = !primary && g_FullSince >= 0;
+
 	JhlGauss_StopCharge();
 
 	if (!JhlParticleSystemEnabled())
 		return;
+
+	// A full charge letting go: the unstable charge's sparks thrown out of the muzzle, and a few of the gun's own
+	// bouncing orbs (its spent-energy balls, as at its impacts), a little bigger.
+	if (Vector muzzle; full && FindMuzzle(muzzle))
+	{
+		for (int i = 0, count = gEngfuncs.pfnRandomLong(8, 12); i < count; ++i)
+			Spit(muzzle, true);
+
+		if (const int balls = gEngfuncs.pEventAPI->EV_FindModelIndex(GlowSprite); balls != 0)
+		{
+			Vector forward, right, up;
+			AngleVectors(gHUD.m_vecAngles, forward, right, up);
+			Vector from = muzzle;
+			Vector to = muzzle + forward;
+			gEngfuncs.pEfxAPI->R_Sprite_Trail(TE_SPRITETRAIL, from, to, balls, gEngfuncs.pfnRandomLong(2, 3), 0.6f,
+				Random(0.15f, 0.25f), 120, 230, 150);
+		}
+	}
 
 	// The muzzle flash's light (as the guns' muzzle light), the charge's light becoming it: bigger and whiter the more
 	// it was charged.
