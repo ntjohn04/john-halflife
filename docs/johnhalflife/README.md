@@ -38,6 +38,8 @@ All are client settings; set them in the console.
 | `jhl_fx_particlesystem` | 1 | The particle system changes (gibs, blood, explosions, debris, beams, rings) | [Effects plan](effects_plan.md#gibs-done) |
 | `jhl_fx_tracers` | 1 | johnhalflife's tracers (with the particle system on): the M249's tracer rounds, every gun's faint streaks, NPCs' | [Weapons](weapons.md#tracers) |
 | `jhl_hud_scale` | 1 | Sprite HUD scale (0 = automatic by screen height) | [HUD](#hud) |
+| `jhl_egon_bend` | 0.1 | Gluon beam drag: how far (seconds) its bend trails the hit point; 0 straight | [Weapons](weapons.md#gluon-gun) |
+| `jhl_egon_spiralpieces` | 2 | How many pieces the gluon beam's spiral is drawn in along the bend (1-8) | [Weapons](weapons.md#gluon-gun) |
 
 Changed defaults of existing settings: `cl_rollangle` 0.65 and `cl_rollspeed` 300 (see
 [strafe roll](camera_movement.md#strafe-roll)).
@@ -164,6 +166,21 @@ fatal ("bogus message type (0)").
 
 Weapon prediction also syncs the current spread through `weapon_data_t.fuser4` (added to `delta.lst`).
 
+johnhalflife also sends its own kinds of temp entity through the SDK's `TempEntity` message (the engine's numbers,
+its own contents, parsed in `client/entity.cpp` `MsgFunc_TempEntity`), in place of or alongside the engine's:
+
+| Kind | Sent by | Purpose |
+|---|---|---|
+| `TE_EXPLOSION` | Explosions (flag bits 32 breakable, 64 sparks, 128 rocket) | johnhalflife's fireballs, smoke, sparks, debris |
+| `TE_BREAKMODEL` | Breakables, vehicle debris | Debris lasting 60 s, by material |
+| `TE_SPARKS` | `UTIL_Sparks`, computers, set pieces | Spark bursts and showers |
+| `TE_ARMOR_RICOCHET` | Armor ricochets | The flash with a few sparks |
+| `TE_BEAMTORUS` | Ring effects (houndeye, helicopter crashes, displacer) | The rings' noisy torus strand |
+| `TE_BEAMRING` | c4a1's and of3a1b's spire ring `env_beam`s | The spire rings' strands, kept on their trains |
+| `TE_SMOKE` | Houndeye blasts | Dust puffs along the floor |
+| `TE_SPRITETRAIL` | The displacer ball as it goes | Its falling specks |
+| `TE_TRACER` | NPCs' tracers (as often as vanilla's) | The vanilla tracer and johnhalflife's streak, from the muzzle |
+
 ## Versions
 
 The version is `project(HalfLifeMod VERSION ...)` in `CMakeLists.txt` and the release type is
@@ -177,6 +194,7 @@ minor version and get a git tag, `v<version>-<release type>`; fixes between mile
 | `v0.2.0-prealpha` | Gibs (counts, lifetime, bounce sounds, blood trails, per-NPC profiles, central blood splash with red and yellow chunks, blood pools) and hit blood (sizes, colors, exit spurts, melee bursts, headshot streams), `jhl_fx_test`, the `jhl_fx_particlesystem` toggle |
 | `v0.3.0-prealpha` | Explosions: vanilla placement restored (Half-Life Updated sank them into surfaces), two-fireball pool with randomness, bigger RPG rockets and explosive breakables, helicopter deaths (varied falling fireballs, crash mushroom cloud), smoke (bigger puff, lingering cloud), client spark showers (by surface material), surface debris by material, ember specks, size-scaled lights, scorches, screen shake, underwater fireballs and bubbles; debris lasting 60 s with a shared budget (barrels, helicopters, gibs) |
 | `v0.4.0-prealpha` | Beams and rings: the vortigaunt's strand pattern (a thin, wild, dimmer strand, endpoint and impact lights, sparks by what was hit) on vortigaunts, voltigores, the displacer and shock rifle, controllers (round animated balls) and the Nihilanth (zaps, death bolts, a finale of flashes and spark showers), map arcs, Gene Worm warp beams and electrified wires; a noisy torus on every ring (houndeye, helicopter crashes, displacer), houndeye light, shake and dust, the displacer's implosion; Xen spire rings layered three deep, drifting in and out of step; breakable shards lasting like gibs (crates throw wood, computers spark), varied spark bursts, armor ricochet sparks, blob particles and fewer non-metal spark showers on explosions; fixes: controller energy ball NaN velocity, gluon view drift after a map change |
+| `v0.5.0-prealpha` | Weapons: tracers (the M249's red tracer rounds with a white-hot core and burning specks off walls; faint streaks on every gun, NPCs' too, from the muzzle; `jhl_fx_tracers`), the M249's muzzle smoke building with sustained fire, per-pellet shotgun smoke, the gluon gun's dragged, bending beam (vanilla colors restored) with scorches, leaking sparks, a fizzle on release and lights, the Gauss gun's visible charge (glow, arcs, unstable sparks), brighter layered beams, release bursts, afterimages of charged shots and impact and reflection lights, a crossbow bolt wake, melee sparks on metal, the tripmine light; corpse gibbing by bullet damage (headcrabs, shock roaches, houndeyes, pit drones, bullsquids, controllers), displacer specks; fixes: controller spark burst on corpse gib |
 
 ## Saves
 
