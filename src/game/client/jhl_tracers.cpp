@@ -183,13 +183,32 @@ void JhlTracers_ParseNpcTracer(BufferReader& reader)
 	Vector start = reader.ReadCoordVector();
 	const Vector end = reader.ReadCoordVector();
 	const auto kind = static_cast<JhlTracerKind>(reader.ReadByte());
+	const int shooter = reader.ReadShort();
 
 	// The vanilla one, but the M249's is replaced by its red tracer rounds.
 	if (kind != JhlTracerKind::M249 || !JhlTracersEnabled())
 		gEngfuncs.pEfxAPI->R_TracerEffect(start, end);
 
 	if (JhlTracersEnabled())
-		JhlTracer_Fire(start, end, JhlTracers_Style(kind));
+		JhlTracer_Fire(JhlTracers_MuzzleStart(shooter, start), end, JhlTracers_Style(kind));
+}
+
+Vector JhlTracers_MuzzleStart(int shooter, const Vector& start)
+{
+	// Further than this from the game's start, the attachment is stale or not a gun's.
+	constexpr float MuzzleNear = 96;
+
+	cl_entity_t* entity = shooter > 0 ? gEngfuncs.GetEntityByIndex(shooter) : nullptr;
+
+	if (!entity || !entity->model || entity->model->type != mod_studio)
+		return start;
+
+	const Vector muzzle = entity->attachment[0];
+
+	if (muzzle == g_vecZero || (muzzle - start).Length() > MuzzleNear)
+		return start;
+
+	return muzzle;
 }
 
 namespace

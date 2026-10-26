@@ -1448,7 +1448,7 @@ void CBaseEntity::FireBullets(unsigned int cShots, Vector vecSrc, Vector vecDirS
 
 			if (jhlTracers)
 			{
-				UTIL_JhlTracer(vecTracerSrc, tr.vecEndPos, jhlTracerKind);
+				UTIL_JhlTracer(vecTracerSrc, tr.vecEndPos, jhlTracerKind, this);
 			}
 			else
 			{

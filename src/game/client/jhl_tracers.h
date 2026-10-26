@@ -69,10 +69,17 @@ bool JhlTracersEnabled();
 class BufferReader;
 
 /**
- *	@brief An NPC's tracer (UTIL_JhlTracer): the SDK's own temp entity message's TE_TRACER, start, end and kind. The
+ *	@brief An NPC's tracer (UTIL_JhlTracer): the SDK's own temp entity message's TE_TRACER, start, end, kind and shooter. The
  *	vanilla tracer, and johnhalflife's on top (the M249's instead of it).
  */
 void JhlTracers_ParseNpcTracer(BufferReader& reader);
+
+/**
+ *	@brief Where a tracer drawn from outside first person starts: the shooter's model's muzzle (its first attachment,
+ *	set while it's drawn), if it's near @p start, where the game starts its tracers (by the eyes, or an NPC's gun
+ *	position, often well behind the muzzle); otherwise @p start.
+ */
+Vector JhlTracers_MuzzleStart(int shooter, const Vector& start);
 
 /**
  *	@brief A tracer from @p start to @p end: grows out of @p start, flies as a fixed-length streak and shrinks into

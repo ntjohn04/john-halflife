@@ -456,6 +456,11 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 				// Zoomed (the revolver's scope), the view model isn't drawn and its attachment is stale.
 				jhlTracerSrc = viewModel->attachment[0];
 			}
+			else if (!firstPerson)
+			{
+				// Another player, or third person: from the player model's muzzle rather than by the eyes.
+				jhlTracerSrc = JhlTracers_MuzzleStart(idx, vecTracerSrc);
+			}
 
 			const bool heavy = iBulletType == BULLET_PLAYER_357 || iBulletType == BULLET_PLAYER_EAGLE;
 			const JhlTracerKind kind = m249						   ? JhlTracerKind::M249
