@@ -306,6 +306,13 @@ the engine saturates into its bright, textured white-blue.
   (60%) orange (255,128,0),
   yellow (255,200,40) or light brown (190,140,80), so each colour is a fifth of all hornets (`m_JhlColor`, saved): its
   trail.
+* **Strike flare:** the hunt made visible. When a homing hornet commits to its strike (vanilla: lined up on its
+  target within 300 units, it doubles its speed, buzzes and dives straight; single player), its trail flares: a
+  wider glow in its colour (width 0.4 against its trail's 0.2, 170) and a hot core (its colour whitened 55%, 0.2,
+  220), with a 0.4 s tail (its trail's 1 s), drawing only the straight line of the dive (`StrikeFlare`, two more
+  `TE_BEAMFOLLOW`s). It stings or expires after it, never hunting again, so the flare rides it to the end. (The
+  trail is the engine's follow beam, the ribbon of its own path: no noise to make it wispy, but hunting it wiggles
+  and on the strike it flies straight, so the flare marks the change.) Alien grunts' hornets flare too.
 * **Dart splats:** a dart that hits a wall or brush entity splats on it in its colour, muted and dark (organic, not
   paint: red 90,50,42, purple-red 80,48,55, orange 105,80,50, yellow 110,98,62, light brown 100,85,65) and small (the shape at 75%)
   (`{hspit_red1`/`2`, `pur`, `org`, `yel`, `brn`: the bullsquid's spit splats `{spit1`, `{spit2` recoloured and shrunk, a

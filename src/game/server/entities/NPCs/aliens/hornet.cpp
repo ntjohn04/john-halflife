@@ -198,42 +198,58 @@ void CHornet::IgniteTrail()
 	WRITE_BYTE(10);			   // life
 	WRITE_BYTE(2);			   // width
 
-	// johnhalflife: its colour within its type: purple-red (ted's suggested colour above, browner), yellow its orange's
-	// lighter side.
-	const int color = UTIL_JhlParticleSystem() ? m_JhlColor : (m_iHornetType == HORNET_TYPE_RED ? JhlRed : JhlOrange);
-
-	switch (color)
-	{
-	case JhlRed:
-		WRITE_BYTE(179); // r, g, b
-		WRITE_BYTE(39);	 // r, g, b
-		WRITE_BYTE(14);	 // r, g, b
-		break;
-	case JhlPurple:
-		WRITE_BYTE(130); // r, g, b
-		WRITE_BYTE(42);	 // r, g, b
-		WRITE_BYTE(48);	 // r, g, b
-		break;
-	case JhlOrange:
-		WRITE_BYTE(255); // r, g, b
-		WRITE_BYTE(128); // r, g, b
-		WRITE_BYTE(0);	 // r, g, b
-		break;
-	case JhlYellow:
-		WRITE_BYTE(255); // r, g, b
-		WRITE_BYTE(200); // r, g, b
-		WRITE_BYTE(40);	 // r, g, b
-		break;
-	default:
-		WRITE_BYTE(190); // r, g, b
-		WRITE_BYTE(140); // r, g, b
-		WRITE_BYTE(80);	 // r, g, b
-		break;
-	}
+	const Vector color = TrailColor();
+	WRITE_BYTE(static_cast<int>(color.x)); // r, g, b
+	WRITE_BYTE(static_cast<int>(color.y)); // r, g, b
+	WRITE_BYTE(static_cast<int>(color.z)); // r, g, b
 
 	WRITE_BYTE(128); // brightness
 
 	MESSAGE_END();
+}
+
+Vector CHornet::TrailColor() const
+{
+	// johnhalflife: its colour within its type: purple-red (ted's suggested colour above, browner), yellow and light
+	// brown its orange's lighter and earthier sides.
+	switch (UTIL_JhlParticleSystem() ? m_JhlColor : (m_iHornetType == HORNET_TYPE_RED ? JhlRed : JhlOrange))
+	{
+	case JhlRed: return {179, 39, 14};
+	case JhlPurple: return {130, 42, 48};
+	case JhlOrange: return {255, 128, 0};
+	case JhlYellow: return {255, 200, 40};
+	default: return {190, 140, 80};
+	}
+}
+
+void CHornet::StrikeFlare()
+{
+	// johnhalflife: as it commits to its strike its trail flares: a wider glow in its colour and a hot core (its colour
+	// whitened), drawing only the straight line of its dive, with a shorter tail than its trail.
+	const Vector color = TrailColor();
+	const Vector hot = color + (Vector{255, 255, 255} - color) * 0.55f;
+
+	const struct
+	{
+		Vector Color;
+		int Width;
+		int Brightness;
+	} layers[] = {{color, 4, 170}, {hot, 2, 220}};
+
+	for (const auto& layer : layers)
+	{
+		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
+		WRITE_BYTE(TE_BEAMFOLLOW);
+		WRITE_SHORT(entindex());
+		WRITE_SHORT(iHornetTrail);
+		WRITE_BYTE(4);			 // life * 10
+		WRITE_BYTE(layer.Width); // width * 10
+		WRITE_BYTE(static_cast<int>(layer.Color.x));
+		WRITE_BYTE(static_cast<int>(layer.Color.y));
+		WRITE_BYTE(static_cast<int>(layer.Color.z));
+		WRITE_BYTE(layer.Brightness);
+		MESSAGE_END();
+	}
 }
 
 void CHornet::TrackTarget()
@@ -359,6 +375,10 @@ void CHornet::TrackTarget()
 			pev->nextthink = gpGlobals->time + 1.0;
 			// don't attack again
 			m_flStopAttack = gpGlobals->time;
+
+			// johnhalflife: the strike made visible (it stings or expires after it: never hunts again).
+			if (UTIL_JhlParticleSystem())
+				StrikeFlare();
 		}
 	}
 }
