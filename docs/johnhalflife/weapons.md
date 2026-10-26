@@ -264,11 +264,12 @@ the engine saturates into its bright, textured white-blue.
     second, more of everything as the overcharge nears.
 * **Primary beam:** a little brighter (153, vanilla 128), with a core in it: the same path, half the width (0.5),
   a pale hot orange (255,200,110) at 0.35, so the edges stay orange and the center is just a little hotter.
-* **Secondary (charged) beam:** still white, wide and stronger with its charge, but even a small charge at least
-  the primary's strength (vanilla drew it at damage / 255: a half-second charge's 25 damage, more than a primary shot's
+* **Secondary (charged) beam:** still white and stronger with its charge, but even a small charge at least the
+  primary's strength (vanilla drew it at damage / 255: a half-second charge's 25 damage, more than a primary shot's
   20, at a fifth of its brightness). By its damage c (0-1 at 200; what's left after reflections and walls): the beam
-  1.6-2.8 wide (vanilla 2.5) at 0.55-0.85 (vanilla full 0.78); a warm white core (255,220,170) 45% as wide at
-  0.25-0.6; past half charge a soft white halo twice as wide, up to 0.25.
+  1.1-2.0 wide (a little over the primary's 1 when small; vanilla 2.5 at any charge) at 0.5-0.78; an orange core
+  (255,150,60) 35% as wide at 0.15-0.45, warming its center (the white is kept below full so it shows: added onto
+  full white it would only make white); past half charge a soft white halo twice as wide, up to 0.25.
 * **Muzzle light** when it fires (as the guns' muzzle light): the charge's light becomes it, so they don't clash;
   primary 161 units (255,160,60), charged up to 299 units and whiter.
 * **Reflections:** a brief light where a beam reflects (anyone's), 72 units in the gun's orange, fading over 0.4 s;

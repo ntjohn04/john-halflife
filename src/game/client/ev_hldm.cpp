@@ -1140,15 +1140,17 @@ void EV_FireGauss(event_args_t* args)
 		}
 		else
 		{
-			// johnhalflife: still white, wide and stronger with its charge, but even a small one at least the primary's
-			// strength: by its damage (c, 0-1 at 200; what's left after reflections and walls), the beam 1.6-2.8 wide
-			// at 0.55-0.85 (vanilla 2.5 wide at damage / 255: a half-second charge's 25 damage, more than a primary
-			// shot's 20, drew at a fifth of its brightness); a warm white core 45% as wide at 0.25-0.6; and past half
-			// charge a soft white halo twice as wide, up to 0.25.
+			// johnhalflife: still white and stronger with its charge, but even a small one at least the primary's
+			// strength: by its damage (c, 0-1 at 200; what's left after reflections and walls), the beam 1.1-2.0 wide
+			// (a little over the primary's 1 when small; vanilla 2.5 at any charge) at 0.5-0.78 (vanilla at damage /
+			// 255: a half-second charge's 25 damage, more than a primary shot's 20, drew at a fifth of its brightness);
+			// an orange core 35% as wide at 0.15-0.45, warming its center (the white is kept below full so the orange
+			// shows: added onto full white it would only make white); and past half charge a soft white halo twice as
+			// wide, up to 0.25.
 			const float c = std::clamp(flDamage / 200.0f, 0.0f, 1.0f);
-			const float width = 1.6f + 1.2f * c;
-			drawLayer(width, 0.55f + 0.3f * c, {255, 255, 255});
-			drawLayer(width * 0.45f, 0.25f + 0.35f * c, {255, 220, 170});
+			const float width = 1.1f + 0.9f * c;
+			drawLayer(width, 0.5f + 0.28f * c, {255, 255, 255});
+			drawLayer(width * 0.35f, 0.15f + 0.3f * c, {255, 150, 60});
 
 			if (c > 0.5f)
 				drawLayer(width * 2, 0.25f * (c - 0.5f) / 0.5f, {255, 255, 255});
