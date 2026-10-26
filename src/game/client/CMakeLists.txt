@@ -114,6 +114,8 @@ target_sources(client PRIVATE
 	jhl_debris.cpp
 	jhl_debris.h
 	jhl_explosions.cpp
+	jhl_egon.cpp
+	jhl_egon.h
 	jhl_explosions.h
 	jhl_rings.cpp
 	jhl_rings.h

@@ -25,6 +25,7 @@
 #include "event_api.h"
 #include "entity_types.h"
 #include "r_efx.h"
+#include "jhl_egon.h"
 
 extern BEAM* pBeam;
 extern BEAM* pBeam2;
@@ -73,6 +74,9 @@ void UpdateBeams()
 		pBeam2->target = tr.endpos;
 		pBeam2->die = gEngfuncs.GetClientTime() + 0.1; // We keep it alive just a little bit forward in the future, just in case.
 	}
+
+	// johnhalflife: the beams bent as if dragged, scorches and sparks.
+	JhlEgon_Update(pBeam, pBeam2, tr);
 
 	if (pFlare) // Vit_amiN: beam flare
 	{

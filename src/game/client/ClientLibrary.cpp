@@ -22,6 +22,7 @@
 #include "client_gibs.h"
 #include "weapon_effects.h"
 #include "jhl_settings.h"
+#include "jhl_egon.h"
 #include "fx_test.h"
 #include "ClientLibrary.h"
 #include "entity.h"
@@ -63,6 +64,7 @@ bool ClientLibrary::Initialize()
 	ClientGibs_Initialize();
 	WeaponEffects_Initialize();
 	JhlSettings_Initialize();
+	JhlEgon_Initialize();
 	FxTest_Initialize();
 
 	return true;

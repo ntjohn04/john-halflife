@@ -67,6 +67,7 @@ static int g_tracerCount[MAX_PLAYERS];
 #include "weapon_effects.h"
 #include "jhl_settings.h"
 #include "jhl_tracers.h"
+#include "jhl_egon.h"
 #include "Exports.h"
 
 void V_PunchAxis(int axis, float punch);
@@ -1623,6 +1624,9 @@ void EV_EgonStop(event_args_t* args)
 
 	if (EV_IsLocal(idx))
 	{
+		// johnhalflife: before its beams go, a fizzle where it was hitting.
+		JhlEgon_Stop();
+
 		V_SetEgonFiring(false);
 
 		if (pBeam)
