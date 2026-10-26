@@ -229,10 +229,13 @@ water). `jhl_fx_tracers` turns all of them off by itself, leaving the vanilla tr
   muzzle) to where it hits, the engine's own beams kept but unseen. The curve's middle pulls toward where the hit
   point was a moment ago (a copy of it that follows by `jhl_egon_bend` seconds, 0.08 by default, saved; 0 straight),
   so sweeping or strafing bows it behind the motion and holding still straightens it; the bow is at most 30% of the
-  beam's length. The hit point and the damage are the game's, unchanged.
+  beam's length. The hit point and the damage are the game's, unchanged. The engine's noise grows with a beam's
+  length (its strength and the spiral's turns) and the spiral starts at a phase, so each piece gets the whole beam's
+  strength for its length and continues the last one's spiral: strung together they spiral as the one beam does.
 * **Scorches:** small scorches (`{smscorch1`-`3`) where it burns walls and brush entities, not creatures, at least 14
   units apart and 0.12 s apart.
-* **Leaking sparks:** every 0.1-0.3 s a small blue speck (`hotglow` at 0.03, (120,150,255), additive) flung from the
+* **Leaking sparks:** every 0.1-0.3 s a small blue speck (the gun's own flare, `XSpark1`, cyan-blue, at 0.06,
+  additive; additive sprites aren't tinted) flung from the
   muzzle out to the side and up, falling at half gravity, 0.4-0.7 s.
-* **Fizzle on release:** 4-6 blue specks (0.05) where it was hitting, scattered ±50 with a pop of 10-70 up, falling at
+* **Fizzle on release:** 4-6 blue specks (0.1) where it was hitting, scattered ±50 with a pop of 10-70 up, falling at
   half gravity onto what's below, each fading over the last 60% of 1-1.5 s.

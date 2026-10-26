@@ -34,8 +34,8 @@ constexpr int Segments = 8;
 // The curve's bow is at most this share of the beam's length.
 constexpr float MaxBow = 0.3f;
 
-// The specks' color: the beam's blue, bright enough to show drawn additive.
-const Vector SpeckColor{120, 150, 255};
+// The specks: the gun's own impact flare (XSpark1, cyan-blue like the beam; additive sprites aren't tinted), 32 px.
+constexpr const char* SpeckSprite = "sprites/XSpark1.spr";
 
 // Scorches: no closer together than this, nor more often.
 constexpr float ScorchSpacing = 14;
@@ -102,10 +102,28 @@ void DrawLayer(Layer& layer, BEAM* source, const Vector& start, const Vector& co
 	// The engine's beam stays (its updates and lifetime are the game's), unseen.
 	source->brightness = 0;
 
+	// The pieces strung together should look like the one beam: the engine's noise grows with a beam's length (its
+	// strength and, for the spiral, its number of turns), and a beam's spiral starts at its phase (freq). So each piece
+	// gets the whole beam's strength for its length, and its spiral picks up where the last piece's left off.
+	Vector points[Segments + 1];
+	float lengths[Segments];
+	float total = 0;
+
+	for (int i = 0; i <= Segments; ++i)
+		points[i] = Bezier(start, control, end, static_cast<float>(i) / Segments);
+
 	for (int i = 0; i < Segments; ++i)
 	{
-		Vector from = Bezier(start, control, end, static_cast<float>(i) / Segments);
-		Vector to = Bezier(start, control, end, static_cast<float>(i + 1) / Segments);
+		lengths[i] = std::max(1.f, (points[i + 1] - points[i]).Length());
+		total += lengths[i];
+	}
+
+	float along = 0;
+
+	for (int i = 0; i < Segments; ++i)
+	{
+		Vector from = points[i];
+		Vector to = points[i + 1];
 
 		BEAM*& piece = layer.Pieces[i];
 
@@ -124,15 +142,19 @@ void DrawLayer(Layer& layer, BEAM* source, const Vector& start, const Vector& co
 		piece->target = to;
 		piece->delta = to - from;
 		piece->brightness = layer.Brightness;
+		piece->amplitude = source->amplitude * (total / lengths[i]);
+		piece->freq = source->freq + 3.14159265f * along * 0.01f;
 		piece->die = now + 0.1f;
 		piece->flags |= FBEAM_ISACTIVE;
+
+		along += lengths[i];
 	}
 }
 
-// A blue speck: hotglow tinted the beam's color, falling slowly onto what's below and fading.
+// A blue speck of it, falling slowly onto what's below, sparkling (its frames once over its life) and fading.
 void Speck(const Vector& origin, const Vector& velocity, float scale, float life)
 {
-	const int sprite = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/hotglow.spr");
+	const int sprite = gEngfuncs.pEventAPI->EV_FindModelIndex(SpeckSprite);
 
 	if (sprite == 0)
 		return;
@@ -145,7 +167,7 @@ void Speck(const Vector& origin, const Vector& velocity, float scale, float life
 	if (!speck)
 		return;
 
-	speck->entity.curstate.rendercolor = {static_cast<byte>(SpeckColor.x), static_cast<byte>(SpeckColor.y), static_cast<byte>(SpeckColor.z)};
+	speck->entity.angles.z = Random(0, 359);
 	JhlSprite_PlayOnce(speck, life, 0.6f);
 }
 
@@ -182,7 +204,7 @@ void Vent(const Vector& muzzle, float now)
 	AngleVectors(gHUD.m_vecAngles, forward, right, up);
 
 	const Vector velocity = right * Random(-90, 90) + up * Random(20, 90) - forward * Random(0, 40);
-	Speck(muzzle, velocity, 0.03f, Random(0.4f, 0.7f));
+	Speck(muzzle, velocity, 0.06f, Random(0.4f, 0.7f));
 }
 } // namespace
 
@@ -274,7 +296,7 @@ void JhlEgon_Stop()
 	{
 		const Vector origin = g_LastHit + Vector{Random(-3, 3), Random(-3, 3), Random(-3, 3)};
 		const Vector velocity{Random(-50, 50), Random(-50, 50), Random(10, 70)};
-		Speck(origin, velocity, 0.05f, Random(1, 1.5f));
+		Speck(origin, velocity, 0.1f, Random(1, 1.5f));
 	}
 }
 
