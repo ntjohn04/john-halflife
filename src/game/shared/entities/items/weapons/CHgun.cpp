@@ -18,6 +18,10 @@
 #include "aliens/hornet.h"
 #include "UserMessages.h"
 
+#ifndef CLIENT_DLL
+#include "jhl_effects.h"
+#endif
+
 enum firemode_e
 {
 	FIREMODE_TRACK = 0,
@@ -114,10 +118,13 @@ void CHgun::PrimaryAttack()
 #ifndef CLIENT_DLL
 	UTIL_MakeVectors(m_pPlayer->pev->v_angle);
 
-	CBaseEntity* pHornet = CBaseEntity::Create("hornet",
-		m_pPlayer->GetGunPosition() + gpGlobals->v_forward * 16 + gpGlobals->v_right * 8 + gpGlobals->v_up * -12,
-		m_pPlayer->pev->v_angle,
-		m_pPlayer);
+	// johnhalflife: aimed at the crosshair (UTIL_JhlAimAtCrosshair).
+	const Vector vecSrc = m_pPlayer->GetGunPosition() + gpGlobals->v_forward * 16 + gpGlobals->v_right * 8 + gpGlobals->v_up * -12;
+	const Vector vecAngles = UTIL_JhlAimAtCrosshair(m_pPlayer, vecSrc, m_pPlayer->pev->v_angle);
+
+	CBaseEntity* pHornet = CBaseEntity::Create("hornet", vecSrc, vecAngles, m_pPlayer);
+
+	UTIL_MakeVectors(vecAngles); // Create stomps on globals, so remake.
 
 	pHornet->pev->velocity = gpGlobals->v_forward * 300;
 
@@ -178,6 +185,10 @@ void CHgun::SecondaryAttack()
 
 	vecSrc = m_pPlayer->GetGunPosition() + gpGlobals->v_forward * 16 + gpGlobals->v_right * 8 + gpGlobals->v_up * -12;
 
+	// johnhalflife: the volley's middle aimed at the crosshair (UTIL_JhlAimAtCrosshair), every hornet of it parallel to
+	// that, so its spread is as it was, around the crosshair.
+	const Vector vecAngles = UTIL_JhlAimAtCrosshair(m_pPlayer, vecSrc, m_pPlayer->pev->v_angle);
+
 	m_iFirePhase++;
 	switch (m_iFirePhase)
 	{
@@ -212,7 +223,8 @@ void CHgun::SecondaryAttack()
 		break;
 	}
 
-	pHornet = CBaseEntity::Create("hornet", vecSrc, m_pPlayer->pev->v_angle, m_pPlayer);
+	pHornet = CBaseEntity::Create("hornet", vecSrc, vecAngles, m_pPlayer);
+	UTIL_MakeVectors(vecAngles);
 	pHornet->pev->velocity = gpGlobals->v_forward * 1200;
 	pHornet->pev->angles = UTIL_VecToAngles(pHornet->pev->velocity);
 

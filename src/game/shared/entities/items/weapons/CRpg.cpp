@@ -20,6 +20,7 @@
 #ifndef CLIENT_DLL
 #include "items/weapons/CLaserSpot.h"
 #include "items/weapons/CRpgRocket.h"
+#include "jhl_effects.h"
 #endif
 
 LINK_ENTITY_TO_CLASS(weapon_rpg, CRpg);
@@ -179,7 +180,8 @@ void CRpg::PrimaryAttack()
 		UTIL_MakeVectors(m_pPlayer->pev->v_angle);
 		Vector vecSrc = m_pPlayer->GetGunPosition() + gpGlobals->v_forward * 16 + gpGlobals->v_right * 8 + gpGlobals->v_up * -8;
 
-		CRpgRocket* pRocket = CRpgRocket::CreateRpgRocket(vecSrc, m_pPlayer->pev->v_angle, m_pPlayer, this);
+		// johnhalflife: aimed at the crosshair (UTIL_JhlAimAtCrosshair; a guided rocket steers to the laser anyway).
+		CRpgRocket* pRocket = CRpgRocket::CreateRpgRocket(vecSrc, UTIL_JhlAimAtCrosshair(m_pPlayer, vecSrc, m_pPlayer->pev->v_angle), m_pPlayer, this);
 
 		UTIL_MakeVectors(m_pPlayer->pev->v_angle); // RpgRocket::Create stomps on globals, so remake.
 		pRocket->pev->velocity = pRocket->pev->velocity + gpGlobals->v_forward * DotProduct(m_pPlayer->pev->velocity, gpGlobals->v_forward);

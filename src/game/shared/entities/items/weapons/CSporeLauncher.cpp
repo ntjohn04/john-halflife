@@ -16,6 +16,7 @@
 #include "UserMessages.h"
 
 #ifndef CLIENT_DLL
+#include "jhl_effects.h"
 #include "weapons/CSpore.h"
 #endif
 
@@ -165,6 +166,9 @@ void CSporeLauncher::PrimaryAttack()
 			gpGlobals->v_up * -8;
 
 		vecAngles = vecAngles + m_pPlayer->GetAutoaimVectorFromPoint(vecSrc, AUTOAIM_10DEGREES);
+
+		// johnhalflife: aimed at the crosshair (UTIL_JhlAimAtCrosshair).
+		vecAngles = UTIL_JhlAimAtCrosshair(m_pPlayer, vecSrc, vecAngles);
 
 		CSpore* pSpore = CSpore::CreateSpore(
 			vecSrc, vecAngles,

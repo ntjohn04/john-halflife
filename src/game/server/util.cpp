@@ -1366,6 +1366,25 @@ static float JhlExplosionSize(float scale)
 	return std::max(1.f, scale / 3);
 }
 
+Vector UTIL_JhlAimAtCrosshair(CBasePlayer* player, const Vector& source, const Vector& angles)
+{
+	if (!UTIL_JhlParticleSystem())
+		return angles;
+
+	Vector forward;
+	AngleVectors(angles, &forward, nullptr, nullptr);
+
+	const Vector eye = player->GetGunPosition();
+	TraceResult tr;
+	UTIL_TraceLine(eye, eye + forward * 8192, dont_ignore_monsters, player->edict(), &tr);
+
+	const Vector target = (tr.vecEndPos - eye).Length() < 64 ? eye + forward * 64 : tr.vecEndPos;
+
+	Vector aimed = UTIL_VecToAngles(target - source);
+	aimed.x = -aimed.x;
+	return aimed;
+}
+
 void UTIL_JhlExplosionScorch(TraceResult* trace, float scale)
 {
 	if (trace->flFraction == 1.0)

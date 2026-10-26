@@ -28,6 +28,14 @@ inline bool UTIL_JhlParticleSystem()
 	return !cvar || cvar->value != 0;
 }
 
+/**
+ *	@brief A projectile fired from source, off to the side of the player's eye (at the gun), aimed at what the
+ *	crosshair is on (at least 64 units out, so nothing close up turns it sharply): its angles, the view's way round
+ *	(pitch down positive). Vanilla fires them parallel to the aim, so they land as far off the crosshair as the gun is
+ *	from the eye at any range. With jhl_fx_particlesystem off, the angles unchanged (vanilla).
+ */
+Vector UTIL_JhlAimAtCrosshair(CBasePlayer* player, const Vector& source, const Vector& angles);
+
 // johnhalflife explosion extras (util.cpp), by the explosion's fireball scale (a grenade 3), for callers to use with
 // jhl_fx_particlesystem on (vanilla's otherwise).
 

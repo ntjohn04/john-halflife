@@ -61,6 +61,14 @@ than vanilla; only the first shots are tighter. The current spread is predicted 
 
 The crosshair is vanilla. MMod's dynamic crosshair was tried and removed.
 
+### Projectile aim
+Projectiles fired from the gun, off to the side of the eye, are aimed from there at what the crosshair is on (at
+least 64 units out, so nothing close up turns them sharply) (`UTIL_JhlAimAtCrosshair`, `util.cpp`; with
+`jhl_fx_particlesystem` on). Vanilla fires them parallel to the aim, so they land as far off the crosshair as the gun
+is from the eye at any range: the shock rifle 9 right and 7 down, the RPG (unguided) and the spore launcher's rocket
+8 and 8, the hornet gun 8 and 12 (its rapid fire's volley keeps its spread, around the crosshair). The crossbow's
+bolt starts 2 below the eye and is left as it is, as are the spore launcher's lobbed spores.
+
 ## Sounds
 
 ### Weapon switch
@@ -355,9 +363,7 @@ out), so:
   medium-range hit (25 feet, about 300 units, 0.15 s) and 3.3 by 35 feet (0.21 s) (`jhl_shockbeams.cpp`). Vanilla's glow and crackle were 40
   units apart (the crackle starting at its model's side attachment); the pair is closer, by look.
   Up to 16 bolts at once.
-* **Aim:** the bolt starts at the gun (9 right, 7 down of the eye), and vanilla fires it parallel to the aim, so it
-  lands that far off the crosshair at any range; it's aimed from there at what the crosshair is on instead (at least
-  64 units out) (`CShockRifle::PrimaryAttack`).
+* **Aim:** at the crosshair (see Projectile aim).
 * **Wake, a double helix:** behind them, from where they've been, about 300 units (0.16 s), fading toward the tail
   and out after it hits: the glow's smooth and purplish (170,110,220, 1.6 wide, 0.5), the spark's jagged and cyan
   (0,253,253, 0.8, 0.6, the engine's random noise at 0.15, rerolled every frame). 8 pieces a strand, for up to 4
@@ -366,7 +372,7 @@ out), so:
   spark's and its glow's):
   * **Muzzle light:** its impact's light, 80 units, a brief 0.15 s, cyan (0,253,253) or purple (170,110,220); first
     person.
-  * **Impact:** cyan, vanilla's light and 3-4 short cyan arcs (`lgtning`, 12-30 units and 1 wide, each impact's 10-35% bigger, noise 0.5-0.8, 0.4-0.6 s and 5-33% more, off the surface hit)
+  * **Impact:** cyan, vanilla's light and 3-4 short cyan arcs (`lgtning`, 12-30 units and 1 wide, each impact's 5-30% bigger, noise 0.5-0.8, 0.4-0.6 s and up to 35% more, off the surface hit)
     crackling off where it hits; or purple, a purple light and 3-4 of its glow sprites (`flare3`, pinkish grey)
     fizzling up and out off the surface it hit (from 4 units off it, so none lodge in a wall), falling and bouncing
     (the engine's sprite trail, `TE_SPRITETRAIL`). Besides its sparks and
