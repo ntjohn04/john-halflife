@@ -35,11 +35,12 @@ constexpr float PieceTime = 0.02f;
 constexpr std::size_t MaxBolts = 16;
 constexpr std::size_t MaxWakes = 4;
 
-// Its glow and spark circle its path this far out, this many turns a second, the circle easing in to RadiusEnd over
-// its first RadiusTime (by a medium-range hit: about 300 units at its 2000 a second).
+// Its glow and spark circle its path this far out, this many turns a second, the circle easing in (smoothstep) to
+// RadiusEnd over its first RadiusTime: 4 units by a medium-range hit (25 feet, about 300 units at its 2000 a second,
+// 0.15 s), 3.25 by 35 feet (0.21 s). Half the bolts turn one way, half the other.
 constexpr float Radius = 7;
-constexpr float RadiusEnd = 4.2f;
-constexpr float RadiusTime = 0.15f;
+constexpr float RadiusEnd = 3.25f;
+constexpr float RadiusTime = 0.21f;
 constexpr float TurnsPerSecond = 3;
 
 // The glow (vanilla's, flare3) and the spark (the gluon gun's flare, XSpark1: cyan-blue by itself, sparkling).
@@ -74,6 +75,7 @@ struct Bolt
 	float FirstSeen;
 	float LastSeen;
 	float Phase;
+	float Turning; // 1 or -1.
 	std::deque<Sample> History;
 	BEAM* Beams[2][Pieces]{};
 	TEMPENTITY* Sprites[2]{}; // Its glow and its spark.
@@ -156,7 +158,8 @@ void JhlShockBeams_Track(cl_entity_t* entity, const char* modelname)
 		if (g_Bolts.size() >= MaxBolts)
 			return;
 
-		g_Bolts.push_back({entity->index, now, now, gEngfuncs.pfnRandomFloat(0, 6.2831853f), {}, {}, {}});
+		g_Bolts.push_back({entity->index, now, now, gEngfuncs.pfnRandomFloat(0, 6.2831853f),
+			gEngfuncs.pfnRandomLong(0, 1) != 0 ? 1.f : -1.f, {}, {}, {}});
 		bolt = &g_Bolts.back();
 	}
 
@@ -165,7 +168,7 @@ void JhlShockBeams_Track(cl_entity_t* entity, const char* modelname)
 	// Its glow and spark, circling its path (its angles' way; a studio model's pitch is the other way round).
 	Vector forward, right, up;
 	AngleVectors(Vector{-entity->angles.x, entity->angles.y, 0}, forward, right, up);
-	const float angle = bolt->Phase + 6.2831853f * TurnsPerSecond * now;
+	const float angle = bolt->Phase + bolt->Turning * 6.2831853f * TurnsPerSecond * now;
 	const float eased = std::clamp((now - bolt->FirstSeen) / RadiusTime, 0.f, 1.f);
 	const float radius = Radius + (RadiusEnd - Radius) * eased * eased * (3 - 2 * eased);
 	const Vector offset = (right * std::cos(angle) + up * std::sin(angle)) * radius;

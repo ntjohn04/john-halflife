@@ -350,8 +350,9 @@ out), so:
 
 * **Glow and spark circling:** the server leaves out its glow and crackle (`Spawn`); the client draws its glow
   (`flare3` at 0.35, distorting, as vanilla's) and a blue spark (the gluon gun's flare, `XSpark1` at 0.45, cyan-blue
-  by itself, sparkling) circling its path 180 degrees apart, 3 turns a second, 7 units out easing in to 4.2 over its
-  first 0.15 s (by a medium-range hit, about 300 units) (`jhl_shockbeams.cpp`). Vanilla's glow and crackle were 40
+  by itself, sparkling) circling its path 180 degrees apart, 3 turns a second, half the bolts one way and half the
+  other (so a burst has no lean and its straight path shows), 7 units out easing in (smoothstep) to 4 by a
+  medium-range hit (25 feet, about 300 units, 0.15 s) and 3.25 by 35 feet (0.21 s) (`jhl_shockbeams.cpp`). Vanilla's glow and crackle were 40
   units apart (the crackle starting at its model's side attachment); the pair is closer, by look.
   Up to 16 bolts at once.
 * **Wake, a double helix:** behind them, from where they've been, about 300 units (0.16 s), fading toward the tail
