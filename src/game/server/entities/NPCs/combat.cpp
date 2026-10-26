@@ -1448,7 +1448,21 @@ void CBaseEntity::FireBullets(unsigned int cShots, Vector vecSrc, Vector vecDirS
 
 			if (jhlTracers)
 			{
-				UTIL_JhlTracer(vecTracerSrc, tr.vecEndPos, jhlTracerKind, this);
+				// johnhalflife's streak from the gun's muzzle (its model's first attachment, where its muzzle flash is),
+				// not its gun position, which is often behind it; unless that's nowhere near (no attachment, or not a
+				// gun's).
+				Vector muzzle = vecTracerSrc;
+
+				if (CBaseMonster* monster = MyMonsterPointer(); monster && !FStringNull(pev->model))
+				{
+					Vector attachment, angles;
+					monster->GetAttachment(0, attachment, angles);
+
+					if ((attachment - pev->origin).Length() > 8 && (attachment - vecTracerSrc).Length() < 96)
+						muzzle = attachment;
+				}
+
+				UTIL_JhlTracer(vecTracerSrc, tr.vecEndPos, jhlTracerKind, muzzle);
 			}
 			else
 			{

@@ -126,18 +126,18 @@ constexpr int JhlTracerShotgun = 4;
 constexpr int JhlTracerM249 = 5;
 
 /**
- *	@brief An NPC's tracer through the SDK's own temp entity message (TE_TRACER: start, end, kind, shooter), in place of the
+ *	@brief An NPC's tracer through the SDK's own temp entity message (TE_TRACER: start, end, kind, muzzle), in place of the
  *	engine's: the client draws the vanilla one and johnhalflife's of @p kind on top (the M249's instead of it). Sent as
  *	the vanilla one is, to those who can hear it.
  */
-inline void UTIL_JhlTracer(const Vector& start, const Vector& end, int kind, CBaseEntity* shooter)
+inline void UTIL_JhlTracer(const Vector& start, const Vector& end, int kind, const Vector& muzzle)
 {
 	MESSAGE_BEGIN(MSG_PAS, gmsgTempEntity, start);
 	WRITE_BYTE(TE_TRACER);
 	WRITE_COORD_VECTOR(start);
 	WRITE_COORD_VECTOR(end);
 	WRITE_BYTE(kind);
-	WRITE_SHORT(shooter ? shooter->entindex() : 0); // So the client can start its streak at the shooter's muzzle.
+	WRITE_COORD_VECTOR(muzzle); // Where johnhalflife's streak starts.
 	MESSAGE_END();
 }
 

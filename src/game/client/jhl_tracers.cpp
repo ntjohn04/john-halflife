@@ -183,14 +183,14 @@ void JhlTracers_ParseNpcTracer(BufferReader& reader)
 	Vector start = reader.ReadCoordVector();
 	const Vector end = reader.ReadCoordVector();
 	const auto kind = static_cast<JhlTracerKind>(reader.ReadByte());
-	const int shooter = reader.ReadShort();
+	const Vector muzzle = reader.ReadCoordVector();
 
 	// The vanilla one, but the M249's is replaced by its red tracer rounds.
 	if (kind != JhlTracerKind::M249 || !JhlTracersEnabled())
 		gEngfuncs.pEfxAPI->R_TracerEffect(start, end);
 
 	if (JhlTracersEnabled())
-		JhlTracer_Fire(JhlTracers_MuzzleStart(shooter, start), end, JhlTracers_Style(kind));
+		JhlTracer_Fire(muzzle, end, JhlTracers_Style(kind));
 }
 
 Vector JhlTracers_MuzzleStart(int shooter, const Vector& start)
@@ -205,7 +205,8 @@ Vector JhlTracers_MuzzleStart(int shooter, const Vector& start)
 
 	const Vector muzzle = entity->attachment[0];
 
-	if (muzzle == g_vecZero || (muzzle - start).Length() > MuzzleNear)
+	// Unset attachments sit at the entity's origin (its feet).
+	if (muzzle == g_vecZero || (muzzle - entity->origin).Length() < 8 || (muzzle - start).Length() > MuzzleNear)
 		return start;
 
 	return muzzle;

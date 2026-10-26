@@ -206,10 +206,12 @@ muzzle, so it crosses the view; otherwise at the game's tracer start.
   revolver's, shotguns the shotgun's, the Black Ops assassin's rifle the sniper rifle's). Opposing Force's friendly M249
   grunt fires the M249's red tracer rounds instead of the vanilla one, one in 3 (vanilla every 2nd).
 
-Outside first person (other players, third person, NPCs) a streak starts at the shooter's model's muzzle (its first
-attachment, `JhlTracers_MuzzleStart`; NPCs' tracer messages carry the shooter) when that's within 96 units of where the
-game starts its tracers (by the eyes, or an NPC's gun position, often behind the muzzle, which hid the M249's red in
-the gun); the vanilla tracer keeps its own start.
+Outside first person a streak starts at the shooter's muzzle, the model's first attachment (the grunts' and the
+player's: 20-25 units out from the right hand, where its muzzle flash is), not where the game starts its tracers (by
+the eyes, or an NPC's gun position, often behind the muzzle, which hid the M249's red in the gun): for NPCs the server
+finds it (`FireBullets`; the client doesn't set NPCs' attachments, leaving them at their feet) and sends it with the
+tracer; for players the client uses the player model's (`JhlTracers_MuzzleStart`). Either only when it's set (not at
+the origin) and within 96 units of the game's start. The vanilla tracer keeps its own start.
 
 Into water, a streak stops about a foot under the surface (found as bullet splashes find it, only when it ends in
 water). `jhl_fx_tracers` turns all of them off by itself, leaving the vanilla tracers.
