@@ -179,11 +179,11 @@ void CCrossbowBolt::WakeThink()
 	WRITE_SHORT(entindex());
 	WRITE_SHORT(g_sModelIndexLaser);
 	WRITE_BYTE(2);	 // life * 10
-	WRITE_BYTE(5);	 // width * 10
+	WRITE_BYTE(4);	 // width * 10
 	WRITE_BYTE(170); // r, g, b
 	WRITE_BYTE(170); // r, g, b
 	WRITE_BYTE(170); // r, g, b
-	WRITE_BYTE(20);	 // brightness
+	WRITE_BYTE(16);	 // brightness
 	MESSAGE_END();
 
 	// Its first bubble check, as it would have had.

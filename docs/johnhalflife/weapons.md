@@ -214,7 +214,7 @@ tracer; for players the client uses the player model's (`JhlTracers_MuzzleStart`
 the origin) and within 96 units of the game's start. The vanilla tracer keeps its own start.
 
 The crossbow's bolt is a real projectile, so no streak: instead a faint grey wake follows it (`TE_BEAMFOLLOW` on the
-bolt, `laserbeam`, (170,170,170) at 20, width 0.5, 0.2 s of its flight, about 400 units), starting a few feet out
+bolt, `laserbeam`, (170,170,170) at 16, width 0.4, 0.2 s of its flight, about 400 units), starting a few feet out
 (sent 0.03 s after it's fired, about 60 units, `WakeThink`), not underwater.
 
 Into water, a streak stops about a foot under the surface (found as bullet splashes find it, only when it ends in
