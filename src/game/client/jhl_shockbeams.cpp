@@ -36,8 +36,8 @@ constexpr std::size_t MaxBolts = 16;
 constexpr std::size_t MaxWakes = 4;
 
 // Its glow and spark circle its path this far out, this many turns a second.
-constexpr float Radius = 10;
-constexpr float TurnsPerSecond = 5;
+constexpr float Radius = 7;
+constexpr float TurnsPerSecond = 3;
 
 // The glow (vanilla's, flare3) and the spark (the gluon gun's flare, XSpark1: cyan-blue by itself, sparkling).
 constexpr const char* GlowSprite = "sprites/flare3.spr";

@@ -228,15 +228,21 @@ void CShockBeam::Explode()
 
 	pev->dmg = 40;
 
+	// johnhalflife: its impact in one of its two colours, half the time each: the spark's cyan (vanilla's light, and
+	// arcs crackling), or the glow's purple (a purple light, and a few of its glow fizzling off); in rapid fire the two
+	// tumble over each other.
+	const bool jhl = UTIL_JhlParticleSystem();
+	const bool purple = jhl && RANDOM_LONG(0, 1) != 0;
+
 	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
 	WRITE_BYTE(TE_DLIGHT);
 	WRITE_COORD(pev->origin.x);
 	WRITE_COORD(pev->origin.y);
 	WRITE_COORD(pev->origin.z);
 	WRITE_BYTE(8);
-	WRITE_BYTE(0);
-	WRITE_BYTE(253);
-	WRITE_BYTE(253);
+	WRITE_BYTE(purple ? 170 : 0);
+	WRITE_BYTE(purple ? 110 : 253);
+	WRITE_BYTE(purple ? 220 : 253);
 	WRITE_BYTE(5);
 	WRITE_BYTE(10);
 	MESSAGE_END();
@@ -245,9 +251,28 @@ void CShockBeam::Explode()
 
 	EmitSound(CHAN_WEAPON, "weapons/shock_impact.wav", RANDOM_FLOAT(0.8, 0.9), ATTN_NORM);
 
-	// johnhalflife: it crackles where it hits: a few short arcs off the impact in its cyan, 0.2-0.35 s each (their
-	// noise changes every frame, so they crackle while they last).
-	if (UTIL_JhlParticleSystem())
+	// johnhalflife: a purple impact fizzles: 2-3 of its glow sprites (flare3, pinkish grey) thrown up off where it hit,
+	// falling and bouncing (the engine's sprite trail).
+	if (purple)
+	{
+		const Vector up = pev->origin + Vector(0, 0, 1);
+
+		MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
+		WRITE_BYTE(TE_SPRITETRAIL);
+		WRITE_COORD_VECTOR(pev->origin);
+		WRITE_COORD_VECTOR(up);
+		WRITE_SHORT(g_engfuncs.pfnModelIndex("sprites/flare3.spr"));
+		WRITE_BYTE(RANDOM_LONG(2, 3)); // count
+		WRITE_BYTE(8);				   // life, tenths
+		WRITE_BYTE(1);				   // scale, tenths
+		WRITE_BYTE(8);				   // velocity along it, tens
+		WRITE_BYTE(10);				   // random velocity, tens
+		MESSAGE_END();
+	}
+
+	// johnhalflife: a cyan impact crackles: a few short arcs off it, 0.2-0.35 s each (their noise changes every frame,
+	// so they crackle while they last).
+	else if (jhl)
 	{
 		const int sprite = g_engfuncs.pfnModelIndex("sprites/lgtning.spr");
 

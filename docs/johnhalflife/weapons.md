@@ -350,12 +350,17 @@ out), so:
 
 * **Glow and spark circling:** the server leaves out its glow and crackle (`Spawn`); the client draws its glow
   (`flare3` at 0.35, distorting, as vanilla's) and a blue spark (the gluon gun's flare, `XSpark1` at 0.45, cyan-blue
-  by itself, sparkling) circling its path 180 degrees apart, 10 units out, 5 turns a second (`jhl_shockbeams.cpp`).
+  by itself, sparkling) circling its path 180 degrees apart, 7 units out, 3 turns a second (`jhl_shockbeams.cpp`).
   Up to 16 bolts at once.
 * **Wake, a double helix:** behind them, from where they've been, about 300 units (0.16 s), fading toward the tail
   and out after it hits: the glow's smooth and purplish (170,110,220, 1.6 wide, 0.35), the spark's jagged and cyan
   (0,253,253, 0.8, 0.6, the engine's random noise at 0.15, rerolled every frame). 8 pieces a strand, for up to 4
   bolts at once (their beams); the rest have their glow and spark only.
-* **Muzzle light:** its impact's cyan (0,253,253), 80 units, a brief 0.15 s; first person.
-* **Impact crackle:** 3-4 short cyan arcs (`lgtning`, 12-30 units, noise 0.5-0.8, 0.2-0.3 s) off where it hits,
-  crackling while they last, besides its light, sparks and scorch.
+* **Its two colours, half the time each,** so rapid fire tumbles the two over each other (both are its own, its
+  spark's and its glow's):
+  * **Muzzle light:** its impact's light, 80 units, a brief 0.15 s, cyan (0,253,253) or purple (170,110,220); first
+    person.
+  * **Impact:** cyan, vanilla's light and 3-4 short cyan arcs (`lgtning`, 12-30 units, noise 0.5-0.8, 0.2-0.3 s)
+    crackling off where it hits; or purple, a purple light and 2-3 of its glow sprites (`flare3`, pinkish grey)
+    fizzling up off it, falling and bouncing (the engine's sprite trail, `TE_SPRITETRAIL`). Besides its sparks and
+    scorch.
