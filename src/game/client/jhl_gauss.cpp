@@ -184,6 +184,14 @@ void JhlGauss_Fire(bool primary, float damage)
 	if (!JhlParticleSystemEnabled())
 		return;
 
+	// A lesser charge letting go: a few of its sparks thrown out of the muzzle, more the more it held (2 for the least,
+	// 7 just short of full).
+	if (Vector muzzle; !primary && !full && FindMuzzle(muzzle))
+	{
+		for (int i = 0, count = static_cast<int>(std::lround(2 + 5 * charge)); i < count; ++i)
+			Spit(muzzle, true);
+	}
+
 	// A full charge letting go: the unstable charge's sparks thrown out of the muzzle, and a few of the gun's own
 	// bouncing orbs (its spent-energy balls, as at its impacts), a little bigger.
 	if (Vector muzzle; full && FindMuzzle(muzzle))

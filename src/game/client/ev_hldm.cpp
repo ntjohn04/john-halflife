@@ -1144,13 +1144,14 @@ void EV_FireGauss(event_args_t* args)
 			// strength: by its damage (c, 0-1 at 200; what's left after reflections and walls), the beam 1.1-2.0 wide
 			// (a little over the primary's 1 when small; vanilla 2.5 at any charge) at 0.42-0.62 (vanilla at damage /
 			// 255: a half-second charge's 25 damage, more than a primary shot's 20, drew at a fifth of its brightness);
-			// a saturated orange core 40% as wide at 0.25-0.65, warming its center (the white is kept well below full
+			// a saturated orange core 40% as wide at 0.35-0.65 (orange even on a small charge; a full one stays near white),
+			// warming its center (the white is kept well below full
 			// so the orange shows: added onto bright white it only makes white); and past half charge a soft white halo
 			// twice as wide, up to 0.25.
 			const float c = std::clamp(flDamage / 200.0f, 0.0f, 1.0f);
 			const float width = 1.1f + 0.9f * c;
 			drawLayer(width, 0.42f + 0.2f * c, {255, 255, 255});
-			drawLayer(width * 0.4f, 0.25f + 0.4f * c, {255, 110, 0});
+			drawLayer(width * 0.4f, 0.35f + 0.3f * c, {255, 110, 0});
 
 			if (c > 0.5f)
 				drawLayer(width * 2, 0.25f * (c - 0.5f) / 0.5f, {255, 255, 255});

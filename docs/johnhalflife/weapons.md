@@ -268,8 +268,10 @@ the engine saturates into its bright, textured white-blue.
   primary's strength (vanilla drew it at damage / 255: a half-second charge's 25 damage, more than a primary shot's
   20, at a fifth of its brightness). By its damage c (0-1 at 200; what's left after reflections and walls): the beam
   1.1-2.0 wide (a little over the primary's 1 when small; vanilla 2.5 at any charge) at 0.42-0.62; a saturated
-  orange core (255,110,0) 40% as wide at 0.25-0.65, warming its center (the white is kept well below full so it
+  orange core (255,110,0) 40% as wide at 0.35-0.65 (orange even on a small charge; a full one stays near white), warming its center (the white is kept well below full so it
   shows: added onto bright white it only makes white); past half charge a soft white halo twice as wide, up to 0.25.
+* **A lesser charge letting go:** a few of those sparks thrown out of the muzzle, more the more it held: 2 for the
+  least, 7 just short of full.
 * **A full charge letting go:** 8-12 of the unstable charge's sparks thrown out of the muzzle (forward 80-200, out
   ±110, up to 110), and 2-3 of the gun's own bouncing orbs (`TE_SPRITETRAIL` of `hotglow`, as at its impacts, 0.15-0.25).
 * **Muzzle light** when it fires (as the guns' muzzle light): the charge's light becomes it, so they don't clash;
