@@ -27,8 +27,9 @@
 void JhlGauss_Spin(int pitch);
 
 /**
- *	@brief The local player fired (EV_FireGauss): the charge ends, its light becoming the muzzle's flash. @p damage
- *	is the shot's (primary 20; charged up to 200).
+ *	@brief The local player fired (EV_FireGauss): the charge ends, its light becoming the muzzle's flash, a charged shot
+ *	throwing sparks by how much it held (from the spin events, not @p damage: the predicted shot's can come in far over
+ *	what was held).
  */
 void JhlGauss_Fire(bool primary, float damage);
 

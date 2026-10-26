@@ -175,8 +175,8 @@ void JhlGauss_Spin(int pitch)
 
 void JhlGauss_Fire(bool primary, float damage)
 {
-	const float charge = primary ? 0.f : std::clamp(damage / 200, 0.f, 1.f);
-
+	// How much it held, from the spin events (the predicted shot's damage can come in far over what was held).
+	const float held = primary ? 0.f : g_Charge;
 	const bool full = !primary && g_FullSince >= 0;
 
 	JhlGauss_StopCharge();
@@ -188,7 +188,7 @@ void JhlGauss_Fire(bool primary, float damage)
 	// 7 just short of full).
 	if (Vector muzzle; !primary && !full && FindMuzzle(muzzle))
 	{
-		for (int i = 0, count = static_cast<int>(std::lround(2 + 5 * charge)); i < count; ++i)
+		for (int i = 0, count = static_cast<int>(std::lround(2 + 5 * held)); i < count; ++i)
 			Spit(muzzle, true);
 	}
 
@@ -214,8 +214,8 @@ void JhlGauss_Fire(bool primary, float damage)
 	// it was charged.
 	if (Vector muzzle; FindMuzzle(muzzle))
 	{
-		const float radius = (primary ? 140 : 140 + 120 * charge) * 1.15f;
-		const color24 color = primary ? color24{255, 160, 60} : color24{255, static_cast<byte>(170 + 60 * charge), static_cast<byte>(80 + 120 * charge)};
+		const float radius = (primary ? 140 : 140 + 120 * held) * 1.15f;
+		const color24 color = primary ? color24{255, 160, 60} : color24{255, static_cast<byte>(170 + 60 * held), static_cast<byte>(80 + 120 * held)};
 		Light(muzzle, radius, color, 0.1f, radius * 8);
 	}
 }
