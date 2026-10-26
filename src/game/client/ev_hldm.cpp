@@ -1574,16 +1574,12 @@ void EV_EgonFire(event_args_t* args)
 
 			int iBeamModelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex(EGON_BEAM_SPRITE);
 
-			float r = 50.0f;
-			float g = 50.0f;
+			// johnhalflife: Half-Life's own colors. Half-Life Updated divided all three by 255 ("too bright", halflife issue
+			// #3033), which made the beam a dim, see-through blue; Half-Life divides red and green by 100 and leaves blue at
+			// 125, which the engine saturates into its bright, textured white-blue.
+			float r = 50.0f / 100.0f;
+			float g = 50.0f / 100.0f;
 			float b = 125.0f;
-
-			// if ( IEngineStudio.IsHardware() )
-			{
-				r /= 255.0f;
-				g /= 255.0f;
-				b /= 255.0f;
-			}
 
 
 			pBeam = gEngfuncs.pEfxAPI->R_BeamEntPoint(idx | 0x1000, tr.endpos, iBeamModelIndex, 99999, 3.5, 0.2, 0.7, 55, 0, 0, r, g, b);

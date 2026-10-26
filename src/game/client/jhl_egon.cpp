@@ -106,7 +106,7 @@ void DrawLayer(Layer& layer, BEAM* source, const Vector& start, const Vector& co
 	// Each piece draws the engine's noise over its own length (the spiral's turns restart on each), so the spiral layer
 	// uses fewer, longer pieces (jhl_egon_spiralpieces) than the smooth one.
 	const bool spiral = (source->flags & FBEAM_SINENOISE) != 0;
-	const int pieces = spiral ? std::clamp(g_SpiralPieces ? static_cast<int>(g_SpiralPieces->value) : 3, 1, Segments) : Segments;
+	const int pieces = spiral ? std::clamp(g_SpiralPieces ? static_cast<int>(g_SpiralPieces->value) : 2, 1, Segments) : Segments;
 
 	for (int i = pieces; i < Segments; ++i)
 	{
@@ -208,7 +208,7 @@ void JhlEgon_Initialize()
 	g_Bend = gEngfuncs.pfnRegisterVariable("jhl_egon_bend", "0.08", FCVAR_ARCHIVE);
 
 	// How many pieces its spiral is drawn in along the bend (1-8): each restarts the spiral's turns.
-	g_SpiralPieces = gEngfuncs.pfnRegisterVariable("jhl_egon_spiralpieces", "3", FCVAR_ARCHIVE);
+	g_SpiralPieces = gEngfuncs.pfnRegisterVariable("jhl_egon_spiralpieces", "2", FCVAR_ARCHIVE);
 }
 
 void JhlEgon_Update(BEAM* beam, BEAM* beam2, const pmtrace_t& hit)

@@ -225,13 +225,17 @@ water). `jhl_fx_tracers` turns all of them off by itself, leaving the vanilla tr
 ### Gluon gun
 `jhl_fx_particlesystem` (`jhl_egon.cpp`, the local player's beam)
 
+Its colors are Half-Life's again (always, as a fix): Half-Life Updated divided all three by 255 ("too bright",
+halflife issue #3033), a dim, see-through blue; Half-Life divides red and green by 100 and leaves blue at 125, which
+the engine saturates into its bright, textured white-blue.
+
 * **Dragged beam:** its two beams are drawn as 8 straight pieces each along a curve from the gun (its view model's
   muzzle) to where it hits, the engine's own beams kept but unseen. The curve's middle pulls toward where the hit
   point was a moment ago (a copy of it that follows by `jhl_egon_bend` seconds, 0.08 by default, saved; 0 straight),
   so sweeping or strafing bows it behind the motion and holding still straightens it; the bow is at most 30% of the
   beam's length. The hit point and the damage are the game's, unchanged. Each piece draws the engine's noise over its
   own length, the spiral's turns restarting on each, so the spiral beam is drawn in fewer, longer pieces
-  (`jhl_egon_spiralpieces`, 3 by default, 1-8, saved) than the smooth one (8). Scaling the pieces' noise to the whole
+  (`jhl_egon_spiralpieces`, 2 by default, like vanilla's spiral, 1-8, saved) than the smooth one (8). Scaling the pieces' noise to the whole
   beam's length to continue one spiral across them didn't work: the noise went wild.
 * **Scorches:** small scorches (`{smscorch1`-`3`) where it burns walls and brush entities, not creatures, at least 14
   units apart and 0.12 s apart.
