@@ -55,6 +55,15 @@ void CShockBeam::Spawn()
 	SetTouch(&CShockBeam::BallTouch);
 	SetThink(&CShockBeam::FlyThink);
 
+	// johnhalflife: the client draws its glow and its spark instead, circling its path 180 degrees apart, with their
+	// wakes a double helix (jhl_shockbeams.cpp); its crackle across it goes (it ran between its model's attachments,
+	// 80 units apart, which can't make a small circle).
+	if (UTIL_JhlParticleSystem())
+	{
+		pev->nextthink = gpGlobals->time + 0.01;
+		return;
+	}
+
 	m_pSprite = CSprite::SpriteCreate("sprites/flare3.spr", pev->origin, false);
 
 	m_pSprite->SetTransparency(kRenderTransAdd, 255, 255, 255, 255, kRenderFxDistort);
@@ -284,11 +293,6 @@ CShockBeam* CShockBeam::CreateShockBeam(const Vector& vecOrigin, const Vector& v
 
 	pBeam->pev->owner = pOwner->edict();
 
-	// johnhalflife: it spins about its flight, 6 turns a second, swinging its crackle around its glow (its beams start
-	// at its model's side attachments); only how it looks, its box doesn't turn. Its wake (the client's,
-	// jhl_shockbeams.cpp) winds around its path.
-	if (UTIL_JhlParticleSystem())
-		pBeam->pev->avelocity.z = 6 * 360;
 
 	return pBeam;
 }

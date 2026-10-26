@@ -15,14 +15,15 @@
 
 #pragma once
 
-// johnhalflife's shock rifle wake (jhl_fx_particlesystem): behind each bolt, a smooth purplish strand along the path of
-// its glow (its centre) and a jagged cyan one along the path of its crackle's end (its model's first attachment, 40
-// units to its side), which the bolt's spin (CShockBeam::CreateShockBeam) winds around it.
+// johnhalflife's shock rifle bolt (jhl_fx_particlesystem): its glow (flare3, as vanilla's) and a blue spark (XSpark1)
+// circling its path 180 degrees apart (the server leaves out its own glow and crackle, CShockBeam::Spawn), and behind
+// them their wakes, a double helix: the glow's smooth and purplish, the spark's jagged and cyan.
 
 struct cl_entity_t;
 
 /**
- *	@brief An entity being added this frame (HUD_AddEntity): records where a shock bolt's two points are.
+ *	@brief An entity being added this frame (HUD_AddEntity): places a shock bolt's glow and spark and records where they
+ *	are.
  */
 void JhlShockBeams_Track(cl_entity_t* entity, const char* modelname);
 

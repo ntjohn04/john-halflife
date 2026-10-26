@@ -342,17 +342,20 @@ The hornet gun's flair is organic (blood, spit, splats) rather than energy, and 
 ### Shock rifle
 `jhl_fx_particlesystem`
 
-The bolt (`CShockBeam`): a tiny chrome model (`shock_effect.mdl`, attachments 5 forward and 40 to either side) with
-a pale glow sprite (`flare3`, distorting) at its centre and two lightning beams (cyan, and a thin noisy pale yellow)
-from one side attachment to the other, fading toward the far end, so its crackle shows on one side of its glow.
+The vanilla bolt (`CShockBeam`): a tiny chrome model (`shock_effect.mdl`, attachments 5 forward and 40 to either side)
+with a pale glow sprite (`flare3`, distorting) at its centre and two lightning beams (cyan, and a thin noisy pale
+yellow) from one side attachment to the other, fading toward the far end, so its crackle shows 40 units to one side
+of its glow. Spinning it can't make the two circle each other equally (the glow is on its axis, the crackle's end 40
+out), so:
 
-* **Spin:** it turns about its flight, 6 turns a second (`avelocity`), swinging its crackle around its glow; only
-  how it looks (its box doesn't turn).
-* **Wake** (`jhl_shockbeams.cpp`): two strands drawn on the client from where its two points have been, about 300
-  units (0.16 s) behind it, fading toward the tail and out after it hits: a smooth purplish one (170,110,220, 1.6 wide,
-  0.35) along its glow's path, and a jagged cyan one (0,253,253, 0.8, 0.6, the engine's random noise at 0.15, rerolled
-  every frame) along its crackle's end, which the spin winds around it. Its side attachment is worked out from its
-  angles (a studio model's pitch the other way round). 8 pieces a strand, up to 4 bolts at once.
+* **Glow and spark circling:** the server leaves out its glow and crackle (`Spawn`); the client draws its glow
+  (`flare3` at 0.35, distorting, as vanilla's) and a blue spark (the gluon gun's flare, `XSpark1` at 0.45, cyan-blue
+  by itself, sparkling) circling its path 180 degrees apart, 10 units out, 5 turns a second (`jhl_shockbeams.cpp`).
+  Up to 16 bolts at once.
+* **Wake, a double helix:** behind them, from where they've been, about 300 units (0.16 s), fading toward the tail
+  and out after it hits: the glow's smooth and purplish (170,110,220, 1.6 wide, 0.35), the spark's jagged and cyan
+  (0,253,253, 0.8, 0.6, the engine's random noise at 0.15, rerolled every frame). 8 pieces a strand, for up to 4
+  bolts at once (their beams); the rest have their glow and spark only.
 * **Muzzle light:** its impact's cyan (0,253,253), 80 units, a brief 0.15 s; first person.
 * **Impact crackle:** 3-4 short cyan arcs (`lgtning`, 12-30 units, noise 0.5-0.8, 0.2-0.3 s) off where it hits,
   crackling while they last, besides its light, sparks and scorch.

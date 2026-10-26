@@ -28,14 +28,22 @@
 namespace
 {
 // Each strand: this many pieces, each this long in time (the wake is their product: about 300 units at its 2000 a
-// second), for up to MaxBolts at once, to keep within the engine's beams.
+// second), for up to MaxWakes bolts at once, to keep within the engine's beams; every bolt (up to MaxBolts) has its
+// glow and spark.
 constexpr int Pieces = 8;
 constexpr float PieceTime = 0.02f;
-constexpr std::size_t MaxBolts = 4;
+constexpr std::size_t MaxBolts = 16;
+constexpr std::size_t MaxWakes = 4;
 
-// Its model's first attachment, where its beams start (shock_effect.mdl: 5 forward, 40 to the side).
-constexpr float AttachmentForward = 5;
-constexpr float AttachmentSide = 40;
+// Its glow and spark circle its path this far out, this many turns a second.
+constexpr float Radius = 10;
+constexpr float TurnsPerSecond = 5;
+
+// The glow (vanilla's, flare3) and the spark (the gluon gun's flare, XSpark1: cyan-blue by itself, sparkling).
+constexpr const char* GlowSprite = "sprites/flare3.spr";
+constexpr float GlowScale = 0.35f;
+constexpr const char* SparkSprite = "sprites/XSpark1.spr";
+constexpr float SparkScale = 0.45f;
 
 // A bolt not seen for this long is gone: its wake fades out over what's left.
 constexpr float LostAfter = 0.05f;
@@ -48,7 +56,7 @@ struct Strand
 	float Noise; // The engine's random noise, rerolled every frame: jagged, crackling.
 };
 
-// The smooth purplish one along its glow's path, the jagged cyan one along its crackle's.
+// The smooth purplish one along its glow's path, the jagged cyan one along its spark's.
 const Strand Strands[2] = {{{170, 110, 220}, 1.6f, 0.35f, 0}, {{0, 253, 253}, 0.8f, 0.6f, 0.15f}};
 
 struct Sample
@@ -61,8 +69,10 @@ struct Bolt
 {
 	int Index;
 	float LastSeen;
+	float Phase;
 	std::deque<Sample> History;
 	BEAM* Beams[2][Pieces]{};
+	TEMPENTITY* Sprites[2]{}; // Its glow and its spark.
 };
 
 std::vector<Bolt> g_Bolts;
@@ -90,6 +100,25 @@ bool At(const Bolt& bolt, float when, int strand, Vector& out)
 
 	out = history.front().Points[strand];
 	return true;
+}
+
+// A sprite of it, kept on it a frame at a time (Track).
+TEMPENTITY* MakeSprite(const char* name, const Vector& origin, float scale, int renderfx, bool animated)
+{
+	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex(name);
+
+	if (model == 0)
+		return nullptr;
+
+	Vector position = origin;
+	Vector still{0, 0, 0};
+	TEMPENTITY* sprite = gEngfuncs.pEfxAPI->R_TempSprite(position, still, scale, model, kRenderTransAdd, renderfx, 1, 1,
+		animated ? FTENT_SPRCYCLE : 0);
+
+	if (sprite && animated)
+		sprite->entity.curstate.framerate = 20;
+
+	return sprite;
 }
 
 void Kill(BEAM*& beam)
@@ -123,19 +152,36 @@ void JhlShockBeams_Track(cl_entity_t* entity, const char* modelname)
 		if (g_Bolts.size() >= MaxBolts)
 			return;
 
-		g_Bolts.push_back({entity->index, now, {}, {}});
+		g_Bolts.push_back({entity->index, now, gEngfuncs.pfnRandomFloat(0, 6.2831853f), {}, {}, {}});
 		bolt = &g_Bolts.back();
 	}
 
 	bolt->LastSeen = now;
 
-	// Its attachment, from its angles (a studio model's pitch is the other way round).
+	// Its glow and spark, circling its path (its angles' way; a studio model's pitch is the other way round).
 	Vector forward, right, up;
-	AngleVectors(Vector{-entity->angles.x, entity->angles.y, entity->angles.z}, forward, right, up);
-	const Vector end = entity->origin + forward * AttachmentForward + right * AttachmentSide;
+	AngleVectors(Vector{-entity->angles.x, entity->angles.y, 0}, forward, right, up);
+	const float angle = bolt->Phase + 6.2831853f * TurnsPerSecond * now;
+	const Vector offset = (right * std::cos(angle) + up * std::sin(angle)) * Radius;
+	const Vector points[2] = {entity->origin + offset, entity->origin - offset};
+
+	if (!bolt->Sprites[0])
+		bolt->Sprites[0] = MakeSprite(GlowSprite, points[0], GlowScale, kRenderFxDistort, false);
+
+	if (!bolt->Sprites[1])
+		bolt->Sprites[1] = MakeSprite(SparkSprite, points[1], SparkScale, kRenderFxNone, true);
+
+	for (int i = 0; i < 2; ++i)
+	{
+		if (TEMPENTITY* sprite = bolt->Sprites[i]; sprite)
+		{
+			sprite->entity.origin = points[i];
+			sprite->die = now + 0.1f;
+		}
+	}
 
 	if (bolt->History.empty() || bolt->History.back().Time < now)
-		bolt->History.push_back({now, {entity->origin, end}});
+		bolt->History.push_back({now, {points[0], points[1]}});
 }
 
 void JhlShockBeams_Update(double time)
@@ -149,13 +195,28 @@ void JhlShockBeams_Update(double time)
 	g_LastTime = now;
 
 	const int sprite = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/laserbeam.spr");
+	std::size_t wakes = 0;
 
 	for (auto it = g_Bolts.begin(); it != g_Bolts.end();)
 	{
 		Bolt& bolt = *it;
+		const bool wake = wakes++ < MaxWakes;
 
 		while (!bolt.History.empty() && bolt.History.front().Time < now - Pieces * PieceTime - 0.05f)
 			bolt.History.pop_front();
+
+		// Gone: its glow and spark go with it.
+		if (now - bolt.LastSeen > LostAfter)
+		{
+			for (TEMPENTITY*& sprite : bolt.Sprites)
+			{
+				if (sprite)
+				{
+					sprite->die = now;
+					sprite = nullptr;
+				}
+			}
+		}
 
 		// Gone, and its wake faded out.
 		if (bolt.History.size() < 2 && now - bolt.LastSeen > LostAfter)
@@ -182,7 +243,7 @@ void JhlShockBeams_Update(double time)
 				Vector from, to;
 				BEAM*& beam = bolt.Beams[s][i];
 
-				if (sprite == 0 || !At(bolt, head - (i + 1) * PieceTime, s, from) || !At(bolt, head - i * PieceTime, s, to) ||
+				if (!wake || sprite == 0 || !At(bolt, head - (i + 1) * PieceTime, s, from) || !At(bolt, head - i * PieceTime, s, to) ||
 					(to - from).Length() < 0.5f)
 				{
 					if (beam)
