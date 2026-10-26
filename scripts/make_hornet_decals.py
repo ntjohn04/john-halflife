@@ -1,9 +1,10 @@
 """Adds the hornet gun's dart splats to an installed John Half-Life's decals.wad (johnhalflife, server hornet.cpp):
-Half-Life's bullsquid spit splats ({spit1, {spit2) in each hornet trail's colour, as {hspit_red1, {hspit_red2, and so
-on for pur(ple-red), org (orange) and yel(low).
+Half-Life's bullsquid spit splats ({spit1, {spit2) in each hornet trail's colour, muted and darker (organic, not
+paint), and smaller (the shape at 75% in the middle of its 32x32: hornets are small), as {hspit_red1, {hspit_red2, and
+so on for pur(ple-red), org (orange) and yel(low).
 
-A decal's pixels are alpha and its colour is the palette's last entry, so each recolour is a copy with a new name and
-that one entry changed.
+A decal's pixels are alpha (0 clear) and its colour is the palette's last entry, so each recolour is a copy with a new
+name, that one entry changed and its pixels shrunk (its smaller mip levels made again from them).
 
 The engine reads one decals.wad, so the new decals go into the installed one (the Unified SDK's, made from the
 player's own games when installing its assets). Its original is kept once as decals_unified.wad and every run starts
@@ -20,11 +21,14 @@ import sys
 SHAPES = ["{spit1", "{spit2"]
 
 COLORS = {
-    "red": (170, 40, 20),
-    "pur": (150, 30, 95),
-    "org": (215, 120, 25),
-    "yel": (215, 185, 45),
+    "red": (110, 45, 35),
+    "pur": (95, 40, 60),
+    "org": (130, 85, 40),
+    "yel": (135, 115, 55),
 }
+
+# The shape's size within its texture.
+SCALE = 0.75
 
 
 def read_wad(path):
@@ -57,13 +61,62 @@ def write_wad(path, lumps):
     open(path, "wb").write(header + body + directory)
 
 
+def shrink(pixels, width, height, scale):
+    """The alpha image at scale in the middle of the same size, clear around it (bilinear)."""
+    out = bytearray(width * height)
+    inner_w, inner_h = width * scale, height * scale
+    left, top = (width - inner_w) / 2, (height - inner_h) / 2
+
+    def at(x, y):
+        x = min(max(x, 0), width - 1)
+        y = min(max(y, 0), height - 1)
+        return pixels[y * width + x]
+
+    for y in range(height):
+        for x in range(width):
+            # Where this pixel's centre falls in the original.
+            u = (x + 0.5 - left) / scale - 0.5
+            v = (y + 0.5 - top) / scale - 0.5
+
+            if u < -0.5 or v < -0.5 or u > width - 0.5 or v > height - 0.5:
+                continue
+
+            x0, y0 = int(u // 1), int(v // 1)
+            fx, fy = u - x0, v - y0
+            value = (at(x0, y0) * (1 - fx) * (1 - fy) + at(x0 + 1, y0) * fx * (1 - fy) +
+                     at(x0, y0 + 1) * (1 - fx) * fy + at(x0 + 1, y0 + 1) * fx * fy)
+            out[y * width + x] = min(255, int(round(value)))
+
+    return out
+
+
+def downsample(pixels, width, height):
+    """Half the size, each pixel the average of the four it covers."""
+    half_w, half_h = width // 2, height // 2
+    out = bytearray(half_w * half_h)
+    for y in range(half_h):
+        for x in range(half_w):
+            total = (pixels[(2 * y) * width + 2 * x] + pixels[(2 * y) * width + 2 * x + 1] +
+                     pixels[(2 * y + 1) * width + 2 * x] + pixels[(2 * y + 1) * width + 2 * x + 1])
+            out[y * half_w + x] = total // 4
+    return out
+
+
 def recolour(lump, name, color):
-    """A decal miptex lump renamed and in another colour (its palette's last entry)."""
+    """A decal miptex lump renamed, in another colour (its palette's last entry) and shrunk."""
     data = bytearray(lump)
     data[0:16] = name.encode("latin-1")[:15].ljust(16, b"\0")
 
     width, height = struct.unpack_from("<II", data, 16)
     offsets = struct.unpack_from("<4I", data, 24)
+
+    level = shrink(data[offsets[0]: offsets[0] + width * height], width, height, SCALE)
+    w, h = width, height
+    for mip in range(4):
+        data[offsets[mip]: offsets[mip] + w * h] = level
+        if mip < 3:
+            level = downsample(level, w, h)
+            w, h = w // 2, h // 2
 
     # After the four mip levels: a short colour count, then the palette.
     palette = offsets[3] + (width // 8) * (height // 8) + 2
@@ -84,7 +137,7 @@ def main():
         shutil.copyfile(wad, original)
 
     lumps = read_wad(original)
-    by_name = {name.lower(): lump for name, lump in ((l[0], l) for l in lumps)}
+    by_name = {lump[0].lower(): lump for lump in lumps}
 
     added = []
     for colour, rgb in COLORS.items():

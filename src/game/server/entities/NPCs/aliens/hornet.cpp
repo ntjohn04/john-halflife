@@ -198,7 +198,7 @@ void CHornet::IgniteTrail()
 	WRITE_BYTE(10);			   // life
 	WRITE_BYTE(2);			   // width
 
-	// johnhalflife: its colour within its type: purple-red is ted's suggested colour above, yellow its orange's
+	// johnhalflife: its colour within its type: purple-red (ted's suggested colour above, browner), yellow its orange's
 	// lighter side.
 	const int color = UTIL_JhlParticleSystem() ? m_JhlColor : (m_iHornetType == HORNET_TYPE_RED ? JhlRed : JhlOrange);
 
@@ -210,9 +210,9 @@ void CHornet::IgniteTrail()
 		WRITE_BYTE(14);	 // r, g, b
 		break;
 	case JhlPurple:
-		WRITE_BYTE(161); // r, g, b
-		WRITE_BYTE(25);	 // r, g, b
-		WRITE_BYTE(97);	 // r, g, b
+		WRITE_BYTE(140); // r, g, b
+		WRITE_BYTE(35);	 // r, g, b
+		WRITE_BYTE(60);	 // r, g, b
 		break;
 	case JhlOrange:
 		WRITE_BYTE(255); // r, g, b
