@@ -1070,11 +1070,6 @@ void EV_FireGauss(event_args_t* args)
 
 	vecDest = vecSrc + (8192 * forward);
 
-	// johnhalflife: the primary beam a little brighter (vanilla 128), with a thinner, slightly hotter core in it, so it
-	// isn't flat.
-	const bool primaryCore = m_fPrimaryFire && JhlParticleSystemEnabled();
-	const float primaryBrightness = primaryCore ? 153.0f : 128.0f;
-
 	if (EV_IsLocal(idx))
 	{
 		if (!EV_WeaponRecoil(RecoilGauss))
@@ -1114,51 +1109,52 @@ void EV_FireGauss(event_args_t* args)
 				// Add muzzle flash to current weapon model
 				EV_MuzzleFlash();
 			}
-			fFirstBeam = false;
+		}
 
-			gEngfuncs.pEfxAPI->R_BeamEntPoint(
-				idx | 0x1000,
-				tr.endpos,
-				m_iBeam,
-				0.1,
-				m_fPrimaryFire ? 1.0 : 2.5,
-				0.0,
-				(m_fPrimaryFire ? primaryBrightness : flDamage) / 255.0,
-				0,
-				0,
-				0,
-				(m_fPrimaryFire ? 255 : 255) / 255.0,
-				(m_fPrimaryFire ? 128 : 255) / 255.0,
-				(m_fPrimaryFire ? 0 : 255) / 255.0);
-
-			if (primaryCore)
+		// One layer of this segment: the first from the gun (following it), the rest between points.
+		const auto drawLayer = [&](float width, float brightness, const Vector& color)
+		{
+			if (fFirstBeam)
 			{
-				gEngfuncs.pEfxAPI->R_BeamEntPoint(idx | 0x1000, tr.endpos, m_iBeam, 0.1, PrimaryCoreWidth, 0.0, PrimaryCoreBrightness, 0, 0,
-					0, PrimaryCoreColor.x / 255, PrimaryCoreColor.y / 255, PrimaryCoreColor.z / 255);
+				gEngfuncs.pEfxAPI->R_BeamEntPoint(idx | 0x1000, tr.endpos, m_iBeam, 0.1, width, 0.0, brightness, 0, 0, 0,
+					color.x / 255, color.y / 255, color.z / 255);
 			}
+			else
+			{
+				gEngfuncs.pEfxAPI->R_BeamPoints(vecSrc, tr.endpos, m_iBeam, 0.1, width, 0.0, brightness, 0, 0, 0,
+					color.x / 255, color.y / 255, color.z / 255);
+			}
+		};
+
+		if (!JhlParticleSystemEnabled())
+		{
+			// Vanilla: primary orange at 128, secondary white at its damage.
+			drawLayer(m_fPrimaryFire ? 1.0f : 2.5f, (m_fPrimaryFire ? 128.0f : flDamage) / 255.0f,
+				m_fPrimaryFire ? Vector{255, 128, 0} : Vector{255, 255, 255});
+		}
+		else if (m_fPrimaryFire)
+		{
+			// johnhalflife: a little brighter (vanilla 128), with a thinner, slightly hotter core.
+			drawLayer(1.0f, 153.0f / 255.0f, {255, 128, 0});
+			drawLayer(PrimaryCoreWidth, PrimaryCoreBrightness, PrimaryCoreColor);
 		}
 		else
 		{
-			gEngfuncs.pEfxAPI->R_BeamPoints(vecSrc,
-				tr.endpos,
-				m_iBeam,
-				0.1,
-				m_fPrimaryFire ? 1.0 : 2.5,
-				0.0,
-				(m_fPrimaryFire ? primaryBrightness : flDamage) / 255.0,
-				0,
-				0,
-				0,
-				(m_fPrimaryFire ? 255 : 255) / 255.0,
-				(m_fPrimaryFire ? 128 : 255) / 255.0,
-				(m_fPrimaryFire ? 0 : 255) / 255.0);
+			// johnhalflife: still white, wide and stronger with its charge, but even a small one at least the primary's
+			// strength: by its damage (c, 0-1 at 200; what's left after reflections and walls), the beam 1.6-2.8 wide
+			// at 0.55-0.85 (vanilla 2.5 wide at damage / 255: a half-second charge's 25 damage, more than a primary
+			// shot's 20, drew at a fifth of its brightness); a warm white core 45% as wide at 0.25-0.6; and past half
+			// charge a soft white halo twice as wide, up to 0.25.
+			const float c = std::clamp(flDamage / 200.0f, 0.0f, 1.0f);
+			const float width = 1.6f + 1.2f * c;
+			drawLayer(width, 0.55f + 0.3f * c, {255, 255, 255});
+			drawLayer(width * 0.45f, 0.25f + 0.35f * c, {255, 220, 170});
 
-			if (primaryCore)
-			{
-				gEngfuncs.pEfxAPI->R_BeamPoints(vecSrc, tr.endpos, m_iBeam, 0.1, PrimaryCoreWidth, 0.0, PrimaryCoreBrightness, 0, 0, 0,
-					PrimaryCoreColor.x / 255, PrimaryCoreColor.y / 255, PrimaryCoreColor.z / 255);
-			}
+			if (c > 0.5f)
+				drawLayer(width * 2, 0.25f * (c - 0.5f) / 0.5f, {255, 255, 255});
 		}
+
+		fFirstBeam = false;
 
 		pEntity = gEngfuncs.pEventAPI->EV_GetPhysent(tr.ent);
 		if (pEntity == nullptr)
