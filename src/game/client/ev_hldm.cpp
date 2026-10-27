@@ -292,7 +292,7 @@ char* EV_HLDM_DamageDecal(physent_t* pe)
 	return decalname;
 }
 
-void EV_HLDM_GunshotDecalTrace(pmtrace_t* pTrace, char* decalName)
+void EV_HLDM_GunshotDecalTrace(pmtrace_t* pTrace, char* decalName, bool heavy)
 {
 	int iRand;
 
@@ -312,7 +312,7 @@ void EV_HLDM_GunshotDecalTrace(pmtrace_t* pTrace, char* decalName)
 		}
 	}
 
-	BulletImpactEffects(pTrace->endpos, pTrace->plane.normal, textureType);
+	BulletImpactEffects(pTrace->endpos, pTrace->plane.normal, textureType, heavy);
 
 	iRand = gEngfuncs.pfnRandomLong(0, 0x7FFF);
 	if (iRand < (0x7fff / 2)) // not every bullet makes a sound.
@@ -367,7 +367,8 @@ void EV_HLDM_DecalGunshot(pmtrace_t* pTrace, int iBulletType)
 		case BULLET_PLAYER_EAGLE:
 		default:
 			// smoke and decal
-			EV_HLDM_GunshotDecalTrace(pTrace, EV_HLDM_DamageDecal(pe));
+			// johnhalflife: the sniper rifle's round hits heavier (BulletImpactEffects).
+			EV_HLDM_GunshotDecalTrace(pTrace, EV_HLDM_DamageDecal(pe), iBulletType == BULLET_PLAYER_762);
 			break;
 		}
 	}
@@ -446,10 +447,22 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 
 			if (iBulletType == BULLET_PLAYER_762 && firstPerson)
 			{
-				// Scoped, it would fly down the magnified view (as its smoke is skipped there); otherwise from where its
-				// muzzle shows on screen, as its view model's attachment sits behind the player (EV_SniperMuzzleEffects).
+				// Scoped, from just under the eye, as a barrel under the scope would be: on the magnified view it rises from
+				// below its bottom edge and meets the crosshair (from the eye itself it would be a dot; started on screen,
+				// it began in mid air);
+				// otherwise from where its muzzle shows on screen, as its view model's attachment sits behind the player
+				// (EV_SniperMuzzleEffects).
 				if (IsViewZoomed())
+				{
+					constexpr float Ahead = 60;
+					constexpr float Down = 1.2f; // Of the way from the middle of the view to its edge: past it.
+					// The view's height from its width's field of view (gHUD.m_iFOV), by the screen's shape.
+					const float halfFov = 0.5f * static_cast<float>(gHUD.m_iFOV) * 3.1415927f / 180;
+					const float halfHeight = std::tan(halfFov) * static_cast<float>(ScreenHeight) / static_cast<float>(ScreenWidth);
+					const Vector upward = CrossProduct(right, forward);
+					JhlSniperTrace_Fire(vecSrc + forward * Ahead - upward * (Ahead * halfHeight * Down), end, false);
 					return;
+				}
 
 				const Vector up = CrossProduct(right, forward);
 				jhlTracerSrc = vecSrc + forward * 30 + right * 5 - up * 5;
@@ -473,7 +486,11 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 									   : iBulletType == BULLET_PLAYER_762 ? JhlTracerKind::Sniper
 									   : iBulletType == BULLET_PLAYER_9MM ? JhlTracerKind::Glock
 																		  : JhlTracerKind::MP5;
-			JhlTracer_Fire(jhlTracerSrc, end, JhlTracers_Style(kind));
+			// The sniper rifle leaves its trace rather than a tracer.
+			if (kind == JhlTracerKind::Sniper)
+				JhlSniperTrace_Fire(jhlTracerSrc, end, false);
+			else
+				JhlTracer_Fire(jhlTracerSrc, end, JhlTracers_Style(kind));
 
 			// Only the MP5 had tracers of its own, and keeps them.
 			if (iBulletType != BULLET_PLAYER_MP5)

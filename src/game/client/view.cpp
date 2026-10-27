@@ -1913,6 +1913,9 @@ void DLLEXPORT V_CalcRefdef(ref_params_t* pparams)
 	// johnhalflife: the RPG's laser line, placed on its view model now it's where it'll be drawn this frame.
 	RpgLaserLine_Update(gEngfuncs.GetClientTime());
 
+	// johnhalflife: the sniper rifle's barrel smoking, on its view model now it's placed.
+	SniperSmoke_Update(gEngfuncs.GetClientTime());
+
 	/*
 	// Example of how to overlay the whole screen with red at 50 % alpha
 	#define SF_TEST

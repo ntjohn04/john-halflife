@@ -75,6 +75,12 @@ void RpgLaser_Reloading();
 void RpgLaserLine_Update(double time);
 
 /**
+ *	@brief The sniper rifle's barrel venting smoke through the bolt's working after a shot (V_CalcRefdef, once the view
+ *	model's placed).
+ */
+void SniperSmoke_Update(double time);
+
+/**
  *	@brief Forgets the line (HUD_VidInit: a new map frees the engine's beams).
  */
 void RpgLaser_Reset();
@@ -97,7 +103,7 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
  *	sparks and a brief flash on metal, a small dust puff on stone, dirt and wood. Uses only stock sprites.
  *	@param textureType Material of the surface hit (CHAR_TEX_*).
  */
-void BulletImpactEffects(const Vector& position, const Vector& normal, char textureType);
+void BulletImpactEffects(const Vector& position, const Vector& normal, char textureType, bool heavy = false);
 
 /**
  *	@brief Adds a splash where a bullet travelling from @p start to @p end enters water or slime, if it does.

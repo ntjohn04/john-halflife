@@ -90,6 +90,13 @@ Vector JhlTracers_MuzzleStart(int shooter, const Vector& start);
 void JhlTracer_Fire(const Vector& start, const Vector& end, const JhlTracerStyle& style);
 
 /**
+ *	@brief The sniper rifle's trace from @p start to @p end, in place of a tracer: a faint pale line along all its path,
+ *	lingering a moment, hot for its first few yards (varying shot to shot). @p scoped: it starts a way out and isn't
+ *	hot (from the eye, it would cut across the magnified view).
+ */
+void JhlSniperTrace_Fire(const Vector& start, const Vector& end, bool scoped);
+
+/**
  *	@brief Moves the tracers along (HUD_TempEntUpdate, before the engine draws beams).
  */
 void JhlTracers_Update(double time);

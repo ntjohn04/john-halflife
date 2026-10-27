@@ -171,7 +171,20 @@ drawn, so the effects are skipped in third person and while zoomed.
 **Sniper rifle:** the M40A1 view model's attachment sits behind the player, so the muzzle is placed
 relative to the view instead (30 forward, 5 right, 5 down from the eyes; the view model is always drawn
 in the same place on screen). Wisp on 60% of shots. While scoped, the light stays but the wisp is skipped
-so it doesn't drift across the magnified view.
+so it doesn't drift across the magnified view. With `jhl_fx_particlesystem` the barrel vents smoke through the
+bolt's working instead: a thin wisp every 0.07 s for 1.2 s after a shot, thinning out, from the tip of its barrel as
+the view model's drawn (found in its vertices: (-25.6, 0, 1.33) in its rifle's bone, `m40a1_stock`;
+`JhlViewModelPoint`), so it stays on the barrel as the bolt's worked; carrying the player's movement, shed as
+smoke's; not while scoped (`SniperSmoke_Update`).
+Its light is bigger and a little longer, a heavy round's (190-230 units, 0.08 s; a gun's 140-170, 0.06 s), and its
+flash shows: the engine draws a gun's flash at its view model's first attachment, which on this one sits behind the
+player, so it never showed; it's drawn on its barrel's tip instead (`muzzleflash2`, 0.3), not while scoped.
+
+**Sniper rifle impacts** (`jhl_fx_particlesystem`): its round hits heavier. On metal, computers, vents and grates the
+hole glows (`hotglow`, orange, 0.096) a moment, fading out over 1 s, as hot spall, on top of the metal sparks; on
+dirt, wood, concrete and tile a puff twice the size (0.45) and two small chunks of the surface (an explosion's
+surface debris at half its size, 80-200 units/s, 4-8 s; `JhlExplosion_ImpactChunks`); on glass the two chunks
+(`HeavyImpact`, `weapon_effects.cpp`).
 
 **RPG:** the view model has no attachments, so the front of the tube is placed relative to the view too
 (36 forward, 8 right, 6 down).
@@ -246,17 +259,25 @@ muzzle, so it crosses the view; otherwise at the game's tracer start.
   and length), 4000 units/s, starting 0-120 units down its path.
 * **Glock, revolver, Desert Eagle, sniper rifle** (semi-automatic; they had none): the MP5's streak on every shot, the
   Glock's a little quicker and shorter (4250 units/s, 85 long), the
-  hard-hitting revolver's and Desert Eagle's faster (5000 units/s), the sniper rifle's faster still (5500) and a
-  little wider (1.19), starting 20-120 units out.
-  The sniper rifle's starts where its muzzle shows on screen (its view model's attachment sits behind the player)
-  and is skipped while scoped; the revolver's, scoped, starts at the game's tracer start.
+  hard-hitting revolver's and Desert Eagle's faster (5000 units/s); the revolver's, scoped, starts at the game's
+  tracer start.
+* **Sniper rifle:** a trace rather than a tracer (`JhlSniperTrace_Fire`): the faint pale line a heavy round leaves in
+  the air, (220,220,215) at 0.15, 1 wide, along all its path in one beam (no seams), growing out at 5500 units/s and
+  fading out over 0.45 s; and for its first 120-300 units (about 10-25 feet), hot: an orange streak (255,150,60, 1.4
+  wide, 0.7) cooling away from the barrel in three pieces end to end (1, 0.6, 0.3), with a white-hot core (255,235,200,
+  0.5 wide) over the first; how hot varies shot to shot (25-100%: its brightness, and how long it lasts, 0.12-0.22 s).
+  It starts where its muzzle shows on screen (its view model's attachment sits behind the player); scoped, from just
+  under the eye, 60 units ahead, as a barrel under the scope would be: on the magnified view it rises from below its
+  bottom edge and meets the crosshair (from the eye itself it would be a dot; started on screen, it began in mid
+  air), hot start and all. The Black Ops assassins' rifle
+  leaves the same.
 * **Shotgun** (a hint of the spread, in the background; it had none): a set number of each shot's pellets, 3-4 for a
   single shot and 6-8 for a double (the extra pellets show), each as the MP5's streak (255,200,120 at 0.2, width
   1.1, 100 units long, 4000 units/s) but starting 0-55 units down its path.
 * **NPCs:** the server sends their tracers through the SDK's own message (`UTIL_JhlTracer`, `TE_TRACER` with a kind)
   in place of the engine's, as often as vanilla (the same number of messages): the client draws the vanilla tracer
   and the matching streak on top (MP5s the MP5's, 9mm pistols the Glock's, the .357 and 12mm (turrets, the Apache) the
-  revolver's, shotguns the shotgun's, the Black Ops assassin's rifle the sniper rifle's). Opposing Force's friendly M249
+  revolver's, shotguns the shotgun's, the Black Ops assassin's rifle the sniper rifle's trace). Opposing Force's friendly M249
   grunt fires the M249's red tracer rounds instead of the vanilla one, one in 3 (vanilla every 2nd).
 
 Outside first person a streak starts at the shooter's muzzle, the model's first attachment (the grunts' and the

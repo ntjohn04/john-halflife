@@ -31,6 +31,7 @@
 #include "pm_materials.h"
 #include "parsemsg.h"
 #include "customentity.h"
+#include "jhl_explosions.h"
 #include "jhl_settings.h"
 #include "view.h"
 #include "networking/ClientUserMessages.h"
@@ -63,7 +64,8 @@ static bool IsZoomed()
 	return gHUD.m_iFOV != 0 && gHUD.m_iFOV < static_cast<int>(CVAR_GET_FLOAT("default_fov"));
 }
 
-static void MuzzleEffectsAt(const Vector& position, float wispChance, float wispScale = 1, float wispAlpha = 0.1f, int rolls = 1);
+static void MuzzleEffectsAt(const Vector& position, float wispChance, float wispScale = 1, float wispAlpha = 0.1f, int rolls = 1,
+	float lightScale = 1, float lightTime = 0.06f);
 
 // Smoke leaves the gun moving with it, and the air stops it: it's given the shooter's velocity on top of its own
 // (kept in curstate.vuser1), and sheds it, halving every 0.5 s (CarriedTime), so it hangs where it was let out a
@@ -165,6 +167,19 @@ void EV_M249MuzzleEffects()
 	MuzzleEffectsAt(muzzle + drift, chance, scale, alpha);
 }
 
+static void Flash(const Vector& origin, float scale, float brightness);
+
+// The sniper rifle's barrel venting smoke through the bolt's working (SniperSmoke_Update): a thin wisp every
+// SniperSmokeEvery for SniperSmokeTime after a shot, thinning out, from its barrel's tip as the view model's drawn (its
+// attachment sits behind the player; the tip, found in its vertices, in its rifle's bone, m40a1_stock), so it stays on
+// the barrel as the bolt's worked; carrying the player's movement, shed as smoke's (Carry).
+constexpr float SniperSmokeTime = 1.2f;
+constexpr float SniperSmokeEvery = 0.07f;
+constexpr int SniperBarrelBone = 5;
+const Vector SniperMuzzle{-25.6f, 0, 1.33f};
+static float g_SniperSmokeStart = -1;
+static float g_SniperSmokeNext = 0;
+
 void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, const Vector& right, const Vector& up)
 {
 	if (!MuzzleEffectsEnabled())
@@ -179,9 +194,66 @@ void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, co
 	constexpr float Right = 5;
 	constexpr float Up = -5;
 
-	// A slow, heavy rifle shot: more often leaves a wisp, except when scoped, where it would drift across the
-	// magnified view.
-	MuzzleEffectsAt(eyePosition + forward * Forward + right * Right + up * Up, IsZoomed() ? 0 : 0.6f);
+	// The light; its smoke comes off the barrel through the bolt's working instead (SniperSmoke_Update), with
+	// jhl_fx_particlesystem; otherwise a slow, heavy rifle shot more often leaves a wisp, except when scoped, where it
+	// would drift across the magnified view.
+	// With jhl_fx_particlesystem its light's bigger and a little longer, a heavy round's (190-230 units, 0.08 s; a gun's
+	// 140-170, 0.06 s), and its flash is shown: the engine draws a gun's flash at its view model's first attachment,
+	// which on this one sits behind the player, so it never showed; it's drawn on its barrel's tip instead.
+	const bool stream = JhlParticleSystemEnabled();
+	MuzzleEffectsAt(eyePosition + forward * Forward + right * Right + up * Up, stream || IsZoomed() ? 0 : 0.6f, 1, 0.1f, 1,
+		stream ? 1.35f : 1, stream ? 0.08f : 0.06f);
+
+	if (stream)
+	{
+		g_SniperSmokeStart = gEngfuncs.GetClientTime();
+
+		if (Vector barrel; !IsZoomed() && JhlViewModelPoint("models/v_m40a1.mdl", SniperBarrelBone, SniperMuzzle, barrel))
+			Flash(barrel, 0.3f, 0.8f);
+	}
+}
+
+void SniperSmoke_Update(double time)
+{
+	const float now = static_cast<float>(time);
+	const float age = now - g_SniperSmokeStart;
+
+	if (g_SniperSmokeStart < 0 || age > SniperSmokeTime || age < 0)
+	{
+		g_SniperSmokeStart = -1;
+		return;
+	}
+
+	// (A new map or a loaded game restarts the clock: one due further off than that is from before.)
+	if (now < g_SniperSmokeNext && g_SniperSmokeNext - now <= SniperSmokeEvery)
+		return;
+
+	g_SniperSmokeNext = now + SniperSmokeEvery;
+
+	// Not scoped (it would drift across the magnified view), and only on the barrel as it's drawn.
+	Vector muzzle;
+
+	if (IsZoomed() || !MuzzleEffectsEnabled() || !JhlViewModelPoint("models/v_m40a1.mdl", SniperBarrelBone, SniperMuzzle, muzzle))
+		return;
+
+	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
+
+	if (modelIndex == 0)
+		return;
+
+	// Thinning out as it goes.
+	const float left = 1 - age / SniperSmokeTime;
+	Vector velocity{gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(10, 16)};
+
+	if (TEMPENTITY* wisp = gEngfuncs.pEfxAPI->R_TempSprite(muzzle, velocity, gEngfuncs.pfnRandomFloat(0.06f, 0.09f) * (0.6f + 0.4f * left),
+			modelIndex, kRenderTransAlpha, kRenderFxNone, 0.04f + 0.1f * left, 2.0f, FTENT_SPRANIMATE);
+		wisp)
+	{
+		wisp->entity.curstate.rendercolor = {190, 190, 190};
+		wisp->entity.curstate.framerate = gEngfuncs.pfnRandomFloat(24, 30);
+		wisp->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+		Carry(wisp, v_sim_vel);
+	}
 }
 
 // A flash of flame for a moment (the engine's own muzzle flash, muzzleflash2, additive), turned at random.
@@ -303,7 +375,8 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 	}
 }
 
-static void MuzzleEffectsAt(const Vector& position, float wispChance, float wispScale, float wispAlpha, int rolls)
+static void MuzzleEffectsAt(const Vector& position, float wispChance, float wispScale, float wispAlpha, int rolls,
+	float lightScale, float lightTime)
 {
 	Vector muzzle = position;
 
@@ -311,12 +384,12 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance, float wisp
 	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)
 	{
 		light->origin = muzzle;
-		light->radius = gEngfuncs.pfnRandomFloat(140, 170);
+		light->radius = gEngfuncs.pfnRandomFloat(140, 170) * lightScale;
 		light->color.r = 255;
 		light->color.g = 190;
 		light->color.b = 110;
-		light->die = gEngfuncs.GetClientTime() + 0.06f;
-		light->decay = light->radius * 12;
+		light->die = gEngfuncs.GetClientTime() + lightTime;
+		light->decay = light->radius / (lightTime * 1.4f);
 	}
 
 	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
@@ -796,7 +869,7 @@ static void MetalImpact(const Vector& position, const Vector& normal)
 	}
 }
 
-static void DustImpact(const Vector& position, const Vector& normal, const color24& color)
+static void DustImpact(const Vector& position, const Vector& normal, const color24& color, float bigger)
 {
 	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
 
@@ -816,8 +889,8 @@ static void DustImpact(const Vector& position, const Vector& normal, const color
 	// No FTENT_FADEOUT: fading keeps a finished sprite on screen while its animation wraps back to frame 0.
 	constexpr float PuffFrameRate = 24;
 
-	TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, gEngfuncs.pfnRandomFloat(0.25f, 0.35f),
-		modelIndex, kRenderTransAlpha, kRenderFxNone, 0.35f, 2.0f, FTENT_SPRANIMATE);
+	TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity * bigger, gEngfuncs.pfnRandomFloat(0.25f, 0.35f) * bigger,
+		modelIndex, kRenderTransAlpha, kRenderFxNone, bigger > 1 ? 0.45f : 0.35f, 2.0f, FTENT_SPRANIMATE);
 
 	if (!puff)
 	{
@@ -825,16 +898,79 @@ static void DustImpact(const Vector& position, const Vector& normal, const color
 	}
 
 	puff->entity.curstate.rendercolor = color;
-	puff->entity.curstate.framerate = PuffFrameRate;
+	puff->entity.curstate.framerate = PuffFrameRate / std::sqrt(bigger);
 	puff->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
 }
 
-void BulletImpactEffects(const Vector& position, const Vector& normal, char textureType)
+// A heavy round's impact (the sniper rifle's, jhl_fx_particlesystem): on metal, computers, vents and grates, the hole
+// glows (hotglow, orange) a moment, fading out over HotHoleTime, as hot spall; on others, a bigger puff and two small
+// chunks of the surface (as an explosion's surface debris, smaller).
+constexpr float HotHoleTime = 1;
+constexpr float HotHoleScale = 0.096f;
+
+static void HotHole(const Vector& position, const Vector& normal)
+{
+	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/hotglow.spr");
+
+	if (model == 0)
+		return;
+
+	Vector origin = position + normal;
+	Vector still{0, 0, 0};
+
+	if (TEMPENTITY* glow = gEngfuncs.pEfxAPI->R_TempSprite(origin, still, HotHoleScale * gEngfuncs.pfnRandomFloat(0.85f, 1.15f), model,
+			kRenderTransAdd, kRenderFxNone, 1, HotHoleTime, FTENT_FADEOUT);
+		glow)
+	{
+		glow->fadeSpeed = 1 / HotHoleTime;
+	}
+}
+
+static void HeavyImpact(const Vector& position, const Vector& normal, char textureType)
+{
+	switch (textureType)
+	{
+	case CHAR_TEX_METAL:
+	case CHAR_TEX_VENT:
+	case CHAR_TEX_GRATE:
+	case CHAR_TEX_COMPUTER:
+		HotHole(position, normal);
+		break;
+
+	case CHAR_TEX_DIRT:
+		DustImpact(position, normal, {120, 105, 85}, 2);
+		JhlExplosion_ImpactChunks(position, normal, textureType, 2);
+		break;
+
+	case CHAR_TEX_WOOD:
+		DustImpact(position, normal, {130, 115, 95}, 2);
+		JhlExplosion_ImpactChunks(position, normal, textureType, 2);
+		break;
+
+	case CHAR_TEX_CONCRETE:
+	case CHAR_TEX_TILE:
+		DustImpact(position, normal, {150, 150, 145}, 2);
+		JhlExplosion_ImpactChunks(position, normal, textureType, 2);
+		break;
+
+	case CHAR_TEX_GLASS:
+		JhlExplosion_ImpactChunks(position, normal, textureType, 2);
+		break;
+
+	default:
+		break;
+	}
+}
+
+void BulletImpactEffects(const Vector& position, const Vector& normal, char textureType, bool heavy)
 {
 	if (0 == g_cl_bulletimpacts->value)
 	{
 		return;
 	}
+
+	if (heavy && JhlParticleSystemEnabled())
+		HeavyImpact(position, normal, textureType);
 
 	switch (textureType)
 	{
@@ -846,16 +982,16 @@ void BulletImpactEffects(const Vector& position, const Vector& normal, char text
 		break;
 
 	case CHAR_TEX_DIRT:
-		DustImpact(position, normal, {120, 105, 85});
+		DustImpact(position, normal, {120, 105, 85}, 1);
 		break;
 
 	case CHAR_TEX_WOOD:
-		DustImpact(position, normal, {130, 115, 95});
+		DustImpact(position, normal, {130, 115, 95}, 1);
 		break;
 
 	case CHAR_TEX_CONCRETE:
 	case CHAR_TEX_TILE:
-		DustImpact(position, normal, {150, 150, 145});
+		DustImpact(position, normal, {150, 150, 145}, 1);
 		break;
 
 	// Glass, liquids, snow, flesh and Xen surfaces keep the stock effects only.

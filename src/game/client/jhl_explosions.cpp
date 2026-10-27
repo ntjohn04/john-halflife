@@ -199,6 +199,14 @@ constexpr float SurfaceDebrisLifeMin = 8;
 constexpr float SurfaceDebrisLifeMax = 16;
 constexpr float SurfaceDebrisSizeVariation = 0.15f; // Each piece ±15%.
 
+// A heavy round's chunks off what it hit (JhlExplosion_ImpactChunks): as surface debris, smaller, slower, gone sooner.
+constexpr float ImpactChunkSize = 0.5f;
+constexpr float ImpactChunkSpeedMin = 80;
+constexpr float ImpactChunkSpeedMax = 200;
+constexpr float ImpactChunkUp = 60;
+constexpr float ImpactChunkLifeMin = 4;
+constexpr float ImpactChunkLifeMax = 8;
+
 // How far (units) from the expected distance a surface can be and still count as the one an explosion hit.
 constexpr float SurfaceMatchTolerance = 12;
 constexpr int SparkStreaksMin = 6; // Per burst.
@@ -717,6 +725,41 @@ void SurfaceDebris(const Surface& surface, float scale)
 	}
 }
 
+void ImpactChunks(const Vector& position, const Vector& normal, char material, int count)
+{
+	int breakType = BREAK_CONCRETE;
+	const auto models = SurfaceDebrisModels(material, breakType);
+
+	if (models.empty() || normal == g_vecZero)
+		return;
+
+	for (int i = 0; i < count; ++i)
+	{
+		const DebrisModel& debris = models[gEngfuncs.pfnRandomLong(0, models.size() - 1)];
+		model_t* model = JhlDebris_LoadModel(debris.Model);
+
+		if (!model)
+			continue;
+
+		Vector scatter{Random(-1, 1), Random(-1, 1), Random(-1, 1)};
+
+		if (DotProduct(scatter, normal) < 0)
+			scatter = scatter - normal * (2 * DotProduct(scatter, normal));
+
+		const Vector direction = (normal + scatter * SurfaceDebrisSpread).Normalize();
+		Vector velocity = direction * Random(ImpactChunkSpeedMin, ImpactChunkSpeedMax);
+		velocity.z += Random(0, ImpactChunkUp);
+
+		TEMPENTITY* piece = JhlDebris_Piece(position + normal * 3, model, breakType, velocity, Random(ImpactChunkLifeMin, ImpactChunkLifeMax));
+
+		if (!piece)
+			return;
+
+		piece->entity.curstate.scale = debris.Scale * ImpactChunkSize * Random(1 - SurfaceDebrisSizeVariation, 1 + SurfaceDebrisSizeVariation);
+		piece->entity.curstate.iuser4 = ScaledModelMarker;
+	}
+}
+
 // An explosion's specks and lights, by its size (see EmberCountMin).
 void EmbersAndLights(const Vector& origin, float scale, int flags, bool embers)
 {
@@ -1110,4 +1153,9 @@ void JhlExplosion_ParseDisplacerSpecks(BufferReader& reader)
 		speck->entity.angles.z = Random(0, 359);
 		JhlSprite_PlayOnce(speck, 1.5f, 0.6f);
 	}
+}
+
+void JhlExplosion_ImpactChunks(const Vector& position, const Vector& normal, char material, int count)
+{
+	ImpactChunks(position, normal, material, count);
 }
