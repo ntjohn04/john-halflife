@@ -625,7 +625,7 @@ void DecalGunshot(TraceResult* pTrace, int iBulletType);
 /**
  *	@brief Server only: a melee weapon's strike on a wall (where its decal goes) sparks now and then on metal.
  */
-void MeleeImpactSpark(TraceResult* pTrace);
+void MeleeImpactSpark(TraceResult* pTrace, float puffChance, bool knife = false);
 
 /**
  *	@brief Server only: tells nearby clients to draw a splash if a bullet fired from @p start to @p end entered water.

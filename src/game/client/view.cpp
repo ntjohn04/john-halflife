@@ -1915,6 +1915,7 @@ void DLLEXPORT V_CalcRefdef(ref_params_t* pparams)
 
 	// johnhalflife: the sniper rifle's barrel smoking, on its view model now it's placed.
 	SniperSmoke_Update(gEngfuncs.GetClientTime());
+	EagleSmoke_Update(gEngfuncs.GetClientTime());
 
 	/*
 	// Example of how to overlay the whole screen with red at 50 % alpha

@@ -292,7 +292,7 @@ char* EV_HLDM_DamageDecal(physent_t* pe)
 	return decalname;
 }
 
-void EV_HLDM_GunshotDecalTrace(pmtrace_t* pTrace, char* decalName, bool heavy)
+void EV_HLDM_GunshotDecalTrace(pmtrace_t* pTrace, char* decalName, JhlImpact kind)
 {
 	int iRand;
 
@@ -312,7 +312,7 @@ void EV_HLDM_GunshotDecalTrace(pmtrace_t* pTrace, char* decalName, bool heavy)
 		}
 	}
 
-	BulletImpactEffects(pTrace->endpos, pTrace->plane.normal, textureType, heavy);
+	BulletImpactEffects(pTrace->endpos, pTrace->plane.normal, textureType, kind);
 
 	iRand = gEngfuncs.pfnRandomLong(0, 0x7FFF);
 	if (iRand < (0x7fff / 2)) // not every bullet makes a sound.
@@ -367,8 +367,9 @@ void EV_HLDM_DecalGunshot(pmtrace_t* pTrace, int iBulletType)
 		case BULLET_PLAYER_EAGLE:
 		default:
 			// smoke and decal
-			// johnhalflife: the sniper rifle's round hits heavier (BulletImpactEffects).
-			EV_HLDM_GunshotDecalTrace(pTrace, EV_HLDM_DamageDecal(pe), iBulletType == BULLET_PLAYER_762);
+			// johnhalflife: the sniper rifle's round hits heavier, the revolver's a little (BulletImpactEffects).
+			EV_HLDM_GunshotDecalTrace(pTrace, EV_HLDM_DamageDecal(pe),
+				iBulletType == BULLET_PLAYER_762 ? JhlImpact::Sniper : iBulletType == BULLET_PLAYER_357 ? JhlImpact::Revolver : JhlImpact::Bullet);
 			break;
 		}
 	}
@@ -702,7 +703,7 @@ void EV_FireGlock2(event_args_t* args)
 	{
 		// Add muzzle flash to current weapon model
 		EV_MuzzleFlash();
-		EV_GunMuzzleEffects();
+		EV_GlockRapidMuzzleEffects();
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(empty ? GLOCK_SHOOT_EMPTY : GLOCK_SHOOT, 0);
 
 		if (!EV_WeaponRecoil(RecoilGlockRapid))
@@ -755,7 +756,7 @@ void EV_FireShotGunDouble(event_args_t* args)
 	{
 		// Add muzzle flash to current weapon model
 		EV_MuzzleFlash();
-		EV_GunMuzzleEffects(g_Skill.GetValue("shotgun_double_wide_spread") != 0 ? 8 : 12);
+		EV_GunMuzzleEffects(g_Skill.GetValue("shotgun_double_wide_spread") != 0 ? 8 : 12, true);
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(SHOTGUN_FIRE2, 0);
 		if (!EV_WeaponRecoil(RecoilShotgunDouble))
 			V_PunchAxis(0, -10.0);
@@ -917,6 +918,8 @@ void EV_FireMP52(event_args_t* args)
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(MP5_LAUNCH, 0);
 		if (!EV_WeaponRecoil(RecoilMP5Grenade))
 			V_PunchAxis(0, -10);
+
+		EV_MP5GrenadeEffects();
 	}
 
 	switch (gEngfuncs.pfnRandomLong(0, 1))
@@ -1910,6 +1913,7 @@ void EV_FireEagle(event_args_t* args)
 	{
 		EV_MuzzleFlash();
 		EV_GunMuzzleEffects();
+		EV_EagleBarrelSmoke();
 
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(bEmpty ? EAGLE_SHOOT_EMPTY : EAGLE_SHOOT, 0);
 		if (!EV_WeaponRecoil(RecoilEagle))

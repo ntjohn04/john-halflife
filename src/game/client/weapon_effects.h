@@ -28,7 +28,40 @@ void WeaponEffects_Initialize();
  *	Call alongside EV_MuzzleFlash for firearms.
  *	@param pellets A shotgun's: a chance of a wisp for each (others: one).
  */
-void EV_GunMuzzleEffects(int pellets = 1);
+void EV_GunMuzzleEffects(int pellets = 1, bool doubleShot = false);
+
+/**
+ *	@brief johnhalflife: the Glock's rapid fire's muzzle smoke, building over a burst (a much lighter M249's).
+ */
+void EV_GlockRapidMuzzleEffects();
+
+/**
+ *	@brief johnhalflife: the MP5's grenade launch: two big wisps and a bigger light (jhl_fx_particlesystem).
+ */
+void EV_MP5GrenadeEffects();
+
+/**
+ *	@brief johnhalflife: the Desert Eagle's barrel smoking a moment after a shot (jhl_fx_particlesystem).
+ */
+void EV_EagleBarrelSmoke();
+
+/**
+ *	@brief Its smoke (V_CalcRefdef, once the view model's placed).
+ */
+void EagleSmoke_Update(double time);
+
+/**
+ *	@brief What a bullet impact is (BulletImpactEffects): a gun's, the revolver's (a little heavier), the sniper
+ *	rifle's (heavy), or a melee blow's (the knife's smaller). Sent as a byte (the BulletHit message).
+ */
+enum class JhlImpact : unsigned char
+{
+	Bullet,
+	Revolver,
+	Sniper,
+	Melee,
+	Knife,
+};
 
 /**
  *	@brief EV_GunMuzzleEffects for the M249: its wisps build with sustained fire (bigger, more opaque, a little apart),
@@ -103,7 +136,7 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
  *	sparks and a brief flash on metal, a small dust puff on stone, dirt and wood. Uses only stock sprites.
  *	@param textureType Material of the surface hit (CHAR_TEX_*).
  */
-void BulletImpactEffects(const Vector& position, const Vector& normal, char textureType, bool heavy = false);
+void BulletImpactEffects(const Vector& position, const Vector& normal, char textureType, JhlImpact kind = JhlImpact::Bullet);
 
 /**
  *	@brief Adds a splash where a bullet travelling from @p start to @p end enters water or slime, if it does.

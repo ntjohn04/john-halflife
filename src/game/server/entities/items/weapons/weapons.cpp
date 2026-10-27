@@ -89,7 +89,12 @@ static char TraceTextureType(TraceResult* pTrace, CBaseEntity* pEntity)
 	return textureType;
 }
 
-static void SendBulletImpact(TraceResult* pTrace, CBaseEntity* pEntity, char textureType)
+// What it was (the client's JhlImpact): a gun's, or a melee blow's (the knife's smaller).
+constexpr int ImpactBullet = 0;
+constexpr int ImpactMelee = 3;
+constexpr int ImpactKnife = 4;
+
+static void SendBulletImpact(TraceResult* pTrace, CBaseEntity* pEntity, char textureType, int kind = ImpactBullet)
 {
 	// Sending an unregistered message is a fatal engine error.
 	if (0 == gmsgBulletImpact)
@@ -103,6 +108,7 @@ static void SendBulletImpact(TraceResult* pTrace, CBaseEntity* pEntity, char tex
 	WRITE_CHAR(static_cast<int>(pTrace->vecPlaneNormal.y * 127));
 	WRITE_CHAR(static_cast<int>(pTrace->vecPlaneNormal.z * 127));
 	WRITE_BYTE(textureType);
+	WRITE_BYTE(kind);
 	MESSAGE_END();
 }
 
@@ -111,17 +117,19 @@ static void SendBulletImpact(TraceResult* pTrace, CBaseEntity* pEntity)
 	SendBulletImpact(pTrace, pEntity, TraceTextureType(pTrace, pEntity));
 }
 
-void MeleeImpactSpark(TraceResult* pTrace)
+void MeleeImpactSpark(TraceResult* pTrace, float puffChance, bool knife)
 {
 	// johnhalflife: a melee weapon striking metal now and then sparks, as a bullet hitting metal does (the client's
-	// metal bullet impact: a few small streaks and a very short warm flash).
+	// metal bullet impact: a few small streaks and a very short warm flash); striking dirt, wood, concrete or tile,
+	// with @p puffChance a little puff (smaller than a bullet's, the knife's smaller still).
 	constexpr float SparkChance = 0.35f;
 
-	if (!UTIL_JhlParticleSystem() || pTrace->flFraction >= 1.0 || RANDOM_FLOAT(0, 1) >= SparkChance)
+	if (!UTIL_JhlParticleSystem() || pTrace->flFraction >= 1.0)
 		return;
 
 	CBaseEntity* pEntity = CBaseEntity::Instance(pTrace->pHit);
 	const char textureType = TraceTextureType(pTrace, pEntity);
+	const int kind = knife ? ImpactKnife : ImpactMelee;
 
 	switch (textureType)
 	{
@@ -129,7 +137,16 @@ void MeleeImpactSpark(TraceResult* pTrace)
 	case CHAR_TEX_VENT:
 	case CHAR_TEX_GRATE:
 	case CHAR_TEX_COMPUTER:
-		SendBulletImpact(pTrace, pEntity, textureType);
+		if (RANDOM_FLOAT(0, 1) < SparkChance)
+			SendBulletImpact(pTrace, pEntity, textureType, kind);
+		break;
+
+	case CHAR_TEX_DIRT:
+	case CHAR_TEX_WOOD:
+	case CHAR_TEX_CONCRETE:
+	case CHAR_TEX_TILE:
+		if (RANDOM_FLOAT(0, 1) < puffChance)
+			SendBulletImpact(pTrace, pEntity, textureType, kind);
 		break;
 
 	default:

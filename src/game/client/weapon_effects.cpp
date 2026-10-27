@@ -111,7 +111,7 @@ static bool FindMuzzle(Vector& muzzle)
 	return muzzle != g_vecZero;
 }
 
-void EV_GunMuzzleEffects(int pellets)
+void EV_GunMuzzleEffects(int pellets, bool doubleShot)
 {
 	Vector muzzle;
 
@@ -121,7 +121,78 @@ void EV_GunMuzzleEffects(int pellets)
 	}
 
 	// Now and then a wisp of smoke; real guns barely smoke. A shotgun's chance is per pellet, so it smokes more.
-	MuzzleEffectsAt(muzzle, 0.3f, 1, 0.1f, std::max(1, pellets));
+	// The shotgun's double shot, with jhl_fx_particlesystem, a little more of a blast: its light a little bigger, and
+	// two small puffs pushed out ahead, carrying the player's movement.
+	const bool blast = doubleShot && JhlParticleSystemEnabled();
+	MuzzleEffectsAt(muzzle, 0.3f, 1, 0.1f, std::max(1, pellets), blast ? 1.2f : 1);
+
+	if (!blast)
+		return;
+
+	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
+	Vector forward;
+	AngleVectors(v_angles, &forward, nullptr, nullptr);
+
+	for (int i = 0; modelIndex != 0 && i < 2; ++i)
+	{
+		Vector position = muzzle + forward * gEngfuncs.pfnRandomFloat(2, 6);
+		Vector velocity = forward * gEngfuncs.pfnRandomFloat(40, 70) +
+						  Vector{gEngfuncs.pfnRandomFloat(-6, 6), gEngfuncs.pfnRandomFloat(-6, 6), gEngfuncs.pfnRandomFloat(0, 10)};
+
+		if (TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, gEngfuncs.pfnRandomFloat(0.15f, 0.2f), modelIndex,
+				kRenderTransAlpha, kRenderFxNone, 0.09f, 2.0f, FTENT_SPRANIMATE);
+			puff)
+		{
+			puff->entity.curstate.rendercolor = {190, 190, 190};
+			puff->entity.curstate.framerate = gEngfuncs.pfnRandomFloat(20, 26);
+			puff->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+			Carry(puff, v_sim_vel);
+		}
+	}
+}
+
+void EV_GlockRapidMuzzleEffects()
+{
+	// As the M249's, much lighter (EV_M249MuzzleEffects): how hot a burst has got it, 0-1, up a 12th a round, back to 0
+	// after a pause; its wisps from a gun's (30% of shots, 0.1, 1x) to 45%, 0.15, up to 1.15x.
+	constexpr float HeatPerRound = 1.f / 12;
+	constexpr float CoolAfter = 0.3f;
+
+	static float heat = 0;
+	static float lastShot = 0;
+
+	const float now = gEngfuncs.GetClientTime();
+
+	if (now < lastShot || now - lastShot > CoolAfter)
+		heat = 0;
+
+	lastShot = now;
+	heat = std::min(1.f, heat + HeatPerRound);
+
+	Vector muzzle;
+
+	if (!FindMuzzle(muzzle))
+		return;
+
+	if (!JhlParticleSystemEnabled())
+	{
+		MuzzleEffectsAt(muzzle, 0.3f);
+		return;
+	}
+
+	MuzzleEffectsAt(muzzle, 0.3f + heat * 0.15f, 1 + heat * gEngfuncs.pfnRandomFloat(0, 0.15f), 0.1f + heat * 0.05f);
+}
+
+void EV_MP5GrenadeEffects()
+{
+	// A grenade launch, with jhl_fx_particlesystem: always two wisps, more than twice a gun's and more opaque, and its
+	// light a little bigger and longer (it had nothing but the sound).
+	Vector muzzle;
+
+	if (!JhlParticleSystemEnabled() || !FindMuzzle(muzzle))
+		return;
+
+	MuzzleEffectsAt(muzzle, 1, 2.2f, 0.18f, 2, 1.1f, 0.08f);
 }
 
 void EV_M249MuzzleEffects()
@@ -168,6 +239,36 @@ void EV_M249MuzzleEffects()
 }
 
 static void Flash(const Vector& origin, float scale, float brightness);
+
+// A thin wisp off a barrel after a shot (SniperSmoke_Update, EagleSmoke_Update): @p left of its stream to go (1 to 0),
+// thinning as it does; rising, carrying the player's movement, shed as smoke's (Carry).
+static void BarrelWisp(const Vector& muzzle, float left, float scaleMin, float scaleMax, float alphaBase, float alphaMore)
+{
+	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
+
+	if (modelIndex == 0)
+		return;
+
+	Vector position = muzzle;
+	Vector velocity{gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(10, 16)};
+
+	if (TEMPENTITY* wisp = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, gEngfuncs.pfnRandomFloat(scaleMin, scaleMax) * (0.6f + 0.4f * left),
+			modelIndex, kRenderTransAlpha, kRenderFxNone, alphaBase + alphaMore * left, 2.0f, FTENT_SPRANIMATE);
+		wisp)
+	{
+		wisp->entity.curstate.rendercolor = {190, 190, 190};
+		wisp->entity.curstate.framerate = gEngfuncs.pfnRandomFloat(24, 30);
+		wisp->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+		Carry(wisp, v_sim_vel);
+	}
+}
+
+// The Desert Eagle's barrel smoking a moment after a shot (EagleSmoke_Update): a smaller, shorter, fainter stream than
+// the sniper rifle's, a big-bore pistol's.
+constexpr float EagleSmokeTime = 0.35f;
+constexpr float EagleSmokeEvery = 0.1f; // Four: at 0, 0.1, 0.2 and 0.3 s.
+static float g_EagleSmokeStart = -1;
+static float g_EagleSmokeNext = 0;
 
 // The sniper rifle's barrel venting smoke through the bolt's working (SniperSmoke_Update): a thin wisp every
 // SniperSmokeEvery for SniperSmokeTime after a shot, thinning out, from its barrel's tip as the view model's drawn (its
@@ -236,24 +337,36 @@ void SniperSmoke_Update(double time)
 	if (IsZoomed() || !MuzzleEffectsEnabled() || !JhlViewModelPoint("models/v_m40a1.mdl", SniperBarrelBone, SniperMuzzle, muzzle))
 		return;
 
-	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
+	// Thinning out as it goes.
+	BarrelWisp(muzzle, 1 - age / SniperSmokeTime, 0.06f, 0.09f, 0.04f, 0.1f);
+}
 
-	if (modelIndex == 0)
+void EV_EagleBarrelSmoke()
+{
+	if (JhlParticleSystemEnabled())
+		g_EagleSmokeStart = gEngfuncs.GetClientTime();
+}
+
+void EagleSmoke_Update(double time)
+{
+	const float now = static_cast<float>(time);
+	const float age = now - g_EagleSmokeStart;
+
+	if (g_EagleSmokeStart < 0 || age > EagleSmokeTime || age < 0)
+	{
+		g_EagleSmokeStart = -1;
+		return;
+	}
+
+	// (A new map or a loaded game restarts the clock: one due further off than that is from before.)
+	if (now < g_EagleSmokeNext && g_EagleSmokeNext - now <= EagleSmokeEvery)
 		return;
 
-	// Thinning out as it goes.
-	const float left = 1 - age / SniperSmokeTime;
-	Vector velocity{gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(10, 16)};
+	g_EagleSmokeNext = now + EagleSmokeEvery;
 
-	if (TEMPENTITY* wisp = gEngfuncs.pEfxAPI->R_TempSprite(muzzle, velocity, gEngfuncs.pfnRandomFloat(0.06f, 0.09f) * (0.6f + 0.4f * left),
-			modelIndex, kRenderTransAlpha, kRenderFxNone, 0.04f + 0.1f * left, 2.0f, FTENT_SPRANIMATE);
-		wisp)
-	{
-		wisp->entity.curstate.rendercolor = {190, 190, 190};
-		wisp->entity.curstate.framerate = gEngfuncs.pfnRandomFloat(24, 30);
-		wisp->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
-		Carry(wisp, v_sim_vel);
-	}
+	// Its muzzle is its view model's first attachment, as the other guns' (not while scoped or in third person).
+	if (Vector muzzle; FindMuzzle(muzzle))
+		BarrelWisp(muzzle, 1 - age / EagleSmokeTime, 0.05f, 0.07f, 0.03f, 0.07f);
 }
 
 // A flash of flame for a moment (the engine's own muzzle flash, muzzleflash2, additive), turned at random.
@@ -869,7 +982,7 @@ static void MetalImpact(const Vector& position, const Vector& normal)
 	}
 }
 
-static void DustImpact(const Vector& position, const Vector& normal, const color24& color, float bigger)
+static void DustImpact(const Vector& position, const Vector& normal, const color24& color, float bigger, float alpha = 0.35f)
 {
 	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
 
@@ -890,7 +1003,7 @@ static void DustImpact(const Vector& position, const Vector& normal, const color
 	constexpr float PuffFrameRate = 24;
 
 	TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity * bigger, gEngfuncs.pfnRandomFloat(0.25f, 0.35f) * bigger,
-		modelIndex, kRenderTransAlpha, kRenderFxNone, bigger > 1 ? 0.45f : 0.35f, 2.0f, FTENT_SPRANIMATE);
+		modelIndex, kRenderTransAlpha, kRenderFxNone, alpha, 2.0f, FTENT_SPRANIMATE);
 
 	if (!puff)
 	{
@@ -926,6 +1039,11 @@ static void HotHole(const Vector& position, const Vector& normal)
 	}
 }
 
+static bool IsMetalTexture(char textureType)
+{
+	return textureType == CHAR_TEX_METAL || textureType == CHAR_TEX_VENT || textureType == CHAR_TEX_GRATE || textureType == CHAR_TEX_COMPUTER;
+}
+
 static void HeavyImpact(const Vector& position, const Vector& normal, char textureType)
 {
 	switch (textureType)
@@ -938,18 +1056,18 @@ static void HeavyImpact(const Vector& position, const Vector& normal, char textu
 		break;
 
 	case CHAR_TEX_DIRT:
-		DustImpact(position, normal, {120, 105, 85}, 2);
+		DustImpact(position, normal, {120, 105, 85}, 2, 0.45f);
 		JhlExplosion_ImpactChunks(position, normal, textureType, 2);
 		break;
 
 	case CHAR_TEX_WOOD:
-		DustImpact(position, normal, {130, 115, 95}, 2);
+		DustImpact(position, normal, {130, 115, 95}, 2, 0.45f);
 		JhlExplosion_ImpactChunks(position, normal, textureType, 2);
 		break;
 
 	case CHAR_TEX_CONCRETE:
 	case CHAR_TEX_TILE:
-		DustImpact(position, normal, {150, 150, 145}, 2);
+		DustImpact(position, normal, {150, 150, 145}, 2, 0.45f);
 		JhlExplosion_ImpactChunks(position, normal, textureType, 2);
 		break;
 
@@ -962,15 +1080,45 @@ static void HeavyImpact(const Vector& position, const Vector& normal, char textu
 	}
 }
 
-void BulletImpactEffects(const Vector& position, const Vector& normal, char textureType, bool heavy)
+void BulletImpactEffects(const Vector& position, const Vector& normal, char textureType, JhlImpact kind)
 {
 	if (0 == g_cl_bulletimpacts->value)
 	{
 		return;
 	}
 
-	if (heavy && JhlParticleSystemEnabled())
+	if (kind == JhlImpact::Sniper && JhlParticleSystemEnabled())
 		HeavyImpact(position, normal, textureType);
+
+	// The revolver's a little heavier than the other guns, and melee blows a little puff (not just on metal): smaller
+	// versions of a bullet's puff (and of the sniper rifle's, for the revolver), with jhl_fx_particlesystem.
+	if (kind != JhlImpact::Bullet && kind != JhlImpact::Sniper && JhlParticleSystemEnabled())
+	{
+		const float size = kind == JhlImpact::Revolver ? 1.4f : kind == JhlImpact::Melee ? 0.7f : 0.5f;
+		const float alpha = kind == JhlImpact::Revolver ? 0.4f : kind == JhlImpact::Melee ? 0.28f : 0.22f;
+
+		switch (textureType)
+		{
+		case CHAR_TEX_DIRT:
+			DustImpact(position, normal, {120, 105, 85}, size, alpha);
+			return;
+
+		case CHAR_TEX_WOOD:
+			DustImpact(position, normal, {130, 115, 95}, size, alpha);
+			return;
+
+		case CHAR_TEX_CONCRETE:
+		case CHAR_TEX_TILE:
+			DustImpact(position, normal, {150, 150, 145}, size, alpha);
+			return;
+
+		default:
+			// Melee sparks on metal as a bullet does (the server sends those only now and then).
+			if (kind != JhlImpact::Revolver && !IsMetalTexture(textureType))
+				return;
+			break;
+		}
+	}
 
 	switch (textureType)
 	{
@@ -1091,8 +1239,9 @@ static void MsgFunc_BulletImpact(const char* pszName, BufferReader& reader)
 	normal.z = reader.ReadChar() / 127.f;
 
 	const char textureType = static_cast<char>(reader.ReadByte());
+	const auto kind = static_cast<JhlImpact>(reader.ReadByte());
 
-	BulletImpactEffects(position, normal, textureType);
+	BulletImpactEffects(position, normal, textureType, kind);
 }
 
 void WeaponEffects_Initialize()

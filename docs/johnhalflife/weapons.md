@@ -219,6 +219,27 @@ light off), flying on with its trail (`CRpgRocket`). With `jhl_fx_particlesystem
   and fading out as they spread to 2.2× their size; at most 12 a
   frame; not under water (vanilla's bubbles there).
 
+### Standard weapons
+`jhl_fx_particlesystem`
+
+Small, reserved versions of the flair weapons' effects (noticeable when looked for, never standing out):
+
+* **Glock, rapid fire:** its smoke builds over a burst, a much lighter M249's (`EV_GlockRapidMuzzleEffects`): up a
+  12th a round, cool again after 0.3 s; wisps from a gun's (30% of shots, 0.1, 1x) to 45%, 0.15, up to 1.15x (the
+  M249's to 70%, 0.33, 1.45x).
+* **Revolver:** a little heavier impacts: on dirt, wood, concrete and tile its puff is 1.4x a bullet's (0.4) in place
+  of a bullet's (the sniper rifle's 2x and chunks).
+* **Desert Eagle:** its barrel smokes a moment after a shot, a shorter, fainter sniper rifle's: four wisps, one every
+  0.1 s, thinning (`EV_EagleBarrelSmoke`, `EagleSmoke_Update`; from its view model's first attachment).
+* **MP5 grenade:** a launch (it had only the sound): two wisps, 2.2x a gun's at 0.18, and its light 1.1x, 0.08 s
+  (`EV_MP5GrenadeEffects`).
+* **Shotgun, double shot:** its light 1.2x and two small puffs (0.15-0.2, 0.09) pushed out ahead at 40-70 units/s,
+  carrying the player's movement, on top of its per-pellet wisps.
+* **Crowbar, pipe wrench, knife:** besides the sparks now and then on metal, every blow on dirt, wood, concrete or
+  tile now and then blows a little puff (the crowbar's half its blows, the pipe wrench's 80%, the knife's 40%), 0.7x a
+  bullet's (0.28), the knife's 0.5x (0.22) (`MeleeImpactSpark`; the `BulletHit`
+  message now carries what made the impact, `JhlImpact`).
+
 ### Tripmine light
 `jhl_fx_particlesystem`
 
