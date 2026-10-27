@@ -399,6 +399,8 @@ out), so:
   over 0.2 s, quickening, wiggling side to side like a measuring tape reeling in (a wave 4 units out at full length,
   1.5 waves along it, running in 4 times a second), so it's plainly not the tongue in play any more.
 * **Bite:** latching onto something that bleeds draws a little of its blood (`SpawnBlood`, 10), as a hornet's sting.
+* **Latch mark:** latching onto a surface leaves a small dull wet mark: the hornet's dart splat in grey
+  (`{hspit_wet1`/`2`, (65,63,58), made by `scripts/make_hornet_decals.py`) (`CGrappleTip::TongueTouch`).
 * **Blending:** the view model blends from its last pose instead of snapping (the engine never latches the view
   model's sequence changes, so its renderer's usual blend never ran; `JhlLatchViewModelSequence`,
   `StudioModelRenderer.cpp`): into idle (and `firereached`, which `EndAttack` shows a frame before idle) over 0.2 s,

@@ -188,6 +188,16 @@ void CGrappleTip::TongueTouch(CBaseEntity* pOther)
 		}
 	}
 
+	// johnhalflife: latched onto a surface it leaves a small dull wet mark (the hornet's dart splat, in grey: made by
+	// scripts/make_hornet_decals.py); what bleeds bleeds instead (CGrapple::PrimaryAttack).
+	if (m_bIsStuck && pOther && pOther->IsBSPModel() && UTIL_JhlParticleSystem() && pev->velocity != g_vecZero)
+	{
+		const Vector direction = pev->velocity.Normalize();
+		TraceResult tr;
+		UTIL_TraceLine(pev->origin - direction * 8, pev->origin + direction * 16, ignore_monsters, edict(), &tr);
+		UTIL_DecalTraceName(&tr, RANDOM_LONG(0, 1) != 0 ? "{hspit_wet1" : "{hspit_wet2");
+	}
+
 	pev->velocity = g_vecZero;
 
 	// johnhalflife: tagged renderamt 2 once it's latched on, for the client's tongue to go taut (jhl_grapple.cpp;
