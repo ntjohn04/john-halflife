@@ -59,6 +59,7 @@ int DLLEXPORT HUD_AddEntity(int type, cl_entity_t* ent, const char* modelname)
 		JhlShockBeams_Track(ent, modelname);
 		JhlGrapple_Track(ent, modelname);
 		SporeLight(ent, modelname);
+		RpgLaserDot(ent, modelname);
 		break;
 	case ET_BEAM:
 		// johnhalflife: an armed tripmine's light.
@@ -946,6 +947,7 @@ static void MsgFunc_TempEntity(const char* name, BufferReader& reader)
 	case TE_BEAMDISK:
 		JhlBlastRing_Parse(reader);
 		break;
+
 	}
 }
 

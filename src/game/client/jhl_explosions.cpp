@@ -169,6 +169,16 @@ constexpr float EmberLifeMax = 2.5f;
 constexpr float LightMoreMax = 2;
 constexpr float LightVariation = 0.05f;
 
+// A third, filling the room: this much wider than the glow, at this much of its brightness (a dlight's at its middle
+// grows with its radius too, so about half the glow's there, falling off gentler), a little redder (light gone further
+// reads warmer), shrinking to nothing as its fireballs burn out (the glow's gone well before them): FillTime, or
+// FillTimeLarge for a large explosion (its second fireball 0.9-1.3 s, a large one's 1.6-2 s).
+constexpr float FillRadius = 1.7f;
+constexpr float FillBrightness = 0.3f;
+constexpr color24 FillColor{255, 150, 40};
+constexpr float FillTime = 1.2f;
+constexpr float FillTimeLarge = 1.9f;
+
 // Under water (WXplo1): a second fireball like the first's, 80-100% its size, a little later.
 constexpr const char* UnderwaterSprite = "sprites/WXplo1.spr";
 constexpr int UnderwaterFrames = 15;
@@ -759,6 +769,18 @@ void EmbersAndLights(const Vector& origin, float scale, int flags, bool embers)
 			glow->color = {255, 190, 40};
 			glow->decay = 200;
 			glow->die = now + std::max(1.f, glow->radius / glow->decay);
+
+			if (dlight_t* fill = gEngfuncs.pEfxAPI->CL_AllocDlight(0); fill)
+			{
+				fill->origin = origin;
+				fill->radius = glow->radius * FillRadius;
+				fill->color = {static_cast<byte>(FillColor.r * FillBrightness), static_cast<byte>(FillColor.g * FillBrightness),
+					static_cast<byte>(FillColor.b * FillBrightness)};
+				const bool large = scale >= LargeScale || (flags & (TE_EXPLFLAG_JHL_ROCKET | TE_EXPLFLAG_JHL_BREAKABLE)) != 0;
+				const float life = large ? FillTimeLarge : FillTime;
+				fill->decay = fill->radius / life;
+				fill->die = now + life;
+			}
 		}
 	}
 }

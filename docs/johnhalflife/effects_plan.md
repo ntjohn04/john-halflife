@@ -205,7 +205,9 @@ grenade 3; RPG rockets 1.5×, explosive breakables 1.3×):
   up to 15 more with size: an RPG rocket 30-40, a satchel 35-45, a mortar 40-50), pale yellow, cream and some white (252, 253, 254), 20-80 sideways (× √ that), 80-220 up, 1.5-2.5 s,
   drifting and falling as the engine's (`pt_blob2`). Not under water.
 * Lights: the engine's flash (200, 0.01 s) and orange glow (150, fading 200 a second) times scale / 3 (1 to 2), ±5%;
-  the glow lasts until it has faded.
+  the glow lasts until it has faded. A third light fills the room: 1.7× the glow's radius, a little redder
+  ((255,150,40) at 30%; a dlight's middle grows with its radius too, so about half the glow's there, falling off
+  gentler), shrinking to nothing as its fireballs burn out, 1.2 s (large explosions 1.9 s), well after the glow.
 * Scorch (`UTIL_JhlExplosionScorch`): one of `{scorch1`-`3` (vanilla 1-2; decals.wad has a third, placed by name),
   and for scale 6+ one more, 9+ two more, overlapping, 16-32 × (scale / 3) units along the surface.
 * Shake (`UTIL_JhlExplosionShake`; vanilla: none): amplitude scale × 1.3, 0.4 + scale × 0.05 s, within

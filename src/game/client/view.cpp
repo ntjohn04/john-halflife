@@ -20,6 +20,7 @@
 #include "Exports.h"
 #include "tri.h"
 #include "view.h"
+#include "weapon_effects.h"
 #include "parsemsg.h"
 #include "networking/ClientUserMessages.h"
 
@@ -1908,6 +1909,9 @@ void DLLEXPORT V_CalcRefdef(ref_params_t* pparams)
 	}
 
 	g_ViewEntity = pparams->viewentity;
+
+	// johnhalflife: the RPG's laser line, placed on its view model now it's where it'll be drawn this frame.
+	RpgLaserLine_Update(gEngfuncs.GetClientTime());
 
 	/*
 	// Example of how to overlay the whole screen with red at 50 % alpha

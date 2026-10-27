@@ -24,6 +24,7 @@
 #include "Exports.h"
 #include "event_api.h"
 #include "r_efx.h"
+#include "beamdef.h"
 #include "dlight.h"
 #include "pm_materials.h"
 #include "parsemsg.h"
@@ -39,6 +40,9 @@ constexpr float TripmineLightDistance = 1024;
 
 // Dynamic light keys for lobbed spores' lights (SporeLight).
 constexpr int SporeLightKey = 12288;
+
+// Dynamic light keys for RPG laser dots (RpgLaserDot).
+constexpr int RpgDotLightKey = 16384;
 
 static cvar_t* g_cl_bulletimpacts = nullptr;
 static cvar_t* g_cl_muzzleflash = nullptr;
@@ -175,6 +179,26 @@ void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, co
 	MuzzleEffectsAt(eyePosition + forward * Forward + right * Right + up * Up, IsZoomed() ? 0 : 0.6f);
 }
 
+// A flash of flame for a moment (the engine's own muzzle flash, muzzleflash2, additive), turned at random.
+static void Flash(const Vector& origin, float scale, float brightness)
+{
+	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/muzzleflash2.spr");
+
+	if (model == 0)
+		return;
+
+	Vector position = origin;
+	Vector still{0, 0, 0};
+
+	if (TEMPENTITY* flash = gEngfuncs.pEfxAPI->R_TempSprite(position, still, scale, model, kRenderTransAdd, kRenderFxNone,
+			brightness, 0.07f, 0);
+		flash)
+	{
+		flash->entity.curstate.frame = static_cast<float>(gEngfuncs.pfnRandomLong(0, 1));
+		flash->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+	}
+}
+
 void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& forward, const Vector& right, const Vector& up,
 	const Vector& shooterVelocity)
 {
@@ -191,8 +215,12 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 		constexpr float Right = 8;
 		constexpr float Up = -6;
 
-		// Always a wisp, much larger than a gun's and twice as opaque.
-		MuzzleEffectsAt(eyePosition + forward * Forward + right * Right + up * Up, 1, 3.5f, 0.2f);
+		// Always two wisps, much larger than a gun's and twice as opaque.
+		const Vector front = eyePosition + forward * Forward + right * Right + up * Up;
+		MuzzleEffectsAt(front, 1, 4, 0.2f, 2);
+
+		// The launch charge's small flash out of the front.
+		Flash(front, 0.25f, 0.6f);
 	}
 
 	// Backblast out of the rear of the tube, over the right shoulder. Placed from the player rather than the view
@@ -202,13 +230,17 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)
 	{
 		light->origin = rear;
-		light->radius = gEngfuncs.pfnRandomFloat(160, 200);
+		light->radius = gEngfuncs.pfnRandomFloat(200, 240);
 		light->color.r = 255;
 		light->color.g = 170;
 		light->color.b = 90;
-		light->die = gEngfuncs.GetClientTime() + 0.1f;
-		light->decay = light->radius * 8;
+		light->die = gEngfuncs.GetClientTime() + 0.15f;
+		light->decay = light->radius / 0.15f;
 	}
+
+	// A short flame out of the back: two flashes along it (a sprite faces the view, so two make it long seen side on).
+	Flash(rear, 0.45f, 0.8f);
+	Flash(rear - forward * 14, 0.35f, 0.6f);
 
 	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
 
@@ -218,29 +250,29 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 	}
 
 	// The blast itself, out the back.
-	for (int i = 0; i < 6; ++i)
+	for (int i = 0; i < 9; ++i)
 	{
 		Vector origin = rear - forward * gEngfuncs.pfnRandomFloat(0, 12);
 		Vector velocity = forward * -gEngfuncs.pfnRandomFloat(90, 160) + right * gEngfuncs.pfnRandomFloat(-40, 40) + up * gEngfuncs.pfnRandomFloat(-10, 25);
 
 		// Plays once and is removed on its last frame (see DustImpact); a slower frame rate lets the plume linger.
-		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, gEngfuncs.pfnRandomFloat(0.5f, 0.8f),
+		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, gEngfuncs.pfnRandomFloat(0.6f, 0.95f),
 			modelIndex, kRenderTransAlpha, kRenderFxNone, 0.3f, 3.0f, FTENT_SPRANIMATE);
 
 		if (puff)
 		{
 			puff->entity.curstate.rendercolor = {170, 170, 170};
-			puff->entity.curstate.framerate = 14;
+			puff->entity.curstate.framerate = 11; // 16 frames: about 1.45 s.
 			puff->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
 			Carry(puff, shooterVelocity);
 		}
 	}
 
 	// Smoke billowing back around the shooter: large, slow puffs that start behind on either side and roll forward
-	// past the shoulders, into view. Two per side, one of the four left out at random.
-	const int skipped = gEngfuncs.pfnRandomLong(0, 3);
+	// past the shoulders, into view. Three per side, one of the six left out at random.
+	const int skipped = gEngfuncs.pfnRandomLong(0, 5);
 
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < 6; ++i)
 	{
 		if (i == skipped)
 		{
@@ -252,14 +284,14 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 		Vector origin = rear + right * side * gEngfuncs.pfnRandomFloat(12, 22) - up * gEngfuncs.pfnRandomFloat(0, 12);
 		Vector velocity = forward * gEngfuncs.pfnRandomFloat(35, 55) + right * side * gEngfuncs.pfnRandomFloat(15, 30) + up * gEngfuncs.pfnRandomFloat(0, 12);
 
-		// 16 frames at 8 per second: about two seconds.
+		// 16 frames at 6.5 per second: about two and a half seconds.
 		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, gEngfuncs.pfnRandomFloat(1.0f, 1.5f),
 			modelIndex, kRenderTransAlpha, kRenderFxNone, 0.19f, 3.0f, FTENT_SPRANIMATE);
 
 		if (puff)
 		{
 			puff->entity.curstate.rendercolor = {170, 170, 170};
-			puff->entity.curstate.framerate = 8;
+			puff->entity.curstate.framerate = 6.5f;
 			puff->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
 			Carry(puff, shooterVelocity);
 		}
@@ -330,6 +362,147 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance, float wisp
 			Carry(wisp, v_sim_vel);
 		}
 	}
+}
+
+// The RPG's laser dot: where it is now (RpgLaserDot), and its line when it comes on (RpgLaserLine_Update); when the
+// local player's last started reloading (its dot is hidden a moment then, and coming back isn't coming on).
+static Vector g_RpgDot;
+static float g_RpgDotSeen = -1;
+static BEAM* g_RpgLine = nullptr;
+static float g_RpgLineStart = -1;
+static float g_RpgReloaded = -100;
+
+// A dot not seen for this long that's seen again has come on (turned on, or the RPG taken out with it on), unless a
+// reload started within ReloadHide (its dot hidden 2.1 s then, CRpg::Reload).
+constexpr float DotAbsent = 0.15f;
+constexpr float ReloadHide = 3;
+
+// Its line: thin, red, as bright as this, holding LineHold then fading out by LineTime.
+constexpr float LineWidth = 0.5f;
+constexpr float LineBrightness = 0.4f;
+constexpr float LineHold = 0.15f;
+constexpr float LineTime = 1;
+
+// The front of the laser's housing in v_rpg.mdl, in its launcher's bone (Dummy22): the middle of the eight-sided ring
+// at the front of the small cylinder alongside the front of the tube, found in its vertices.
+constexpr int RpgLaserBone = 12;
+const Vector RpgLaserHousing{3.37f, -9.88f, -3.39f};
+
+void RpgLaserDot(cl_entity_t* dot, const char* modelname)
+{
+	// The RPG's (the Desert Eagle's laser has the same dot, drawn at half size: CEagleLaser).
+	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "sprites/laserdot.spr") ||
+		(dot->curstate.scale > 0 && dot->curstate.scale < 0.75f))
+	{
+		return;
+	}
+
+	const float now = gEngfuncs.GetClientTime();
+
+	// Come on: its line, from now.
+	if ((now - g_RpgDotSeen > DotAbsent || now < g_RpgDotSeen) && now - g_RpgReloaded > ReloadHide)
+		g_RpgLineStart = now;
+
+	g_RpgDot = dot->origin;
+	g_RpgDotSeen = now;
+
+	// As faint as the tripmine's (72 units, its color at 80%): the dot's red.
+	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(RpgDotLightKey + dot->index); light)
+	{
+		light->origin = dot->origin;
+		light->radius = 72;
+		light->color = {204, 0, 0};
+		light->die = gEngfuncs.GetClientTime() + 0.05f;
+		light->decay = 0;
+	}
+}
+
+void RpgLaser_Reloading()
+{
+	g_RpgReloaded = gEngfuncs.GetClientTime();
+}
+
+void RpgLaserLine_Update(double time)
+{
+	const float now = static_cast<float>(time);
+	const float age = now - g_RpgLineStart;
+
+	// Done, or a new map (the clock restarted).
+	if (g_RpgLineStart < 0 || age > LineTime || age < 0 || 0 != CL_IsThirdPerson())
+	{
+		if (g_RpgLine)
+		{
+			g_RpgLine->die = 0;
+			g_RpgLine->brightness = 0;
+			g_RpgLine = nullptr;
+		}
+
+		if (age > LineTime || age < 0)
+			g_RpgLineStart = -1;
+
+		return;
+	}
+
+	const auto gone = []()
+	{
+		if (g_RpgLine)
+		{
+			g_RpgLine->die = 0;
+			g_RpgLine->brightness = 0;
+			g_RpgLine = nullptr;
+		}
+	};
+
+	// The dot's gone (the laser turned off): no line (the engine would free it if kept but not kept up).
+	if (now - g_RpgDotSeen > 0.05f)
+	{
+		gone();
+		return;
+	}
+
+	// From the laser's housing, the small cylinder under the front of the tube: the view model has no attachments, so
+	// its front (in the launcher's bone, Dummy22, 12) is placed from its bone as last drawn, moved with the view model
+	// since (JhlViewModelPoint; this is run once the view's placed, V_CalcRefdef).
+	Vector from;
+
+	if (!JhlViewModelPoint("models/v_rpg.mdl", RpgLaserBone, RpgLaserHousing, from))
+	{
+		gone();
+		return;
+	}
+
+	Vector to = g_RpgDot;
+
+	const float fade = age < LineHold ? 1 : 1 - (age - LineHold) / (LineTime - LineHold);
+	const float brightness = LineBrightness * fade * fade;
+
+	if (!g_RpgLine)
+	{
+		const int sprite = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/laserbeam.spr");
+
+		if (sprite == 0)
+			return;
+
+		g_RpgLine = gEngfuncs.pEfxAPI->R_BeamPoints(from, to, sprite, 1, LineWidth, 0, brightness, 0, 0, 0, 1, 0.12f, 0.12f);
+
+		if (!g_RpgLine)
+			return;
+	}
+
+	g_RpgLine->source = from;
+	g_RpgLine->target = to;
+	g_RpgLine->delta = to - from;
+	g_RpgLine->brightness = brightness;
+	g_RpgLine->die = now + 0.2f;
+	g_RpgLine->flags |= FBEAM_ISACTIVE;
+}
+
+void RpgLaser_Reset()
+{
+	g_RpgLine = nullptr;
+	g_RpgLineStart = -1;
+	g_RpgReloaded = -100;
+	g_RpgDotSeen = -1;
 }
 
 // The spore launcher's light color: its burst sprite's lime (spore_exp_c_01), at full brightness.

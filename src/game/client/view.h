@@ -17,6 +17,13 @@ inline Vector v_angles;
 inline Vector v_cl_angles;
 inline Vector v_sim_org;
 inline Vector v_sim_vel; // johnhalflife: the local player's predicted velocity, for what's thrown off their weapon.
+
+/**
+ *	@brief johnhalflife: a point on the view model where it has no attachment: @p local in its bone @p bone's space,
+ *	in the world: where it was on the view model as last drawn (StudioModelRenderer), where the view model is now. False
+ *	if it isn't @p modelName or wasn't just drawn (third person, zoomed).
+ */
+bool JhlViewModelPoint(const char* modelName, int bone, const Vector& local, Vector& world);
 inline Vector v_client_aimangles;
 inline Vector v_crosshairangle;
 

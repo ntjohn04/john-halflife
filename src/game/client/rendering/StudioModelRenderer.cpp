@@ -812,6 +812,13 @@ StudioSetupBones
 // they were: only how it looks.
 static float g_JhlViewModelBlendTime = 0.2f;
 
+static model_t* g_JhlViewModel = nullptr;
+static int g_JhlViewModelBoneCount = 0;
+static double g_JhlViewModelTime = 0;
+static float g_JhlViewModelBones[MAXSTUDIOBONES][3][4];
+static Vector g_JhlViewModelOrigin; // Where the view model was, and its angles, when they were.
+static Vector g_JhlViewModelAngles;
+
 static void JhlLatchViewModelSequence(cl_entity_t* entity, model_t* model, float time)
 {
 	static model_t* lastModel = nullptr;
@@ -1085,6 +1092,50 @@ void CStudioModelRenderer::StudioSetupBones()
 			ConcatTransforms((*m_plighttransform)[parent], bonematrix, (*m_plighttransform)[i]);
 		}
 	}
+
+	// johnhalflife: the view model's bones kept, for points on it that have no attachment (JhlViewModelPoint).
+	if (m_pCurrentEntity == gEngfuncs.GetViewModel())
+	{
+		g_JhlViewModel = m_pRenderModel;
+		g_JhlViewModelBoneCount = std::min(m_pStudioHeader->numbones, MAXSTUDIOBONES);
+		g_JhlViewModelTime = m_clTime;
+		g_JhlViewModelOrigin = m_pCurrentEntity->origin;
+		g_JhlViewModelAngles = m_pCurrentEntity->angles;
+		std::memcpy(g_JhlViewModelBones, *m_pbonetransform, sizeof(float[3][4]) * g_JhlViewModelBoneCount);
+	}
+}
+
+bool JhlViewModelPoint(const char* modelName, int bone, const Vector& local, Vector& world)
+{
+	// Drawn just now (last frame's, the view model being drawn after the effects), and the one asked about.
+	if (!g_JhlViewModel || bone < 0 || bone >= g_JhlViewModelBoneCount ||
+		0 != std::strcmp(g_JhlViewModel->name, modelName) || std::abs(gEngfuncs.GetClientTime() - g_JhlViewModelTime) > 0.1)
+	{
+		return false;
+	}
+
+	const float(&m)[3][4] = g_JhlViewModelBones[bone];
+	Vector then;
+
+	for (int i = 0; i < 3; ++i)
+		then[i] = m[i][0] * local.x + m[i][1] * local.y + m[i][2] * local.z + m[i][3];
+
+	// Moved with the view model since (the camera, the player, its sway): where it is on the view model then, put where
+	// the view model is now (its animation a frame behind, too little to see).
+	cl_entity_t* viewModel = gEngfuncs.GetViewModel();
+
+	if (!viewModel)
+		return false;
+
+	Vector forward, right, up;
+	AngleVectors(g_JhlViewModelAngles, forward, right, up);
+	const Vector offset = then - g_JhlViewModelOrigin;
+	const Vector onModel{DotProduct(offset, forward), DotProduct(offset, right), DotProduct(offset, up)};
+
+	AngleVectors(viewModel->angles, forward, right, up);
+	world = viewModel->origin + forward * onModel.x + right * onModel.y + up * onModel.z;
+
+	return true;
 }
 
 

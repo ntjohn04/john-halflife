@@ -21,6 +21,8 @@
 #include "items/weapons/CLaserSpot.h"
 #include "items/weapons/CRpgRocket.h"
 #include "jhl_effects.h"
+#else
+#include "weapon_effects.h"
 #endif
 
 LINK_ENTITY_TO_CLASS(weapon_rpg, CRpg);
@@ -76,6 +78,10 @@ void CRpg::Reload()
 		m_pSpot->Suspend(2.1);
 		m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 2.1;
 	}
+#else
+	// johnhalflife: its dot's hidden while it reloads, and coming back isn't coming on (no laser line).
+	if (m_fSpotActive)
+		RpgLaser_Reloading();
 #endif
 
 	if (GetMagazine1() == 0)
@@ -93,6 +99,9 @@ void CRpg::Precache()
 	PrecacheModel(STRING(m_WorldModel));
 	PrecacheModel("models/v_rpg.mdl");
 	PrecacheModel("models/p_rpg.mdl");
+
+	// johnhalflife: the launch's flame flashes (EV_RpgFireEffects; the client only finds what's precached).
+	PrecacheModel("sprites/muzzleflash2.spr");
 
 	PrecacheSound("items/9mmclip1.wav");
 	PrecacheSound("weapons/desert_eagle_sight.wav");
@@ -224,6 +233,7 @@ void CRpg::SecondaryAttack()
 
 	// The Desert Eagle's laser on/off sounds, played from the server like CEagle does.
 	m_pPlayer->EmitSound(CHAN_ITEM, m_fSpotActive ? "weapons/desert_eagle_sight.wav" : "weapons/desert_eagle_sight2.wav", VOL_NORM, ATTN_NORM);
+
 #endif
 
 	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.2;
@@ -287,6 +297,10 @@ void CRpg::UpdateSpot()
 		if (!m_pSpot)
 		{
 			m_pSpot = CLaserSpot::CreateSpot();
+
+			// johnhalflife: its dot a little smaller (vanilla's 1).
+			if (UTIL_JhlParticleSystem())
+				m_pSpot->pev->scale = 0.93f;
 		}
 
 		UTIL_MakeVectors(m_pPlayer->pev->v_angle);

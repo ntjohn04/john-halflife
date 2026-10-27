@@ -51,6 +51,29 @@ void TripmineLight(cl_entity_t* beam, const char* modelname);
 void SporeLight(cl_entity_t* spore, const char* modelname);
 
 /**
+ *	@brief johnhalflife: the RPG's laser dot lit, faintly red (jhl_fx_particlesystem; HUD_AddEntity), and where it is
+ *	for its line.
+ */
+void RpgLaserDot(cl_entity_t* dot, const char* modelname);
+
+/**
+ *	@brief johnhalflife: the local player's RPG is reloading (CRpg::Reload, predicted): its dot is hidden 2.1 s, and
+ *	coming back isn't coming on.
+ */
+void RpgLaser_Reloading();
+
+/**
+ *	@brief Draws the RPG's laser line when its dot comes on (turned on, or the RPG taken out with it on): a thin red line
+ *	from the laser's housing to the dot, fading out over a second (V_CalcRefdef, once the view model's placed).
+ */
+void RpgLaserLine_Update(double time);
+
+/**
+ *	@brief Forgets the line (HUD_VidInit: a new map frees the engine's beams).
+ */
+void RpgLaser_Reset();
+
+/**
  *	@brief EV_GunMuzzleEffects for the sniper rifle, whose view model attachment isn't at its muzzle:
  *	the muzzle is placed relative to the view instead, and more often leaves a wisp.
  */

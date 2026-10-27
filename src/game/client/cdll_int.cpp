@@ -47,6 +47,7 @@
 #include "jhl_shockbeams.h"
 #include "jhl_grapple.h"
 #include "jhl_blastring.h"
+#include "weapon_effects.h"
 
 extern bool g_ResetMousePosition;
 
@@ -168,6 +169,7 @@ int DLLEXPORT HUD_VidInit()
 	JhlShockBeams_Reset();
 	JhlGrapple_Reset();
 	JhlBlastRing_Reset();
+	RpgLaser_Reset();
 
 	VGui_Startup();
 

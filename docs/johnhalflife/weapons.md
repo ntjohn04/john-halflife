@@ -95,6 +95,25 @@ in `CHandGrenade::ItemPostFrame` rather than a think function, which would need 
 Turning the RPG's laser guidance on plays the Desert Eagle's `weapons/desert_eagle_sight.wav`, and turning
 it off plays `desert_eagle_sight2.wav`, as the Desert Eagle does.
 
+With `jhl_fx_particlesystem`:
+
+* **Dot:** 7% smaller than vanilla's (0.93; `CRpg::UpdateSpot`).
+* **Dot light:** the RPG's laser dot lights the surface around it faintly, as the tripmine's light (72 units, its red
+  at 80%, (204,0,0)); not the Desert Eagle's, whose dot is the same drawn at half size (`RpgLaserDot`,
+  `weapon_effects.cpp`). It goes out with the dot while it's hidden after a shot.
+* **Line when it comes on:** its player sees a thin red line (0.5 wide, 0.4) from the laser's housing to the dot,
+  holding 0.15 s and fading out by 1 s, following the dot: the targeting locking on, not a beam always on screen.
+  Whenever the dot comes on: the client starts it when the dot's seen after 0.15 s unseen (turned on, or the RPG
+  taken out with it on), not within 3 s of a reload starting (the dot's hidden 2.1 s then, and coming back isn't
+  coming on; `CRpg::Reload` tells the client, predicted);
+  first person. (A server message when the dot was made was tried: quick toggles sometimes went without a line.)
+  Turned off before it's faded, it goes with the dot. The housing is the small cylinder alongside the front of the
+  tube; the view model has no attachments, so its front, found in the model's vertices (the middle of its front ring,
+  (3.37, -9.88, -3.39) in the launcher's bone, `Dummy22`), is placed from that bone as the view model was last drawn (`JhlViewModelPoint`,
+  `StudioModelRenderer.cpp`): where it was on the view model then, put where the view model is now, once the view's
+  placed for the frame (`V_CalcRefdef`), so it stays on the housing as the camera, the player and the gun's sway
+  move (set before, it was a frame behind them).
+
 ## Effects
 
 The client side is in `src/game/client/weapon_effects.cpp`.
@@ -157,13 +176,19 @@ so it doesn't drift across the magnified view.
 **RPG:** the view model has no attachments, so the front of the tube is placed relative to the view too
 (36 forward, 8 right, 6 down).
 
-* **Front:** the light and a wisp on every shot, 3.5× the size and twice the opacity of a gun's.
+The launch is the first of its two beats (a recoilless launcher's soft launch; its motor lights 0.4 s later): its
+punch is in its light, smoke and flame, not a push on the shooter.
+
+* **Front:** the light, two wisps on every shot, 4× the size and twice the opacity of a gun's, and the launch
+  charge's small flash (the engine's `muzzleflash2`, 0.25, 0.07 s).
 * **Backblast:** behind the right shoulder, placed from the shooter's position and aim, so other players
   and third person see it too.
-  * A short orange light.
-  * 6 puffs blasted backward.
+  * An orange light, 200-240 units, 0.15 s.
+  * A short flame out the back: two flashes along it (`muzzleflash2`, 0.45 and 0.35, 0.07 s; a sprite faces the
+    view, so two make it long seen side on). The server precaches the sprite (`CRpg::Precache`).
+  * 9 puffs blasted backward, 0.6-0.95, about 1.45 s.
   * A billow of large, slow puffs that start behind the shoulders and roll forward past the shooter into
-    view, lasting about 2 seconds: two positions per side, three of the four used each shot.
+    view, lasting about 2.5 seconds: three positions per side, five of the six used each shot.
 
 ### Tripmine light
 `jhl_fx_particlesystem`
