@@ -142,6 +142,10 @@ On the local player's firearm shots (not the gauss gun), on top of the engine's 
   shots, opacity 0.13, 1.08×); hot, 70% of shots, opacity up to 0.33 and 1.2-1.45× at random; each up to 1.5 units
   off the muzzle so they don't stack.
 
+Smoke leaves the gun moving with it and the air stops it: each wisp, and the RPG's backblast and shoulder smoke, is
+given the shooter's velocity on top of its own and sheds it, halving every 0.5 s: a gun's wisp (about 0.57 s) keeps most of it
+its whole life, the RPG's longer-lived smoke hangs where it was let out a moment after. A flat share of the velocity was considered: it never slows.
+
 The muzzle position is the view model's first attachment. That is only valid while the view model is
 drawn, so the effects are skipped in third person and while zoomed.
 
@@ -249,7 +253,7 @@ the engine saturates into its bright, textured white-blue.
   units apart and 0.12 s apart.
 * **Leaking sparks:** every 0.1-0.3 s a small blue speck (the gun's own flare, `XSpark1`, cyan-blue, at 0.06,
   additive; additive sprites aren't tinted) flung from the
-  muzzle out to the side and up, falling at half gravity, 0.4-0.7 s.
+  muzzle out to the side and up, moving with the player (their velocity added), falling at half gravity, 0.4-0.7 s.
 * **Fizzle on release:** 4-6 blue specks (0.1) where it was hitting, scattered ±50 with a pop of 10-70 up, falling at
   half gravity onto what's below, each fading over the last 60% of 1-1.5 s.
 * **Lights while firing:** one each, moved every frame (a keyed dynamic light, kept alive a frame at a time, not
@@ -268,7 +272,8 @@ the engine saturates into its bright, textured white-blue.
   * From a third of the charge: short arcs crackling off the muzzle (`smoke.spr`, the gun's beam sprite, 5-10
     units, 0.05-0.12 s), 4 to 12 a second as it charges.
   * At full charge, unstable: the arcs 20-30 a second, longer and wilder, the glow and light flickering, and sparks
-    spitting out of the muzzle (`hotglow` at 0.04, falling at half gravity onto what's below, 0.6-1 s), 3 to 9 a
+    spitting out of the muzzle (`hotglow` at 0.04, moving with the player (their velocity added), falling at half
+    gravity onto what's below, 0.6-1 s), 3 to 9 a
     second, more of everything as the overcharge nears.
 * **Primary beam:** a little brighter (153, vanilla 128), with a core in it: the same path, half the width (0.5),
   a pale hot orange (255,200,110) at 0.35, so the edges stay orange and the center is just a little hotter.

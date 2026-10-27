@@ -26,6 +26,7 @@
 #include "jhl_explosions.h"
 #include "jhl_gauss.h"
 #include "jhl_settings.h"
+#include "view.h"
 
 namespace
 {
@@ -170,7 +171,8 @@ void Spit(const Vector& muzzle, bool burst = false)
 
 	const float spread = burst ? 110.f : 60.f;
 	Vector position = muzzle;
-	Vector velocity = forward * (burst ? Random(80, 200) : Random(30, 90)) + right * Random(-spread, spread) + up * Random(10, burst ? 110 : 60);
+	// Thrown off the gun, moving with it (the player's velocity), as a hornet's spit and the shells are.
+	Vector velocity = forward * (burst ? Random(80, 200) : Random(30, 90)) + right * Random(-spread, spread) + up * Random(10, burst ? 110 : 60) + v_sim_vel;
 	const float life = Random(0.6f, 1);
 
 	TEMPENTITY* spark = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, 0.04f, sprite, kRenderTransAdd, kRenderFxNone, 1,

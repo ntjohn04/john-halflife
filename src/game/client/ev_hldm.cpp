@@ -1535,7 +1535,7 @@ void EV_FireRpg(event_args_t* args)
 	Vector eyePosition;
 	EV_GetGunPosition(args, eyePosition, origin);
 
-	EV_RpgFireEffects(EV_IsLocal(idx), eyePosition, forward, right, up);
+	EV_RpgFireEffects(EV_IsLocal(idx), eyePosition, forward, right, up, args->velocity);
 }
 //======================
 //	     RPG END

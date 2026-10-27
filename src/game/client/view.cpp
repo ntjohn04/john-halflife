@@ -1888,6 +1888,9 @@ void DLLEXPORT V_CalcRefdef(ref_params_t* pparams)
 	RenderFog();
 
 	g_Paused = pparams->paused != 0;
+
+	// johnhalflife: the local player's predicted velocity, every frame (for what's thrown off their weapon).
+	v_sim_vel = pparams->simvel;
 	g_WaterLevel = pparams->waterlevel;
 
 	// intermission / finale rendering

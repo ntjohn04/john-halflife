@@ -56,6 +56,27 @@ static bool IsZoomed()
 
 static void MuzzleEffectsAt(const Vector& position, float wispChance, float wispScale = 1, float wispAlpha = 0.1f, int rolls = 1);
 
+// Smoke leaves the gun moving with it, and the air stops it: it's given the shooter's velocity on top of its own
+// (kept in curstate.vuser1), and sheds it, halving every 0.5 s (CarriedTime), so it hangs where it was let out a
+// moment after (a sprite's velocity otherwise never changes but for gravity).
+constexpr float CarriedTime = 0.72f;
+
+static void ShedCarried(TEMPENTITY* ent, float frametime, float currenttime)
+{
+	const float keep = std::exp(-frametime / CarriedTime);
+	Vector carried = ent->entity.curstate.vuser1;
+	ent->entity.baseline.origin = ent->entity.baseline.origin - carried * (1 - keep);
+	ent->entity.curstate.vuser1 = carried * keep;
+}
+
+static void Carry(TEMPENTITY* ent, const Vector& velocity)
+{
+	ent->entity.baseline.origin = ent->entity.baseline.origin + velocity;
+	ent->entity.curstate.vuser1 = velocity;
+	ent->flags |= FTENT_CLIENTCUSTOM;
+	ent->callback = ShedCarried;
+}
+
 // Where the view model's muzzle is, if muzzle effects should be drawn there now.
 static bool FindMuzzle(Vector& muzzle)
 {
@@ -154,7 +175,8 @@ void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, co
 	MuzzleEffectsAt(eyePosition + forward * Forward + right * Right + up * Up, IsZoomed() ? 0 : 0.6f);
 }
 
-void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& forward, const Vector& right, const Vector& up)
+void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& forward, const Vector& right, const Vector& up,
+	const Vector& shooterVelocity)
 {
 	if (0 == g_cl_muzzleflash->value)
 	{
@@ -210,6 +232,7 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 			puff->entity.curstate.rendercolor = {170, 170, 170};
 			puff->entity.curstate.framerate = 14;
 			puff->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+			Carry(puff, shooterVelocity);
 		}
 	}
 
@@ -238,6 +261,7 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 			puff->entity.curstate.rendercolor = {170, 170, 170};
 			puff->entity.curstate.framerate = 8;
 			puff->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+			Carry(puff, shooterVelocity);
 		}
 	}
 }
@@ -301,6 +325,9 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance, float wisp
 			wisp->entity.curstate.rendercolor = {190, 190, 190};
 			wisp->entity.curstate.framerate = framerate;
 			wisp->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+
+			// Only the local player's guns smoke here (first person): theirs is the velocity.
+			Carry(wisp, v_sim_vel);
 		}
 	}
 }

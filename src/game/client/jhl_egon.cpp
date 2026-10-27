@@ -26,6 +26,7 @@
 #include "jhl_egon.h"
 #include "jhl_explosions.h"
 #include "jhl_settings.h"
+#include "view.h"
 #include "Exports.h"
 
 namespace
@@ -233,7 +234,8 @@ void Vent(const Vector& muzzle, float now)
 	Vector forward, right, up;
 	AngleVectors(gHUD.m_vecAngles, forward, right, up);
 
-	const Vector velocity = right * Random(-90, 90) + up * Random(20, 90) - forward * Random(0, 40);
+	// Thrown off the gun, moving with it (the player's velocity), as a hornet's spit and the shells are.
+	const Vector velocity = right * Random(-90, 90) + up * Random(20, 90) - forward * Random(0, 40) + v_sim_vel;
 	Speck(muzzle, velocity, 0.06f, Random(0.4f, 0.7f));
 }
 } // namespace

@@ -16,6 +16,7 @@ inline Vector v_origin;
 inline Vector v_angles;
 inline Vector v_cl_angles;
 inline Vector v_sim_org;
+inline Vector v_sim_vel; // johnhalflife: the local player's predicted velocity, for what's thrown off their weapon.
 inline Vector v_client_aimangles;
 inline Vector v_crosshairangle;
 
