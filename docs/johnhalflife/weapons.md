@@ -190,6 +190,22 @@ punch is in its light, smoke and flame, not a push on the shooter.
   * A billow of large, slow puffs that start behind the shoulders and roll forward past the shooter into
     view, lasting about 2.5 seconds: three positions per side, five of the six used each shot.
 
+The rocket coasts 0.4 s, then its motor lights (its sound, light and trail), burns 1 s and burns out (its sound and
+light off), flying on with its trail (`CRpgRocket`). With `jhl_fx_particlesystem`:
+
+* **Motor glow and light:** drawn by the client in place of the engine's (`EF_LIGHT`: a big flat white flare and
+  light, gone at once at burnout): an orange glow (`hotglow`, 0.9) with a white-hot core (`glow02`, 0.27) on top, and
+  a warm orange light (255,150,60), 200 units; flickering as it burns, each frame (the glow 0.65-1.35× its size, the
+  core 0.8-1.6×, mostly flaring bigger; their brightness down to the least of that; the light ±20%), fading out over
+  0.25 s at burnout
+  (`RocketGlow`, `weapon_effects.cpp`). The server tags the rocket `renderamt` 1 burning, 2 burnt out.
+* **Trail:** smoke laid along its path from when its motor lights, in place of the engine's follow beam (it only adds
+  light, and drawn in straight pieces showed seams and bright overlaps where it turned; toning it down was tried):
+  grey puffs (`steam1`, as the backblast's, (170,170,170), 0.6-0.9), one every 32 units, slowly rising (about 18
+  units over their life) and coming apart over about 3.75 s (±15%; vanilla's trail 4 s, near solid), starting at 0.5
+  and fading out as they spread to 2.2× their size; at most 12 a
+  frame; not under water (vanilla's bubbles there).
+
 ### Tripmine light
 `jhl_fx_particlesystem`
 

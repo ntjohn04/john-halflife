@@ -16,6 +16,7 @@
 #include "cbase.h"
 #include "CRpg.h"
 #include "CRpgRocket.h"
+#include "jhl_effects.h"
 
 BEGIN_DATAMAP(CRpgRocket)
 DEFINE_FIELD(m_flIgniteTime, FIELD_TIME),
@@ -88,6 +89,10 @@ void CRpgRocket::Precache()
 {
 	PrecacheModel("models/rpgrocket.mdl");
 	m_iTrail = PrecacheModel("sprites/smoke.spr");
+
+	// johnhalflife: its motor's glow, drawn by the client (RocketGlow).
+	PrecacheModel("sprites/hotglow.spr");
+	PrecacheModel("sprites/glow02.spr");
 	PrecacheSound("weapons/rocket1.wav");
 }
 
@@ -96,25 +101,39 @@ void CRpgRocket::IgniteThink()
 	// pev->movetype = MOVETYPE_TOSS;
 
 	pev->movetype = MOVETYPE_FLY;
-	pev->effects |= EF_LIGHT;
+
+	// johnhalflife: its motor's glow and light drawn by the client instead of the engine's (EF_LIGHT, a big flat white
+	// flare and light, gone at once at burnout): tagged renderamt 1 while it burns, 2 once it's burnt out (RocketGlow;
+	// renderamt does nothing for a model drawn normally).
+	const bool jhl = UTIL_JhlParticleSystem();
+
+	if (jhl)
+		pev->renderamt = 1;
+	else
+		pev->effects |= EF_LIGHT;
 
 	// make rocket sound
 	EmitSound(CHAN_VOICE, "weapons/rocket1.wav", 1, 0.5);
 
 	// rocket trail
-	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
+	// johnhalflife: the client lays smoke along its path instead (RocketGlow): a follow beam only adds light, and drawn in
+	// straight pieces it showed seams and bright overlaps where it turned.
+	if (!jhl)
+	{
+		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
 
-	WRITE_BYTE(TE_BEAMFOLLOW);
-	WRITE_SHORT(entindex()); // entity
-	WRITE_SHORT(m_iTrail);	 // model
-	WRITE_BYTE(40);			 // life
-	WRITE_BYTE(5);			 // width
-	WRITE_BYTE(224);		 // r, g, b
-	WRITE_BYTE(224);		 // r, g, b
-	WRITE_BYTE(255);		 // r, g, b
-	WRITE_BYTE(255);		 // brightness
+		WRITE_BYTE(TE_BEAMFOLLOW);
+		WRITE_SHORT(entindex()); // entity
+		WRITE_SHORT(m_iTrail);	 // model
+		WRITE_BYTE(40);			 // life
+		WRITE_BYTE(5);			 // width
+		WRITE_BYTE(224);		 // r, g, b
+		WRITE_BYTE(224);		 // r, g, b
+		WRITE_BYTE(255);		 // r, g, b
+		WRITE_BYTE(255);		 // brightness
 
-	MESSAGE_END(); // move PHS/PVS data sending into here (SEND_ALL, SEND_PVS, SEND_PHS)
+		MESSAGE_END(); // move PHS/PVS data sending into here (SEND_ALL, SEND_PVS, SEND_PHS)
+	}
 
 	m_flIgniteTime = gpGlobals->time;
 
@@ -181,9 +200,10 @@ void CRpgRocket::FollowThink()
 	}
 	else
 	{
-		if ((pev->effects & EF_LIGHT) != 0)
+		if ((pev->effects & EF_LIGHT) != 0 || pev->renderamt == 1)
 		{
 			pev->effects = 0;
+			pev->renderamt = pev->renderamt == 1 ? 2 : pev->renderamt;
 			StopSound(CHAN_VOICE, "weapons/rocket1.wav");
 		}
 		pev->velocity = pev->velocity * 0.2 + vecTarget * flSpeed * 0.798;

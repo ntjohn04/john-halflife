@@ -16,8 +16,10 @@
 // Reserved takes on MMod's weapon effects, using engine particles, short lights and stock sprites:
 // bullet impacts and water splashes (see re/specs/bullet_impacts.md) and muzzle light and smoke.
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <vector>
 
 #include "hud.h"
 #include "weapon_effects.h"
@@ -43,6 +45,9 @@ constexpr int SporeLightKey = 12288;
 
 // Dynamic light keys for RPG laser dots (RpgLaserDot).
 constexpr int RpgDotLightKey = 16384;
+
+// Dynamic light keys for RPG rockets' motors (RocketGlow).
+constexpr int RocketLightKey = 20480;
 
 static cvar_t* g_cl_bulletimpacts = nullptr;
 static cvar_t* g_cl_muzzleflash = nullptr;
@@ -503,6 +508,206 @@ void RpgLaser_Reset()
 	g_RpgLineStart = -1;
 	g_RpgReloaded = -100;
 	g_RpgDotSeen = -1;
+}
+
+// An RPG rocket's motor: its glow (an orange glow, hotglow, with a white-hot core, glow02, on top), and its light, warm
+// orange; flickering as it burns, the core the most, fading out over BurnoutFade once it's burnt out (the engine's,
+// EF_LIGHT, was a big flat white flare and light, gone at once).
+constexpr float RocketGlowScale = 0.9f;
+constexpr float RocketCoreScale = 0.27f;
+constexpr float RocketLightRadius = 200;
+constexpr color24 RocketLightColor{255, 150, 60};
+
+// Each frame its size times between these (the glow evenly about its size; the core mostly flaring bigger, now and then
+// a little smaller), and its brightness down to the first.
+constexpr float RocketFlickerMin[2] = {0.65f, 0.8f};
+constexpr float RocketFlickerMax[2] = {1.35f, 1.6f};
+constexpr float RocketLightFlicker = 0.2f;
+constexpr float BurnoutFade = 0.25f;
+
+// Its trail, smoke laid along its path from when its motor lights (in place of the engine's follow beam, which only
+// adds light, and drawn in straight pieces showed seams and bright overlaps where it turned): grey puffs (steam1, as
+// the backblast's), one every TrailSpacing units, slowly rising and coming apart over about TrailLife, starting fairly
+// thick (TrailAlpha) and fading out as they spread (to TrailGrowth times their size); not under water (vanilla's
+// bubbles there).
+constexpr float TrailSpacing = 32;
+constexpr float TrailLife = 3.75f;
+constexpr float TrailAlpha = 0.5f;
+constexpr float TrailGrowth = 2.2f;
+constexpr int TrailMostAFrame = 12;
+
+// A trail puff as it goes (curstate.fuser1: when it was made; fuser2: its life; fuser3: its size at first).
+static void SpreadPuff(TEMPENTITY* puff, float frametime, float currenttime)
+{
+	const auto& state = puff->entity.curstate;
+	const float p = std::clamp((currenttime - state.fuser1) / state.fuser2, 0.f, 1.f);
+
+	puff->entity.curstate.scale = state.fuser3 * (1 + (TrailGrowth - 1) * p);
+	puff->entity.curstate.renderamt = static_cast<int>(255 * TrailAlpha * std::pow(1 - p, 1.3f));
+}
+
+struct Rocket
+{
+	int Index;
+	float LastSeen;
+	float BurntOut; // When it was first seen burnt out; -1 while it burns.
+	TEMPENTITY* Glows[2];
+	Vector LastPuff;
+	bool Puffed;
+};
+
+static void TrailPuff(const Vector& origin)
+{
+	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
+
+	Vector position = origin;
+
+	if (model == 0 || gEngfuncs.PM_PointContents(position, nullptr) == CONTENTS_WATER)
+		return;
+
+	position = position + Vector{gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(-3, 3)};
+
+	// Rising about 18 units over its life, wandering a little.
+	Vector velocity{gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(2.7f, 6.8f)};
+
+	// Plays once and is removed on its last frame (16 of them): slowly, so it lingers.
+	const float scale = gEngfuncs.pfnRandomFloat(0.6f, 0.9f);
+	const float life = TrailLife * gEngfuncs.pfnRandomFloat(0.85f, 1.15f);
+
+	if (TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, scale, model, kRenderTransAlpha, kRenderFxNone,
+			TrailAlpha, life + 1, FTENT_SPRANIMATE);
+		puff)
+	{
+		puff->entity.curstate.rendercolor = {170, 170, 170};
+		puff->entity.curstate.framerate = 16 / life;
+		puff->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+		puff->entity.curstate.fuser1 = gEngfuncs.GetClientTime();
+		puff->entity.curstate.fuser2 = life;
+		puff->entity.curstate.fuser3 = scale;
+		puff->flags |= FTENT_CLIENTCUSTOM;
+		puff->callback = SpreadPuff;
+	}
+}
+
+static std::vector<Rocket> g_Rockets;
+
+static TEMPENTITY* RocketSprite(const char* name, const Vector& origin, float scale)
+{
+	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex(name);
+
+	if (model == 0)
+		return nullptr;
+
+	Vector position = origin;
+	Vector still{0, 0, 0};
+	return gEngfuncs.pEfxAPI->R_TempSprite(position, still, scale, model, kRenderTransAdd, kRenderFxNone, 1, 1, 0);
+}
+
+void RocketGlow(cl_entity_t* rocket, const char* modelname)
+{
+	// Tagged renderamt 1 burning, 2 burnt out (CRpgRocket::IgniteThink, FollowThink).
+	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "models/rpgrocket.mdl") ||
+		(rocket->curstate.renderamt != 1 && rocket->curstate.renderamt != 2))
+	{
+		return;
+	}
+
+	const float now = gEngfuncs.GetClientTime();
+
+	// Those gone (and a new map's clock): their glows die on their own (kept on a frame at a time; by now they may have
+	// been freed and their slots used again, so they're left alone).
+	std::erase_if(g_Rockets, [&](const Rocket& r)
+		{ return now - r.LastSeen > 0.1f || now < r.LastSeen; });
+
+	auto it = std::find_if(g_Rockets.begin(), g_Rockets.end(), [&](const Rocket& r)
+		{ return r.Index == rocket->index; });
+
+	if (it == g_Rockets.end())
+	{
+		g_Rockets.push_back({rocket->index, now, -1, {}, rocket->origin, false});
+		it = g_Rockets.end() - 1;
+	}
+
+	Rocket& r = *it;
+	r.LastSeen = now;
+
+	if (rocket->curstate.renderamt == 2 && r.BurntOut < 0)
+		r.BurntOut = now;
+
+	// Its trail, evenly along where it's been since last frame.
+	if (!r.Puffed)
+	{
+		TrailPuff(rocket->origin);
+		r.LastPuff = rocket->origin;
+		r.Puffed = true;
+	}
+	else
+	{
+		const Vector moved = rocket->origin - r.LastPuff;
+		float distance = moved.Length();
+
+		if (distance >= TrailSpacing)
+		{
+			const Vector direction = moved / distance;
+			int puffs = 0;
+
+			while (distance >= TrailSpacing && puffs++ < TrailMostAFrame)
+			{
+				r.LastPuff = r.LastPuff + direction * TrailSpacing;
+				distance -= TrailSpacing;
+				TrailPuff(r.LastPuff);
+			}
+
+			// A hitch: on from where it is.
+			if (distance >= TrailSpacing)
+				r.LastPuff = rocket->origin;
+		}
+	}
+
+	// How much is left of it (fading at burnout).
+	const float left = r.BurntOut < 0 ? 1 : std::clamp(1 - (now - r.BurntOut) / BurnoutFade, 0.f, 1.f);
+
+	const char* const names[2] = {"sprites/hotglow.spr", "sprites/glow02.spr"};
+	const float scales[2] = {RocketGlowScale, RocketCoreScale};
+
+	for (int i = 0; i < 2; ++i)
+	{
+		TEMPENTITY*& glow = r.Glows[i];
+
+		if (left <= 0)
+		{
+			if (glow)
+			{
+				glow->die = now;
+				glow = nullptr;
+			}
+
+			continue;
+		}
+
+		if (!glow)
+			glow = RocketSprite(names[i], rocket->origin, scales[i]);
+
+		if (glow)
+		{
+			glow->entity.origin = rocket->origin;
+			glow->entity.curstate.scale = scales[i] * gEngfuncs.pfnRandomFloat(RocketFlickerMin[i], RocketFlickerMax[i]) * std::sqrt(left);
+			glow->entity.curstate.renderamt = static_cast<int>(255 * std::min(left * gEngfuncs.pfnRandomFloat(RocketFlickerMin[i], 1), 1.f));
+			glow->die = now + 0.1f;
+		}
+	}
+
+	if (left > 0)
+	{
+		if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(RocketLightKey + rocket->index); light)
+		{
+			light->origin = rocket->origin;
+			light->radius = RocketLightRadius * left * gEngfuncs.pfnRandomFloat(1 - RocketLightFlicker, 1 + RocketLightFlicker);
+			light->color = RocketLightColor;
+			light->die = now + 0.05f;
+			light->decay = 0;
+		}
+	}
 }
 
 // The spore launcher's light color: its burst sprite's lime (spore_exp_c_01), at full brightness.

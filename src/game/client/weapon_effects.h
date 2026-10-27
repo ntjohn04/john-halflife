@@ -51,6 +51,12 @@ void TripmineLight(cl_entity_t* beam, const char* modelname);
 void SporeLight(cl_entity_t* spore, const char* modelname);
 
 /**
+ *	@brief johnhalflife: an RPG rocket's motor (jhl_fx_particlesystem; HUD_AddEntity): an orange glow with a white-hot
+ *	core and a warm light, flickering, fading out at burnout, in place of the engine's (EF_LIGHT).
+ */
+void RocketGlow(cl_entity_t* rocket, const char* modelname);
+
+/**
  *	@brief johnhalflife: the RPG's laser dot lit, faintly red (jhl_fx_particlesystem; HUD_AddEntity), and where it is
  *	for its line.
  */
