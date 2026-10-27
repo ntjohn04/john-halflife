@@ -61,6 +61,7 @@ int DLLEXPORT HUD_AddEntity(int type, cl_entity_t* ent, const char* modelname)
 		SporeLight(ent, modelname);
 		RpgLaserDot(ent, modelname);
 		RocketGlow(ent, modelname);
+		GrenadePivot(ent, modelname);
 		break;
 	case ET_BEAM:
 		// johnhalflife: an armed tripmine's light.

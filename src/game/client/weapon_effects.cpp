@@ -896,6 +896,28 @@ void RocketGlow(cl_entity_t* rocket, const char* modelname)
 	}
 }
 
+// A thrown hand grenade turns about its model's origin, at its base (it sits on the floor), its middle this far above
+// it (w_grenade.mdl, from its vertices): drawn as it is, tumbling it swings round a point under it. While it bounces
+// about (MOVETYPE_BOUNCE: thrown, not lying to be picked up) it's drawn moved so its middle is where its origin's
+// middle would be unturned: round its middle; lying level it isn't moved at all.
+const Vector GrenadeMiddle{0, 0, 6.3f};
+
+void GrenadePivot(cl_entity_t* grenade, const char* modelname)
+{
+	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "models/w_grenade.mdl") ||
+		grenade->curstate.movetype != MOVETYPE_BOUNCE)
+	{
+		return;
+	}
+
+	// Its turn as the model's drawn (a studio model's pitch is the other way round).
+	Vector forward, right, up;
+	AngleVectors(Vector{-grenade->angles.x, grenade->angles.y, grenade->angles.z}, forward, right, up);
+	const Vector turned = forward * GrenadeMiddle.x - right * GrenadeMiddle.y + up * GrenadeMiddle.z;
+
+	grenade->origin = grenade->origin + GrenadeMiddle - turned;
+}
+
 // The spore launcher's light color: its burst sprite's lime (spore_exp_c_01), at full brightness.
 constexpr color24 SporeLime{221, 255, 54};
 

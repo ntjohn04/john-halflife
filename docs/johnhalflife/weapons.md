@@ -240,6 +240,27 @@ Small, reserved versions of the flair weapons' effects (noticeable when looked f
   bullet's (0.28), the knife's 0.5x (0.22) (`MeleeImpactSpark`; the `BulletHit`
   message now carries what made the impact, `JhlImpact`).
 
+### Hand grenade
+`jhl_fx_particlesystem`
+
+A thrown grenade tumbles and rolls only to look at: where it goes (its velocity, gravity, bounces and friction) is
+untouched (`CGrenade::ShootTimed`, `BounceTouch`, `TumbleThink`; NPCs' thrown grenades too).
+
+* **In the air:** it spins as fast as it was thrown (1.1 degrees a second per unit a second, 300-1100: about 1 to 3
+  turns a second), each throw its own way: turned about its length at random (flying flat, upright or slanted), its
+  spin mostly end over end, up to 60 degrees of it turned toward a roll, 0.55-1.35x (one in 10 a lazy lob, 0.3-0.5x),
+  wobbling a little (±60); its angles turned by `avelocity`, which moves nothing. Vanilla played a slow fixed tumble
+  animation (61 frames at 10 fps).
+* **About its middle:** its model turns about its origin, at its base (it sits on the floor), its middle 6.3 units
+  above it (from its vertices); tumbling, it swung round a point under it. While it bounces about (`MOVETYPE_BOUNCE`)
+  the client draws it moved so its middle stays where it is (`GrenadePivot`, `weapon_effects.cpp`): only where it's
+  drawn; lying level, not moved at all.
+* **Bouncing:** each bounce turns its spin the other way and takes some of it (40-70% kept), with a little wobble.
+* **On the ground:** it lies level (vanilla kept its throw's tilt), faces where it's going (vanilla kept its throw's
+  facing, so after a wall it rolled sideways or backwards), and rolls with either of its model's roll animations
+  (vanilla only ever the first), at its own rate per 200 units/s it's going (up to twice), eased each 0.1 s, coming to
+  a stop where it is (vanilla snapped back to its first frame under 100 units/s).
+
 ### Tripmine light
 `jhl_fx_particlesystem`
 

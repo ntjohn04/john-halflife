@@ -90,6 +90,12 @@ void SporeLight(cl_entity_t* spore, const char* modelname);
 void RocketGlow(cl_entity_t* rocket, const char* modelname);
 
 /**
+ *	@brief johnhalflife: a thrown hand grenade drawn turning about its middle rather than its base (jhl_fx_particlesystem;
+ *	HUD_AddEntity): only where it's drawn, not where it is.
+ */
+void GrenadePivot(cl_entity_t* grenade, const char* modelname);
+
+/**
  *	@brief johnhalflife: the RPG's laser dot lit, faintly red (jhl_fx_particlesystem; HUD_AddEntity), and where it is
  *	for its line.
  */
