@@ -180,6 +180,7 @@ its own contents, parsed in `client/entity.cpp` `MsgFunc_TempEntity`), in place 
 | `TE_SMOKE` | Houndeye blasts | Dust puffs along the floor |
 | `TE_SPRITETRAIL` | The displacer ball as it goes | Its falling specks |
 | `TE_TRACER` | NPCs' tracers (as often as vanilla's) | The vanilla tracer and johnhalflife's streak, from the muzzle |
+| `TE_BEAMDISK` | The spore launcher's burst | Its blast ring, facing the view |
 
 ## Versions
 

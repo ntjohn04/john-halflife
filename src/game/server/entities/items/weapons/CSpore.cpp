@@ -15,6 +15,7 @@
 #include "cbase.h"
 
 #include "CSpore.h"
+#include "jhl_effects.h"
 
 BEGIN_DATAMAP(CSpore)
 DEFINE_FIELD(m_SporeType, FIELD_INTEGER),
@@ -55,6 +56,11 @@ void CSpore::Spawn()
 	pev->solid = SOLID_BBOX;
 
 	SetModel("models/spore.mdl");
+
+	// johnhalflife: tagged renderamt 1 for the client's light on it in flight (SporeLight; renderamt does nothing for a
+	// model drawn normally).
+	if (UTIL_JhlParticleSystem())
+		pev->renderamt = 1;
 
 	SetSize(g_vecZero, g_vecZero);
 
@@ -130,19 +136,38 @@ void CSpore::IgniteThink()
 
 	EmitSound(CHAN_WEAPON, "weapons/splauncher_impact.wav", VOL_NORM, ATTN_NORM);
 
-	const auto vecDir = pev->velocity.Normalize();
+	const bool jhl = UTIL_JhlParticleSystem();
+
+	auto vecDir = pev->velocity.Normalize();
+
+	// johnhalflife: a lobbed spore bursting at rest on its fuse has no way it's going: it's on the floor (vanilla found
+	// no surface, so no splat and its spray no way to go).
+	if (jhl && pev->velocity.Length() < 1)
+		vecDir = Vector(0, 0, -1);
 
 	TraceResult tr;
 
+	// johnhalflife: from a little back, in case it's just inside what it hit.
 	UTIL_TraceLine(
-		pev->origin, pev->origin + vecDir * (m_SporeType == SporeType::GRENADE ? 64 : 32),
+		pev->origin - vecDir * (jhl ? 8 : 0), pev->origin + vecDir * (m_SporeType == SporeType::GRENADE ? 64 : 32),
 		dont_ignore_monsters, edict(), &tr);
+
+	// johnhalflife: nothing that way (a lobbed spore sliding to a stop): it's on the floor.
+	if (jhl && tr.flFraction >= 1)
+		UTIL_TraceLine(pev->origin + Vector(0, 0, 8), pev->origin - Vector(0, 0, 32), dont_ignore_monsters, edict(), &tr);
 
 	UTIL_DecalTrace(&tr, DECAL_SPR_SPLT1 + RANDOM_LONG(0, 2));
 
-	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
+	// johnhalflife: its burst's effects from 12 units off the surface it hit, not on it (its burst sprite, 128 units
+	// across, was half behind it, its spray up into a ceiling); its damage is where vanilla's is.
+	Vector vecEffects = pev->origin;
+
+	if (jhl && tr.flFraction < 1 && !tr.fStartSolid)
+		vecEffects = tr.vecEndPos + tr.vecPlaneNormal * 12;
+
+	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, vecEffects);
 	WRITE_BYTE(TE_SPRITE_SPRAY);
-	WRITE_COORD_VECTOR(pev->origin);
+	WRITE_COORD_VECTOR(vecEffects);
 	WRITE_COORD_VECTOR(tr.vecPlaneNormal);
 	WRITE_SHORT(m_iSpitSprite);
 	WRITE_BYTE(100);
@@ -150,28 +175,31 @@ void CSpore::IgniteThink()
 	WRITE_BYTE(180);
 	MESSAGE_END();
 
-	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
+	// johnhalflife: its burst light bigger and longer than vanilla's (100 units for 0.5 s, hidden behind its spray) but
+	// dimmer: 180 units fading out over 1 s, still glowing once most of the spray's gone, bigger than a spore's own
+	// light in flight (SporeLight), in the spore launcher's lime (its burst sprite's, as all its lights) at 60%.
+	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, vecEffects);
 	WRITE_BYTE(TE_DLIGHT);
-	WRITE_COORD_VECTOR(pev->origin);
-	WRITE_BYTE(10);
-	WRITE_BYTE(15);
-	WRITE_BYTE(220);
-	WRITE_BYTE(40);
-	WRITE_BYTE(5);
-	WRITE_BYTE(10);
+	WRITE_COORD_VECTOR(vecEffects);
+	WRITE_BYTE(jhl ? 18 : 10); // radius, tens
+	WRITE_BYTE(jhl ? 133 : 15);
+	WRITE_BYTE(jhl ? 153 : 220);
+	WRITE_BYTE(jhl ? 32 : 40);
+	WRITE_BYTE(jhl ? 10 : 5);  // life, tenths
+	WRITE_BYTE(jhl ? 18 : 10); // decay, tens a second
 	MESSAGE_END();
 
-	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
+	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, vecEffects);
 	WRITE_BYTE(TE_SPRITE);
-	WRITE_COORD_VECTOR(pev->origin);
+	WRITE_COORD_VECTOR(vecEffects);
 	WRITE_SHORT(RANDOM_LONG(0, 1) ? m_iBlow : m_iBlowSmall);
 	WRITE_BYTE(20);
 	WRITE_BYTE(128);
 	MESSAGE_END();
 
-	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
+	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, vecEffects);
 	WRITE_BYTE(TE_SPRITE_SPRAY);
-	WRITE_COORD_VECTOR(pev->origin);
+	WRITE_COORD_VECTOR(vecEffects);
 	WRITE_COORD(RANDOM_FLOAT(-1, 1));
 	WRITE_COORD(1);
 	WRITE_COORD(RANDOM_FLOAT(-1, 1));
@@ -180,6 +208,17 @@ void CSpore::IgniteThink()
 	WRITE_BYTE(20);
 	WRITE_BYTE(80);
 	MESSAGE_END();
+
+	// johnhalflife: a faint ring facing the view, the outline of its blast, growing out to 180 units (its 200 less
+	// where its damage has fallen off to almost nothing) as it fades, from where its damage is (jhl_blastring.cpp).
+	if (jhl)
+	{
+		MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, pev->origin);
+		WRITE_BYTE(TE_BEAMDISK);
+		WRITE_COORD_VECTOR(pev->origin);
+		WRITE_SHORT(180);
+		MESSAGE_END();
+	}
 
 	::RadiusDamage(pev->origin, this, GetOwner(), pev->dmg, 200, DMG_ALWAYSGIB | DMG_BLAST);
 

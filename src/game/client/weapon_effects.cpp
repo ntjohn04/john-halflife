@@ -16,6 +16,7 @@
 // Reserved takes on MMod's weapon effects, using engine particles, short lights and stock sprites:
 // bullet impacts and water splashes (see re/specs/bullet_impacts.md) and muzzle light and smoke.
 
+#include <cmath>
 #include <cstring>
 
 #include "hud.h"
@@ -35,6 +36,9 @@
 // Dynamic light keys for tripmine lights (TripmineLight), clear of the engine's entity-index keys.
 constexpr int TripmineLightKey = 8192;
 constexpr float TripmineLightDistance = 1024;
+
+// Dynamic light keys for lobbed spores' lights (SporeLight).
+constexpr int SporeLightKey = 12288;
 
 static cvar_t* g_cl_bulletimpacts = nullptr;
 static cvar_t* g_cl_muzzleflash = nullptr;
@@ -298,6 +302,29 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance, float wisp
 			wisp->entity.curstate.framerate = framerate;
 			wisp->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
 		}
+	}
+}
+
+// The spore launcher's light color: its burst sprite's lime (spore_exp_c_01), at full brightness.
+constexpr color24 SporeLime{221, 255, 54};
+
+void SporeLight(cl_entity_t* spore, const char* modelname)
+{
+	// A spore in flight, fired or lobbed, tagged renderamt 1 by the server (CSpore::Spawn).
+	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "models/spore.mdl") ||
+		spore->curstate.renderamt != 1)
+	{
+		return;
+	}
+
+	// Kept on a frame at a time, one per spore: enough to glow on the walls it's near, smaller than its burst's.
+	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(SporeLightKey + spore->index); light)
+	{
+		light->origin = spore->origin;
+		light->radius = 120;
+		light->color = SporeLime;
+		light->die = gEngfuncs.GetClientTime() + 0.05f;
+		light->decay = 0;
 	}
 }
 

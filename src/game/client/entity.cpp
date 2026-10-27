@@ -29,6 +29,7 @@
 #include "jhl_hornets.h"
 #include "jhl_shockbeams.h"
 #include "jhl_grapple.h"
+#include "jhl_blastring.h"
 #include "weapon_effects.h"
 #include "sound/ClientSoundReplacementSystem.h"
 #include "sound/ISoundSystem.h"
@@ -57,6 +58,7 @@ int DLLEXPORT HUD_AddEntity(int type, cl_entity_t* ent, const char* modelname)
 		JhlHornets_Track(ent, modelname);
 		JhlShockBeams_Track(ent, modelname);
 		JhlGrapple_Track(ent, modelname);
+		SporeLight(ent, modelname);
 		break;
 	case ET_BEAM:
 		// johnhalflife: an armed tripmine's light.
@@ -382,6 +384,7 @@ void DLLEXPORT HUD_TempEntUpdate(
 	JhlHornets_Update(client_time);
 	JhlShockBeams_Update(client_time);
 	JhlGrapple_Update(client_time);
+	JhlBlastRing_Update(client_time);
 
 	// Use our own temp ent list instead.
 	ppTempEntFree = &gpTempEntFree;
@@ -938,6 +941,10 @@ static void MsgFunc_TempEntity(const char* name, BufferReader& reader)
 
 	case TE_TRACER:
 		JhlTracers_ParseNpcTracer(reader);
+		break;
+
+	case TE_BEAMDISK:
+		JhlBlastRing_Parse(reader);
 		break;
 	}
 }

@@ -45,6 +45,12 @@ struct cl_entity_t;
 void TripmineLight(cl_entity_t* beam, const char* modelname);
 
 /**
+ *	@brief johnhalflife: a spore's light in flight (jhl_fx_particlesystem), in the spore launcher's lime
+ *	(HUD_AddEntity).
+ */
+void SporeLight(cl_entity_t* spore, const char* modelname);
+
+/**
  *	@brief EV_GunMuzzleEffects for the sniper rifle, whose view model attachment isn't at its muzzle:
  *	the muzzle is placed relative to the view instead, and more often leaves a wisp.
  */

@@ -20,6 +20,7 @@
 #include "particleman.h"
 #include "tri.h"
 #include "view.h"
+#include "jhl_blastring.h"
 
 void RenderFog()
 {
@@ -45,6 +46,9 @@ void DLLEXPORT HUD_DrawTransparentTriangles()
 {
 	if (g_pParticleMan)
 		g_pParticleMan->Update();
+
+	// johnhalflife: blast rings.
+	JhlBlastRing_Draw();
 
 	// Handled in V_CalcRefdef.
 	// RenderFog();

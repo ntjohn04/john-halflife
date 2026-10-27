@@ -411,3 +411,32 @@ out), so:
   `CGrapple::GetWeaponData`). Latching, missing and letting go are the server's alone, so the client's prediction
   otherwise went on thinking it was firing after the server had stopped, and their two views of the animation flipped
   it for a frame (`ClientPredictionSystem` forces the server's), worst holding fire through misses.
+
+### Spore launcher
+`jhl_fx_particlesystem`
+
+Vanilla's spit sprays, glow, trail, splat and burst sprites are kept; its lights are added to.
+
+All its lights are the launcher's lime (221,255,54): its burst sprite's (`spore_exp_c_01`), at full brightness.
+
+* **Muzzle light:** bigger than a firearm's (180-210 units), 0.15 s as the shock rifle's; first person
+  (`EV_FireSpore`).
+* **Spore light:** a steady 120 units on a spore in flight, fired or lobbed, enough to glow on the walls it's near
+  (`SporeLight`, `weapon_effects.cpp`; the server tags a spore `renderamt` 1, `CSpore::Spawn`). A throb quickening
+  toward a lobbed spore's burst was tried and couldn't be noticed.
+* **Burst light:** 180 units fading out over 1 s at 60% (133,153,32) (vanilla's green (15,220,40), 100 units for
+  0.5 s, hidden behind its spray), still glowing once most of the spray's gone.
+* **Burst placement:** its burst's sprite, sprays and light are 12 units off the surface it hit, not on it (the
+  spore is a point, so vanilla burst exactly at the surface: its 128-unit burst sprite half behind it, its upward
+  spray into a ceiling); its damage is where vanilla's is (`CSpore::IgniteThink`). A lobbed spore bursting at rest on
+  its fuse looks down for its surface (vanilla found none: no splat, and its spray no way to go).
+* **Blast ring:** so its reach can be read (the same for both fire modes: 200 units, falling off evenly to nothing),
+  a faint ring facing the view, the outline of its blast's sphere from wherever it's seen, from where its damage is,
+  growing out to 180 units over 0.265 s, widening and fading out as it goes, all three evenly together (halfway at
+  half its time): a lime glow
+  (3 to 12.8 wide, 0.235) around a thinner paler core (240,255,170; 1 to 3.2 wide, 0.12: it adds onto the glow, only a
+  hint of texture); lumpy, a circle at a glance, a lumpy one looked at: its edge wavers by up to 12% of its radius (three
+  waves around it, 2, 3 and 5 to a turn, drifting), both layers the same shape, the core's a little turned; a little toward the view so it doesn't flicker in a wall seen straight on. Drawn as
+  one band of triangles, 64 points round, with the beams' texture (`laserbeam.spr`), not beams: their straight pieces
+  with square ends overlapped at every joint, seams brighter where they added up (`jhl_blastring.cpp`, from
+  `HUD_DrawTransparentTriangles`; sent as the `TempEntity` message's `TE_BEAMDISK`).

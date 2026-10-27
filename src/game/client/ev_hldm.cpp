@@ -2225,6 +2225,20 @@ void EV_FireSpore(event_args_t* args)
 		{
 			Vector vecSrc = pViewModel->attachment[1];
 
+			// johnhalflife: a muzzle light, bigger than a firearm's (180-210 units), briefly (0.15 s, as the shock
+			// rifle's), in the spore launcher's lime (its burst sprite's, as all its lights).
+			if (JhlParticleSystemEnabled() && 0 == CL_IsThirdPerson() && vecSrc != g_vecZero)
+			{
+				if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)
+				{
+					light->origin = vecSrc;
+					light->radius = gEngfuncs.pfnRandomFloat(180, 210);
+					light->color = color24{221, 255, 54};
+					light->die = gEngfuncs.GetClientTime() + 0.15f;
+					light->decay = light->radius / 0.15f;
+				}
+			}
+
 			Vector forward;
 
 			AngleVectors(args->angles, &forward, nullptr, nullptr);
