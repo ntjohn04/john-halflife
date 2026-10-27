@@ -367,13 +367,34 @@ out), so:
 * **Wake, a double helix:** behind them, from where they've been, about 300 units (0.16 s), fading toward the tail
   and out after it hits: the glow's smooth and purplish (170,110,220, 1.6 wide, 0.5), the spark's jagged and cyan
   (0,253,253, 0.8, 0.6, the engine's random noise at 0.15, rerolled every frame). 8 pieces a strand, for up to 4
-  bolts at once (their beams); the rest have their glow and spark only.
+  bolts at once (their beams), the newest; the rest have their glow and spark only. Each fades out over 0.1 s,
+  done 0.1 s before the 5th bolt after it in held fire: 0.6-0.7 s old (about 100-117 feet) usually, 0.2-0.3 s (about
+  33-50 feet) with `shockrifle_fast` (the multiplayer default), so a new bolt never takes a wake still showing.
 * **Its two colours, half the time each,** so rapid fire tumbles the two over each other (both are its own, its
   spark's and its glow's):
-  * **Muzzle light:** its impact's light, 80 units, a brief 0.15 s, cyan (0,253,253) or purple (170,110,220); first
+  * **Muzzle light:** its impact's light, as big as a firearm's (140-170 units), a brief 0.15 s, cyan (0,253,253) or purple (170,110,220); first
     person.
   * **Impact:** cyan, vanilla's light and 3-4 short cyan arcs (`lgtning`, 12-30 units and 1 wide, each impact's 5-30% bigger, noise 0.5-0.8, 0.4-0.6 s and up to 35% more, off the surface hit)
     crackling off where it hits; or purple, a purple light and 3-4 of its glow sprites (`flare3`, pinkish grey)
     fizzling up and out off the surface it hit (from 4 units off it, so none lodge in a wall), falling and bouncing
     (the engine's sprite trail, `TE_SPRITETRAIL`). Besides its sparks and
     scorch.
+
+### Barnacle grapple
+`jhl_fx_particlesystem`
+
+* **Tongue:** drawn by the client instead of the server's beam (hidden, `EF_NODRAW`), in 8 pieces from the player's
+  attachment 1 to the tip, as the server's (`tongue.spr`, 1.6 wide, solid) (`jhl_grapple.cpp`). Flying out it hangs
+  a little slack (sagging at its middle by 4% of its length, up to 8 units); once latched on (the server tags the tip
+  `renderamt` 2, `CGrappleTip::TongueTouch`) it pulls taut, straight and thinner (1.25), over 0.08 s. The tip has the
+  shock bolt's model; shock bolts are tagged `renderamt` 1 to tell them apart.
+* **Retraction:** when its tongue lets go (a miss, or fire let go of), it reels back into the gun instead of
+  vanishing, starting the frame the tip goes: from at most 150 units out (so it's always seen to, at the same pace),
+  over 0.2 s, quickening, wiggling side to side like a measuring tape reeling in (a wave 4 units out at full length,
+  1.5 waves along it, running in 4 times a second), so it's plainly not the tongue in play any more.
+* **Bite:** latching onto something that bleeds draws a little of its blood (`SpawnBlood`, 10), as a hornet's sting.
+* **Back to idle:** letting go (a latch released or failed, or fire let go of) blends the view model from its last
+  pose into idle over 0.2 s instead of snapping (the engine never latches the view model's sequence changes, so its
+  renderer's usual blend never ran; `JhlLatchViewModelSequence`, `StudioModelRenderer.cpp`). Only how it looks: its
+  timings are as they were. (`EndAttack` plays `firereached` and idle the next frame; the blend is from the pose
+  before both.)

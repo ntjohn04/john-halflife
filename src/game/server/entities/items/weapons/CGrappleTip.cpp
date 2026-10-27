@@ -17,6 +17,7 @@
 #include "com_model.h"
 
 #include "CGrappleTip.h"
+#include "jhl_effects.h"
 
 BEGIN_DATAMAP(CGrappleTip)
 DEFINE_FUNCTION(FlyThink),
@@ -188,6 +189,11 @@ void CGrappleTip::TongueTouch(CBaseEntity* pOther)
 	}
 
 	pev->velocity = g_vecZero;
+
+	// johnhalflife: tagged renderamt 2 once it's latched on, for the client's tongue to go taut (jhl_grapple.cpp;
+	// renderamt does nothing for a model drawn normally).
+	if (m_bIsStuck && UTIL_JhlParticleSystem())
+		pev->renderamt = 2;
 
 	m_GrappleType = targetClass;
 

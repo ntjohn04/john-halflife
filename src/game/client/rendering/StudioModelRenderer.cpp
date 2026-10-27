@@ -1,6 +1,8 @@
 // studio_model.cpp
 // routines for setting up to draw 3DStudio models
 
+#include <cstring>
+
 #include "hud.h"
 #include "const.h"
 #include "com_model.h"
@@ -13,6 +15,7 @@
 #include "r_studioint.h"
 
 #include "client_gibs.h"
+#include "jhl_settings.h"
 #include "StudioModelRenderer.h"
 #include "GameStudioModelRenderer.h"
 
@@ -801,6 +804,55 @@ StudioSetupBones
 
 ====================
 */
+// johnhalflife: the engine doesn't latch the view model's sequence changes, so it snaps from one to the next; the
+// barnacle grapple's return to idle (a latch let go of or failed, or fire let go of: CGrapple::EndAttack plays
+// firereached, then idle the next frame) blends from its last pose over the usual 0.2 s instead (jhl_fx_particlesystem).
+// Its timings are as they were: only how it looks.
+static void JhlLatchViewModelSequence(cl_entity_t* entity, model_t* model, float time)
+{
+	static model_t* lastModel = nullptr;
+	static int lastSequence = -1;
+
+	const int sequence = entity->curstate.sequence;
+
+	if (model != lastModel)
+	{
+		lastModel = model;
+		lastSequence = sequence;
+		return;
+	}
+
+	if (sequence == lastSequence)
+		return;
+
+	const int previous = lastSequence;
+	lastSequence = sequence;
+
+	if (!JhlParticleSystemEnabled() || !std::strstr(model->name, "v_bgrap.mdl"))
+		return;
+
+	// v_bgrap's sequences: breathe, longidle, shortidle, cough (0-3); fire, firewaiting, firereached, firetravel,
+	// firerelease (6-10).
+	constexpr int FireReached = 8;
+	const bool fromFiring = previous >= 6 && previous <= 10;
+	const bool toIdle = (sequence >= 0 && sequence <= 3) || sequence == FireReached;
+
+	if (!fromFiring || !toIdle)
+		return;
+
+	// Firereached shows only a frame before idle: blend from the pose before it, not from it.
+	if (0 != entity->latched.sequencetime && time - entity->latched.sequencetime < 0.1f)
+	{
+		entity->latched.sequencetime = time;
+		return;
+	}
+
+	// latched.prevframe is still the frame it drew last (StudioSetupBones).
+	entity->latched.prevsequence = previous;
+	entity->latched.prevseqblending[0] = entity->latched.prevseqblending[1] = 0;
+	entity->latched.sequencetime = time;
+}
+
 void CStudioModelRenderer::StudioSetupBones()
 {
 	int i;
@@ -827,6 +879,9 @@ void CStudioModelRenderer::StudioSetupBones()
 	}
 
 	pseqdesc = (mstudioseqdesc_t*)((byte*)m_pStudioHeader + m_pStudioHeader->seqindex) + m_pCurrentEntity->curstate.sequence;
+
+	if (m_pCurrentEntity == gEngfuncs.GetViewModel())
+		JhlLatchViewModelSequence(m_pCurrentEntity, m_pRenderModel, m_clTime);
 
 	// always want new gait sequences to start on frame zero
 	/*	if ( m_pPlayerInfo )

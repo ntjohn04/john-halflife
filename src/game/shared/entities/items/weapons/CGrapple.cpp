@@ -17,6 +17,7 @@
 #include "UserMessages.h"
 
 #ifndef CLIENT_DLL
+#include "jhl_effects.h"
 #include "weapons/CGrappleTip.h"
 #else
 #include "cl_dll.h"
@@ -157,6 +158,10 @@ void CGrapple::PrimaryAttack()
 				{
 					pTarget->EmitSoundDyn(CHAN_STATIC, "weapons/bgrapple_impact.wav", 0.98, ATTN_NORM, 0, 125);
 				}
+
+				// johnhalflife: its bite draws a little blood (as a hornet's sting).
+				if (UTIL_JhlParticleSystem() && pTarget->BloodColor() != DONT_BLEED)
+					SpawnBlood(m_pTip->pev->origin, pTarget->BloodColor(), 10);
 
 				m_bMomentaryStuck = false;
 			}
@@ -484,6 +489,10 @@ void CGrapple::CreateEffect()
 		m_pBeam->SetEndAttachment(1);
 
 		m_pBeam->pev->spawnflags |= SF_BEAM_TEMPORARY;
+
+		// johnhalflife: the client draws the tongue instead (jhl_grapple.cpp): slack flying out, taut once latched on.
+		if (UTIL_JhlParticleSystem())
+			m_pBeam->pev->effects |= EF_NODRAW;
 	}
 #endif
 }
