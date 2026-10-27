@@ -392,13 +392,20 @@ out), so:
   springs back to its shape, flying 16 rad/s and damping 0.4, latched 60 and 0.3 (stiffer, bouncier), bowed at most
   20% of its length, up to 40 units. Moving while it's out bows it behind. The tip has the shock bolt's model; shock
   bolts are tagged `renderamt` 1 to tell them apart.
+* **Swallowing:** latched on and taut, a bulge 0.65 wider runs along the tongue from the tip to the gun over 0.3 s,
+  one every 0.7 s, spread over about 22% of its length so it rolls from piece to piece.
 * **Retraction:** when its tongue lets go (a miss, or fire let go of), it reels back into the gun instead of
   vanishing, starting the frame the tip goes: from at most 150 units out (so it's always seen to, at the same pace),
   over 0.2 s, quickening, wiggling side to side like a measuring tape reeling in (a wave 4 units out at full length,
   1.5 waves along it, running in 4 times a second), so it's plainly not the tongue in play any more.
 * **Bite:** latching onto something that bleeds draws a little of its blood (`SpawnBlood`, 10), as a hornet's sting.
-* **Back to idle:** letting go (a latch released or failed, or fire let go of) blends the view model from its last
-  pose into idle over 0.2 s instead of snapping (the engine never latches the view model's sequence changes, so its
-  renderer's usual blend never ran; `JhlLatchViewModelSequence`, `StudioModelRenderer.cpp`). Only how it looks: its
-  timings are as they were. (`EndAttack` plays `firereached` and idle the next frame; the blend is from the pose
-  before both.)
+* **Blending:** the view model blends from its last pose instead of snapping (the engine never latches the view
+  model's sequence changes, so its renderer's usual blend never ran; `JhlLatchViewModelSequence`,
+  `StudioModelRenderer.cpp`): into idle (and `firereached`, which `EndAttack` shows a frame before idle) over 0.2 s,
+  between its firing animations over 0.1 s, and into `fire` not at all (it snaps, at once). Only how it looks: its
+  timings are as they were. (The model's unused `firerelease` was tried for letting go: it's `fire`'s mouth opening
+  wide again, then a close.)
+* **Prediction:** its fire state is told to the client (`weapon_data_t.iuser3`, as the gluon gun's;
+  `CGrapple::GetWeaponData`). Latching, missing and letting go are the server's alone, so the client's prediction
+  otherwise went on thinking it was firing after the server had stopped, and their two views of the animation flipped
+  it for a frame (`ClientPredictionSystem` forces the server's), worst holding fire through misses.

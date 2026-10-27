@@ -61,6 +61,10 @@ public:
 
 	bool GetWeaponInfo(WeaponInfo& info) override;
 
+	void GetWeaponData(weapon_data_t& data) override;
+
+	void SetWeaponData(const weapon_data_t& data) override;
+
 	bool UseDecrement() override
 	{
 #if defined(CLIENT_WEAPONS)

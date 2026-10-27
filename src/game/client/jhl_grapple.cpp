@@ -54,6 +54,14 @@ constexpr float BendLimit = 0.2f;
 constexpr float BendMax = 40;
 constexpr float StepTime = 1 / 200.f;
 
+// Latched on, it swallows: a bulge this much wider runs along it from the tip to the gun over BulgeTime, one every
+// BulgeEvery, spread over about BulgeSpread of its length (so it rolls from piece to piece rather than stepping),
+// starting once it's taut.
+constexpr float BulgeWidth = 0.65f;
+constexpr float BulgeTime = 0.3f;
+constexpr float BulgeEvery = 0.7f;
+constexpr float BulgeSpread = 0.22f;
+
 // When it lets go it reels back into its gun over this long, quickening, from at most this far out (so it's always
 // seen to, at the same pace).
 constexpr float RetractTime = 0.2f;
@@ -76,7 +84,8 @@ struct Chain
 	// eyes until then.
 	Vector Mouth() const;
 
-	// Placed along these points (made if need be: the engine won't make one out of view).
+	// Placed along these points, each piece this wide (made if need be: the engine won't make one out of view).
+	void Place(const Vector (&points)[Pieces + 1], const float (&widths)[Pieces], float now);
 	void Place(const Vector (&points)[Pieces + 1], float width, float now);
 	void Free();
 };
@@ -132,6 +141,13 @@ Vector Chain::Mouth() const
 
 void Chain::Place(const Vector (&points)[Pieces + 1], float width, float now)
 {
+	float widths[Pieces];
+	std::fill(std::begin(widths), std::end(widths), width);
+	Place(points, widths, now);
+}
+
+void Chain::Place(const Vector (&points)[Pieces + 1], const float (&widths)[Pieces], float now)
+{
 	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/tongue.spr");
 
 	for (int i = 0; i < Pieces; ++i)
@@ -139,6 +155,7 @@ void Chain::Place(const Vector (&points)[Pieces + 1], float width, float now)
 		BEAM*& beam = Beams[i];
 		Vector from = points[i];
 		Vector to = points[i + 1];
+		const float width = widths[i];
 
 		if (!beam && model != 0)
 		{
@@ -243,7 +260,28 @@ void DrawTongue(Tip& tip, float now)
 	tip.Drawn = true;
 	tip.LastTime = now;
 
-	tip.Tongue.Place(points, Width + (TautWidth - Width) * eased, now);
+	float widths[Pieces];
+	std::fill(std::begin(widths), std::end(widths), Width + (TautWidth - Width) * eased);
+
+	// Swallowing, once taut: where the bulge is along it (1 the tip, 0 the gun), if one's running.
+	if (latched && now - tip.LatchedAt > TautTime)
+	{
+		const float cycle = std::fmod(now - tip.LatchedAt - TautTime, BulgeEvery);
+
+		if (cycle < BulgeTime)
+		{
+			const float at = 1 - cycle / BulgeTime;
+
+			for (int i = 0; i < Pieces; ++i)
+			{
+				const float centre = (i + 0.5f) / Pieces;
+				const float d = (centre - at) / BulgeSpread;
+				widths[i] += BulgeWidth * std::exp(-d * d);
+			}
+		}
+	}
+
+	tip.Tongue.Place(points, widths, now);
 }
 
 // Its tongue gone with it: one reels back in from where it was, starting this frame.

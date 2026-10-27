@@ -805,9 +805,13 @@ StudioSetupBones
 ====================
 */
 // johnhalflife: the engine doesn't latch the view model's sequence changes, so it snaps from one to the next; the
-// barnacle grapple's return to idle (a latch let go of or failed, or fire let go of: CGrapple::EndAttack plays
-// firereached, then idle the next frame) blends from its last pose over the usual 0.2 s instead (jhl_fx_particlesystem).
-// Its timings are as they were: only how it looks.
+// barnacle grapple's blend from its last pose instead (jhl_fx_particlesystem), into idle (and firereached, which
+// CGrapple::EndAttack shows a frame before idle) over the usual 0.2 s, between its firing ones quicker, 0.1 s; only
+// into firing (fire) does it snap, at once. A flip for a frame between the client's prediction and the server's word
+// on its animation (ClientPredictionSystem forces the server's, from its start) is blended too. Its timings are as
+// they were: only how it looks.
+static float g_JhlViewModelBlendTime = 0.2f;
+
 static void JhlLatchViewModelSequence(cl_entity_t* entity, model_t* model, float time)
 {
 	static model_t* lastModel = nullptr;
@@ -815,10 +819,12 @@ static void JhlLatchViewModelSequence(cl_entity_t* entity, model_t* model, float
 
 	const int sequence = entity->curstate.sequence;
 
+	// Another weapon: nothing of the last one's to blend from.
 	if (model != lastModel)
 	{
 		lastModel = model;
 		lastSequence = sequence;
+		entity->latched.sequencetime = 0;
 		return;
 	}
 
@@ -831,16 +837,17 @@ static void JhlLatchViewModelSequence(cl_entity_t* entity, model_t* model, float
 	if (!JhlParticleSystemEnabled() || !std::strstr(model->name, "v_bgrap.mdl"))
 		return;
 
-	// v_bgrap's sequences: breathe, longidle, shortidle, cough (0-3); fire, firewaiting, firereached, firetravel,
-	// firerelease (6-10).
+	// v_bgrap's sequences: breathe, longidle, shortidle, cough (0-3), down, up (4-5); fire, firewaiting, firereached,
+	// firetravel, firerelease (6-10).
+	constexpr int Fire = 6;
 	constexpr int FireReached = 8;
-	const bool fromFiring = previous >= 6 && previous <= 10;
-	const bool toIdle = (sequence >= 0 && sequence <= 3) || sequence == FireReached;
 
-	if (!fromFiring || !toIdle)
+	if (sequence == Fire)
 		return;
 
-	// Firereached shows only a frame before idle: blend from the pose before it, not from it.
+	g_JhlViewModelBlendTime = sequence <= 3 || sequence == FireReached ? 0.2f : 0.1f;
+
+	// One shown only a moment (a frame's flip, or firereached before idle): blend from the pose before it, not from it.
 	if (0 != entity->latched.sequencetime && time - entity->latched.sequencetime < 0.1f)
 	{
 		entity->latched.sequencetime = time;
@@ -938,9 +945,12 @@ void CStudioModelRenderer::StudioSetupBones()
 		}
 	}
 
+	// johnhalflife: the view model's blends are its own length (JhlLatchViewModelSequence).
+	const double blendTime = m_pCurrentEntity == gEngfuncs.GetViewModel() ? g_JhlViewModelBlendTime : 0.2;
+
 	if (m_fDoInterp &&
 		0 != m_pCurrentEntity->latched.sequencetime &&
-		(m_pCurrentEntity->latched.sequencetime + 0.2 > m_clTime) &&
+		(m_pCurrentEntity->latched.sequencetime + blendTime > m_clTime) &&
 		(m_pCurrentEntity->latched.prevsequence < m_pStudioHeader->numseq))
 	{
 		// blend from last sequence
@@ -982,7 +992,7 @@ void CStudioModelRenderer::StudioSetupBones()
 			}
 		}
 
-		s = 1.0 - (m_clTime - m_pCurrentEntity->latched.sequencetime) / 0.2;
+		s = 1.0 - (m_clTime - m_pCurrentEntity->latched.sequencetime) / blendTime;
 		StudioSlerpBones(q, pos, q1b, pos1b, s);
 	}
 	else

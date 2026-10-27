@@ -21,9 +21,20 @@
 #include "weapons/CGrappleTip.h"
 #else
 #include "cl_dll.h"
+#include "jhl_settings.h"
 #endif
 
 #include "CGrapple.h"
+
+// johnhalflife's particle system changes (jhl_fx_particlesystem): the server's and the client's view of it.
+static bool JhlGrappleEffects()
+{
+#ifndef CLIENT_DLL
+	return UTIL_JhlParticleSystem();
+#else
+	return JhlParticleSystemEnabled();
+#endif
+}
 
 BEGIN_DATAMAP(CGrapple)
 DEFINE_FIELD(m_pBeam, FIELD_CLASSPTR),
@@ -79,6 +90,22 @@ void CGrapple::Holster()
 	{
 		EndAttack();
 	}
+}
+
+// johnhalflife: its fire state told to the client, as the gluon gun's (CEgon::GetWeaponData): its latching, missing and
+// letting go are the server's alone, so the client's prediction otherwise goes on thinking it's firing after the
+// server's stopped, and their two views of its animation flip it for a frame (ClientPredictionSystem forces the
+// server's).
+void CGrapple::GetWeaponData(weapon_data_t& data)
+{
+	if (JhlGrappleEffects())
+		data.iuser3 = static_cast<int>(m_FireState);
+}
+
+void CGrapple::SetWeaponData(const weapon_data_t& data)
+{
+	if (JhlGrappleEffects())
+		m_FireState = static_cast<FireState>(data.iuser3);
 }
 
 void CGrapple::WeaponIdle()
