@@ -35,11 +35,24 @@ constexpr float Width = 1.6f;
 constexpr float Brightness = 100 / 255.f;
 
 // Flying out it hangs a little slack, sagging at its middle by this much of its length, up to SagMax; once latched on
-// it pulls taut, straight and this much thinner, over TautTime.
-constexpr float Sag = 0.04f;
-constexpr float SagMax = 8;
+// it pulls taut, straight and this much thinner (over TautTime).
+constexpr float Sag = 0.07f;
+constexpr float SagMax = 14;
 constexpr float TautWidth = 1.25f;
 constexpr float TautTime = 0.08f;
+
+// It's a little springy, only to look at (where its tip goes is the server's): each point along it keeps where it is
+// when the line from the gun to the tip moves under it (as the player moves), most at its middle (none at its ends),
+// and springs back to its shape (slack, or straight once latched) at this stiffness (radians a second) and damping (1
+// none overshooting), the latched one stiffer and bouncier (it twangs taut). Moving while it's out bows it behind;
+// it's bowed at most this much of its length, up to BendMax.
+constexpr float FlyStiffness = 16;
+constexpr float FlyDamping = 0.4f;
+constexpr float TautStiffness = 60;
+constexpr float TautDamping = 0.3f;
+constexpr float BendLimit = 0.2f;
+constexpr float BendMax = 40;
+constexpr float StepTime = 1 / 200.f;
 
 // When it lets go it reels back into its gun over this long, quickening, from at most this far out (so it's always
 // seen to, at the same pace).
@@ -75,6 +88,13 @@ struct Tip
 	float LastSeen;
 	float LatchedAt; // 0 while flying.
 	Chain Tongue;
+
+	// Its points' springing, off the straight line from the gun to the tip, and where that line had them last frame.
+	Vector Offsets[Pieces + 1]{};
+	Vector Velocities[Pieces + 1]{};
+	Vector LastLine[Pieces + 1]{};
+	bool Drawn = false;
+	float LastTime = 0;
 };
 
 struct Retraction
@@ -161,18 +181,67 @@ void DrawTongue(Tip& tip, float now)
 {
 	const Vector mouth = tip.Tongue.Mouth();
 	const Vector along = tip.Origin - mouth;
+	const float length = along.Length();
+	const Vector direction = length > 1 ? along / length : Vector{0, 0, 0};
 
-	const float taut = tip.LatchedAt != 0 ? std::clamp((now - tip.LatchedAt) / TautTime, 0.f, 1.f) : 0;
+	const bool latched = tip.LatchedAt != 0;
+	const float taut = latched ? std::clamp((now - tip.LatchedAt) / TautTime, 0.f, 1.f) : 0;
 	const float eased = taut * taut * (3 - 2 * taut);
-	const float sag = std::min(along.Length() * Sag, SagMax) * (1 - eased);
+	const float sag = latched ? 0 : std::min(length * Sag, SagMax);
+	const float stiffness = latched ? TautStiffness : FlyStiffness;
+	const float damping = latched ? TautDamping : FlyDamping;
+	const float limit = std::min(length * BendLimit, BendMax);
+
+	// Square to the line (springing along it doesn't bend it).
+	const auto square = [&](const Vector& v)
+	{ return v - direction * DotProduct(v, direction); };
+
+	const float elapsed = tip.Drawn ? std::clamp(now - tip.LastTime, 0.f, 0.1f) : 0;
+	const int steps = static_cast<int>(std::ceil(elapsed / StepTime));
 
 	Vector points[Pieces + 1];
 
 	for (int i = 0; i <= Pieces; ++i)
 	{
 		const float s = static_cast<float>(i) / Pieces;
-		points[i] = mouth + along * s - Vector{0, 0, sag * std::sin(3.1415927f * s)};
+		const float middle = std::sin(3.1415927f * s);
+		const Vector line = mouth + along * s;
+
+		Vector& offset = tip.Offsets[i];
+		Vector& velocity = tip.Velocities[i];
+
+		if (i == 0 || i == Pieces || length <= 1)
+		{
+			offset = velocity = g_vecZero;
+		}
+		else
+		{
+			// Where it was stays put as the line moves under it.
+			if (tip.Drawn)
+				offset = offset - (line - tip.LastLine[i]) * middle;
+
+			offset = square(offset);
+			velocity = square(velocity);
+
+			const Vector rest = Vector{0, 0, -sag * middle};
+
+			for (int step = 0; step < steps; ++step)
+			{
+				const float dt = elapsed / steps;
+				velocity = velocity + ((rest - offset) * (stiffness * stiffness) - velocity * (2 * damping * stiffness)) * dt;
+				offset = offset + velocity * dt;
+			}
+
+			if (const float bend = offset.Length(); bend > limit)
+				offset = offset * (limit / bend);
+		}
+
+		tip.LastLine[i] = line;
+		points[i] = line + offset;
 	}
+
+	tip.Drawn = true;
+	tip.LastTime = now;
 
 	tip.Tongue.Place(points, Width + (TautWidth - Width) * eased, now);
 }

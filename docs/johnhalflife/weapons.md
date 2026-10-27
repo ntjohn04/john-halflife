@@ -385,9 +385,13 @@ out), so:
 
 * **Tongue:** drawn by the client instead of the server's beam (hidden, `EF_NODRAW`), in 8 pieces from the player's
   attachment 1 to the tip, as the server's (`tongue.spr`, 1.6 wide, solid) (`jhl_grapple.cpp`). Flying out it hangs
-  a little slack (sagging at its middle by 4% of its length, up to 8 units); once latched on (the server tags the tip
-  `renderamt` 2, `CGrappleTip::TongueTouch`) it pulls taut, straight and thinner (1.25), over 0.08 s. The tip has the
-  shock bolt's model; shock bolts are tagged `renderamt` 1 to tell them apart.
+  a little slack (sagging at its middle by 7% of its length, up to 14 units); once latched on (the server tags the tip
+  `renderamt` 2, `CGrappleTip::TongueTouch`) it twangs taut, straight and thinner (1.25, over 0.08 s). It's springy,
+  only to look at (where the tip goes and when it latches are the server's): each point along it keeps where it is as
+  the line from the gun to the tip moves under it (as the player moves; most at its middle, none at its ends) and
+  springs back to its shape, flying 16 rad/s and damping 0.4, latched 60 and 0.3 (stiffer, bouncier), bowed at most
+  20% of its length, up to 40 units. Moving while it's out bows it behind. The tip has the shock bolt's model; shock
+  bolts are tagged `renderamt` 1 to tell them apart.
 * **Retraction:** when its tongue lets go (a miss, or fire let go of), it reels back into the gun instead of
   vanishing, starting the frame the tip goes: from at most 150 units out (so it's always seen to, at the same pace),
   over 0.2 s, quickening, wiggling side to side like a measuring tape reeling in (a wave 4 units out at full length,
