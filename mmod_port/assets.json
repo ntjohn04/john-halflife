@@ -87,9 +87,10 @@
 		},
 		{
 			"Path": "sound/weapons/satchel_flap.wav",
-			"Action": "copy",
+			"Action": "fix-wav-header",
 			"Feature": "weapon-switch",
-			"Sha256": "23e7b7a75960e6ddad309f81c1062314d3772b1d37c69c68448432064830a770"
+			"Sha256": "23e7b7a75960e6ddad309f81c1062314d3772b1d37c69c68448432064830a770",
+			"Notes": "MMod's RIFF header gives the file 12 bytes short; the sound system rejected it"
 		},
 		{
 			"Path": "sound/weapons/satchel_pickup.wav",

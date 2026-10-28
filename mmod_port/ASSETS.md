@@ -58,7 +58,7 @@ Source: Half-Life: MMod (Steam), HL1MMod directory
 | File | Installed as | Used by | Notes |
 |---|---|---|---|
 | `sound/weapons/grenade_pinpull.wav` | same path | grenade-pin | Hand grenade pin pull, played 0.29 s into the pinpull animation |
-| `sound/weapons/satchel_flap.wav` | same path | weapon-switch |  |
+| `sound/weapons/satchel_flap.wav` | same path | weapon-switch | MMod's RIFF header gives the file 12 bytes short; the sound system rejected it |
 | `sound/weapons/satchel_pickup.wav` | same path | weapon-switch |  |
 | `sound/weapons/weapon_draw_crossbow.wav` | same path | weapon-switch |  |
 | `sound/weapons/weapon_draw_crowbar.wav` | same path | weapon-switch | Also the placeholder for Opposing Force weapons |

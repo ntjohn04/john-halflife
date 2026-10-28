@@ -111,9 +111,23 @@ def convert_materials(source, destination):
     print(f"  converted {len(materials)} material assignments")
 
 
+def fix_wav_header(source, destination):
+    """Copy a WAV whose RIFF header gives the wrong file size, giving the right one (the sound system rejects it:
+    "declared size of file less than file size"; GoldSrc's own loader didn't check)."""
+    data = bytearray(source.read_bytes())
+    if data[:4] != b"RIFF" or data[8:12] != b"WAVE":
+        raise ValueError(f"{source.name}: not a RIFF WAVE file")
+
+    declared = int.from_bytes(data[4:8], "little") + 8
+    data[4:8] = (len(data) - 8).to_bytes(4, "little")
+    destination.write_bytes(data)
+    print(f"  RIFF size fixed: declared {declared} bytes, file {len(data)}")
+
+
 ACTIONS = {
     "copy": lambda source, destination: shutil.copyfile(source, destination),
     "convert-materials": convert_materials,
+    "fix-wav-header": fix_wav_header,
 }
 
 
