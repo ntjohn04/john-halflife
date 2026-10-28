@@ -24,7 +24,9 @@
 #include "hud.h"
 #include "weapon_effects.h"
 #include "Exports.h"
+#include "com_model.h"
 #include "event_api.h"
+#include "eventscripts.h"
 #include "r_efx.h"
 #include "beamdef.h"
 #include "dlight.h"
@@ -261,6 +263,125 @@ static void BarrelWisp(const Vector& muzzle, float left, float scaleMin, float s
 		wisp->entity.curstate.framerate = gEngfuncs.pfnRandomFloat(24, 30) / life;
 		wisp->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
 		Carry(wisp, v_sim_vel);
+	}
+}
+
+// A thrown shell's lingering (JhlBrassLinger): 6-10 s, then fading out over a second, while fewer than BrassMost are
+// lingering (the temporary entities, 2048, are everyone's: the particles' too; and only so many entities are drawn a
+// frame); vanilla's 2.5 s past that. Kept as when each lingering one goes.
+constexpr int BrassMost = 100;
+static float g_BrassGone[BrassMost]{};
+static int g_BrassNext = 0;
+
+void JhlBrassLinger(TEMPENTITY* shell)
+{
+	if (!shell || !JhlParticleSystemEnabled())
+		return;
+
+	const float now = gEngfuncs.GetClientTime();
+	int lingering = 0;
+
+	// (A new map or a loaded game restarts the clock: one due to go further off than a shell lasts is from before.)
+	for (float& gone : g_BrassGone)
+	{
+		if (gone > now + 11)
+			gone = 0;
+
+		lingering += gone > now ? 1 : 0;
+	}
+
+	if (lingering >= BrassMost)
+		return;
+
+	shell->die = now + gEngfuncs.pfnRandomFloat(6, 10);
+	shell->flags |= FTENT_FADEOUT;
+	shell->fadeSpeed = 1;
+	shell->entity.baseline.renderamt = 255;
+
+	g_BrassGone[g_BrassNext] = shell->die + 1;
+	g_BrassNext = (g_BrassNext + 1) % BrassMost;
+}
+
+// The local player's shotgun's shells, thrown when it's pumped (EV_ShotgunPumpShells): when each's due, how many.
+struct PumpShells
+{
+	float Due = -1;
+	int Count = 0;
+};
+
+static PumpShells g_PumpShells[2];
+
+constexpr int ShotgunHandBone = 10;
+const Vector ShotgunEjectionPort{10, -0.65f, 4.8f};
+
+void EV_ShotgunPumpShells(int count, float delay)
+{
+	const float now = gEngfuncs.GetClientTime();
+
+	for (auto& pending : g_PumpShells)
+	{
+		if (pending.Due < 0)
+		{
+			pending = {now + delay, count};
+			return;
+		}
+	}
+
+	// Both taken (it can't fire that fast): the oldest's forgotten.
+	g_PumpShells[0] = g_PumpShells[1];
+	g_PumpShells[1] = {now + delay, count};
+}
+
+void ShotgunShells_Update(double time)
+{
+	const float now = static_cast<float>(time);
+
+	for (auto& pending : g_PumpShells)
+	{
+		if (pending.Due < 0)
+			continue;
+
+		// (A new map or a loaded game restarts the clock: one due further off than a pump is from before.)
+		if (pending.Due - now > 2)
+		{
+			pending.Due = -1;
+			continue;
+		}
+
+		if (now < pending.Due)
+			continue;
+
+		const int count = pending.Count;
+		pending.Due = -1;
+
+		// Only if it's still the shotgun pumping (not switched away from), in first person.
+		cl_entity_t* viewModel = gEngfuncs.GetViewModel();
+		const int shell = gEngfuncs.pEventAPI->EV_FindModelIndex("models/shotgunshell.mdl");
+
+		if (!viewModel || !viewModel->model || !std::strstr(viewModel->model->name, "v_shotgun.mdl") || 0 != CL_IsThirdPerson() ||
+			shell == 0)
+		{
+			continue;
+		}
+
+		// From its ejection port, on the right of its receiver as its view model's drawn (in its right hand's bone, found
+		// in its vertices: the receiver 4-11 units along it, the barrel and tube on to 26), as a pump gun's are; else
+		// from where a shot's are (EV_GetDefaultShellInfo's, the shotgun's 32 ahead, 12 down, 6 right: out by its
+		// muzzle). Thrown as now aimed, moving as the player is.
+		Vector forward, right, up;
+		AngleVectors(v_angles, forward, right, up);
+
+		Vector port;
+
+		if (!JhlViewModelPoint("models/v_shotgun.mdl", ShotgunHandBone, ShotgunEjectionPort, port))
+			port = v_origin + forward * 32 - up * 12 + right * 6;
+
+		for (int i = 0; i < count; ++i)
+		{
+			const Vector origin = port;
+			const Vector velocity = v_sim_vel + right * gEngfuncs.pfnRandomFloat(50, 70) + up * gEngfuncs.pfnRandomFloat(100, 150) + forward * 25;
+			EV_EjectBrass(origin, velocity, v_angles[YAW], shell, TE_BOUNCE_SHOTSHELL);
+		}
 	}
 }
 

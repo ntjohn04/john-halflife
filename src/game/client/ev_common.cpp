@@ -23,6 +23,7 @@
 #include "eventscripts.h"
 #include "event_api.h"
 #include "pm_shared.h"
+#include "weapon_effects.h"
 
 #define IS_FIRSTPERSON_SPEC (g_iUser1 == OBS_IN_EYE || (g_iUser1 && (gHUD.m_Spectator.m_pip->value == INSET_IN_EYE)))
 /*
@@ -134,7 +135,10 @@ Bullet shell casings
 void EV_EjectBrass(const Vector& origin, const Vector& velocity, float rotation, int model, int soundtype)
 {
 	const Vector endpos{0, rotation, 0};
-	gEngfuncs.pEfxAPI->R_TempModel(origin, velocity, endpos, 2.5, model, soundtype);
+	TEMPENTITY* shell = gEngfuncs.pEfxAPI->R_TempModel(origin, velocity, endpos, 2.5, model, soundtype);
+
+	// johnhalflife: staying a while.
+	JhlBrassLinger(shell);
 }
 
 /*

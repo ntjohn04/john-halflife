@@ -763,11 +763,19 @@ void EV_FireShotGunDouble(event_args_t* args)
 			V_PunchAxis(0, -10.0);
 	}
 
-	for (j = 0; j < 2; j++)
+	// johnhalflife: the player's own two thrown when it's pumped (shoot_big, 13 fps: back at frame 15), not as it fires.
+	if (JhlParticleSystemEnabled() && EV_IsLocal(idx) && 0 == CL_IsThirdPerson())
 	{
-		EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, 32, -12, 6);
+		EV_ShotgunPumpShells(2, 1.15f);
+	}
+	else
+	{
+		for (j = 0; j < 2; j++)
+		{
+			EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, 32, -12, 6);
 
-		EV_EjectBrass(ShellOrigin, ShellVelocity, angles[YAW], shell, TE_BOUNCE_SHOTSHELL);
+			EV_EjectBrass(ShellOrigin, ShellVelocity, angles[YAW], shell, TE_BOUNCE_SHOTSHELL);
+		}
 	}
 
 	EV_PlaySound(idx, origin, CHAN_WEAPON, "weapons/dbarrel1.wav", gEngfuncs.pfnRandomFloat(0.98, 1.0), ATTN_NORM, 0, 85 + gEngfuncs.pfnRandomLong(0, 0x1f));
@@ -824,7 +832,11 @@ void EV_FireShotGunSingle(event_args_t* args)
 
 	EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, 32, -12, 6);
 
-	EV_EjectBrass(ShellOrigin, ShellVelocity, angles[YAW], shell, TE_BOUNCE_SHOTSHELL);
+	// johnhalflife: the player's own thrown when it's pumped (shoot, 20 fps: back at frame 12), not as it fires.
+	if (JhlParticleSystemEnabled() && EV_IsLocal(idx) && 0 == CL_IsThirdPerson())
+		EV_ShotgunPumpShells(1, 0.6f);
+	else
+		EV_EjectBrass(ShellOrigin, ShellVelocity, angles[YAW], shell, TE_BOUNCE_SHOTSHELL);
 
 	EV_PlaySound(idx, origin, CHAN_WEAPON, "weapons/sbarrel1.wav", gEngfuncs.pfnRandomFloat(0.95, 1.0), ATTN_NORM, 0, 93 + gEngfuncs.pfnRandomLong(0, 0x1f));
 

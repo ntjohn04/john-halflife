@@ -277,6 +277,16 @@ With `jhl_fx_particlesystem`:
   bone stretched, so Half-Life's (lying flat by its bones' own turns) settles on its side. All of johnhalflife's shells are drawn turned as they tumble (the temporary entities'
   update turns their `angles`; drawn by their state's, as they were thrown, they kept one fixed turn in the world).
 
+* **Lingering:** every thrown shell (the guns', the revolver's and sniper rifle's casings, the M249's links) stays 6-10 s,
+  then fades out over a second (`JhlBrassLinger`), vanilla's 2.5 s; at most 100 at a time (the temporary entities, 2048,
+  are shared with every particle, and only so many entities are drawn a frame), past which new ones keep vanilla's.
+* **Water:** a shell lands silently under water (`CL_TempEntPlaySound`); vanilla clinked as on the floor.
+* **Shotgun:** the player's own shells are thrown when it's pumped, not as it fires (`EV_ShotgunPumpShells`,
+  `ShotgunShells_Update`): its single shot's at 0.6 s (`shoot`, 20 fps, the pump back at frame 12), its double's two at
+  1.15 s (`shoot_big`, 13 fps, frame 15), from its ejection port on the right of its receiver as its view model's drawn
+  (vanilla's from out by its muzzle, 32 units ahead), as then aimed; not if it's been switched away from
+  by then. Other players' and third person's as they were. Its shell is Half-Life's: Opposing Force has none of its own.
+
 ### Hand grenade
 `jhl_fx_particlesystem`
 

@@ -21,6 +21,7 @@
 #include "DummySoundSystem.h"
 #include "GameSoundSystem.h"
 #include "jhl_explosions.h"
+#include "jhl_settings.h"
 #include "MusicSystem.h"
 #include "r_efx.h"
 #include "SoundSystem.h"
@@ -330,6 +331,15 @@ void CL_TempEntPlaySound(TEMPENTITY* pTemp, float damp)
 		sounds[2] = "weapons/sshell3.wav";
 		break;
 	}
+	}
+
+	// johnhalflife: a shell lands silently under water.
+	if (isShell && JhlParticleSystemEnabled())
+	{
+		Vector origin = pTemp->entity.origin;
+
+		if (gEngfuncs.PM_PointContents(origin, nullptr) <= CONTENTS_WATER)
+			return;
 	}
 
 	// Note: temp entities use baseline.origin to store off velocity. This is vertical movement speed.

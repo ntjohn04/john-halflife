@@ -1917,6 +1917,9 @@ void DLLEXPORT V_CalcRefdef(ref_params_t* pparams)
 	SniperSmoke_Update(gEngfuncs.GetClientTime());
 	EagleSmoke_Update(gEngfuncs.GetClientTime());
 
+	// johnhalflife: the shotgun's shells, thrown as it's pumped.
+	ShotgunShells_Update(gEngfuncs.GetClientTime());
+
 	/*
 	// Example of how to overlay the whole screen with red at 50 % alpha
 	#define SF_TEST

@@ -20,6 +20,7 @@
 #include "event_api.h"
 #include "jhl_settings.h"
 #include "view.h"
+#include "weapon_effects.h"
 #include "StudioModelRenderer.h"
 
 // johnhalflife: a shell that's a view model's casing (JhlViewModelCasings): its iuser4, and its bone its iuser3.
@@ -884,6 +885,7 @@ static void JhlSpawnCasing(int model, int bone, const Vector& origin, const Vect
 		casing->entity.curstate.iuser3 = bone;
 		casing->entity.curstate.vuser1 = scale;
 		casing->entity.curstate.fuser1 = static_cast<float>(gEngfuncs.GetClientTime()) - (grow ? 0 : JhlCasingGrowTime);
+		JhlBrassLinger(casing);
 	}
 }
 
@@ -924,6 +926,7 @@ void JhlEjectShapedBrass(const Vector& origin, const Vector& velocity, const Vec
 			}
 		}
 
+		JhlBrassLinger(shell);
 		shell->entity.curstate.iuser4 = JhlShapedMarker;
 		shell->entity.curstate.iuser3 = bone;
 		shell->entity.curstate.vuser1 = scale;

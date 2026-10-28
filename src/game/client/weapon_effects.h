@@ -17,6 +17,8 @@
 
 #include "vector.h"
 
+struct TEMPENTITY;
+
 /**
  *	@brief Registers the effect cvars and the BulletHit and WaterSplash messages, which the server sends for
  *	bullets it fires (NPCs, mounted guns).
@@ -49,6 +51,23 @@ void EV_EagleBarrelSmoke();
  *	@brief Its smoke (V_CalcRefdef, once the view model's placed).
  */
 void EagleSmoke_Update(double time);
+
+/**
+ *	@brief johnhalflife: a thrown shell stays a while, 6-10 s, then fades out (jhl_fx_particlesystem), while there aren't
+ *	too many about (else vanilla's 2.5 s).
+ */
+void JhlBrassLinger(TEMPENTITY* shell);
+
+/**
+ *	@brief johnhalflife: the local player's shotgun throws its @p count shells when it's pumped, @p delay seconds from
+ *	now, not when it fires (jhl_fx_particlesystem; ShotgunShells_Update).
+ */
+void EV_ShotgunPumpShells(int count, float delay);
+
+/**
+ *	@brief Its shells, due (V_CalcRefdef, once the view's placed).
+ */
+void ShotgunShells_Update(double time);
 
 /**
  *	@brief What a bullet impact is (BulletImpactEffects): a gun's, the revolver's (a little heavier), the sniper
