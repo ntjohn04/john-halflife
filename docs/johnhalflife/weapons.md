@@ -268,7 +268,9 @@ With `jhl_fx_particlesystem`:
   back, 14 and 24 up), out of sight; they come from the gun instead: the Desert Eagle's as the Glock's (20 ahead, 12
   down; 7 right, thrown 25-40 units/s harder to the side, its bigger casing clear of the gun), the M249's beside where its belt goes in (12 ahead, 11 down, 4 right). The M249 throws a casing every shot
   (Opposing Force's every other, a link in between), drawn slimmer (`JhlEjectShapedBrass`; `saw_shell.mdl`, 4.1 units
-  long and 1.4 across, stubby), a 5.56x45mm's shape, 1 across, leaving the gun lying along it as it came in on the belt, pointing
+  long and 1.4 across, stubby), a 5.56x45mm's shape, 3.7 by 0.9 (9% under
+  its first 4.1 by 1, toward its belt's rounds: they're true to life, 1.4 by 0.4 without their tips, while every gun's
+  thrown brass is 3-4x that), leaving the gun lying along it as it came in on the belt, pointing
   toward the muzzle, a few degrees off, barely tumbling at first (0-8% of it), then tumbling as other guns' shells (the engine's: spinning about
   its length at up to 512 degrees/s, swinging end over end at up to 255) by 0.13 s, about two shots later, and a link with it every two or three shots at random,
   both spat out the side, lower (50-60% of a gun's usual upward throw, 93-131% of its throw to the side). The Desert Eagle's is a .50 AE's, a

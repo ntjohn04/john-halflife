@@ -2115,7 +2115,9 @@ void EV_FireM249(event_args_t* args)
 		EV_GetDefaultShellInfo(args, args->origin, args->velocity, ShellVelocity, ShellOrigin, forward, right, up, 12, -11, 4);
 
 	// johnhalflife: a casing every shot (Opposing Force's every other, a link in between), slimmer (saw_shell.mdl, 4.1
-	// units long and 1.4 across, stubby), a 5.56x45mm's shape, 1 across, smaller than the sniper rifle's (7.7 by 1.8);
+	// units long and 1.4 across, stubby), a 5.56x45mm's shape, 3.7 by 0.9 (a little smaller than other guns' brass, toward
+	// its belt's rounds; they're true to life, 1.4 by 0.4 without their tips, every gun's thrown brass 3-4x that), smaller
+	// than the sniper rifle's (7.7 by 1.8);
 	// and a link with it every two or three shots, thrown a little more to the side, from just behind it. Both spat out
 	// the side, lower (50-60% of a gun's usual throw up), there being so many, each harder or softer to the side
 	// (93-131%).
@@ -2137,7 +2139,7 @@ void EV_FireM249(event_args_t* args)
 		{
 			const Vector tumble{gEngfuncs.pfnRandomFloat(-512, 511), gEngfuncs.pfnRandomFloat(-255, 255), gEngfuncs.pfnRandomFloat(-255, 255)};
 			const Vector angles{gEngfuncs.pfnRandomFloat(-5, 5), args->angles[1] + gEngfuncs.pfnRandomFloat(-6, 6), 0};
-			JhlEjectShapedBrass(ShellOrigin, ShellVelocity, angles, casing, 0, {0.75f, 1, 0.75f}, &tumble,
+			JhlEjectShapedBrass(ShellOrigin, ShellVelocity, angles, casing, 0, {0.68f, 0.91f, 0.68f}, &tumble,
 				gEngfuncs.pfnRandomFloat(0, 0.08f), 0.13f);
 		}
 
