@@ -1025,30 +1025,63 @@ static void JhlLatchViewModelSequence(cl_entity_t* entity, model_t* model, float
 	const int previous = lastSequence;
 	lastSequence = sequence;
 
-	if (!JhlParticleSystemEnabled() || !std::strstr(model->name, "v_bgrap.mdl"))
+	if (!JhlParticleSystemEnabled())
 		return;
 
-	// v_bgrap's sequences: breathe, longidle, shortidle, cough (0-3), down, up (4-5); fire, firewaiting, firereached,
-	// firetravel, firerelease (6-10).
-	constexpr int Fire = 6;
-	constexpr int FireReached = 8;
+	if (std::strstr(model->name, "v_bgrap.mdl"))
+	{
+		// v_bgrap's sequences: breathe, longidle, shortidle, cough (0-3), down, up (4-5); fire, firewaiting, firereached,
+		// firetravel, firerelease (6-10).
+		constexpr int Fire = 6;
+		constexpr int FireReached = 8;
 
-	if (sequence == Fire)
-		return;
+		if (sequence == Fire)
+			return;
 
-	g_JhlViewModelBlendTime = sequence <= 3 || sequence == FireReached ? 0.2f : 0.1f;
+		g_JhlViewModelBlendTime = sequence <= 3 || sequence == FireReached ? 0.2f : 0.1f;
+	}
+	else
+	{
+		// The Glock's, revolver's, Desert Eagle's and shotgun's reloads blended into (from the last shot's end pose,
+		// the slide back) over 0.12 s, and out of into idle over 0.2 s (the shotgun's start_reload, reload and pump
+		// between each other too); a shot during one still snaps, at once.
+		if (!std::strstr(model->name, "v_9mmhandgun.mdl") && !std::strstr(model->name, "v_357.mdl") &&
+			!std::strstr(model->name, "v_desert_eagle.mdl") && !std::strstr(model->name, "v_shotgun.mdl"))
+		{
+			return;
+		}
+
+		const auto header = static_cast<studiohdr_t*>(IEngineStudio.Mod_Extradata(model));
+
+		if (!header || previous < 0 || previous >= header->numseq || sequence >= header->numseq)
+			return;
+
+		const auto sequences = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(header) + header->seqindex);
+		const auto reloading = [&](int index)
+		{ return std::strstr(sequences[index].label, "reload") || std::strstr(sequences[index].label, "pump"); };
+
+		if (std::strstr(sequences[sequence].label, "shoot") || (!reloading(sequence) && !reloading(previous)))
+			return;
+
+		g_JhlViewModelBlendTime = reloading(sequence) ? 0.12f : 0.2f;
+	}
+
+	// When the blend started, never exactly its animation's start (animtime, stamped with the same client time as it
+	// changed): the engine takes the two being equal for a sequence just begun, and plays all its events from frame 0
+	// again, every frame (its reload sounds, over and over, until the next change).
+	const float blendStart = time == entity->curstate.animtime ? time - 0.001f : time;
 
 	// One shown only a moment (a frame's flip, or firereached before idle): blend from the pose before it, not from it.
 	if (0 != entity->latched.sequencetime && time - entity->latched.sequencetime < 0.1f)
 	{
-		entity->latched.sequencetime = time;
+		entity->latched.sequencetime = blendStart;
 		return;
 	}
 
 	// latched.prevframe is still the frame it drew last (StudioSetupBones).
 	entity->latched.prevsequence = previous;
 	entity->latched.prevseqblending[0] = entity->latched.prevseqblending[1] = 0;
-	entity->latched.sequencetime = time;
+	entity->latched.sequencetime = blendStart;
 }
 
 void CStudioModelRenderer::StudioSetupBones()

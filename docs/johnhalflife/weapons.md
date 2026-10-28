@@ -45,6 +45,15 @@ nothing on the server, so with client weapon prediction off (`cl_lw 0`) there's 
 The crossbow and the sniper rifle can toggle their scope every 0.3 seconds (`ScopeToggleDelay`; originally 1
 and 0.5 seconds), and the crossbow plays the sniper rifle's `weapons/sniper_zoom.wav`.
 
+### Reload blending
+
+The engine doesn't blend the view model from one animation to the next; it snaps. With `jhl_fx_particlesystem`, the
+Glock's, revolver's, Desert Eagle's and shotgun's reloads (sequences named `reload` or `pump`) are blended into over
+0.12 s, from wherever the last one left off (the slide back after the last shot), and out of into idle over 0.2 s; the
+shotgun's `start_reload`, `reload` and `pump` blend into each other too. A shot still snaps at once
+(`JhlLatchViewModelSequence`, `StudioModelRenderer.cpp`, as the barnacle grapple's blends). Timings are unchanged:
+only how it looks.
+
 ### Accuracy
 Spread grows per shot and recovers shortly after the weapon is ready again (`FireSpread` in
 `weapons_shared.cpp`). It always ends at the vanilla value, so sustained fire is never less accurate
