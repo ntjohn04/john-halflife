@@ -351,6 +351,41 @@ static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bl
 	}
 }
 
+void ClientGibs_Pop(const Vector& origin, int bloodColor, int chunks)
+{
+	// A small creature bursting, leaving no body (a snark): one of the gib splash's blood puffs, small, and a few of
+	// its blood chunks, smaller (a snark's tiny), thrown up and out, falling and bouncing as theirs.
+	if (!ShowsBlood(bloodColor) || (bloodColor != BLOOD_COLOR_RED && bloodColor != BLOOD_COLOR_YELLOW))
+		return;
+
+	auto efx = gEngfuncs.pEfxAPI;
+	const int spray = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/bloodspray.spr");
+	const int drop = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/blood.spr");
+
+	if (spray != 0 && drop != 0)
+	{
+		Vector position = origin;
+		efx->R_BloodSprite(position, bloodColor == BLOOD_COLOR_RED ? SplashPuffRed : DarkYellow, spray, drop, 6);
+	}
+
+	const int chunk = gEngfuncs.pEventAPI->EV_FindModelIndex(bloodColor == BLOOD_COLOR_YELLOW ? "sprites/blood_chnk_yellow.spr" : "sprites/blood_chnk.spr");
+
+	for (int i = 0; chunk != 0 && i < chunks; ++i)
+	{
+		Vector position = origin + Vector{RANDOM_FLOAT(-2, 2), RANDOM_FLOAT(-2, 2), RANDOM_FLOAT(0, 3)};
+		Vector velocity{RANDOM_FLOAT(-70, 70), RANDOM_FLOAT(-70, 70), RANDOM_FLOAT(80, 160)};
+
+		if (TEMPENTITY* sprite = efx->R_TempSprite(position, velocity, 0.27f, chunk, kRenderTransAlpha, kRenderFxNone, 0.9f, 4.5f,
+				FTENT_SPRANIMATE | FTENT_GRAVITY | FTENT_COLLIDEWORLD);
+			sprite)
+		{
+			sprite->entity.curstate.rendercolor = {255, 255, 255};
+			sprite->entity.curstate.framerate = 4 / RANDOM_FLOAT(1.5f, 3);
+			sprite->entity.angles.z = RANDOM_FLOAT(0, 359);
+		}
+	}
+}
+
 static void EV_TFC_BloodDecalTrace(pmtrace_t* pTrace, int bloodColor)
 {
 	if (bloodColor == DONT_BLEED)

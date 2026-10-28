@@ -24,6 +24,12 @@ constexpr int ScaledModelMarker = 0x4A484C; // "JHL"
 void ClientGibs_Initialize();
 
 /**
+ *	@brief johnhalflife: a small creature bursting with no body left (a snark): a small blood puff and @p chunks small
+ *	blood chunks (the TempEntity message's TE_BLOODSPRITE).
+ */
+void ClientGibs_Pop(const Vector& origin, int bloodColor, int chunks);
+
+/**
  *	@brief Spawns gibs as the server's ClientGibs message does.
  *	@param flags A GibType combined with GibFlag_* values.
  */

@@ -30,6 +30,7 @@
 #include "jhl_shockbeams.h"
 #include "jhl_grapple.h"
 #include "jhl_blastring.h"
+#include "client_gibs.h"
 #include "weapon_effects.h"
 #include "sound/ClientSoundReplacementSystem.h"
 #include "sound/ISoundSystem.h"
@@ -949,6 +950,15 @@ static void MsgFunc_TempEntity(const char* name, BufferReader& reader)
 	case TE_BEAMDISK:
 		JhlBlastRing_Parse(reader);
 		break;
+
+	case TE_BLOODSPRITE:
+	{
+		const Vector origin = reader.ReadCoordVector();
+		const int bloodColor = reader.ReadByte();
+		const int chunks = reader.ReadByte();
+		ClientGibs_Pop(origin, bloodColor, chunks);
+		break;
+	}
 
 	}
 }

@@ -16,6 +16,10 @@
 #include "cbase.h"
 #include "CSqueak.h"
 
+#ifndef CLIENT_DLL
+#include "jhl_effects.h"
+#endif
+
 enum w_squeak_e
 {
 	WSQUEAK_IDLE1 = 0,
@@ -150,6 +154,30 @@ void CSqueakGrenade::Killed(CBaseEntity* attacker, int iGib)
 	CSoundEnt::InsertSound(bits_SOUND_COMBAT, pev->origin, SMALL_EXPLOSION_VOLUME, 3.0);
 
 	UTIL_BloodDrips(pev->origin, g_vecZero, BloodColor(), 80);
+
+	// johnhalflife: it leaves no body, so its burst: a small blood puff and two or three small blood chunks (the
+	// client's, ClientGibs_Pop), and a splat of its blood where it was, on the floor (or the wall or ceiling it was on).
+	if (UTIL_JhlParticleSystem())
+	{
+		MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, pev->origin);
+		WRITE_BYTE(TE_BLOODSPRITE);
+		WRITE_COORD_VECTOR(pev->origin);
+		WRITE_BYTE(BloodColor());
+		WRITE_BYTE(RANDOM_LONG(2, 3));
+		MESSAGE_END();
+
+		TraceResult tr;
+		UTIL_TraceLine(pev->origin + Vector(0, 0, 8), pev->origin - Vector(0, 0, 40), ignore_monsters, edict(), &tr);
+
+		if (tr.flFraction >= 1)
+		{
+			// Not on a floor: the nearest surface it was on.
+			UTIL_MakeVectors(pev->angles);
+			UTIL_TraceLine(pev->origin, pev->origin - gpGlobals->v_up * 24, ignore_monsters, edict(), &tr);
+		}
+
+		UTIL_BloodDecalTrace(&tr, BloodColor());
+	}
 
 	if (m_hOwner != nullptr)
 		RadiusDamage(this, m_hOwner, pev->dmg, DMG_BLAST);

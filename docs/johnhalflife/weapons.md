@@ -261,6 +261,15 @@ untouched (`CGrenade::ShootTimed`, `BounceTouch`, `TumbleThink`; NPCs' thrown gr
   (vanilla only ever the first), at its own rate per 200 units/s it's going (up to twice), eased each 0.1 s, coming to
   a stop where it is (vanilla snapped back to its first frame under 100 units/s).
 
+### Snark
+`jhl_fx_particlesystem`
+
+A snark leaves no body when it bursts (killed, or its time up): vanilla's sound, blast and faint blood drips only (its
+gibbing is a sound; it never reached the gib system). Now also a small yellow blood puff and two or three small blood
+chunks (the gib splash's, `blood_chnk_yellow`, at 0.27, thrown up and out, falling and bouncing; `ClientGibs_Pop`,
+sent as the `TempEntity` message's `TE_BLOODSPRITE`), and a splat of its blood where it was, on the floor (or the
+wall or ceiling it was on) (`CSqueakGrenade::Killed`). Kept to that: snarks burst in numbers.
+
 ### Tripmine light
 `jhl_fx_particlesystem`
 
