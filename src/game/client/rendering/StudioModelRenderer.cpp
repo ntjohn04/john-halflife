@@ -1,6 +1,8 @@
 // studio_model.cpp
 // routines for setting up to draw 3DStudio models
 
+#include <algorithm>
+#include <cmath>
 #include <cstring>
 
 #include "hud.h"
@@ -15,8 +17,17 @@
 #include "r_studioint.h"
 
 #include "client_gibs.h"
+#include "event_api.h"
 #include "jhl_settings.h"
+#include "view.h"
 #include "StudioModelRenderer.h"
+
+// johnhalflife: a shell that's a view model's casing (JhlViewModelCasings): its iuser4, and its bone its iuser3.
+constexpr int JhlCasingMarker = 0x4A4843; // "JHC"
+
+// johnhalflife: a shell drawn posed as usual, only its casing's bone (its iuser3) stretched (JhlEjectShapedBrass): its
+// iuser4.
+constexpr int JhlShapedMarker = 0x4A4853; // "JHS"
 #include "GameStudioModelRenderer.h"
 
 #define VectorCopy(a, b) \
@@ -534,6 +545,11 @@ void CStudioModelRenderer::StudioSetUpTransform(bool trivial_accept)
 	// Con_DPrintf("%.0f %0.f %0.f\n", modelpos[0], modelpos[1], modelpos[2] );
 	// Con_DPrintf("%.0f %0.f %0.f\n", angles[0], angles[1], angles[2] );
 
+	// johnhalflife: johnhalflife's shells turned as they tumble (their angles, which the temporary entities' update turns;
+	// their state's are only as they were thrown).
+	if (m_pCurrentEntity->curstate.iuser4 == JhlCasingMarker || m_pCurrentEntity->curstate.iuser4 == JhlShapedMarker)
+		angles = m_pCurrentEntity->angles;
+
 	angles[PITCH] = -angles[PITCH];
 	AngleMatrix(angles, (*m_protationmatrix));
 
@@ -819,6 +835,171 @@ static float g_JhlViewModelBones[MAXSTUDIOBONES][3][4];
 static Vector g_JhlViewModelOrigin; // Where the view model was, and its angles, when they were.
 static Vector g_JhlViewModelAngles;
 
+// johnhalflife: casings the view model's animations throw out (jhl_fx_particlesystem) become shells of the world's
+// where they're let go (as the other guns' ejected ones: falling, bouncing and clinking), each the casing itself (its
+// view model drawn as only that bone, JhlSetupCasingBones), turned as it was, thrown on as its animation had it going
+// (and as the player's going); the revolver's six spent casings dropping out of its cylinder as it's
+// reloaded (snapped back to be its new rounds in the speedloader a frame later), the sniper rifle's flying off its bolt
+// as it's worked (snapped back into the rifle at its end: hidden from where it's let go). Found in their models'
+// animations.
+struct JhlCasingDrop
+{
+	const char* Model;
+	int Sequence;
+	float Frame;	 // Let go as its animation reaches this,
+	float HideUntil; // and its animation's own hidden until this.
+	int Bones[6];
+	int BoneCount;
+	Vector Velocity; // Along the view model (forward, left, up), units a second.
+	Vector Scale;	 // Drawn this much bigger along its bone's axes once it's let go (growing to it over JhlCasingGrowTime).
+	Vector Scatter{8, 8, 8}; // Each thrown up to this much more or less along each (units a second), apart from the others.
+};
+
+constexpr float JhlCasingGrowTime = 0.15f;
+
+
+static const JhlCasingDrop JhlCasingDrops[] = {
+	// v_357 reload (36 fps): falling out of the cylinder, frames 45-58. Its rounds are tiny (1.6 units long, 0.55 across,
+	// smaller than the Glock's 9 mm shell, 3 by 1.45): a .357 Magnum's (33 mm long, 9.6 across; the 9 mm's 19 and 10),
+	// as long as the Desert Eagle's .50 AE and as wide as the 9 mm, a little smaller, 4.1 by 1.3. Scattering as they
+	// fall, not one heap.
+	{"models/v_357.mdl", 3, 57.5f, 57.5f, {19, 21, 23, 25, 27, 29}, 6, {-10, 0, -70}, {2.32f, 2.55f, 2.32f}, {45, 45, 15}},
+	// v_m40a1 fire, firelastround (38 fps): clear of the bolt, frame 46, back in the rifle at 67. Its casing's tiny (1.7
+	// units long, 0.32 across): a 7.62x51mm's (51 mm long, 12 across), the biggest of the guns' casings (the shotgun's
+	// shell 1.6 across), 7.7 by 1.8.
+	{"models/v_m40a1.mdl", 2, 46, 67, {10}, 1, {0, -45, 60}, {4.5f, 5.67f, 5.67f}},
+	{"models/v_m40a1.mdl", 3, 46, 67, {10}, 1, {-20, -95, 60}, {4.5f, 5.67f, 5.67f}},
+};
+
+// A shell that's @p model's bone @p bone (as JhlSetupCasingBones draws it), turned to @p angles, @p scale bigger along
+// its bone's axes, growing to it if @p grow.
+static void JhlSpawnCasing(int model, int bone, const Vector& origin, const Vector& velocity, const Vector& angles,
+	const Vector& scale, bool grow)
+{
+	if (TEMPENTITY* casing = gEngfuncs.pEfxAPI->R_TempModel(origin, velocity, angles, 2.5f, model, TE_BOUNCE_SHELL); casing)
+	{
+		casing->entity.angles = casing->entity.curstate.angles = angles;
+		casing->entity.curstate.body = 0;
+		casing->entity.curstate.iuser4 = JhlCasingMarker;
+		casing->entity.curstate.iuser3 = bone;
+		casing->entity.curstate.vuser1 = scale;
+		casing->entity.curstate.fuser1 = static_cast<float>(gEngfuncs.GetClientTime()) - (grow ? 0 : JhlCasingGrowTime);
+	}
+}
+
+// A shell's tumble growing from its start (its fuser2 of it) to all of it (its vuser2) over its fuser3 seconds since it
+// was thrown (its fuser1), eased.
+static void JhlRampTumble(TEMPENTITY* shell, float frametime, float currenttime)
+{
+	const entity_state_t& state = shell->entity.curstate;
+	const float t = std::clamp((currenttime - state.fuser1) / std::max(state.fuser3, 0.01f), 0.f, 1.f);
+	const float grown = state.fuser2 + (1 - state.fuser2) * t * t * (3 - 2 * t);
+
+	shell->entity.baseline.angles = state.vuser2 * grown;
+
+	if (t >= 1)
+		shell->flags &= ~FTENT_CLIENTCUSTOM;
+}
+
+void JhlEjectShapedBrass(const Vector& origin, const Vector& velocity, const Vector& angles, int model, int bone, const Vector& scale,
+	const Vector* tumble, float tumbleStart, float tumbleRamp)
+{
+	if (TEMPENTITY* shell = gEngfuncs.pEfxAPI->R_TempModel(origin, velocity, angles, 2.5f, model, TE_BOUNCE_SHELL); shell)
+	{
+		shell->entity.angles = shell->entity.curstate.angles = angles;
+
+		if (tumble)
+		{
+			shell->flags |= FTENT_ROTATE;
+			shell->entity.baseline.angles = *tumble * tumbleStart;
+
+			if (tumbleRamp > 0)
+			{
+				shell->flags |= FTENT_CLIENTCUSTOM;
+				shell->callback = JhlRampTumble;
+				shell->entity.curstate.vuser2 = *tumble;
+				shell->entity.curstate.fuser1 = static_cast<float>(gEngfuncs.GetClientTime());
+				shell->entity.curstate.fuser2 = tumbleStart;
+				shell->entity.curstate.fuser3 = tumbleRamp;
+			}
+		}
+
+		shell->entity.curstate.iuser4 = JhlShapedMarker;
+		shell->entity.curstate.iuser3 = bone;
+		shell->entity.curstate.vuser1 = scale;
+	}
+}
+
+static void JhlViewModelCasings(cl_entity_t* entity, model_t* model, float frame, float (*bones)[3][4], float (*rotation)[3][4])
+{
+	// Where its casings were drawn last (and the view model then), to be let go from: drawn now, they may have snapped
+	// back already.
+	static const JhlCasingDrop* last = nullptr;
+	static float lastFrame = 0;
+	static float lastBones[6][3][4];
+	static Vector lastOrigin;
+
+	const JhlCasingDrop* drop = nullptr;
+
+	if (JhlParticleSystemEnabled())
+	{
+		for (const auto& candidate : JhlCasingDrops)
+		{
+			if (candidate.Sequence == entity->curstate.sequence && 0 == std::strcmp(candidate.Model, model->name))
+				drop = &candidate;
+		}
+	}
+
+	if (!drop)
+	{
+		last = nullptr;
+		return;
+	}
+
+	// Reached where they're let go, since it was drawn last (and not started over).
+	if (drop == last && lastFrame < drop->Frame && frame >= drop->Frame && frame >= lastFrame)
+	{
+		const int shell = gEngfuncs.pEventAPI->EV_FindModelIndex(drop->Model);
+
+		for (int i = 0; shell != 0 && i < drop->BoneCount; ++i)
+		{
+			const float(&m)[3][4] = lastBones[i];
+			const Vector& scatter = drop->Scatter;
+			const Vector spread{gEngfuncs.pfnRandomFloat(-scatter.x, scatter.x), gEngfuncs.pfnRandomFloat(-scatter.y, scatter.y),
+				gEngfuncs.pfnRandomFloat(-scatter.z, scatter.z)};
+			const Vector along = drop->Velocity * gEngfuncs.pfnRandomFloat(0.9f, 1.1f) + spread;
+			Vector velocity = v_sim_vel;
+
+			for (int axis = 0; axis < 3; ++axis)
+				velocity[axis] += (*rotation)[axis][0] * along.x + (*rotation)[axis][1] * along.y + (*rotation)[axis][2] * along.z;
+
+			// Turned as it was drawn (the inverse of AngleMatrix; a studio model's pitch is the other way round).
+			constexpr float Degrees = 180 / 3.1415927f;
+			const Vector angles{std::asin(std::clamp(m[2][0], -1.f, 1.f)) * Degrees, std::atan2(m[1][0], m[0][0]) * Degrees,
+				std::atan2(m[2][1], m[2][2]) * Degrees};
+			const Vector origin = Vector{m[0][3], m[1][3], m[2][3]} + (entity->origin - lastOrigin);
+			JhlSpawnCasing(shell, drop->Bones[i], origin, velocity, angles, drop->Scale, true);
+		}
+	}
+
+	last = drop;
+	lastFrame = frame;
+	lastOrigin = entity->origin;
+
+	for (int i = 0; i < drop->BoneCount; ++i)
+	{
+		float(&m)[3][4] = bones[drop->Bones[i]];
+		std::memcpy(lastBones[i], m, sizeof(m));
+
+		// Hidden: drawn shrunk to nothing where it is.
+		if (frame >= drop->Frame && frame < drop->HideUntil)
+		{
+			for (int row = 0; row < 3; ++row)
+				m[row][0] = m[row][1] = m[row][2] = 0;
+		}
+	}
+}
+
 static void JhlLatchViewModelSequence(cl_entity_t* entity, model_t* model, float time)
 {
 	static model_t* lastModel = nullptr;
@@ -1096,12 +1277,36 @@ void CStudioModelRenderer::StudioSetupBones()
 	// johnhalflife: the view model's bones kept, for points on it that have no attachment (JhlViewModelPoint).
 	if (m_pCurrentEntity == gEngfuncs.GetViewModel())
 	{
+		JhlViewModelCasings(m_pCurrentEntity, m_pRenderModel, static_cast<float>(f), *m_pbonetransform, m_protationmatrix);
+
 		g_JhlViewModel = m_pRenderModel;
 		g_JhlViewModelBoneCount = std::min(m_pStudioHeader->numbones, MAXSTUDIOBONES);
 		g_JhlViewModelTime = m_clTime;
 		g_JhlViewModelOrigin = m_pCurrentEntity->origin;
 		g_JhlViewModelAngles = m_pCurrentEntity->angles;
 		std::memcpy(g_JhlViewModelBones, *m_pbonetransform, sizeof(float[3][4]) * g_JhlViewModelBoneCount);
+	}
+}
+
+void CStudioModelRenderer::JhlSetupCasingBones()
+{
+	// Only its casing's bone drawn, where it is and as it's turned, growing to its size; every other shrunk to nothing.
+	const int casing = m_pCurrentEntity->curstate.iuser3;
+	const float grown = std::clamp((static_cast<float>(m_clTime) - m_pCurrentEntity->curstate.fuser1) / JhlCasingGrowTime, 0.f, 1.f);
+	const Vector& size = m_pCurrentEntity->curstate.vuser1;
+	const Vector scale{1 + (size.x - 1) * grown, 1 + (size.y - 1) * grown, 1 + (size.z - 1) * grown};
+
+	for (int i = 0; i < m_pStudioHeader->numbones; ++i)
+	{
+		float(&m)[3][4] = (*m_pbonetransform)[i];
+
+		for (int row = 0; row < 3; ++row)
+		{
+			for (int column = 0; column < 4; ++column)
+				m[row][column] = column == 3 ? (*m_protationmatrix)[row][column] : i == casing ? (*m_protationmatrix)[row][column] * scale[column] : 0;
+		}
+
+		MatrixCopy(m, (*m_plighttransform)[i]);
 	}
 }
 
@@ -1321,6 +1526,27 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 	if (m_pCurrentEntity->curstate.movetype == MOVETYPE_FOLLOW)
 	{
 		StudioMergeBones(m_pRenderModel);
+	}
+	else if (m_pCurrentEntity->curstate.iuser4 == JhlCasingMarker)
+	{
+		JhlSetupCasingBones();
+	}
+	else if (m_pCurrentEntity->curstate.iuser4 == JhlShapedMarker)
+	{
+		// Posed as usual (Half-Life's shell lies flat by its bones' own turns), its casing's bone stretched along its axes.
+		StudioSetupBones();
+
+		if (const int bone = m_pCurrentEntity->curstate.iuser3; bone >= 0 && bone < m_pStudioHeader->numbones)
+		{
+			for (int row = 0; row < 3; ++row)
+			{
+				for (int column = 0; column < 3; ++column)
+				{
+					(*m_pbonetransform)[bone][row][column] *= m_pCurrentEntity->curstate.vuser1[column];
+					(*m_plighttransform)[bone][row][column] *= m_pCurrentEntity->curstate.vuser1[column];
+				}
+			}
+		}
 	}
 	else
 	{

@@ -41,6 +41,9 @@ public:
 	// Set up model bone positions
 	virtual void StudioSetupBones();
 
+	// johnhalflife: a view model's casing thrown out as a shell (JhlViewModelCasings): only its bone drawn.
+	void JhlSetupCasingBones();
+
 	// Find final attachment points
 	virtual void StudioCalcAttachments();
 

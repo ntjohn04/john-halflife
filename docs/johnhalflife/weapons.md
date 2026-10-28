@@ -240,6 +240,43 @@ Small, reserved versions of the flair weapons' effects (noticeable when looked f
   bullet's (0.28), the knife's 0.5x (0.22) (`MeleeImpactSpark`; the `BulletHit`
   message now carries what made the impact, `JhlImpact`).
 
+### Spent casings
+
+With `jhl_fx_particlesystem`:
+
+* **Revolver, sniper rifle:** their casings were only their view models' animation, snapping back into the gun (the
+  revolver's six dropping out of its cylinder as it's reloaded become its new rounds a frame later; the sniper rifle's,
+  flying off its bolt as it's worked, back in the rifle at its end), so they never landed. Each now becomes an ejected
+  shell where it's let go, as the other guns' (falling, bouncing, clinking), but the casing itself: its view model
+  drawn as only that bone (`JhlSetupCasingBones`), so the same look and color (the revolver's orange), turned as it
+  was (the revolver's, tiny, 1.6 units long and 0.55 across, grow
+  over 0.15 s to a .357 Magnum's, 4.1 by 1.3, a little short of the Desert Eagle's length and the 9 mm's width,
+  scattering as they fall (each thrown up to 45 units/s apart sideways); the sniper rifle's, tiny, 1.7 units long and 0.32 across, grows over 0.15 s to a 7.62x51mm's shape, 7.7 by 1.8,
+  the biggest of the guns' casings), thrown on as its animation had it going, plus the player's movement, the animation's own hidden from then on
+  (`JhlViewModelCasings`, `StudioModelRenderer.cpp`; frames and bones found in the models: frame 57.5 of the
+  revolver's `reload`, 46 of the sniper rifle's `fire` and `firelastround`).
+* **Desert Eagle, M249:** Opposing Force threw their shells from behind the player's head, above it (9 and 28 units
+  back, 14 and 24 up), out of sight; they come from the gun instead: the Desert Eagle's as the Glock's (20 ahead, 12
+  down; 7 right, thrown 25-40 units/s harder to the side, its bigger casing clear of the gun), the M249's beside where its belt goes in (12 ahead, 11 down, 4 right). The M249 throws a casing every shot
+  (Opposing Force's every other, a link in between), drawn slimmer (`JhlEjectShapedBrass`; `saw_shell.mdl`, 4.1 units
+  long and 1.4 across, stubby), a 5.56x45mm's shape, 1 across, leaving the gun lying along it as it came in on the belt, pointing
+  toward the muzzle, a few degrees off, barely tumbling at first (0-8% of it), then tumbling as other guns' shells (the engine's: spinning about
+  its length at up to 512 degrees/s, swinging end over end at up to 255) by 0.13 s, about two shots later, and a link with it every two or three shots at random,
+  both spat out the side, lower (50-60% of a gun's usual upward throw, 93-131% of its throw to the side). The Desert Eagle's is a .50 AE's, a
+  little short of true to life (33 mm long and 14 across, the 9 mm's 19 and 10), 4.5 units by 1.75 (the Glock's 3 by
+  1.45), just short of the sniper rifle's 1.8 across: Opposing Force's burnt-looking shell, as its other guns', which
+  the install copies from the player's `gearbox` folder as `shell_op4.mdl` (precached only if there; else Half-Life's
+  is used).
+* **Half-Life's shell:** the Unified SDK's release puts Opposing Force's `shell.mdl` in the mod folder (yellower,
+  burnt-edged, 3 units long and 1 across), over Half-Life's, so the Glock, MP5, Desert Eagle and NPCs' brass all
+  looked like Opposing Force's. The install copies Half-Life's from the player's own `valve` folder over it
+  (`CMakeLists.txt`): brighter bronze, 3 by 1.45, a 9 mm's shape (19 mm by 10, 1.9 to 1; Opposing Force's 3 to 1).
+  The M249's (`saw_shell.mdl`, burnt-looking) and the sniper rifle's (its own) stay Opposing Force's (Half-Life's,
+  tried on them, was too shiny for the M249 and changed look too visibly at the sniper rifle's handoff); the
+  shotgun's (`shotgunshell.mdl`) is the games' own. Stretched shells are drawn posed as usual, only their casing's
+  bone stretched, so Half-Life's (lying flat by its bones' own turns) settles on its side. All of johnhalflife's shells are drawn turned as they tumble (the temporary entities'
+  update turns their `angles`; drawn by their state's, as they were thrown, they kept one fixed turn in the world).
+
 ### Hand grenade
 `jhl_fx_particlesystem`
 

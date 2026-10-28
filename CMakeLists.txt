@@ -260,6 +260,25 @@ endfunction()
 
 jhl_install_valve_menu(johnhalflife "" HD)
 
+# Half-Life's brass shell (the Glock's, the MP5's, the Desert Eagle's, NPCs'), copied from the player's own install
+# over the Opposing Force one the Unified SDK's release puts in the mod folder: a 9 mm's shape, as Half-Life had it
+# (docs/johnhalflife/weapons.md#spent-casings).
+install(CODE "set(valveShell \"\${CMAKE_INSTALL_PREFIX}/../valve/models/shell.mdl\")
+	if (EXISTS \"\${valveShell}\")
+		file(COPY_FILE \"\${valveShell}\" \"\${CMAKE_INSTALL_PREFIX}/models/shell.mdl\")
+	else()
+		message(WARNING \"Half-Life's shell.mdl not found next to the mod; the mod keeps the one it has\")
+	endif()")
+
+# Opposing Force's shell (burnt-looking) for the Desert Eagle, an Opposing Force gun, as its M249's and sniper rifle's
+# casings, under its own name (Half-Life's has its).
+install(CODE "set(gearboxShell \"\${CMAKE_INSTALL_PREFIX}/../gearbox/models/shell.mdl\")
+	if (EXISTS \"\${gearboxShell}\")
+		file(COPY_FILE \"\${gearboxShell}\" \"\${CMAKE_INSTALL_PREFIX}/models/shell_op4.mdl\")
+	else()
+		message(WARNING \"Opposing Force's shell.mdl not found next to the mod; the Desert Eagle uses Half-Life's\")
+	endif()")
+
 # CMake doesn't currently support installing imported libraries of type UNKNOWN.
 # See https://gitlab.kitware.com/cmake/cmake/-/issues/22406
 #install(IMPORTED_RUNTIME_ARTIFACTS OpenAL::OpenAL

@@ -24,6 +24,14 @@ inline Vector v_sim_vel; // johnhalflife: the local player's predicted velocity,
  *	if it isn't @p modelName or wasn't just drawn (third person, zoomed).
  */
 bool JhlViewModelPoint(const char* modelName, int bone, const Vector& local, Vector& world);
+
+/**
+ *	@brief johnhalflife: EV_EjectBrass's shell, @p model drawn as only its bone @p bone (its casing), @p scale bigger along
+ *	that bone's axes, turned to @p angles, tumbling at @p tumble (degrees a second; the engine's own if null), starting
+ *	at @p tumbleStart of it and growing to all of it over @p tumbleRamp seconds (at once if 0).
+ */
+void JhlEjectShapedBrass(const Vector& origin, const Vector& velocity, const Vector& angles, int model, int bone, const Vector& scale,
+	const Vector* tumble = nullptr, float tumbleStart = 1, float tumbleRamp = 0);
 inline Vector v_client_aimangles;
 inline Vector v_crosshairangle;
 

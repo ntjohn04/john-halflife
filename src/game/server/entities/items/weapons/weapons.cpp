@@ -398,6 +398,12 @@ void W_Precache()
 	{
 		UTIL_PrecacheModel("sprites/water_splash_ring.spr");
 	}
+
+	// johnhalflife: Opposing Force's shell, the Desert Eagle's (installed from the player's Opposing Force; ev_hldm.cpp).
+	if (g_pFileSystem->FileExists("models/shell_op4.mdl"))
+	{
+		UTIL_PrecacheModel("models/shell_op4.mdl");
+	}
 	g_sModelIndexBubbles = UTIL_PrecacheModel("sprites/bubble.spr");		// bubbles
 	g_sModelIndexBloodSpray = UTIL_PrecacheModel("sprites/bloodspray.spr"); // initial blood
 	g_sModelIndexBloodDrop = UTIL_PrecacheModel("sprites/blood.spr");		// splattered blood

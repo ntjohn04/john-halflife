@@ -66,6 +66,7 @@ static int g_tracerCount[MAX_PLAYERS];
 #include "pm_shared.h"
 #include "weapon_effects.h"
 #include "jhl_settings.h"
+#include "view.h"
 #include "jhl_tracers.h"
 #include "jhl_egon.h"
 #include "jhl_gauss.h"
@@ -1931,7 +1932,28 @@ void EV_FireEagle(event_args_t* args)
 		forward, right, up,
 		-9.0, 14.0, 9.0);
 
-	EV_EjectBrass(ShellOrigin, ShellVelocity, args->angles[1], iShell, TE_BOUNCE_SHELL);
+	// johnhalflife: Opposing Force's came from behind the player's head, above it, out of sight; from its ejection port
+	// instead, as the Glock's (its view model's the same), but its bigger casing a little further out and thrown harder
+	// to the side, clear of the gun, its kick throwing the gun up past where it starts.
+	if (JhlParticleSystemEnabled())
+	{
+		EV_GetDefaultShellInfo(args, args->origin, args->velocity, ShellVelocity, ShellOrigin, forward, right, up, 20, -12, 7);
+		ShellVelocity = ShellVelocity + right * gEngfuncs.pfnRandomFloat(25, 40);
+	}
+
+	// johnhalflife: a .50 AE's casing, not the Glock's 9 mm: one a little short of true to life (33 mm long and 14 across,
+	// 1.7x and 1.4x the 9 mm's 19 and 10), 4.5 by 1.75, just short of the sniper rifle's 1.8 across. Opposing Force's
+	// burnt-looking shell, as its M249's and sniper rifle's (shell_op4.mdl, installed from the player's Opposing Force:
+	// 3 units long along its y, 1.09 by 0.94 across), else Half-Life's (its casing its bone 1, 3 long along its z, 1.45
+	// across).
+	const int op4Shell = gEngfuncs.pEventAPI->EV_FindModelIndex("models/shell_op4.mdl");
+
+	if (JhlParticleSystemEnabled() && op4Shell != 0)
+		JhlEjectShapedBrass(ShellOrigin, ShellVelocity, {0, args->angles[1], 0}, op4Shell, 0, {1.6f, 1.5f, 1.86f});
+	else if (JhlParticleSystemEnabled())
+		JhlEjectShapedBrass(ShellOrigin, ShellVelocity, {0, args->angles[1], 0}, iShell, 1, {1.2f, 1.2f, 1.5f});
+	else
+		EV_EjectBrass(ShellOrigin, ShellVelocity, args->angles[1], iShell, TE_BOUNCE_SHELL);
 
 	EV_PlaySound(
 		args->entindex,
@@ -2075,7 +2097,51 @@ void EV_FireM249(event_args_t* args)
 		forward, right, up,
 		-28.0, 24.0, 4.0);
 
-	EV_EjectBrass(ShellOrigin, ShellVelocity, args->angles[1], iShell, TE_BOUNCE_SHELL);
+	// johnhalflife: Opposing Force's came from behind the player's head, above it, out of sight; from its receiver
+	// instead, beside where its belt goes in (its view model's rounds), back toward the player.
+	if (JhlParticleSystemEnabled())
+		EV_GetDefaultShellInfo(args, args->origin, args->velocity, ShellVelocity, ShellOrigin, forward, right, up, 12, -11, 4);
+
+	// johnhalflife: a casing every shot (Opposing Force's every other, a link in between), slimmer (saw_shell.mdl, 4.1
+	// units long and 1.4 across, stubby), a 5.56x45mm's shape, 1 across, smaller than the sniper rifle's (7.7 by 1.8);
+	// and a link with it every two or three shots, thrown a little more to the side, from just behind it. Both spat out
+	// the side, lower (50-60% of a gun's usual throw up), there being so many, each harder or softer to the side
+	// (93-131%).
+	if (JhlParticleSystemEnabled())
+	{
+		static int shotsToLink = 0;
+
+		const Vector thrown = ShellVelocity - args->velocity;
+		const float upward = DotProduct(thrown, up);
+		ShellVelocity = args->velocity + (thrown - up * upward) * gEngfuncs.pfnRandomFloat(0.93f, 1.31f) +
+						up * (upward * gEngfuncs.pfnRandomFloat(0.5f, 0.6f));
+
+		// Out as it came in on the belt: lying along the gun, pointing toward the muzzle (turned as the player faces,
+		// found in game), a few degrees off, barely tumbling at first (0-8% of it); then tumbling as other guns' shells
+		// do (the engine's R_TempModel's: -512-511 degrees a second spinning about its length, its pitch; -255-255
+		// swinging end over end, its yaw and roll), soon after, by the time the gun's fired two more (0.13 s; it fires
+		// every 0.067).
+		if (const int casing = gEngfuncs.pEventAPI->EV_FindModelIndex("models/saw_shell.mdl"); casing != 0)
+		{
+			const Vector tumble{gEngfuncs.pfnRandomFloat(-512, 511), gEngfuncs.pfnRandomFloat(-255, 255), gEngfuncs.pfnRandomFloat(-255, 255)};
+			const Vector angles{gEngfuncs.pfnRandomFloat(-5, 5), args->angles[1] + gEngfuncs.pfnRandomFloat(-6, 6), 0};
+			JhlEjectShapedBrass(ShellOrigin, ShellVelocity, angles, casing, 0, {0.75f, 1, 0.75f}, &tumble,
+				gEngfuncs.pfnRandomFloat(0, 0.08f), 0.13f);
+		}
+
+		if (--shotsToLink <= 0)
+		{
+			shotsToLink = gEngfuncs.pfnRandomLong(2, 3);
+
+			if (const int link = gEngfuncs.pEventAPI->EV_FindModelIndex("models/saw_link.mdl"); link != 0)
+			{
+				const Vector linkVelocity = ShellVelocity + right * gEngfuncs.pfnRandomFloat(10, 30);
+				EV_EjectBrass(ShellOrigin - forward * 2, linkVelocity, args->angles[1], link, TE_BOUNCE_SHELL);
+			}
+		}
+	}
+	else
+		EV_EjectBrass(ShellOrigin, ShellVelocity, args->angles[1], iShell, TE_BOUNCE_SHELL);
 
 	EV_PlaySound(
 		args->entindex,
