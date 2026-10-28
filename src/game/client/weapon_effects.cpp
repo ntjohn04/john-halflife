@@ -241,8 +241,9 @@ void EV_M249MuzzleEffects()
 static void Flash(const Vector& origin, float scale, float brightness);
 
 // A thin wisp off a barrel after a shot (SniperSmoke_Update, EagleSmoke_Update): @p left of its stream to go (1 to 0),
-// thinning as it does; rising, carrying the player's movement, shed as smoke's (Carry).
-static void BarrelWisp(const Vector& muzzle, float left, float scaleMin, float scaleMax, float alphaBase, float alphaMore)
+// thinning as it does; rising, carrying the player's movement, shed as smoke's (Carry); lasting @p life of its sprite's
+// run.
+static void BarrelWisp(const Vector& muzzle, float left, float scaleMin, float scaleMax, float alphaBase, float alphaMore, float life = 1)
 {
 	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
 
@@ -253,18 +254,19 @@ static void BarrelWisp(const Vector& muzzle, float left, float scaleMin, float s
 	Vector velocity{gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(10, 16)};
 
 	if (TEMPENTITY* wisp = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, gEngfuncs.pfnRandomFloat(scaleMin, scaleMax) * (0.6f + 0.4f * left),
-			modelIndex, kRenderTransAlpha, kRenderFxNone, alphaBase + alphaMore * left, 2.0f, FTENT_SPRANIMATE);
+			modelIndex, kRenderTransAlpha, kRenderFxNone, alphaBase + alphaMore * left, 2.0f * life, FTENT_SPRANIMATE);
 		wisp)
 	{
 		wisp->entity.curstate.rendercolor = {190, 190, 190};
-		wisp->entity.curstate.framerate = gEngfuncs.pfnRandomFloat(24, 30);
+		wisp->entity.curstate.framerate = gEngfuncs.pfnRandomFloat(24, 30) / life;
 		wisp->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
 		Carry(wisp, v_sim_vel);
 	}
 }
 
 // The Desert Eagle's barrel smoking a moment after a shot (EagleSmoke_Update): a smaller, shorter, fainter stream than
-// the sniper rifle's, a big-bore pistol's.
+// the sniper rifle's, a big-bore pistol's, its wisps gone a little sooner.
+constexpr float EagleSmokeLife = 0.93f;
 constexpr float EagleSmokeTime = 0.35f;
 constexpr float EagleSmokeEvery = 0.1f; // Four: at 0, 0.1, 0.2 and 0.3 s.
 static float g_EagleSmokeStart = -1;
@@ -366,7 +368,7 @@ void EagleSmoke_Update(double time)
 
 	// Its muzzle is its view model's first attachment, as the other guns' (not while scoped or in third person).
 	if (Vector muzzle; FindMuzzle(muzzle))
-		BarrelWisp(muzzle, 1 - age / EagleSmokeTime, 0.05f, 0.07f, 0.03f, 0.07f);
+		BarrelWisp(muzzle, 1 - age / EagleSmokeTime, 0.05f, 0.07f, 0.03f, 0.07f, EagleSmokeLife);
 }
 
 // A flash of flame for a moment (the engine's own muzzle flash, muzzleflash2, additive), turned at random.

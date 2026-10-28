@@ -230,7 +230,7 @@ Small, reserved versions of the flair weapons' effects (noticeable when looked f
 * **Revolver:** a little heavier impacts: on dirt, wood, concrete and tile its puff is 1.4x a bullet's (0.4) in place
   of a bullet's (the sniper rifle's 2x and chunks).
 * **Desert Eagle:** its barrel smokes a moment after a shot, a shorter, fainter sniper rifle's: four wisps, one every
-  0.1 s, thinning (`EV_EagleBarrelSmoke`, `EagleSmoke_Update`; from its view model's first attachment).
+  0.1 s, thinning, each lasting 93% of the sniper's (`EV_EagleBarrelSmoke`, `EagleSmoke_Update`; from its view model's first attachment).
 * **MP5 grenade:** a launch (it had only the sound): two wisps, 2.2x a gun's at 0.18, and its light 1.1x, 0.08 s
   (`EV_MP5GrenadeEffects`).
 * **Shotgun, double shot:** its light 1.2x and two small puffs (0.15-0.2, 0.09) pushed out ahead at 40-70 units/s,
@@ -356,11 +356,11 @@ the engine saturates into its bright, textured white-blue.
 
 * **Dragged beam:** its two beams are drawn as 8 straight pieces each along a curve from the gun (its view model's
   muzzle) to where it hits, the engine's own beams kept but unseen. The curve's middle pulls toward where the hit
-  point was a moment ago (a copy of it that follows by `jhl_egon_bend` seconds, 0.1 by default, saved; 0 straight),
+  point was a moment ago (a copy of it that follows 0.25 s behind),
   so sweeping or strafing bows it behind the motion and holding still straightens it; the bow is at most 30% of the
   beam's length. The hit point and the damage are the game's, unchanged. Each piece draws the engine's noise over its
   own length, the spiral's turns restarting on each, so the spiral beam is drawn in fewer, longer pieces
-  (`jhl_egon_spiralpieces`, 2 by default, like vanilla's spiral, 1-8, saved) than the smooth one (8). Scaling the pieces' noise to the whole
+  (2, like vanilla's spiral) than the smooth one (8). Scaling the pieces' noise to the whole
   beam's length to continue one spiral across them didn't work: the noise went wild.
 * **Scorches:** small scorches (`{smscorch1`-`3`) where it burns walls and brush entities, not creatures, at least 14
   units apart and 0.12 s apart.

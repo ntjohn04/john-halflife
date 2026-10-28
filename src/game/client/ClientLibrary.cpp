@@ -64,7 +64,6 @@ bool ClientLibrary::Initialize()
 	ClientGibs_Initialize();
 	WeaponEffects_Initialize();
 	JhlSettings_Initialize();
-	JhlEgon_Initialize();
 	FxTest_Initialize();
 
 	return true;

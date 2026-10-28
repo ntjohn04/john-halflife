@@ -66,8 +66,11 @@ struct Layer
 	BEAM* Pieces[Segments]{};
 };
 
-cvar_t* g_Bend = nullptr;
-cvar_t* g_SpiralPieces = nullptr;
+// How long (seconds) the beam's pull lags behind where it hits: 0 straight, more a stronger bend.
+constexpr float Bend = 0.25f;
+
+// How many pieces its spiral is drawn in along the bend (1-8, as vanilla's spiral at 2): each restarts its turns.
+constexpr int SpiralPieces = 2;
 
 Layer g_Layers[2];
 Vector g_Lagged; // Where the hit point was a moment ago (the curve's pull).
@@ -120,9 +123,9 @@ void DrawLayer(Layer& layer, BEAM* source, const Vector& start, const Vector& co
 	source->brightness = 0;
 
 	// Each piece draws the engine's noise over its own length (the spiral's turns restart on each), so the spiral layer
-	// uses fewer, longer pieces (jhl_egon_spiralpieces) than the smooth one.
+	// uses fewer, longer pieces (SpiralPieces) than the smooth one.
 	const bool spiral = (source->flags & FBEAM_SINENOISE) != 0;
-	const int pieces = spiral ? std::clamp(g_SpiralPieces ? static_cast<int>(g_SpiralPieces->value) : 2, 1, Segments) : Segments;
+	const int pieces = spiral ? SpiralPieces : Segments;
 
 	for (int i = pieces; i < Segments; ++i)
 	{
@@ -240,15 +243,6 @@ void Vent(const Vector& muzzle, float now)
 }
 } // namespace
 
-void JhlEgon_Initialize()
-{
-	// How long (seconds) the beam's pull lags behind where it hits: 0 straight, more a stronger bend.
-	g_Bend = gEngfuncs.pfnRegisterVariable("jhl_egon_bend", "0.1", FCVAR_ARCHIVE);
-
-	// How many pieces its spiral is drawn in along the bend (1-8): each restarts the spiral's turns.
-	g_SpiralPieces = gEngfuncs.pfnRegisterVariable("jhl_egon_spiralpieces", "2", FCVAR_ARCHIVE);
-}
-
 void JhlEgon_Update(BEAM* beam, BEAM* beam2, const pmtrace_t& hit)
 {
 	const float now = gEngfuncs.GetClientTime();
@@ -296,8 +290,7 @@ void JhlEgon_Update(BEAM* beam, BEAM* beam2, const pmtrace_t& hit)
 	g_LastHit = end;
 
 	// The pull follows the hit point, a little behind: it catches up when still.
-	const float lag = g_Bend ? g_Bend->value : 0;
-	g_Lagged = lag > 0 ? g_Lagged + (end - g_Lagged) * (1 - std::exp(-frametime / lag)) : end;
+	g_Lagged = g_Lagged + (end - g_Lagged) * (1 - std::exp(-frametime / Bend));
 
 	// The curve leaves the gun toward where it was hitting and bends onto where it hits: its middle point halfway to
 	// the pull, kept within MaxBow of the straight line.

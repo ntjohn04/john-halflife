@@ -21,7 +21,7 @@ struct pmtrace_t;
 /**
  *	@brief johnhalflife's gluon gun (jhl_fx_particlesystem), for the local player's beam (UpdateBeams, hl_objects.cpp):
  *	draws its two beams bent as if dragged through the air (their middle trailing where the hit point was a moment
- *	ago, by jhl_egon_bend seconds; straight when still), scorches what it burns, and leaks sparks from the barrel.
+ *	ago, by a quarter of a second; straight when still), scorches what it burns, and leaks sparks from the barrel.
  *	@param beam, beam2 The engine's beams (hidden while these are drawn).
  *	@param hit Where it hits this frame.
  */
@@ -31,11 +31,6 @@ void JhlEgon_Update(BEAM* beam, BEAM* beam2, const pmtrace_t& hit);
  *	@brief The beam's let go (EV_EgonStop): its bent beams go, and a few blue specks fizzle off where it was hitting.
  */
 void JhlEgon_Stop();
-
-/**
- *	@brief Registers jhl_egon_bend.
- */
-void JhlEgon_Initialize();
 
 /**
  *	@brief Forgets the beams: a new map frees the engine's (HUD_VidInit).

@@ -38,8 +38,6 @@ All are client settings; set them in the console.
 | `jhl_fx_particlesystem` | 1 | The particle system changes (gibs, blood, explosions, debris, beams, rings) | [Effects plan](effects_plan.md#gibs-done) |
 | `jhl_fx_tracers` | 1 | johnhalflife's tracers (with the particle system on): the M249's tracer rounds, every gun's faint streaks, NPCs' | [Weapons](weapons.md#tracers) |
 | `jhl_hud_scale` | 1 | Sprite HUD scale (0 = automatic by screen height) | [HUD](#hud) |
-| `jhl_egon_bend` | 0.1 | Gluon beam drag: how far (seconds) its bend trails the hit point; 0 straight | [Weapons](weapons.md#gluon-gun) |
-| `jhl_egon_spiralpieces` | 2 | How many pieces the gluon beam's spiral is drawn in along the bend (1-8) | [Weapons](weapons.md#gluon-gun) |
 
 Changed defaults of existing settings: `cl_rollangle` 0.65 and `cl_rollspeed` 300 (see
 [strafe roll](camera_movement.md#strafe-roll)).
