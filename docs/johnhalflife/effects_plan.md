@@ -158,6 +158,14 @@ gone, new effects (shells, smoke, sparks, gibs) silently don't appear. Debris th
 `jhl_debris.cpp`) counts against a shared budget of 250: past it, the oldest pieces fade out early. NPC gibs and
 the shards below are tracked (a serial in `curstate.iuser3`; the engine clears temp entities when it reuses them).
 
+Bounce sounds are thinned out (`JhlBounceSoundAllowed`, `SoundSystem.cpp`). Vanilla plays one on every bounce with
+some speed (louder up to 450 units/s down), its only thinning a shell's slow bounces (under 200, 3 in 4 silent); with
+more pieces, living longer and bouncing more under half gravity, a broken crate or a few explosions stacked the same
+clatter dozens of times within a moment. A bounce is silent if the same sound played within 64 units in the last
+0.1 s (one stands for the cluster); debris and gibs play at most 6 bounce sounds in any 0.25 s; and their slow
+bounces (under 150 units/s down, settling) play half the time. Shells only keep apart, closer and sooner (48 units,
+0.06 s), so brass still rains.
+
 Shards (`TE_BREAKMODEL`): the engine makes `count` (0: (x·y + y·z + x·z) / 432 of the size, at most 100) at random
 points in the box, flying `velocity` ± `random` × 10 (up only: 0 to that), half gravity, colliding, fading, 200 in
 256 tumbling, glass/`BREAK_TRANS` translucent at 128, living `life` / 10 + 0-1 s. `UTIL_JhlBreakModel` sends it

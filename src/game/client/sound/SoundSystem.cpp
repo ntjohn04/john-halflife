@@ -239,6 +239,69 @@ void PlaySoundByNameAtLocation(const char* szSound, float volume, const Vector& 
 	// gEngfuncs.pfnPlaySoundByNameAtLocation(szSound, 1.0, entity->attachment[0]);
 }
 
+// johnhalflife: bounce sounds thinned out (jhl_fx_particlesystem). Debris lives longer, falls slower and comes in
+// greater numbers than vanilla's (whose only thinning was a shell's slow bounces, 3 in 4 silent), so a broken crate or a
+// few explosions stacked the same clatter dozens of times over within a moment. A bounce is silent if the same sound
+// played close by just now (one standing for the cluster); debris and gibs share a budget of sounds a moment; and their
+// slow, settling bounces play half the time, as a shell's do. Shells only keep apart, closer and sooner, brass raining
+// as it should.
+namespace
+{
+struct RecentBounce
+{
+	float Time = -100;
+	Vector Origin;
+	int Sound = 0;
+};
+
+constexpr int RecentBounceCount = 32;
+RecentBounce g_RecentBounces[RecentBounceCount];
+int g_NextRecentBounce = 0;
+
+constexpr float DebrisApart = 64; // The same sound this close,
+constexpr float DebrisSoon = 0.1f; // this soon: silent.
+constexpr float ShellApart = 48;
+constexpr float ShellSoon = 0.06f;
+constexpr int DebrisBudget = 6; // Debris and gib sounds at most in DebrisBudgetTime.
+constexpr float DebrisBudgetTime = 0.25f;
+constexpr int DebrisSlowBounce = 150; // Slower bounces (units a second, down) play half the time.
+} // namespace
+
+static bool JhlBounceSoundAllowed(TEMPENTITY* pTemp, bool isShell, int bounceSpeed)
+{
+	const float now = gEngfuncs.GetClientTime();
+	const Vector& origin = pTemp->entity.origin;
+
+	if (!isShell && bounceSpeed < DebrisSlowBounce && gEngfuncs.pfnRandomLong(0, 1) != 0)
+		return false;
+
+	const float apart = isShell ? ShellApart : DebrisApart;
+	const float soon = isShell ? ShellSoon : DebrisSoon;
+	int debrisLately = 0;
+
+	for (auto& recent : g_RecentBounces)
+	{
+		// (A new map or a loaded game restarts the clock.)
+		if (recent.Time > now)
+			recent.Time = -100;
+
+		const float ago = now - recent.Time;
+
+		if (recent.Sound == pTemp->hitSound && ago < soon && (recent.Origin - origin).Length() < apart)
+			return false;
+
+		if (recent.Sound != BOUNCE_SHELL && recent.Sound != BOUNCE_SHOTSHELL && ago < DebrisBudgetTime)
+			++debrisLately;
+	}
+
+	if (!isShell && debrisLately >= DebrisBudget)
+		return false;
+
+	g_RecentBounces[g_NextRecentBounce] = {now, origin, pTemp->hitSound};
+	g_NextRecentBounce = (g_NextRecentBounce + 1) % RecentBounceCount;
+	return true;
+}
+
 void CL_TempEntPlaySound(TEMPENTITY* pTemp, float damp)
 {
 	bool isShell = false;
@@ -352,6 +415,11 @@ void CL_TempEntPlaySound(TEMPENTITY* pTemp, float damp)
 	}
 
 	if (damp <= 0)
+	{
+		return;
+	}
+
+	if (JhlParticleSystemEnabled() && !JhlBounceSoundAllowed(pTemp, isShell, bounceSpeed))
 	{
 		return;
 	}
