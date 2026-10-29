@@ -14,6 +14,7 @@
  ****/
 
 #include "cbase.h"
+#include "jhl_effects.h"
 
 #define TURRET_SHOTS 2
 #define TURRET_RANGE (100 * 12)
@@ -628,8 +629,34 @@ void CBaseTurret::ActiveThink()
 	MoveTurret();
 }
 
+// johnhalflife (jhl_fx_particlesystem): a turret's shot's effects at its muzzle (the client's, weapon_effects.cpp's
+// JhlTank_ParseFire, a mounted gun's as a smaller gun, kind 4): a flickering flash, a light on top of the engine's
+// (EF_MUZZLEFLASH), a wisp and its brass: rifle casings for 12 mm (as func_tank's TANK_BULLET_12MM, 3), else 9 mm.
+static void JhlTurretShot(const Vector& muzzle, const Vector& direction, bool rifle)
+{
+	if (!UTIL_JhlParticleSystem())
+		return;
+
+	MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, muzzle);
+	WRITE_BYTE(TE_MULTIGUNSHOT);
+	WRITE_COORD_VECTOR(muzzle);
+	WRITE_CHAR(static_cast<int>(direction.x * 100));
+	WRITE_CHAR(static_cast<int>(direction.y * 100));
+	WRITE_CHAR(static_cast<int>(direction.z * 100));
+	WRITE_BYTE(4);
+	WRITE_BYTE(1);
+	WRITE_BYTE(rifle ? 3 : 1);
+	WRITE_COORD_VECTOR(muzzle);
+	WRITE_BYTE(0);
+	WRITE_BYTE(0);
+	WRITE_BYTE(0);
+	WRITE_BYTE(35); // Flash scale, hundredths.
+	MESSAGE_END();
+}
+
 void CTurret::Shoot(Vector& vecSrc, Vector& vecDirToEnemy)
 {
+	JhlTurretShot(vecSrc, vecDirToEnemy, true);
 	FireBullets(1, vecSrc, vecDirToEnemy, TURRET_SPREAD, TURRET_RANGE, BULLET_MONSTER_12MM, 1);
 	EmitSound(CHAN_WEAPON, "turret/tu_fire1.wav", 1, 0.6);
 	pev->effects = pev->effects | EF_MUZZLEFLASH;
@@ -637,6 +664,7 @@ void CTurret::Shoot(Vector& vecSrc, Vector& vecDirToEnemy)
 
 void CMiniTurret::Shoot(Vector& vecSrc, Vector& vecDirToEnemy)
 {
+	JhlTurretShot(vecSrc, vecDirToEnemy, false);
 	FireBullets(1, vecSrc, vecDirToEnemy, TURRET_SPREAD, TURRET_RANGE, BULLET_MONSTER_9MM, 1);
 
 	switch (RANDOM_LONG(0, 2))
@@ -1202,6 +1230,7 @@ void CSentry::Spawn()
 
 void CSentry::Shoot(Vector& vecSrc, Vector& vecDirToEnemy)
 {
+	JhlTurretShot(vecSrc, vecDirToEnemy, false);
 	FireBullets(1, vecSrc, vecDirToEnemy, TURRET_SPREAD, TURRET_RANGE, BULLET_MONSTER_MP5, 1);
 
 	switch (RANDOM_LONG(0, 2))

@@ -578,7 +578,7 @@ void JhlTank_ParseFire(BufferReader& reader)
 	forward = forward.Length() > 0.1f ? forward.Normalize() : Vector{1, 0, 0};
 
 	// The kinds (CFuncTank::Fire): 0 a machine gun, 1 a rocket launcher, 2 a cannon (func_tankmortar: the Abrams', the
-	// howitzer's, the player's tank's), 3 a laser.
+	// howitzer's, the player's tank's), 3 a laser; 4 an NPC turret (turret.cpp).
 	switch (kind)
 	{
 	case 0:
@@ -620,6 +620,29 @@ void JhlTank_ParseFire(BufferReader& reader)
 		Flash(muzzle + forward * 24, 0.7f, 0.8f);
 		TankMuzzleSmoke(muzzle, forward, 9, 1.0f, 1.6f, 60, 180, 3.0f);
 		break;
+
+	case 4:
+	{
+		// An NPC turret (turret.cpp: ceiling turrets, mini-turrets, sentries): a smaller gun's, on top of the engine's
+		// light (EF_MUZZLEFLASH): a flickering flash, a little more light, now and then a wisp, and its brass.
+		MuzzleEffectsAt(muzzle, 0.35f, 1.0f, 0.1f, 1, 0.8f, 0.05f);
+
+		if (flashScale > 0)
+			Flash(muzzle, flashScale * gEngfuncs.pfnRandomFloat(0.85f, 1.15f), 0.85f);
+
+		const int shell = gEngfuncs.pEventAPI->EV_FindModelIndex(bullet == 3 ? "models/saw_shell.mdl" : "models/shell.mdl");
+		Vector right = CrossProduct(forward, Vector{0, 0, 1});
+		right = right.Length() > 0.1f ? right.Normalize() : Vector{1, 0, 0};
+
+		if (shell != 0)
+		{
+			const Vector origin = muzzle - forward * 12 + right * 3;
+			const Vector velocity = right * gEngfuncs.pfnRandomFloat(60, 100) + Vector{0, 0, gEngfuncs.pfnRandomFloat(60, 120)} +
+									forward * gEngfuncs.pfnRandomFloat(-15, 15);
+			EV_EjectBrass(origin, velocity, VectorToYaw(forward), shell, TE_BOUNCE_SHELL);
+		}
+		break;
+	}
 
 	case 3:
 		// A laser: a light its own color at its emitter and where it hits.

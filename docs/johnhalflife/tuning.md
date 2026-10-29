@@ -91,5 +91,7 @@ Server `server/entities/func_tank.cpp` (`CFuncTank::Fire`, `CFuncTankMortar::Fir
 | | Shell's explosion shown | 2.5× its magnitude, 180-260 (Abrams 60: 180, Bradley's cannon 100: 250); magnitude 150+ (howitzers, 200): 0.91×, 182. Damage unchanged | |
 | Laser (`func_tanklaser`) | `TankLight` | The beam's color: 140 at the emitter, 110 where it hits | `map c3a1b`, `map c4a1` |
 
+| NPC turret (`turret.cpp`, kind 4) | `JhlTurretShot`, `MuzzleEffectsAt` | Flash 0.35 (client-drawn, ±15%, 0.07 s), light 0.8 a gun's on top of the engine's, a wisp 35%, 1 casing a shot (rifle for the ceiling turret's 12 mm) | Ceiling: `map c3a1`; mini: `map c1a2`, `t0a0d`; sentry: `map c1a3`, `c2a2d`, `c3a1a`; or `npc_create monster_sentry` |
+
 Touches: every map's turrets and every usable one; the cannon's damage now comes from a second, silent, unseen
 `env_explosion` at the map's magnitude.

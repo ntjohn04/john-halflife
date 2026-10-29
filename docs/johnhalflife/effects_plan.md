@@ -482,6 +482,12 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
     spilled out of the buildings it's fired into), damage-free, with its damage as it was by a silent, unseen one at its own magnitude.
   * Lasers (`func_tanklaser`: Forget About Freeman's alien turret, Xen's crystals): a light the beam's own color at
     its emitter (140) and where it hits (110).
+* NPC turrets (`turret.cpp`: ceiling turrets `monster_turret`, `monster_miniturret`, `monster_sentry`): vanilla's
+  shots had only the engine's light (`EF_MUZZLEFLASH`). Each now also sends its muzzle and aim as a mounted gun's,
+  kind 4 (`TE_MULTIGUNSHOT`, `JhlTurretShot`), drawn as a smaller gun's: a flickering `muzzleflash2` (0.35, ±15%,
+  a random frame and turn, 0.07 s), a little more light (0.8 a gun's), a wisp 35% of the time, and its brass, one a
+  shot, out to its right: rifle casings for the ceiling turret's 12 mm, 9 mm brass for the others. Their deaths are
+  as they were (the engine's smoke, `UTIL_Sparks`, already our spark bursts).
 * Tentacles (`tentacle.cpp`; c1a4i's Blast Pit, c2a5x, c4a1b): vanilla's strikes only sounded, by a map key (silo,
   dirt, water). Now each also sends where it struck (`TE_LARGEFUNNEL`: 0 a light tap, 1 a slam, 2 its killing
   swing's, 200 damage), and the client looks at the floor under it, by its material (`JhlExplosion_TentacleImpact`):
