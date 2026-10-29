@@ -1620,6 +1620,7 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 			// johnhalflife: a gargantua's flames' cores onto its hands, a pit worm's eye's light, as just drawn.
 			JhlGargantua_Drawn(m_pCurrentEntity);
 			JhlPitWorm_Drawn(m_pCurrentEntity);
+			JhlGeneWorm_Drawn(m_pCurrentEntity);
 		}
 	}
 

@@ -404,6 +404,12 @@ void W_Precache()
 	{
 		UTIL_PrecacheModel("models/shell_op4.mdl");
 	}
+
+	// johnhalflife: a real laser turret's flash (Opposing Force's, weapon_effects.cpp's JhlTank_ParseFire).
+	if (g_pFileSystem->FileExists("sprites/glow_blu.spr"))
+	{
+		UTIL_PrecacheModel("sprites/glow_blu.spr");
+	}
 	g_sModelIndexBubbles = UTIL_PrecacheModel("sprites/bubble.spr");		// bubbles
 	g_sModelIndexBloodSpray = UTIL_PrecacheModel("sprites/bloodspray.spr"); // initial blood
 	g_sModelIndexBloodDrop = UTIL_PrecacheModel("sprites/blood.spr");		// splattered blood

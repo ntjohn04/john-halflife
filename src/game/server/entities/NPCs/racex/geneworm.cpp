@@ -77,6 +77,21 @@ void COFGeneWormCloud::Precache()
 	PrecacheModel("sprites/ballsmoke.spr");
 }
 
+// johnhalflife (jhl_fx_particlesystem): its acid's droplets (the bullsquid's spit, tinyspit), sprayed @p count of them
+// at @p speed along @p direction.
+static void JhlCloudSpray(const Vector& origin, const Vector& direction, int count, int speed, int noise)
+{
+	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, origin);
+	WRITE_BYTE(TE_SPRITE_SPRAY);
+	WRITE_COORD_VECTOR(origin);
+	WRITE_COORD_VECTOR(direction);
+	WRITE_SHORT(g_engfuncs.pfnModelIndex("sprites/tinyspit.spr"));
+	WRITE_BYTE(count);
+	WRITE_BYTE(speed);
+	WRITE_BYTE(noise);
+	MESSAGE_END();
+}
+
 void COFGeneWormCloud::Spawn()
 {
 	Precache();
@@ -126,6 +141,25 @@ void COFGeneWormCloud::GeneWormCloudTouch(CBaseEntity* pOther)
 			pOther->TakeDamage(this, this, GetSkillFloat("geneworm_dmg_spit"sv), DMG_ACID);
 		}
 
+		// johnhalflife (jhl_fx_particlesystem): it bursts: a splash of its acid back off what it hit, a spit mark there
+		// and a sizzle.
+		if (UTIL_JhlParticleSystem())
+		{
+			const Vector direction = pev->velocity.Length() > 1 ? pev->velocity.Normalize() : Vector(0, 0, -1);
+
+			TraceResult tr;
+			UTIL_TraceLine(pev->origin - direction * 32, pev->origin + direction * 64, ignore_monsters, edict(), &tr);
+
+			const Vector normal = tr.flFraction < 1.0 ? tr.vecPlaneNormal : direction * -1;
+			JhlCloudSpray(pev->origin + normal * 8, normal, 18, 160, 90);
+
+			if (tr.flFraction < 1.0)
+				UTIL_DecalTrace(&tr, DECAL_SPIT1 + RANDOM_LONG(0, 1));
+
+			EmitSoundDyn(CHAN_BODY, RANDOM_LONG(0, 1) != 0 ? "bullchicken/bc_acid1.wav" : "bullchicken/bc_acid2.wav", 0.8f,
+				ATTN_NORM, 0, RANDOM_LONG(90, 105));
+		}
+
 		pev->nextthink = gpGlobals->time;
 		SetThink(nullptr);
 		UTIL_Remove(this);
@@ -138,6 +172,10 @@ void COFGeneWormCloud::RunGeneWormCloud(float frames)
 	{
 		pev->scale += m_fadeScale;
 		pev->renderamt -= m_fadeRender;
+
+		// johnhalflife (jhl_fx_particlesystem): shedding droplets of its acid as it flies.
+		if (UTIL_JhlParticleSystem() && pev->velocity.Length() > 1)
+			JhlCloudSpray(pev->origin, pev->velocity.Normalize() * -1, 3, 40, 70);
 
 		if (pev->scale >= 4.5)
 		{
@@ -212,6 +250,13 @@ void COFGeneWormCloud::LaunchCloud(const Vector& origin, const Vector& aim, int 
 
 	SetTouch(&COFGeneWormCloud::GeneWormCloudTouch);
 	m_bLaunched = true;
+
+	// johnhalflife (jhl_fx_particlesystem): each turned its own way and turning as it flies.
+	if (UTIL_JhlParticleSystem())
+	{
+		pev->angles.z = RANDOM_FLOAT(0, 360);
+		pev->avelocity.z = RANDOM_FLOAT(60, 140) * (RANDOM_LONG(0, 1) != 0 ? 1 : -1);
+	}
 }
 
 const auto GENEWORM_SPAWN_BEAM_COUNT = 8;
@@ -327,6 +372,25 @@ void COFGeneWormSpawn::GeneWormSpawnTouch(CBaseEntity* pOther)
 	// Nothing
 }
 
+// johnhalflife (jhl_fx_particlesystem): the orb in its heart lights the cavern too, its color (its own light, vanilla's,
+// only lights models: 96), about 260 units, a fifth of a second at a time.
+static void JhlHeartLight(const Vector& origin, int r, int g, int b)
+{
+	if (!UTIL_JhlParticleSystem())
+		return;
+
+	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, origin);
+	WRITE_BYTE(TE_DLIGHT);
+	WRITE_COORD_VECTOR(origin);
+	WRITE_BYTE(RANDOM_LONG(24, 28)); // Radius, tens.
+	WRITE_BYTE(r);
+	WRITE_BYTE(g);
+	WRITE_BYTE(b);
+	WRITE_BYTE(2); // Life, tenths.
+	WRITE_BYTE(0);
+	MESSAGE_END();
+}
+
 void COFGeneWormSpawn::RunGeneWormSpawn(float frames)
 {
 	if (m_bLaunched)
@@ -399,6 +463,8 @@ void COFGeneWormSpawn::RunGeneWormSpawn(float frames)
 		WRITE_BYTE(1);
 		WRITE_COORD(1.0);
 		MESSAGE_END();
+
+		JhlHeartLight(pev->origin, 207, 214, 0);
 	}
 	else
 	{
@@ -415,6 +481,8 @@ void COFGeneWormSpawn::RunGeneWormSpawn(float frames)
 		WRITE_BYTE(1);
 		WRITE_COORD(1.0);
 		MESSAGE_END();
+
+		JhlHeartLight(pev->origin, 207, 0, 214);
 	}
 
 	pev->frame += frames;
@@ -727,6 +795,13 @@ void COFGeneWorm::Precache()
 	PrecacheModel("sprites/boss_glow.spr");
 
 	iGeneWormSpitSprite = PrecacheModel("sprites/tinyspit.spr");
+
+	// johnhalflife: its acid clouds' sizzle (COFGeneWormCloud::GeneWormCloudTouch). Here, as the map loads: the clouds
+	// are made mid-fight, when nothing new can be precached (their droplets are tinyspit, above). And its smacks.
+	PrecacheSound("bullchicken/bc_acid1.wav");
+	PrecacheSound("bullchicken/bc_acid2.wav");
+	PrecacheSound("tentacle/te_strike1.wav");
+	PrecacheSound("tentacle/te_strike2.wav");
 
 	PrecacheModel("sprites/xbeam3.spr");
 
@@ -1634,8 +1709,19 @@ void FireHurtTargets(const char* targetName, CBaseEntity* pActivator, CBaseEntit
 	}
 }
 
+// johnhalflife (jhl_fx_particlesystem): a smack as a swipe lands (its damage switched on; vanilla's made no sound: only
+// its roar as it swung): the tentacle's strike, pitched a little down for a bigger body. Heard across the cavern (from
+// its origin, at its base far below its claws, it had all but faded) on a channel of its own (on its body's, its idle
+// sounds cut it off), a little under its smack on the cavern.
+static void JhlGeneWormSmack(CBaseEntity* worm)
+{
+	if (UTIL_JhlParticleSystem())
+		worm->EmitSoundDyn(CHAN_STATIC, "tentacle/te_strike1.wav", 0.85f, ATTN_NONE, 0, RANDOM_LONG(82, 92));
+}
+
 void COFGeneWorm::HandleAnimEvent(MonsterEvent_t* pEvent)
 {
+
 	switch (pEvent->event)
 	{
 	case AE_GENEWORM_SPIT_START:
@@ -1660,6 +1746,7 @@ void COFGeneWorm::HandleAnimEvent(MonsterEvent_t* pEvent)
 
 	case AE_GENEWORM_SLASH_LEFT_ON:
 		FireHurtTargets("GeneWormLeftSlash", this, this, USE_ON, 0);
+		JhlGeneWormSmack(this);
 		break;
 
 	case AE_GENEWORM_SLASH_LEFT_OFF:
@@ -1668,6 +1755,7 @@ void COFGeneWorm::HandleAnimEvent(MonsterEvent_t* pEvent)
 
 	case AE_GENEWORM_SLASH_RIGHT_ON:
 		FireHurtTargets("GeneWormRightSlash", this, this, USE_ON, 0);
+		JhlGeneWormSmack(this);
 		break;
 
 	case AE_GENEWORM_SLASH_RIGHT_OFF:
@@ -1676,6 +1764,7 @@ void COFGeneWorm::HandleAnimEvent(MonsterEvent_t* pEvent)
 
 	case AE_GENEWORM_SLASH_CENTER_ON:
 		FireHurtTargets("GeneWormCenterSlash", this, this, USE_ON, 0);
+		JhlGeneWormSmack(this);
 		break;
 
 	case AE_GENEWORM_SLASH_CENTER_OFF:
@@ -1685,6 +1774,11 @@ void COFGeneWorm::HandleAnimEvent(MonsterEvent_t* pEvent)
 	case AE_GENEWORM_HIT_WALL:
 		FireTargets("GeneWormWallHit", this, this, USE_TOGGLE, 0);
 		UTIL_ScreenShake(pev->origin, 24, 3, 5, 2048);
+
+		// johnhalflife (jhl_fx_particlesystem): a smack as it hits the cavern (vanilla's made none: only its roar as it
+		// swung): the tentacle's strike, pitched down for a bigger body.
+		if (UTIL_JhlParticleSystem())
+			EmitSoundDyn(CHAN_STATIC, "tentacle/te_strike2.wav", VOL_NORM, ATTN_NONE, 0, RANDOM_LONG(75, 85));
 		break;
 
 	default:

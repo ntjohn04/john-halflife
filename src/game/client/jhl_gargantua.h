@@ -43,6 +43,12 @@ void JhlGargantua_Drawn(cl_entity_t* ent);
 void JhlPitWorm_Drawn(cl_entity_t* ent);
 
 /**
+ *	@brief johnhalflife: the gene worm's eyes lit, as just drawn (CStudioModelRenderer::StudioDrawModel), each out once
+ *	shot out.
+ */
+void JhlGeneWorm_Drawn(cl_entity_t* ent);
+
+/**
  *	@brief johnhalflife: the stretch a gargantua's stomp covered since it was last moved (CStomp::Think; TE_LAVASPLASH):
  *	its head is drawn moving along it smoothly, a light low over the floor, and the ground's torn up along it.
  */

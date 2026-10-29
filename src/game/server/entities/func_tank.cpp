@@ -61,6 +61,16 @@ public:
 	 *	@brief johnhalflife: a laser's beam's color, for its shot's light (CFuncTankLaser's).
 	 */
 	virtual Vector JhlLaserColor() { return g_vecZero; }
+
+	/**
+	 *	@brief johnhalflife: whether it's a real laser (laserbeam.spr), for its shot's flash (CFuncTankLaser's).
+	 */
+	virtual bool JhlIsRealLaser() { return false; }
+
+	/**
+	 *	@brief johnhalflife: stops anything it's still firing (a laser's beam), as it's let go (StopControl).
+	 */
+	virtual void JhlStopFiring() {}
 	virtual Vector UpdateTargetPosition(CBaseEntity* pTarget)
 	{
 		return pTarget->BodyTarget(pev->origin);
@@ -441,6 +451,10 @@ void CFuncTank::StopControl()
 	MESSAGE_BEGIN(MSG_ONE, gmsgTgtLaser, nullptr, m_pController);
 	WRITE_BYTE(0);
 	MESSAGE_END();
+
+	// johnhalflife: what it was firing stops with it (a laser's beam: it stops thinking now, and only its think turned
+	// the beam off, so a beam on as it was let go stayed on for good; likelier now its beams last longer).
+	JhlStopFiring();
 
 	pev->nextthink = 0;
 	m_pController = nullptr;
@@ -927,7 +941,7 @@ void CFuncTank::Fire(const Vector& barrelEnd, const Vector& forward, CBaseEntity
 			WRITE_CHAR(static_cast<int>(forward.z * 100));
 			WRITE_BYTE(kind);
 			WRITE_BYTE(std::clamp(m_JhlShots, 1, 255));
-			WRITE_BYTE(m_bulletType);
+			WRITE_BYTE(kind == 3 ? (JhlIsRealLaser() ? 1 : 0) : m_bulletType);
 			WRITE_COORD_VECTOR(kind == 3 ? m_JhlEnd : barrelEnd);
 			WRITE_BYTE(static_cast<int>(laserColor.x));
 			WRITE_BYTE(static_cast<int>(laserColor.y));
@@ -937,6 +951,16 @@ void CFuncTank::Fire(const Vector& barrelEnd, const Vector& forward, CBaseEntity
 		}
 
 		m_JhlShots = 1;
+
+		// johnhalflife (jhl_fx_particlesystem): a kick to whoever's manning it, by its kind (a machine gun's light, it
+		// fires fast; a cannon's hardest).
+		if (UTIL_JhlParticleSystem() && m_pController)
+		{
+			const int kind = ClassnameIs("func_tankrocket") ? 1 : ClassnameIs("func_tankmortar") ? 2 : ClassnameIs("func_tanklaser") ? 3 : 0;
+			constexpr float Kick[4] = {0.3f, 2.0f, 3.0f, 1.5f};
+			m_pController->pev->punchangle.x -= Kick[kind] * RANDOM_FLOAT(0.8f, 1.2f);
+			m_pController->pev->punchangle.y += Kick[kind] * RANDOM_FLOAT(-0.25f, 0.25f);
+		}
 
 		SUB_UseTargets(this, USE_TOGGLE, 0);
 	}
@@ -1044,6 +1068,30 @@ private:
 	// johnhalflife: its beam's color, for its shot's light.
 	Vector JhlLaserColor() override { return m_pLaser ? m_pLaser->pev->rendercolor : g_vecZero; }
 	float m_laserTime;
+
+	// johnhalflife (jhl_fx_particlesystem): a real laser's (laserbeam.spr: the gene worm's mounted guns, Forget About
+	// Freeman's alien turret; not Xen's lightning crystals) hot core, a temporary beam (gone on save and restore; not
+	// saved).
+	EHANDLE m_hJhlCore;
+
+public:
+	bool JhlIsRealLaser() override { return JhlRealLaser(); }
+
+	void JhlStopFiring() override
+	{
+		if (m_pLaser)
+			m_pLaser->TurnOff();
+
+		if (CBaseEntity* core = m_hJhlCore; core)
+			UTIL_Remove(core);
+
+		m_hJhlCore = nullptr;
+	}
+
+	bool JhlRealLaser() const
+	{
+		return m_pLaser && !FStringNull(m_pLaser->pev->model) && std::strstr(STRING(m_pLaser->pev->model), "laserbeam.spr");
+	}
 };
 
 LINK_ENTITY_TO_CLASS(func_tanklaser, CFuncTankLaser);
@@ -1096,8 +1144,26 @@ CLaser* CFuncTankLaser::GetLaser()
 
 void CFuncTankLaser::Think()
 {
+	// johnhalflife (jhl_fx_particlesystem): while its beam's on (longer than vanilla's), its start (and its core's) kept
+	// on its barrel as it turns; where it hit stays.
+	if (m_pLaser && UTIL_JhlParticleSystem() && gpGlobals->time <= m_laserTime)
+	{
+		const Vector barrel = BarrelPosition();
+		m_pLaser->pev->origin = barrel;
+
+		if (CBaseEntity* core = m_hJhlCore; core)
+			static_cast<CBeam*>(core)->SetStartPos(barrel);
+	}
+
 	if (m_pLaser && (gpGlobals->time > m_laserTime))
+	{
 		m_pLaser->TurnOff();
+
+		if (CBaseEntity* core = m_hJhlCore; core)
+			UTIL_Remove(core);
+
+		m_hJhlCore = nullptr;
+	}
 
 	CFuncTank::Think();
 }
@@ -1126,6 +1192,37 @@ void CFuncTankLaser::Fire(const Vector& barrelEnd, const Vector& forward, CBaseE
 				m_pLaser->FireAtPoint(tr);
 				m_pLaser->pev->nextthink = 0;
 				m_JhlEnd = tr.vecEndPos;
+
+				// johnhalflife (jhl_fx_particlesystem): each shot's beam stays a little longer and is 40% wider (once:
+				// marked in its laser's iuser1, saved with it); a real laser gets a hot core, paler, thinner, its length.
+				if (UTIL_JhlParticleSystem())
+				{
+					m_laserTime = gpGlobals->time + 0.15f;
+
+					if (m_pLaser->pev->iuser1 == 0)
+					{
+						m_pLaser->SetWidth(static_cast<int>(m_pLaser->GetWidth() * 1.4f));
+						m_pLaser->pev->iuser1 = 1;
+					}
+
+					if (JhlRealLaser())
+					{
+						auto core = static_cast<CBeam*>(static_cast<CBaseEntity*>(m_hJhlCore));
+
+						if (!core && (core = CBeam::BeamCreate("sprites/laserbeam.spr", std::max(4, m_pLaser->GetWidth() / 3))) != nullptr)
+						{
+							const Vector color = m_pLaser->pev->rendercolor * 0.4f + Vector(150, 150, 150);
+							core->SetColor(static_cast<int>(color.x), static_cast<int>(color.y), static_cast<int>(color.z));
+							core->SetBrightness(110);
+							core->SetScrollRate(m_pLaser->GetScrollRate() * 2);
+							core->pev->spawnflags |= SF_BEAM_TEMPORARY;
+							m_hJhlCore = core;
+						}
+
+						if (core)
+							core->PointsInit(barrelEnd, tr.vecEndPos);
+					}
+				}
 			}
 			CFuncTank::Fire(barrelEnd, forward, this);
 		}

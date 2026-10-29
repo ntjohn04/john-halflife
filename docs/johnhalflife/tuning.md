@@ -160,3 +160,20 @@ Server `server/entities/NPCs/racex/pitworm_up.cpp`, client `JhlPitWorm_Drawn` in
 | Eye light, on its face | `PitWormEyeModelDim`, `PitWormEyeModelBlazing`, `PitWormEyeAhead` | 50 open, 90 firing, 24 units ahead of its eye |
 | Beam core | `ShootBeam` | `laserbeam`, width 10 (its beam 32), (210,255,200), 110, scroll 40 |
 | Beam burn | `JhlBeamBurn` | Small scorch; light 110-140 (60,255,70) for 0.2 s each update |
+
+## Gene worm and laser turrets
+
+Server `server/entities/NPCs/racex/geneworm.cpp`, `server/entities/func_tank.cpp` (`CFuncTankLaser`); client
+`JhlGeneWorm_Drawn` in `client/jhl_gargantua.cpp`, `JhlTank_ParseFire` in `client/weapon_effects.cpp`. See:
+`map of6a5`; the laser turrets also `map c3a1b`, `map c4a1`.
+
+| Part | Knob | Value |
+|---|---|---|
+| Eye lights | `GeneWormEyeRadius`, `GeneWormEyeModelRadius`, `GeneWormEyeAhead`, `GeneWormEyeColor` | 260, 70 on its face 30 ahead, (255,205,60); each out once shot |
+| Acid clouds | `LaunchCloud`, `RunGeneWormCloud`, `GeneWormCloudTouch` | Spin 60-140°/s; 3 droplets a tenth in flight; a splash of 18, a spit mark, a sizzle |
+| Laser turret beam | `CFuncTankLaser::Fire` | On 0.15 s longer, 40% wider (all laser turrets) |
+| Real laser's core and flash | `CFuncTankLaser::Fire`, kind 3 | Core a third its width, its color toward white, 110; flash `glow_blu` 1.1-1.4 |
+| Laser start on the barrel | `CFuncTankLaser::Think` | Moved to the barrel each update while on |
+| Heart light | `JhlHeartLight` | 240-280 on the cavern, the orb's color |
+| Smacks | `AE_GENEWORM_HIT_WALL`, `JhlGeneWormSmack` | Cavern: `tentacle/te_strike2.wav` 75-85, heard across it; swipes: `te_strike1.wav` 82-92 at 0.85, heard across it, on its own channel |
+| Recoil when manned | `CFuncTank::Fire` | Machine gun 0.3°, rocket 2, cannon 3, laser 1.5 |

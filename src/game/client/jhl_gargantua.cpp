@@ -399,6 +399,55 @@ void JhlPitWorm_Drawn(cl_entity_t* ent)
 	}
 }
 
+// The gene worm's eyes (geneworm.mdl: its attachments 3, its left, and 2, its right): lit yellow, each out once shot
+// out (its skin: 1 its left, 2 its right, 3 both), a light on the cavern around them and a small one on its face.
+constexpr int GeneWormEyeKey = 45056; // + its index * 2 + which.
+constexpr float GeneWormEyeRadius = 260;
+constexpr float GeneWormEyeModelRadius = 70;
+constexpr float GeneWormEyeAhead = 30;
+constexpr float GeneWormEyeFlicker = 0.08f;
+constexpr color24 GeneWormEyeColor{255, 205, 60};
+
+void JhlGeneWorm_Drawn(cl_entity_t* ent)
+{
+	if (!JhlParticleSystemEnabled() || !ent->model || !std::strstr(ent->model->name, "geneworm.mdl"))
+		return;
+
+	const int skin = ent->curstate.skin;
+	const bool open[2] = {skin != 2 && skin != 3, skin != 1 && skin != 3}; // Its right, its left.
+
+	Vector forward;
+	AngleVectors(ent->angles, &forward, nullptr, nullptr);
+
+	for (int i = 0; i < 2; ++i)
+	{
+		const Vector& eye = ent->attachment[2 + i];
+
+		if (!open[i] || eye == g_vecZero)
+			continue;
+
+		const float flicker = Random(1 - GeneWormEyeFlicker, 1 + GeneWormEyeFlicker);
+
+		if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(GeneWormEyeKey + ent->index * 2 + i); light)
+		{
+			light->origin = eye;
+			light->radius = GeneWormEyeRadius * flicker;
+			light->color = GeneWormEyeColor;
+			light->die = gEngfuncs.GetClientTime() + 0.05f;
+			light->decay = 0;
+		}
+
+		if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocElight(GeneWormEyeKey + ent->index * 2 + i); light)
+		{
+			light->origin = eye + forward * GeneWormEyeAhead;
+			light->radius = GeneWormEyeModelRadius * flicker;
+			light->color = GeneWormEyeColor;
+			light->die = gEngfuncs.GetClientTime() + 0.05f;
+			light->decay = 0;
+		}
+	}
+}
+
 void JhlGargantua_ParseStomp(BufferReader& reader)
 {
 	const int index = reader.ReadShort();

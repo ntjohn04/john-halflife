@@ -645,9 +645,26 @@ void JhlTank_ParseFire(BufferReader& reader)
 	}
 
 	case 3:
-		// A laser: a light its own color at its emitter and where it hits.
+		// A laser: a light its own color at its emitter and where it hits; a real laser (laserbeam.spr: its bullet byte
+		// 1), a blue flash at its emitter (glow_blu: additive, it can't be tinted; they're all blue).
 		TankLight(muzzle, 140, laserColor, 0.1f);
 		TankLight(end, 110, laserColor, 0.1f);
+
+		if (bullet == 1)
+		{
+			if (const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/glow_blu.spr"); model != 0)
+			{
+				Vector position = muzzle;
+				Vector still{0, 0, 0};
+
+				if (TEMPENTITY* flash = gEngfuncs.pEfxAPI->R_TempSprite(position, still, gEngfuncs.pfnRandomFloat(1.1f, 1.4f), model,
+						kRenderTransAdd, kRenderFxNone, 0.8f, 0.1f, 0);
+					flash)
+				{
+					flash->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+				}
+			}
+		}
 		break;
 
 	default:

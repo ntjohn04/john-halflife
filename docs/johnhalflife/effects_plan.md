@@ -483,8 +483,16 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
     looks as a tank shell's: its explosion shown 2.5 times its magnitude, 180 to 260 (the Abrams' is 60: 180, the
     Bradley's cannon 100: 250); a howitzer's (150 and up; c2a5e's and c2a5f's are 200) 0.91 its own, 182 (bigger
     spilled out of the buildings it's fired into), damage-free, with its damage as it was by a silent, unseen one at its own magnitude.
-  * Lasers (`func_tanklaser`: Forget About Freeman's alien turret, Xen's crystals): a light the beam's own color at
-    its emitter (140) and where it hits (110).
+  * Lasers (`func_tanklaser`: Forget About Freeman's alien turret, Xen's crystals, the gene worm's two mounted guns,
+    of6a5's `func_tanklaser_of`, which the installer makes `func_tanklaser`): a light the beam's own color at its
+    emitter (140) and where it hits (110); each shot's beam on 0.15 s longer and 40% wider (once, marked in its
+    `env_laser`'s `iuser1`), its start (and its core's) kept on the barrel as the turret turns while it's on (longer,
+    it was left behind where it was fired from). Real lasers (`laserbeam.spr`: the gene worm's guns, the alien turret; not the crystals'
+    lightning) also get a hot core (a third its width, its color toward white, 110, scrolling twice as fast; a
+    temporary beam, gone with it) and a blue flash at the emitter (Opposing Force's `glow_blu`, 1.1-1.4, 0.1 s;
+    additive, it can't be tinted, and they're all blue).
+  * Whoever's manning one feels each shot: a kick of the view by its kind (machine gun 0.3°, rocket 2, cannon 3,
+    laser 1.5, ±20%, a little sideways).
 * Chargers (`chargers.cpp`: `func_healthcharger`, `func_recharge`): while one gives, a soft light on its face toward
   the player (the engine's `TE_DLIGHT`, 70-90 units, a fifth of a second at a time, refreshed each tenth it gives):
   health blue-green (60,205,180), the HEV's amber (255,170,70); sparks (`UTIL_Sparks`) as it runs dry.
@@ -516,6 +524,19 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
   a random frame and turn, 0.07 s), a little more light (0.8 a gun's), a wisp 35% of the time, and its brass, one a
   shot, out to its right: rifle casings for the ceiling turret's 12 mm, 9 mm brass for the others. Their deaths are
   as they were (the engine's smoke, `UTIL_Sparks`, already our spark bursts).
+* Gene worm (`geneworm.cpp`, of6a5):
+  * Eyes: lit yellow (255,205,60) on each (attachments 3, its left, and 2, its right, as drawn: `JhlGeneWorm_Drawn`),
+    each out once shot out (its skin: 1 its left, 2 its right, 3 both): 260 on the cavern, 70 on its face 30 ahead,
+    ±8%.
+  * Its heart (the spawn orb charging in its chest, `boss_glow`): vanilla's light on it, purple charging, yellow-green
+    after, only lights models (96); it lights the cavern too, its color, 240-280.
+  * Its smacks: vanilla's made no sound but its roar as it swung. Smacking the cavern (`AE_GENEWORM_HIT_WALL`: a
+    shake and the map's `GeneWormWallHit`, counters for crumbling set pieces): the tentacle's strike, `te_strike2`,
+    pitched down (75-85), heard across it. Its swipes landing (`AE_GENEWORM_SLASH_*_ON`, their damage on):
+    `te_strike1`, pitched a little down (82-92).
+  * Its acid clouds (`COFGeneWormCloud`, `ballsmoke`): each turned its own way and turning as it flies (60-140
+    degrees/s), shedding droplets of its acid (the bullsquid's spit, `tinyspit`, 3 a tenth of a second); bursting on
+    what it hits in a splash of them (18, off the surface), a spit mark and a sizzle (`bc_acid1-2`).
 * Pit worm (`pitworm_up.cpp`, of4a4), all in its own code:
   * Eye: lights its beam's green (90,255,110) on its eye (attachment 0, as drawn: `JhlPitWorm_Drawn`), while open
     (skin 0), out as it blinks (skins 1-5), stronger while it fires (the server marks its `renderamt` 1 while its
