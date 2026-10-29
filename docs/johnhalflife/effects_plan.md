@@ -462,6 +462,26 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
   it (`jhl_rings.cpp`): a ring beam it moves every frame to the trains' midpoint ± its scale times half the line between
   them, kept alive a second at a time (it dies by itself when no longer tracked), dark while they're out of view,
   forgotten on a new map. Only these maps: c4a1b's ring beams (on machines) and of6a5's Gene Worm orbs are left alone.
+* Mounted guns, the `func_tank` family (`func_tank.cpp`; every one, by kind): vanilla's shots had only the map's
+  flash and smoke sprites (if it gave any), no light. Each shot now also sends its muzzle, aim and kind
+  (`TE_MULTIGUNSHOT`; the client's `JhlTank_ParseFire`):
+  * Machine guns (`func_tank`: emplacements, the Bradley's, the player's `biggun`): a gun's muzzle light and wisp
+    1.6 times as big, and its brass, up to 2 a shot, thrown out to its right from a little behind its muzzle,
+    lingering as guns' do: rifle casings (`saw_shell.mdl`) for 12 mm, else 9 mm brass. Its flash sprite (the map's,
+    `muzzleflash2` at 0.5 on the usable `biggun`s) is drawn by the client in place of the server's, the map's size, a
+    frame, a turn and ±15% at random, for 0.07 s: a server sprite stays at least 0.1 s, the same way round, so at
+    10-16 rounds a second they piled up into one still blob. (Every kind's map flash sprite is the client's now; the
+    rocket launcher's and cannon's are their own.)
+  * Rocket launchers (`func_tankrocket`: the Bradley's, On a Rail's `trackguardrocket`s; their rockets are already
+    the RPG's): a flash of light (260, orange, 0.15 s), a flash of fire (`muzzleflash2` at 0.5) and 5 puffs blown
+    out ahead.
+  * Cannons (`func_tankmortar`: the Abrams', the Bradley's, the howitzer): the biggest light (380, 0.2 s), two flashes
+    of fire along the muzzle (1.0, 0.7) and a big cloud, 9 puffs at 1.0-1.6 spreading out ahead, 3 s. Their shell
+    looks as a tank shell's: its explosion shown 2.5 times its magnitude, 180 to 260 (the Abrams' is 60: 180, the
+    Bradley's cannon 100: 250); a howitzer's (150 and up; c2a5e's and c2a5f's are 200) 0.91 its own, 182 (bigger
+    spilled out of the buildings it's fired into), damage-free, with its damage as it was by a silent, unseen one at its own magnitude.
+  * Lasers (`func_tanklaser`: Forget About Freeman's alien turret, Xen's crystals): a light the beam's own color at
+    its emitter (140) and where it hits (110).
 * Tentacles (`tentacle.cpp`; c1a4i's Blast Pit, c2a5x, c4a1b): vanilla's strikes only sounded, by a map key (silo,
   dirt, water). Now each also sends where it struck (`TE_LARGEFUNNEL`: 0 a light tap, 1 a slam, 2 its killing
   swing's, 200 damage), and the client looks at the floor under it, by its material (`JhlExplosion_TentacleImpact`):

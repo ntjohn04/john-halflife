@@ -15,6 +15,7 @@
 #include "cbase.h"
 #include "explode.h"
 #include "UserMessages.h"
+#include "jhl_effects.h"
 
 #define SF_TANK_ACTIVE 0x0001
 #define SF_TANK_PLAYER 0x0002
@@ -55,6 +56,11 @@ public:
 	 *	@brief Fire targets and spawn sprites
 	 */
 	virtual void Fire(const Vector& barrelEnd, const Vector& forward, CBaseEntity* attacker);
+
+	/**
+	 *	@brief johnhalflife: a laser's beam's color, for its shot's light (CFuncTankLaser's).
+	 */
+	virtual Vector JhlLaserColor() { return g_vecZero; }
 	virtual Vector UpdateTargetPosition(CBaseEntity* pTarget)
 	{
 		return pTarget->BodyTarget(pev->origin);
@@ -158,6 +164,10 @@ protected:
 	int m_TargetLaserModelIndex = 0;
 	int m_TargetLaserWidth = 1;
 	Vector m_TargetLaserColor{255, 0, 0};
+
+	// johnhalflife: this shot's, for its effects (CFuncTank::Fire; not saved): how many rounds, and where a laser's hit.
+	int m_JhlShots = 1;
+	Vector m_JhlEnd;
 };
 
 BEGIN_DATAMAP(CFuncTank)
@@ -887,7 +897,10 @@ void CFuncTank::Fire(const Vector& barrelEnd, const Vector& forward, CBaseEntity
 			pSprite->pev->velocity.z = RANDOM_FLOAT(40, 80);
 			pSprite->SetScale(m_spriteScale);
 		}
-		if (!FStringNull(m_iszSpriteFlash))
+		// johnhalflife: its flash drawn by the client instead (JhlTank_ParseFire), flickering a frame and a turn at a time:
+		// a server sprite stays at least a tenth of a second, the same way round, so a fast gun's piled up into one still
+		// blob.
+		if (!FStringNull(m_iszSpriteFlash) && !UTIL_JhlParticleSystem())
 		{
 			CSprite* pSprite = CSprite::SpriteCreate(STRING(m_iszSpriteFlash), barrelEnd, true);
 			pSprite->AnimateAndDie(60);
@@ -897,6 +910,34 @@ void CFuncTank::Fire(const Vector& barrelEnd, const Vector& forward, CBaseEntity
 			// Hack Hack, make it stick around for at least 100 ms.
 			pSprite->pev->nextthink += 0.1;
 		}
+
+		// johnhalflife (jhl_fx_particlesystem): its shot's effects at its muzzle, by kind (the client's,
+		// weapon_effects.cpp's JhlTank_ParseFire): 0 a machine gun, 1 a rocket launcher, 2 a cannon (func_tankmortar),
+		// 3 a laser (its color, where it hit).
+		if (UTIL_JhlParticleSystem())
+		{
+			const int kind = ClassnameIs("func_tankrocket") ? 1 : ClassnameIs("func_tankmortar") ? 2 : ClassnameIs("func_tanklaser") ? 3 : 0;
+			const Vector laserColor = kind == 3 ? JhlLaserColor() : g_vecZero;
+
+			MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, barrelEnd);
+			WRITE_BYTE(TE_MULTIGUNSHOT);
+			WRITE_COORD_VECTOR(barrelEnd);
+			WRITE_CHAR(static_cast<int>(forward.x * 100));
+			WRITE_CHAR(static_cast<int>(forward.y * 100));
+			WRITE_CHAR(static_cast<int>(forward.z * 100));
+			WRITE_BYTE(kind);
+			WRITE_BYTE(std::clamp(m_JhlShots, 1, 255));
+			WRITE_BYTE(m_bulletType);
+			WRITE_COORD_VECTOR(kind == 3 ? m_JhlEnd : barrelEnd);
+			WRITE_BYTE(static_cast<int>(laserColor.x));
+			WRITE_BYTE(static_cast<int>(laserColor.y));
+			WRITE_BYTE(static_cast<int>(laserColor.z));
+			WRITE_BYTE(FStringNull(m_iszSpriteFlash) ? 0 : std::clamp(static_cast<int>(m_spriteScale * 100), 1, 255));
+			MESSAGE_END();
+		}
+
+		m_JhlShots = 1;
+
 		SUB_UseTargets(this, USE_TOGGLE, 0);
 	}
 	m_fireLast = gpGlobals->time;
@@ -977,6 +1018,7 @@ void CFuncTankGun::Fire(const Vector& barrelEnd, const Vector& forward, CBaseEnt
 					break;
 				}
 			}
+			m_JhlShots = bulletCount;
 			CFuncTank::Fire(barrelEnd, forward, attacker);
 		}
 	}
@@ -998,6 +1040,9 @@ public:
 
 private:
 	CLaser* m_pLaser;
+
+	// johnhalflife: its beam's color, for its shot's light.
+	Vector JhlLaserColor() override { return m_pLaser ? m_pLaser->pev->rendercolor : g_vecZero; }
 	float m_laserTime;
 };
 
@@ -1080,6 +1125,7 @@ void CFuncTankLaser::Fire(const Vector& barrelEnd, const Vector& forward, CBaseE
 				m_pLaser->pev->dmgtime = gpGlobals->time - 1.0;
 				m_pLaser->FireAtPoint(tr);
 				m_pLaser->pev->nextthink = 0;
+				m_JhlEnd = tr.vecEndPos;
 			}
 			CFuncTank::Fire(barrelEnd, forward, this);
 		}
@@ -1160,7 +1206,29 @@ void CFuncTankMortar::Fire(const Vector& barrelEnd, const Vector& forward, CBase
 
 			TankTrace(barrelEnd, forward, gTankSpread[m_spread], tr);
 
-			ExplosionCreate(tr.vecEndPos, pev->angles, this, pev->impulse, true);
+			// johnhalflife (jhl_fx_particlesystem): a tank shell's look: its explosion shown 2.5 times its magnitude, at
+			// least 180, at most 260 (the Abrams' is 60: 180, the Bradley's cannon 100: 250); a howitzer's (150 and up:
+			// c2a5e's and c2a5f's are 200) at 0.91 its own, 182 (more spilled out of the buildings it's fired into).
+			// Its damage as it was, by an unseen, silent one at its own.
+			if (UTIL_JhlParticleSystem())
+			{
+				const int shown = pev->impulse >= 150 ? pev->impulse * 91 / 100 : std::clamp(pev->impulse * 5 / 2, 180, 260);
+				ExplosionCreate(tr.vecEndPos, pev->angles, this, shown, false);
+
+				CBaseEntity* damage = CBaseEntity::Create("env_explosion", tr.vecEndPos, pev->angles, this);
+				KeyValueData kvd;
+				char magnitude[16];
+				sprintf(magnitude, "%3d", pev->impulse);
+				kvd.szKeyName = "iMagnitude";
+				kvd.szValue = magnitude;
+				damage->KeyValue(&kvd);
+				damage->pev->spawnflags |= SF_ENVEXPLOSION_NOFIREBALL | SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_NODECAL |
+										   SF_ENVEXPLOSION_NOSPARKS;
+				damage->Spawn();
+				damage->Use(nullptr, nullptr, USE_TOGGLE, 0);
+			}
+			else
+				ExplosionCreate(tr.vecEndPos, pev->angles, this, pev->impulse, true);
 
 			CFuncTank::Fire(barrelEnd, forward, this);
 		}

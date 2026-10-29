@@ -17,6 +17,7 @@
 
 #include "vector.h"
 
+class BufferReader;
 struct TEMPENTITY;
 
 /**
@@ -153,6 +154,12 @@ void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, co
  *	@brief RPG launch: a wisp and light at the front of the tube (local player only) and a backblast of smoke and
  *	light behind the shooter's shoulder (everyone).
  */
+/**
+ *	@brief johnhalflife: a mounted gun's shot (CFuncTank::Fire; the SDK's own temp entity message's TE_MULTIGUNSHOT):
+ *	its muzzle light, flash and smoke, by kind (machine gun, rocket launcher, cannon, laser); a machine gun's brass.
+ */
+void JhlTank_ParseFire(BufferReader& reader);
+
 void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& forward, const Vector& right, const Vector& up,
 	const Vector& shooterVelocity);
 

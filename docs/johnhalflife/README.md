@@ -7,6 +7,8 @@ These pages record what johnhalflife changes compared with the stock SDK, and wh
 * [Weapons](weapons.md)
 * [Effects plan](effects_plan.md): the map of visual effects to work through next
 * [Effects test command](effects_test.md): `jhl_fx_test`, for designing particle effects
+* [Tuning sheet](tuning.md): the numbers on the changes since `v0.7.0-prealpha` (shared systems, gargantua,
+  tentacles, mounted guns), where each is and where to see it
 
 ## Principles
 
@@ -183,6 +185,7 @@ its own contents, parsed in `client/entity.cpp` `MsgFunc_TempEntity`), in place 
 | `TE_FIREFIELD` | A gargantua's flames, each tenth of a second | Where each hand's lands: flickering lights, embers, heat smoke |
 | `TE_LAVASPLASH` | A gargantua's stomp, each move | The stretch it covered: its head's light, the ground kicked up |
 | `TE_LARGEFUNNEL` | A tentacle's tap, slam or killing swing | What the floor throws up, by its material |
+| `TE_MULTIGUNSHOT` | A `func_tank` shot | Its muzzle light, flash and smoke by kind; a machine gun's brass; a laser's lights |
 
 ## Versions
 

@@ -512,6 +512,126 @@ static void Flash(const Vector& origin, float scale, float brightness)
 	}
 }
 
+// A mounted gun's smoke blast out of its muzzle (JhlTank_ParseFire): @p count puffs, @p scale big, blown out ahead at
+// @p speed and spreading, lingering.
+static void TankMuzzleSmoke(const Vector& muzzle, const Vector& forward, int count, float scaleMin, float scaleMax, float speedMin,
+	float speedMax, float life)
+{
+	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
+
+	if (model == 0)
+		return;
+
+	Vector right = CrossProduct(forward, Vector{0, 0, 1});
+	right = right.Length() > 0.1f ? right.Normalize() : Vector{1, 0, 0};
+	const Vector up = CrossProduct(right, forward);
+
+	for (int i = 0; i < count; ++i)
+	{
+		Vector origin = muzzle + forward * gEngfuncs.pfnRandomFloat(0, 16);
+		Vector velocity = forward * gEngfuncs.pfnRandomFloat(speedMin, speedMax) + right * gEngfuncs.pfnRandomFloat(-50, 50) +
+						  up * gEngfuncs.pfnRandomFloat(-10, 40);
+
+		// Plays once and is removed on its last frame (see DustImpact); a slower frame rate lets it linger.
+		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, gEngfuncs.pfnRandomFloat(scaleMin, scaleMax), model,
+			kRenderTransAlpha, kRenderFxNone, 0.3f, life + 1, FTENT_SPRANIMATE);
+
+		if (puff)
+		{
+			puff->entity.curstate.rendercolor = {170, 170, 170};
+			puff->entity.curstate.framerate = 16 / life;
+			puff->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
+		}
+	}
+}
+
+// A flash of light, @p radius, fading over @p time.
+static void TankLight(const Vector& origin, float radius, color24 color, float time)
+{
+	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)
+	{
+		light->origin = origin;
+		light->radius = radius * gEngfuncs.pfnRandomFloat(0.9f, 1.1f);
+		light->color = color;
+		light->die = gEngfuncs.GetClientTime() + time;
+		light->decay = light->radius / time;
+	}
+}
+
+void JhlTank_ParseFire(BufferReader& reader)
+{
+	const Vector muzzle = reader.ReadCoordVector();
+	const float fx = reader.ReadChar() / 100.f;
+	const float fy = reader.ReadChar() / 100.f;
+	const float fz = reader.ReadChar() / 100.f;
+	const int kind = reader.ReadByte();
+	const int shots = reader.ReadByte();
+	const int bullet = reader.ReadByte();
+	const Vector end = reader.ReadCoordVector();
+	const color24 laserColor{static_cast<byte>(reader.ReadByte()), static_cast<byte>(reader.ReadByte()), static_cast<byte>(reader.ReadByte())};
+	const float flashScale = reader.ReadByte() / 100.f; // The map's flash sprite's (muzzleflash2), or 0 if it gave none.
+
+	if (!JhlParticleSystemEnabled() || 0 == g_cl_muzzleflash->value)
+		return;
+
+	Vector forward{fx, fy, fz};
+	forward = forward.Length() > 0.1f ? forward.Normalize() : Vector{1, 0, 0};
+
+	// The kinds (CFuncTank::Fire): 0 a machine gun, 1 a rocket launcher, 2 a cannon (func_tankmortar: the Abrams', the
+	// howitzer's, the player's tank's), 3 a laser.
+	switch (kind)
+	{
+	case 0:
+	{
+		// A gun's muzzle light, bigger (a mounted gun), and a wisp; its brass thrown out to its right, from a little
+		// behind its muzzle, lingering as guns' do: rifle casings for a 12 mm gun, else 9 mm brass.
+		MuzzleEffectsAt(muzzle, 0.5f, 1.6f, 0.12f, 1, 1.6f, 0.06f);
+
+		// Its flash, as the server's was (in its place), the map's size, but a frame, a turn and a little bigger or
+		// smaller at random, and only a moment: flickering as a gun's.
+		if (flashScale > 0)
+			Flash(muzzle, flashScale * gEngfuncs.pfnRandomFloat(0.85f, 1.15f), 0.9f);
+
+		const int shell = gEngfuncs.pEventAPI->EV_FindModelIndex(bullet == 3 ? "models/saw_shell.mdl" : "models/shell.mdl");
+		Vector right = CrossProduct(forward, Vector{0, 0, 1});
+		right = right.Length() > 0.1f ? right.Normalize() : Vector{1, 0, 0};
+
+		for (int i = 0; shell != 0 && i < std::min(shots, 2); ++i)
+		{
+			const Vector origin = muzzle - forward * 24 + right * 4;
+			const Vector velocity = right * gEngfuncs.pfnRandomFloat(70, 110) + Vector{0, 0, gEngfuncs.pfnRandomFloat(80, 140)} +
+									forward * gEngfuncs.pfnRandomFloat(-20, 20);
+			EV_EjectBrass(origin, velocity, VectorToYaw(forward), shell, TE_BOUNCE_SHELL);
+		}
+		break;
+	}
+
+	case 1:
+		// A rocket's launch out of its tube: a big flash, of light and fire, and a cloud blown out ahead.
+		TankLight(muzzle, 260, {255, 170, 90}, 0.15f);
+		Flash(muzzle, 0.5f, 0.8f);
+		TankMuzzleSmoke(muzzle, forward, 5, 0.6f, 0.9f, 40, 110, 2.0f);
+		break;
+
+	case 2:
+		// A cannon's blast: the biggest flash, of light and fire, and a big cloud spreading out from its muzzle.
+		TankLight(muzzle, 380, {255, 180, 100}, 0.2f);
+		Flash(muzzle, 1.0f, 1.0f);
+		Flash(muzzle + forward * 24, 0.7f, 0.8f);
+		TankMuzzleSmoke(muzzle, forward, 9, 1.0f, 1.6f, 60, 180, 3.0f);
+		break;
+
+	case 3:
+		// A laser: a light its own color at its emitter and where it hits.
+		TankLight(muzzle, 140, laserColor, 0.1f);
+		TankLight(end, 110, laserColor, 0.1f);
+		break;
+
+	default:
+		break;
+	}
+}
+
 void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& forward, const Vector& right, const Vector& up,
 	const Vector& shooterVelocity)
 {
