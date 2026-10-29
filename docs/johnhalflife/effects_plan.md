@@ -484,6 +484,12 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
     puff of the floor's color off each side, now and then a chunk of it, or sparks off metal. The server scorches the
     floor along its lane every 40 units, shakes those within 240 a little as it passes, and spits its glow a little
     less and calmer (4 in 5 of vanilla's two a step, ±150 sideways where vanilla's were ±200).
+  * Stomp's foot: where its foot comes down (its crater decal), a big cloud of dust, the houndeye's blast's floor
+    dust (`UTIL_JhlGroundDust`, `TE_SMOKE`, now with a size) at 2.5 times: 16 low puffs 1.25 big rolling out up to
+    300 units/s, and 5 billowing up from the middle, all the floor's color, 1.9-2.5 s. The houndeye's is as it was.
+  * Eye: its glow (`gargeye1`, red, (214,33,33) at its brightest, on its head, brightening as it attacks) gets a
+    light the same red (230,40,30) on its head as drawn (attachment 0, `JhlGargantua_Drawn`), 70 units barely lit up
+    to 200 at full, flickering ±8%, gone when the glow is (the client reads the glow sprite's brightness as it's added).
   * Death: vanilla's 10 server plates were always the same piece, the smallest (a scrap of beam: it picked by its own
     body, 0, not by the model's 13), fading at 1.25 s, and its 50 engine shards (any piece, up to big plates) all went
     at about 3 s. Now 16 plates, any piece, each lying 35-60 s as debris; and the shards in three lots of about 17

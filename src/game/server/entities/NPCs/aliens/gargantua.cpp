@@ -532,6 +532,9 @@ void CGargantua::StompAttack()
 	UTIL_TraceLine(pev->origin, pev->origin - Vector(0, 0, 20), ignore_monsters, edict(), &trace);
 	if (trace.flFraction < 1.0)
 		UTIL_DecalTrace(&trace, DECAL_GARGSTOMP1);
+
+	// johnhalflife: a big cloud of dust off the floor where its foot comes down, 2.5 times a houndeye's blast's.
+	UTIL_JhlGroundDust(trace.flFraction < 1.0 ? trace.vecEndPos : pev->origin, 16, 25);
 }
 
 void CGargantua::FlameCreate()

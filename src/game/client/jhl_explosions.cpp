@@ -1098,6 +1098,7 @@ void JhlExplosion_ParseGroundDust(BufferReader& reader)
 {
 	const Vector origin = reader.ReadCoordVector();
 	const int count = reader.ReadByte();
+	const float size = std::max(reader.ReadByte(), 1) / 10.f;
 
 	if (!JhlParticleSystemEnabled())
 		return;
@@ -1107,21 +1108,69 @@ void JhlExplosion_ParseGroundDust(BufferReader& reader)
 	if (model == 0)
 		return;
 
+	// Bigger ones (a gargantua's stomp) are the floor's color, as bullet impacts' dust (weapon_effects.cpp's
+	// DustImpact), and billow up too; a houndeye's (size 1) are as they were.
+	color24 dust{255, 255, 255};
+
+	if (size > 1)
+	{
+		pmtrace_t tr;
+		gEngfuncs.pEventAPI->EV_PushPMStates();
+		gEngfuncs.pEventAPI->EV_SetTraceHull(2);
+		gEngfuncs.pEventAPI->EV_PlayerTrace(origin + Vector{0, 0, 8}, origin - Vector{0, 0, 32}, PM_WORLD_ONLY, -1, &tr);
+		gEngfuncs.pEventAPI->EV_PopPMStates();
+
+		dust = {140, 135, 130};
+
+		if (tr.fraction < 1)
+		{
+			switch (SurfaceMaterial(tr))
+			{
+			case CHAR_TEX_DIRT: dust = {120, 105, 85}; break;
+			case CHAR_TEX_WOOD: dust = {130, 115, 95}; break;
+			case CHAR_TEX_CONCRETE:
+			case CHAR_TEX_TILE: dust = {150, 150, 145}; break;
+			default: break;
+			}
+		}
+	}
+
 	// Low puffs kicked out along the floor: steam1 at 0.5, alpha 0.25, each playing once over 1.2 s and fading
-	// over the last 60% of it.
+	// over the last 60% of it (all of it by the size: farther, faster, bigger, longer).
+	const float life = 1.2f * std::sqrt(size);
+
 	for (int i = 0; i < count; ++i)
 	{
-		Vector position = origin + Vector{Random(-48, 48), Random(-48, 48), 4};
-		Vector velocity{Random(-120, 120), Random(-120, 120), 10 + Random(-20, 20)};
+		Vector position = origin + Vector{Random(-48, 48), Random(-48, 48), 4} * size;
+		position.z = origin.z + 4;
+		Vector velocity{Random(-120, 120) * size, Random(-120, 120) * size, 10 + Random(-20, 20)};
 
-		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, 0.5f, model, kRenderTransAlpha,
-			kRenderFxNone, 0.25f, 1.2f, 0);
+		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, 0.5f * size, model, kRenderTransAlpha,
+			kRenderFxNone, 0.25f, life, 0);
 
 		if (!puff)
 			continue;
 
+		puff->entity.curstate.rendercolor = dust;
 		puff->entity.angles.z = Random(0, 359);
-		JhlSprite_PlayOnce(puff, 1.2f, 0.6f);
+		JhlSprite_PlayOnce(puff, life, 0.6f);
+	}
+
+	// A third as many billowing up from the middle, bigger and slower to go.
+	for (int i = 0; size > 1 && i < count / 3; ++i)
+	{
+		Vector position = origin + Vector{Random(-24, 24) * size, Random(-24, 24) * size, 16};
+		Vector velocity{Random(-30, 30), Random(-30, 30), Random(50, 110)};
+
+		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, Random(0.6f, 0.8f) * size, model,
+			kRenderTransAlpha, kRenderFxNone, 0.22f, life * 1.3f, 0);
+
+		if (!puff)
+			continue;
+
+		puff->entity.curstate.rendercolor = dust;
+		puff->entity.angles.z = Random(0, 359);
+		JhlSprite_PlayOnce(puff, life * 1.3f, 0.6f);
 	}
 }
 

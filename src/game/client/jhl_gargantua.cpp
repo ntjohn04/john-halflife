@@ -14,6 +14,7 @@
  ****/
 
 #include <algorithm>
+#include <cstring>
 #include <vector>
 
 #include "hud.h"
@@ -69,6 +70,23 @@ struct Flames
 };
 
 std::vector<Flames> g_Flames;
+
+// Its eye's glow (gargeye1, red, (214,33,33) at its brightest; kept on its head, its attachment 0, brightening as it
+// attacks): lit the same, by how bright it is, a little flickering.
+constexpr int EyeLightKey = 36864; // + its index.
+constexpr float EyeLightRadiusMin = 70;
+constexpr float EyeLightRadiusMax = 200;
+constexpr float EyeLightFlicker = 0.08f;
+constexpr color24 EyeLightColor{230, 40, 30};
+
+struct Eye
+{
+	int Index = 0; // Its gargantua's.
+	float Last = -100;
+	int Brightness = 0;
+};
+
+std::vector<Eye> g_Eyes;
 
 // Its stomp: each stretch it covered between the server's moves, gone along smoothly over that time; a light low over
 // the floor at its head (red, as its glow), and the ground torn up every StompKickSpacing along it.
@@ -209,10 +227,31 @@ void JhlGargantua_ParseFlame(BufferReader& reader)
 
 void JhlGargantua_Track(cl_entity_t* ent, const char* modelname)
 {
-	if (g_Flames.empty() || !JhlParticleSystemEnabled())
+	if (!JhlParticleSystemEnabled())
 		return;
 
 	const float now = gEngfuncs.GetClientTime();
+
+	// Its eye's glow, following its gargantua: how bright it is (hidden when out, so not added).
+	if (modelname && 0 == std::strcmp(modelname, "sprites/gargeye1.spr") && ent->curstate.rendermode == kRenderGlow &&
+		ent->curstate.aiment > 0)
+	{
+		auto eye = std::find_if(g_Eyes.begin(), g_Eyes.end(), [&](const Eye& e)
+			{ return e.Index == ent->curstate.aiment; });
+
+		if (eye == g_Eyes.end())
+		{
+			g_Eyes.push_back({ent->curstate.aiment});
+			eye = g_Eyes.end() - 1;
+		}
+
+		eye->Last = now;
+		eye->Brightness = ent->curstate.renderamt;
+		return;
+	}
+
+	if (g_Flames.empty())
+		return;
 
 	// Gone out (or a new map's clock); their cores die by themselves (kept on a frame at a time; by now they may have
 	// been freed and used again, so they're left alone).
@@ -260,7 +299,32 @@ void JhlGargantua_Track(cl_entity_t* ent, const char* modelname)
 
 void JhlGargantua_Drawn(cl_entity_t* ent)
 {
-	if (g_Flames.empty() || !JhlParticleSystemEnabled())
+	if (!JhlParticleSystemEnabled())
+		return;
+
+	const float now = gEngfuncs.GetClientTime();
+
+	// Its eye's light, on its head as just drawn, while its glow's shown (lately added; or a new map's clock).
+	std::erase_if(g_Eyes, [&](const Eye& e)
+		{ return now - e.Last > 0.2f || now < e.Last; });
+
+	if (auto eye = std::find_if(g_Eyes.begin(), g_Eyes.end(), [&](const Eye& e)
+			{ return e.Index == ent->index; });
+		eye != g_Eyes.end() && eye->Brightness > 0 && ent->attachment[0] != g_vecZero)
+	{
+		if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(EyeLightKey + ent->index); light)
+		{
+			const float bright = eye->Brightness / 255.f;
+			light->origin = ent->attachment[0];
+			light->radius = (EyeLightRadiusMin + (EyeLightRadiusMax - EyeLightRadiusMin) * bright) *
+							Random(1 - EyeLightFlicker, 1 + EyeLightFlicker);
+			light->color = EyeLightColor;
+			light->die = now + 0.05f;
+			light->decay = 0;
+		}
+	}
+
+	if (g_Flames.empty())
 		return;
 
 	auto it = std::find_if(g_Flames.begin(), g_Flames.end(), [&](const Flames& f)
@@ -382,5 +446,6 @@ void JhlGargantua_Update(double time)
 void JhlGargantua_Reset()
 {
 	g_Flames.clear();
+	g_Eyes.clear();
 	g_Stomps.clear();
 }

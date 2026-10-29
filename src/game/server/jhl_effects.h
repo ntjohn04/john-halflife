@@ -96,9 +96,9 @@ inline void UTIL_JhlRingStrand(const Vector& center, const Vector& axis, int spr
 
 /**
  *	@brief Low dust puffs kicked out along the floor at @p position (the client's, jhl_explosions.cpp): TE_SMOKE through
- *	the SDK's own temp entity message.
+ *	the SDK's own temp entity message. @p size tenths: 10 a houndeye's; bigger ones also billow up, the floor's color.
  */
-inline void UTIL_JhlGroundDust(const Vector& position, int count)
+inline void UTIL_JhlGroundDust(const Vector& position, int count, int size = 10)
 {
 	if (!UTIL_JhlParticleSystem())
 		return;
@@ -107,6 +107,7 @@ inline void UTIL_JhlGroundDust(const Vector& position, int count)
 	WRITE_BYTE(TE_SMOKE);
 	WRITE_COORD_VECTOR(position);
 	WRITE_BYTE(count);
+	WRITE_BYTE(size);
 	MESSAGE_END();
 }
 
