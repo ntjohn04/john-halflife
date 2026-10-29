@@ -180,6 +180,8 @@ its own contents, parsed in `client/entity.cpp` `MsgFunc_TempEntity`), in place 
 | `TE_TRACER` | NPCs' tracers (as often as vanilla's) | The vanilla tracer and johnhalflife's streak, from the muzzle |
 | `TE_BEAMDISK` | The spore launcher's burst | Its blast ring, facing the view |
 | `TE_BLOODSPRITE` | A snark bursting | A small blood puff and blood chunks |
+| `TE_FIREFIELD` | A gargantua's flames, each tenth of a second | Where each hand's lands: flickering lights, embers, heat smoke |
+| `TE_LAVASPLASH` | A gargantua's stomp, each move | The stretch it covered: its head's light, the ground kicked up |
 
 ## Versions
 

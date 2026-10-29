@@ -30,6 +30,7 @@
 #include "jhl_shockbeams.h"
 #include "jhl_grapple.h"
 #include "jhl_blastring.h"
+#include "jhl_gargantua.h"
 #include "client_gibs.h"
 #include "weapon_effects.h"
 #include "sound/ClientSoundReplacementSystem.h"
@@ -63,6 +64,7 @@ int DLLEXPORT HUD_AddEntity(int type, cl_entity_t* ent, const char* modelname)
 		RpgLaserDot(ent, modelname);
 		RocketGlow(ent, modelname);
 		GrenadePivot(ent, modelname);
+		JhlGargantua_Track(ent, modelname);
 		break;
 	case ET_BEAM:
 		// johnhalflife: an armed tripmine's light.
@@ -389,6 +391,7 @@ void DLLEXPORT HUD_TempEntUpdate(
 	JhlShockBeams_Update(client_time);
 	JhlGrapple_Update(client_time);
 	JhlBlastRing_Update(client_time);
+	JhlGargantua_Update(client_time);
 
 	// Use our own temp ent list instead.
 	ppTempEntFree = &gpTempEntFree;
@@ -949,6 +952,14 @@ static void MsgFunc_TempEntity(const char* name, BufferReader& reader)
 
 	case TE_BEAMDISK:
 		JhlBlastRing_Parse(reader);
+		break;
+
+	case TE_FIREFIELD:
+		JhlGargantua_ParseFlame(reader);
+		break;
+
+	case TE_LAVASPLASH:
+		JhlGargantua_ParseStomp(reader);
 		break;
 
 	case TE_BLOODSPRITE:

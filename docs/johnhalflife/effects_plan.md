@@ -462,6 +462,33 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
   it (`jhl_rings.cpp`): a ring beam it moves every frame to the trains' midpoint ± its scale times half the line between
   them, kept alive a second at a time (it dies by itself when no longer tracked), dark while they're out of view,
   forgotten on a new map. Only these maps: c4a1b's ring beams (on machines) and of6a5's Gene Worm orbs are left alone.
+* Gargantua (`gargantua.cpp`, `jhl_gargantua.cpp`), all in its own code, so every one:
+  * Flames: in place of the white flash on its hands, where each hand's flame starts and lands is sent every update
+    (`TE_FIREFIELD`); the client lights each hand (where the server had them, moved onto its attachments 1 and 2 as
+    soon as it's drawn and they're worked out, `JhlGargantua_Drawn`: they're what its flames follow as its arms blend
+    up into the attack, and when it's added to be drawn they aren't yet) orange
+    (255,150,60), 180 units, and,
+    where they hit, 150, both flickering ±20% a frame as the RPG rocket's motor; and where they hit throws 1-3 embers
+    (`hotglow` at 0.04-0.07, additive, rising and falling, 0.5-0.9 s) and 4 times in 10 a little dark heat smoke
+    (`steam1`, (70,65,60), 0.2, rising, 1.4-1.9 s). Its small scorches are vanilla's. A hot core runs down the
+    middle of each flame (its flames are two layers of `xbeam3`, 24 units wide): the same sprite from its hand to where
+    it lands, 9 wide, pale (255,225,180), faint (0.4: additive adds up), scrolling faster (3.5), kept on them a frame
+    at a time by the client, drawn as they are (from where it lands to its hand, shading in from nothing there:
+    `BEAM_FSHADEIN`, so it fades out with them rather than running past). When its flames go out, the server says
+    so (`TE_FIREFIELD` off) and the lights and cores go with them at once.
+  * Stomp: vanilla's is a damage slug racing along the ground at its target, accelerating, out to 1024 units,
+    hitting whatever's in a lane about 32 wide for full damage, no falloff, spitting its red glow sprite two a step
+    every way. Made readable as a wave tearing along the floor down a lane: each move sends the stretch it covered
+    (`TE_LAVASPLASH`), along which the client moves its head smoothly over that time, a red (255,70,40) light 200
+    (±15% a frame) low over the floor at it, and every 36 units tears the floor up (`JhlExplosion_GroundKick`): a
+    puff of the floor's color off each side, now and then a chunk of it, or sparks off metal. The server scorches the
+    floor along its lane every 40 units, shakes those within 240 a little as it passes, and spits its glow a little
+    less and calmer (4 in 5 of vanilla's two a step, ±150 sideways where vanilla's were ±200).
+  * Death: vanilla's 10 server plates were always the same piece, the smallest (a scrap of beam: it picked by its own
+    body, 0, not by the model's 13), fading at 1.25 s, and its 50 engine shards (any piece, up to big plates) all went
+    at about 3 s. Now 16 plates, any piece, each lying 35-60 s as debris; and the shards in three lots of about 17
+    going at 2.5, 5 and 8 s (and up to a second more), so they thin out and the plates are what's left. Blood was left
+    out: none that could be added would be enough for its size, against its explosions.
 * Explosions: the engine's blob explosion
   (`R_BlobExplosion`, rebuilt as `JhlExplosion_Blob` to take a count) on generic explosions, 64 particles (a
   sixteenth of its 1024), large ones 256 (a quarter; more ran a few satchels out of particles).

@@ -17,6 +17,7 @@
 #include "customentity.h"
 #include "explode.h"
 #include "func_break.h"
+#include "jhl_effects.h"
 
 const float GARG_ATTACKDIST = 80.0;
 
@@ -69,6 +70,9 @@ public:
 	static CStomp* StompCreate(const Vector& origin, const Vector& end, float speed);
 
 	float m_flLastThinkTime;
+
+	// johnhalflife: how far it's gone since it last scorched the floor (not saved: it lasts a second or two).
+	float m_JhlSinceMark = 0;
 
 private:
 	// UNDONE: re-use this sprite list instead of creating new ones all the time
@@ -125,6 +129,15 @@ void CStomp::Think()
 
 	pev->nextthink = gpGlobals->time + 0.1;
 
+	// johnhalflife (jhl_fx_particlesystem): readable as a wave tearing along the ground at its target, down a narrow
+	// lane (its damage: whatever's in its path, at full damage, no falloff): the stretch it covers each move sent to the
+	// client (CStomp; jhl_gargantua.cpp: its head's light low over the floor, the ground kicked up along it), the floor
+	// scorched along its lane every JhlMarkSpacing, a rumble for those it passes close to, and its glow's sparks a little
+	// fewer and calmer (vanilla's spat two a step, up to 200 every way: 4 in 5 of them, up to 150).
+	const bool jhl = UTIL_JhlParticleSystem();
+	const Vector jhlFrom = pev->origin;
+	constexpr float JhlMarkSpacing = 40;
+
 	// Do damage for this frame
 	Vector vecStart = pev->origin;
 	vecStart.z += 30;
@@ -151,14 +164,34 @@ void CStomp::Think()
 	while (gpGlobals->time - pev->dmgtime > STOMP_INTERVAL)
 	{
 		pev->origin = pev->origin + pev->movedir * pev->speed * STOMP_INTERVAL;
+
+		if (jhl)
+		{
+			m_JhlSinceMark += pev->speed * STOMP_INTERVAL;
+
+			if (m_JhlSinceMark >= JhlMarkSpacing)
+			{
+				m_JhlSinceMark = 0;
+				UTIL_TraceLine(pev->origin, pev->origin - Vector(0, 0, 500), ignore_monsters, edict(), &tr);
+
+				if (tr.flFraction < 1.0)
+					UTIL_DecalTrace(&tr, DECAL_SMALLSCORCH1 + RANDOM_LONG(0, 2));
+			}
+		}
+
 		for (int i = 0; i < 2; i++)
 		{
+			// johnhalflife: 4 in 5 of them.
+			if (jhl && RANDOM_LONG(0, 4) == 0)
+				continue;
+
 			CSprite* pSprite = CSprite::SpriteCreate(GARG_STOMP_SPRITE_NAME, pev->origin, true);
 			if (pSprite)
 			{
 				UTIL_TraceLine(pev->origin, pev->origin - Vector(0, 0, 500), ignore_monsters, edict(), &tr);
 				pSprite->pev->origin = tr.vecEndPos;
-				pSprite->pev->velocity = Vector(RANDOM_FLOAT(-200, 200), RANDOM_FLOAT(-200, 200), 175);
+				const float spread = jhl ? 150 : 200;
+				pSprite->pev->velocity = Vector(RANDOM_FLOAT(-spread, spread), RANDOM_FLOAT(-spread, spread), 175);
 				// pSprite->AnimateAndDie( RANDOM_FLOAT( 8.0, 12.0 ) );
 				pSprite->pev->nextthink = gpGlobals->time + 0.3;
 				pSprite->SetThink(&CSprite::SUB_Remove);
@@ -174,6 +207,19 @@ void CStomp::Think()
 			UTIL_Remove(this);
 			StopSound(CHAN_BODY, GARG_STOMP_BUZZ_SOUND);
 		}
+	}
+
+	if (jhl)
+	{
+		MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, pev->origin);
+		WRITE_BYTE(TE_LAVASPLASH);
+		WRITE_SHORT(entindex());
+		WRITE_COORD_VECTOR(jhlFrom);
+		WRITE_COORD_VECTOR(pev->origin);
+		WRITE_BYTE(10); // Till its next move, hundredths.
+		MESSAGE_END();
+
+		UTIL_ScreenShake(pev->origin, 5.0, 60.0, 0.4, 240);
 	}
 }
 
@@ -553,6 +599,13 @@ void CGargantua::FlameUpdate()
 	Vector vecStart, angleGun;
 	bool streaks = false;
 
+	// johnhalflife (jhl_fx_particlesystem): where each hand's flame lands, to the client (jhl_gargantua.cpp:
+	// flickering orange lights on its hands and there, as the RPG rocket's motor; embers and heat smoke where they hit),
+	// in place of the white flash on its hands.
+	const bool jhl = UTIL_JhlParticleSystem();
+	bool jhlHit[2]{};
+	Vector jhlStart[2], jhlEnd[2], jhlNormal[2];
+
 	for (i = 0; i < 2; i++)
 	{
 		if (m_pFlame[i])
@@ -580,6 +633,14 @@ void CGargantua::FlameUpdate()
 			// RadiusDamage(trace.vecEndPos, this, this, GetSkillFloat("gargantua_dmg_fire"sv), DMG_BURN, Classify());
 			FlameDamage(vecStart, trace.vecEndPos, this, this, GetSkillFloat("gargantua_dmg_fire"sv), DMG_BURN, Classify());
 
+			jhlHit[i] = trace.flFraction != 1.0;
+			jhlStart[i] = vecStart;
+			jhlEnd[i] = trace.vecEndPos;
+			jhlNormal[i] = trace.vecPlaneNormal;
+
+			if (jhl)
+				continue;
+
 			MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
 			WRITE_BYTE(TE_ELIGHT);
 			WRITE_SHORT(entindex() + 0x1000 * (i + 2)); // entity, attachment
@@ -597,6 +658,26 @@ void CGargantua::FlameUpdate()
 	}
 	if (streaks)
 		m_streakTime = gpGlobals->time;
+
+	if (jhl && m_pFlame[0] && m_pFlame[1])
+	{
+		MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, pev->origin);
+		WRITE_BYTE(TE_FIREFIELD);
+		WRITE_SHORT(entindex());
+		WRITE_BYTE(1); // On.
+
+		for (i = 0; i < 2; i++)
+		{
+			WRITE_BYTE(jhlHit[i] ? 1 : 0);
+			WRITE_COORD_VECTOR(jhlStart[i]);
+			WRITE_COORD_VECTOR(jhlEnd[i]);
+			WRITE_CHAR(static_cast<int>(jhlNormal[i].x * 100));
+			WRITE_CHAR(static_cast<int>(jhlNormal[i].y * 100));
+			WRITE_CHAR(static_cast<int>(jhlNormal[i].z * 100));
+		}
+
+		MESSAGE_END();
+	}
 }
 
 void CGargantua::FlameDamage(Vector vecStart, Vector vecEnd, CBaseEntity* inflictor, CBaseEntity* attacker, float flDamage,
@@ -673,6 +754,17 @@ void CGargantua::FlameDestroy()
 	int i;
 
 	EmitSound(CHAN_WEAPON, pBeamAttackSounds[0], 1.0, ATTN_NORM);
+
+	// johnhalflife: its flames' lights and cores go with them, at once (jhl_gargantua.cpp).
+	if (m_pFlame[0] && UTIL_JhlParticleSystem())
+	{
+		MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, pev->origin);
+		WRITE_BYTE(TE_FIREFIELD);
+		WRITE_SHORT(entindex());
+		WRITE_BYTE(0); // Out.
+		MESSAGE_END();
+	}
+
 	for (i = 0; i < 4; i++)
 	{
 		if (m_pFlame[i])
@@ -754,6 +846,9 @@ void CGargantua::Precache()
 	PrecacheModel(GARG_BEAM_SPRITE2);
 	gStompSprite = PrecacheModel(GARG_STOMP_SPRITE_NAME);
 	gGargGibModel = PrecacheModel(GARG_GIB_MODEL);
+
+	// johnhalflife: its flames' embers (jhl_gargantua.cpp; the client only finds what's precached).
+	PrecacheModel("sprites/hotglow.spr");
 	PrecacheSound(GARG_STOMP_BUZZ_SOUND);
 
 	PRECACHE_SOUND_ARRAY(pAttackHitSounds);
@@ -1042,7 +1137,13 @@ void CGargantua::RunTask(const Task_t* pTask)
 			SetThink(&CGargantua::SUB_Remove);
 			int i;
 			int parts = MODEL_FRAMES(gGargGibModel);
-			for (i = 0; i < 10; i++)
+
+			// johnhalflife (jhl_fx_particlesystem): more of its plates, any of them (vanilla took one by its own body,
+			// 0: always the smallest, a scrap of beam), each lying a while, as debris is, for its own time.
+			const bool jhl = UTIL_JhlParticleSystem();
+			const int plates = jhl ? 16 : 10;
+
+			for (i = 0; i < plates; i++)
 			{
 				CGib* pGib = g_EntityDictionary->Create<CGib>("gib");
 
@@ -1050,16 +1151,41 @@ void CGargantua::RunTask(const Task_t* pTask)
 
 				int bodyPart = 0;
 				if (parts > 1)
-					bodyPart = RANDOM_LONG(0, pev->body - 1);
+					bodyPart = RANDOM_LONG(0, (jhl ? parts : pev->body) - 1);
 
 				pGib->pev->body = bodyPart;
 				pGib->m_bloodColor = BLOOD_COLOR_YELLOW;
 				pGib->m_material = matNone;
 				pGib->pev->origin = pev->origin;
 				pGib->pev->velocity = UTIL_RandomBloodVector() * RANDOM_FLOAT(300, 500);
-				pGib->pev->nextthink = gpGlobals->time + 1.25;
+				pGib->pev->nextthink = gpGlobals->time + (jhl ? RANDOM_FLOAT(35, 60) : 1.25);
 				pGib->SetThink(&CGib::SUB_FadeOut);
 			}
+			// johnhalflife: its 50 shards in three lots fading at their own times (vanilla's all went at about 3 s), so
+			// they thin out and its plates are what's left (the engine's own shards, as vanilla's, not lasting debris).
+			if (jhl)
+			{
+				constexpr int Shards[3] = {17, 17, 16};
+				constexpr int Lives[3] = {25, 50, 80}; // Tenths of a second, and up to another second.
+
+				for (int lot = 0; lot < 3; ++lot)
+				{
+					MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
+					WRITE_BYTE(TE_BREAKMODEL);
+					WRITE_COORD_VECTOR(pev->origin);
+					WRITE_COORD_VECTOR(Vector(200, 200, 128));
+					WRITE_COORD_VECTOR(g_vecZero);
+					WRITE_BYTE(200);
+					WRITE_SHORT(gGargGibModel);
+					WRITE_BYTE(Shards[lot]);
+					WRITE_BYTE(Lives[lot]);
+					WRITE_BYTE(BREAK_FLESH);
+					MESSAGE_END();
+				}
+
+				return;
+			}
+
 			MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
 			WRITE_BYTE(TE_BREAKMODEL);
 

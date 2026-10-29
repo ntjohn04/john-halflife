@@ -113,6 +113,8 @@ target_sources(client PRIVATE
 	fx_test.h
 	jhl_blastring.cpp
 	jhl_blastring.h
+	jhl_gargantua.cpp
+	jhl_gargantua.h
 	jhl_debris.cpp
 	jhl_debris.h
 	jhl_explosions.cpp

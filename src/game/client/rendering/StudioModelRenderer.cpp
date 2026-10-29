@@ -18,6 +18,7 @@
 
 #include "client_gibs.h"
 #include "event_api.h"
+#include "jhl_gargantua.h"
 #include "jhl_settings.h"
 #include "view.h"
 #include "weapon_effects.h"
@@ -1600,6 +1601,9 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 			cl_entity_t* ent = gEngfuncs.GetEntityByIndex(m_pCurrentEntity->index);
 
 			memcpy(ent->attachment, m_pCurrentEntity->attachment, sizeof(Vector) * 4);
+
+			// johnhalflife: a gargantua's flames' cores onto its hands as just drawn.
+			JhlGargantua_Drawn(m_pCurrentEntity);
 		}
 	}
 

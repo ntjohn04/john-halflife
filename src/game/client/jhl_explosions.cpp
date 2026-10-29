@@ -1159,3 +1159,67 @@ void JhlExplosion_ImpactChunks(const Vector& position, const Vector& normal, cha
 {
 	ImpactChunks(position, normal, material, count);
 }
+
+void JhlExplosion_GroundKick(const Vector& point, const Vector& direction)
+{
+	if (!JhlParticleSystemEnabled())
+		return;
+
+	pmtrace_t tr;
+	gEngfuncs.pEventAPI->EV_PushPMStates();
+	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
+	gEngfuncs.pEventAPI->EV_PlayerTrace(point + Vector{0, 0, 16}, point - Vector{0, 0, 128}, PM_WORLD_ONLY, -1, &tr);
+	gEngfuncs.pEventAPI->EV_PopPMStates();
+
+	// Only off a floor.
+	if (tr.fraction >= 1 || tr.plane.normal.z < 0.5f)
+		return;
+
+	const char material = SurfaceMaterial(tr);
+
+	// Dust the floor's color, as bullet impacts' (weapon_effects.cpp's DustImpact), else a stony grey.
+	color24 dust{140, 135, 130};
+
+	switch (material)
+	{
+	case CHAR_TEX_DIRT: dust = {120, 105, 85}; break;
+	case CHAR_TEX_WOOD: dust = {130, 115, 95}; break;
+	case CHAR_TEX_CONCRETE:
+	case CHAR_TEX_TILE: dust = {150, 150, 145}; break;
+	default: break;
+	}
+
+	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
+
+	// A puff thrown off each side of its path, up and a little on the way it's going.
+	Vector side = CrossProduct(direction, Vector{0, 0, 1});
+	side = side.Length() > 0.1f ? side.Normalize() : Vector{1, 0, 0};
+
+	for (int i = 0; model != 0 && i < 2; ++i)
+	{
+		const float away = (i == 0 ? 1 : -1) * Random(50, 110);
+		Vector position = tr.endpos + Vector{0, 0, 6} + side * Random(-10, 10);
+		Vector velocity = side * away + direction * Random(10, 40) + Vector{0, 0, Random(30, 70)};
+
+		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, Random(0.5f, 0.75f), model, kRenderTransAlpha,
+			kRenderFxNone, 0.3f, 1.6f, 0);
+
+		if (!puff)
+			continue;
+
+		puff->entity.curstate.rendercolor = dust;
+		puff->entity.angles.z = Random(0, 359);
+		JhlSprite_PlayOnce(puff, Random(1.2f, 1.6f), 0.6f);
+	}
+
+	// Now and then a chunk of it, or off metal, sparks.
+	if (IsMetal(material))
+	{
+		if (Random(0, 1) < 0.3f)
+			gEngfuncs.pEfxAPI->R_SparkStreaks(tr.endpos + Vector{0, 0, 2}, 6, -200, 200);
+	}
+	else if (Random(0, 1) < 0.35f)
+	{
+		ImpactChunks(tr.endpos, tr.plane.normal, material, 1);
+	}
+}
