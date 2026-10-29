@@ -96,6 +96,21 @@ are on), and changing it sets all four. It isn't saved itself; the four are.
   matching the defaults in `user.scr`). Notable values: `crosshair_scale 2`, `default_fov 105`,
   `fps_override 1` with `fps_max 240`, `m_rawinput 1`.
 
+## Recommended launch options
+
+Set in Steam: right-click Half-Life (or the mod), Properties, Launch Options. These are the engine's own, read
+once as it starts, before any of the mod's code runs, so the mod can't set them itself.
+
+* **`-particles 8192`**: room for more of the engine's small particles (explosion specks, spark streaks, blood
+  specks, tracer particles), which the effects use more of than vanilla. Without it, a chain of big explosions can
+  run the engine's pool dry: the console says "not enough free particles", and a few specks don't appear for a
+  moment. Harmless either way (nothing breaks; the explosions also thin their own out as they near it:
+  [tuning sheet](tuning.md#explosion-particles-clientjhl_explosionscpp-particleshare)); this just keeps them all.
+  Modern PCs don't feel it.
+* **`-condebug`** (optional, for troubleshooting): writes the console to `qconsole.log` in the game folder as you
+  play, so its last lines survive a crash. With the crash's details from Windows' event log, that usually shows
+  what happened.
+
 ## HUD
 
 ### HUD scale
