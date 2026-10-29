@@ -844,6 +844,20 @@ static Vector g_JhlViewModelAngles;
 // reloaded (snapped back to be its new rounds in the speedloader a frame later), the sniper rifle's flying off its bolt
 // as it's worked (snapped back into the rifle at its end: hidden from where it's let go). Found in their models'
 // animations.
+// johnhalflife: whether the view model drawn, @p drawn, is @p wanted, by its file's name: Opposing Force and Blue Shift
+// draw their own (the Unified SDK's model replacement: models/op4/v_rpg.mdl, models/bshift/v_rpg.mdl for
+// models/v_rpg.mdl), the same skeleton and gun, other arms.
+static bool JhlSameViewModel(const char* drawn, const char* wanted)
+{
+	const auto fileName = [](const char* path)
+	{
+		const char* slash = std::strrchr(path, '/');
+		return slash ? slash + 1 : path;
+	};
+
+	return 0 == _stricmp(fileName(drawn), fileName(wanted));
+}
+
 struct JhlCasingDrop
 {
 	const char* Model;
@@ -949,7 +963,7 @@ static void JhlViewModelCasings(cl_entity_t* entity, model_t* model, float frame
 	{
 		for (const auto& candidate : JhlCasingDrops)
 		{
-			if (candidate.Sequence == entity->curstate.sequence && 0 == std::strcmp(candidate.Model, model->name))
+			if (candidate.Sequence == entity->curstate.sequence && JhlSameViewModel(model->name, candidate.Model))
 				drop = &candidate;
 		}
 	}
@@ -963,7 +977,8 @@ static void JhlViewModelCasings(cl_entity_t* entity, model_t* model, float frame
 	// Reached where they're let go, since it was drawn last (and not started over).
 	if (drop == last && lastFrame < drop->Frame && frame >= drop->Frame && frame >= lastFrame)
 	{
-		const int shell = gEngfuncs.pEventAPI->EV_FindModelIndex(drop->Model);
+		// The one drawn: in Opposing Force and Blue Shift only theirs is loaded.
+		const int shell = gEngfuncs.pEventAPI->EV_FindModelIndex(model->name);
 
 		for (int i = 0; shell != 0 && i < drop->BoneCount; ++i)
 		{
@@ -1351,7 +1366,7 @@ bool JhlViewModelPoint(const char* modelName, int bone, const Vector& local, Vec
 {
 	// Drawn just now (last frame's, the view model being drawn after the effects), and the one asked about.
 	if (!g_JhlViewModel || bone < 0 || bone >= g_JhlViewModelBoneCount ||
-		0 != std::strcmp(g_JhlViewModel->name, modelName) || std::abs(gEngfuncs.GetClientTime() - g_JhlViewModelTime) > 0.1)
+		!JhlSameViewModel(g_JhlViewModel->name, modelName) || std::abs(gEngfuncs.GetClientTime() - g_JhlViewModelTime) > 0.1)
 	{
 		return false;
 	}

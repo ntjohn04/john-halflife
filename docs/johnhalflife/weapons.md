@@ -124,7 +124,10 @@ With `jhl_fx_particlesystem`:
   (3.37, -9.88, -3.39) in the launcher's bone, `Dummy22`), is placed from that bone as the view model was last drawn (`JhlViewModelPoint`,
   `StudioModelRenderer.cpp`): where it was on the view model then, put where the view model is now, once the view's
   placed for the frame (`V_CalcRefdef`), so it stays on the housing as the camera, the player and the gun's sway
-  move (set before, it was a frame behind them).
+  move (set before, it was a frame behind them). Opposing Force and Blue Shift draw their own RPG view models
+  (`models/op4/v_rpg.mdl`, `models/bshift/v_rpg.mdl`: the same skeleton and gun, other arms), so view models are
+  matched by their file's name (`JhlSameViewModel`); matched by the full path, the line, the sniper rifle's barrel
+  smoke, the shotgun's ejection port and the revolver's and sniper rifle's casings worked only in Half-Life.
 
 ## Effects
 
