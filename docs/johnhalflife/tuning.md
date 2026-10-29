@@ -137,3 +137,14 @@ The shells' explosions are the shared explosion code's (`CGrenade::Explode`), as
 Touches: every map's scripted debris (`env_shooter`) and `gibshooter`s; their pieces are entities, so the cap matters.
 Keep shooters close to vanilla: their count is vanilla's (extra pieces stuck together in c1a1a's vending machine), and
 no handles to their pieces are kept between maps (a reused slot named other entities).
+
+## Opposing Force's mortar (`op4mortar`)
+
+Server `server/entities/op4mortar.cpp`, client `MortarShellTrail` and `JhlTank_ParseFire` (kind 1) in
+`client/weapon_effects.cpp`. See: `map of6a2`.
+
+| Part | Knob | Value |
+|---|---|---|
+| Explosion | `MortarExplodeTouch` | As a grenade's of its damage: scale 90, 15 fps (vanilla's overflowed to about 24× a grenade's) |
+| Launch | `JhlMortarLaunch` | The rocket launcher's: light 260, flash 0.5, 5 puffs along its shell's way |
+| Trail | `MortarTrailSpacing`, `MortarTrailScaleMin`-`Max`, `MortarTrailLifeScale`, `MortarTrailAlpha` | 40 units, 0.45-0.7, 0.7 the RPG trail's life, 0.4 |

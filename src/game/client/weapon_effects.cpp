@@ -1008,7 +1008,7 @@ struct Rocket
 	bool Puffed;
 };
 
-static void TrailPuff(const Vector& origin)
+static void TrailPuff(const Vector& origin, float scaleMin = 0.6f, float scaleMax = 0.9f, float lifeScale = 1, float alpha = TrailAlpha)
 {
 	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
 
@@ -1023,11 +1023,11 @@ static void TrailPuff(const Vector& origin)
 	Vector velocity{gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(2.7f, 6.8f)};
 
 	// Plays once and is removed on its last frame (16 of them): slowly, so it lingers.
-	const float scale = gEngfuncs.pfnRandomFloat(0.6f, 0.9f);
-	const float life = TrailLife * gEngfuncs.pfnRandomFloat(0.85f, 1.15f);
+	const float scale = gEngfuncs.pfnRandomFloat(scaleMin, scaleMax);
+	const float life = TrailLife * lifeScale * gEngfuncs.pfnRandomFloat(0.85f, 1.15f);
 
 	if (TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, scale, model, kRenderTransAlpha, kRenderFxNone,
-			TrailAlpha, life + 1, FTENT_SPRANIMATE);
+			alpha, life + 1, FTENT_SPRANIMATE);
 		puff)
 	{
 		puff->entity.curstate.rendercolor = {170, 170, 170};
@@ -1160,6 +1160,67 @@ void RocketGlow(cl_entity_t* rocket, const char* modelname)
 			light->decay = 0;
 		}
 	}
+}
+
+// Opposing Force's mortar shells (op4mortar's, mortarshell.mdl): a smoke trail all the way as the RPG rocket's
+// (TrailPuff), a little lighter (vanilla's only sputtered for the first 0.2 s): a puff every MortarTrailSpacing,
+// smaller, sooner gone, fainter.
+constexpr float MortarTrailSpacing = 40;
+constexpr float MortarTrailScaleMin = 0.45f;
+constexpr float MortarTrailScaleMax = 0.7f;
+constexpr float MortarTrailLifeScale = 0.7f;
+constexpr float MortarTrailAlpha = 0.4f;
+
+struct MortarShell
+{
+	int Index = 0;
+	float LastSeen = 0;
+	Vector LastPuff;
+};
+
+static std::vector<MortarShell> g_MortarShells;
+
+void MortarShellTrail(cl_entity_t* shell, const char* modelname)
+{
+	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "models/mortarshell.mdl"))
+		return;
+
+	const float now = gEngfuncs.GetClientTime();
+
+	std::erase_if(g_MortarShells, [&](const MortarShell& s)
+		{ return now - s.LastSeen > 0.1f || now < s.LastSeen; });
+
+	auto it = std::find_if(g_MortarShells.begin(), g_MortarShells.end(), [&](const MortarShell& s)
+		{ return s.Index == shell->index; });
+
+	if (it == g_MortarShells.end())
+	{
+		g_MortarShells.push_back({shell->index, now, shell->origin});
+		TrailPuff(shell->origin, MortarTrailScaleMin, MortarTrailScaleMax, MortarTrailLifeScale, MortarTrailAlpha);
+		return;
+	}
+
+	it->LastSeen = now;
+
+	const Vector moved = shell->origin - it->LastPuff;
+	float distance = moved.Length();
+
+	if (distance < MortarTrailSpacing)
+		return;
+
+	const Vector direction = moved / distance;
+	int puffs = 0;
+
+	while (distance >= MortarTrailSpacing && puffs++ < TrailMostAFrame)
+	{
+		it->LastPuff = it->LastPuff + direction * MortarTrailSpacing;
+		distance -= MortarTrailSpacing;
+		TrailPuff(it->LastPuff, MortarTrailScaleMin, MortarTrailScaleMax, MortarTrailLifeScale, MortarTrailAlpha);
+	}
+
+	// A hitch: on from where it is.
+	if (distance >= MortarTrailSpacing)
+		it->LastPuff = shell->origin;
 }
 
 // A thrown hand grenade turns about its model's origin, at its base (it sits on the floor), its middle this far above

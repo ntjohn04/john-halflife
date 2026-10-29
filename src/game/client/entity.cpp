@@ -63,6 +63,7 @@ int DLLEXPORT HUD_AddEntity(int type, cl_entity_t* ent, const char* modelname)
 		SporeLight(ent, modelname);
 		RpgLaserDot(ent, modelname);
 		RocketGlow(ent, modelname);
+		MortarShellTrail(ent, modelname);
 		GrenadePivot(ent, modelname);
 		JhlGargantua_Track(ent, modelname);
 		break;

@@ -502,6 +502,14 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
   with a 140 core, falls straight onto where it lands from 1024 up at 2900 units/s, arriving as it explodes
   (`JhlExplosion_ParseMortarIncoming`, a tracer); and where it lands the ground thrown up in a column, the floor's
   color (`UTIL_JhlGroundDust`, 12 puffs at size 2, 4 billowing up).
+* Opposing Force's mortar (`op4mortar.cpp`: `op4mortar`, of6a2; it lobs a shell, `mortar_shell`, 200 damage):
+  vanilla sent its explosion at scale (dmg - 50) × 5, which overflowed its byte (750, sent as 238: a fireball some
+  24 times a grenade's) at 10 fps, which the client's explosions don't take for one. It now explodes as a grenade of
+  its damage (`CGrenade::Explode`'s scale (dmg - 50) × 0.6, 90, 15 fps, the client's spark showers, scorch and
+  shake), with johnhalflife's fireballs, specks, lights and debris. Its launch, whoever fires it, is a rocket
+  launcher's (`JhlMortarLaunch`: `TE_MULTIGUNSHOT` kind 1, along its shell's way); and its shell trails smoke all the
+  way as the RPG rocket's, lighter (`MortarShellTrail`: a puff every 40 units, 0.45-0.7, 0.7 the life, 0.4 alpha;
+  vanilla's sputtered only its first 0.2 s, still does).
 * NPC turrets (`turret.cpp`: ceiling turrets `monster_turret`, `monster_miniturret`, `monster_sentry`): vanilla's
   shots had only the engine's light (`EF_MUZZLEFLASH`). Each now also sends its muzzle and aim as a mounted gun's,
   kind 4 (`TE_MULTIGUNSHOT`, `JhlTurretShot`), drawn as a smaller gun's: a flickering `muzzleflash2` (0.35, ±15%,

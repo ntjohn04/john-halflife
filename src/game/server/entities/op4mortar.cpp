@@ -13,6 +13,8 @@
  *
  ****/
 #include "cbase.h"
+#include "jhl_effects.h"
+#include "jhl_explosion.h"
 
 class CMortarShell : public CGrenade
 {
@@ -149,8 +151,17 @@ void CMortarShell::MortarExplodeTouch(CBaseEntity* pOther)
 
 	const auto contents = UTIL_PointContents(pev->origin);
 
+	// johnhalflife (jhl_fx_particlesystem): exploding as a grenade of its damage does (CGrenade::Explode: scale
+	// (dmg - 50) * 0.6, 15 fps, the client's spark showers), so with johnhalflife's explosions (two fireballs, specks,
+	// lights, debris). Vanilla's (dmg - 50) * 5 overflowed its byte (200 damage: 750, sent as 238, a fireball some 24
+	// times a grenade's), at 10 fps, which the client's explosions don't take for one.
+	const bool jhl = UTIL_JhlParticleSystem();
+	const bool clientSparks = jhl && contents != CONTENTS_WATER;
+	const float jhlScale = (pev->dmg - 50) * 0.06f;
+
 	UTIL_ExplosionEffect(pev->origin, contents == CONTENTS_WATER ? g_sModelIndexWExplosion : g_sModelIndexFireball,
-		static_cast<int>((pev->dmg - 50.0) * 5.0), 10, TE_EXPLFLAG_NONE,
+		jhl ? static_cast<int>((pev->dmg - 50) * 0.6f) : static_cast<int>((pev->dmg - 50.0) * 5.0), jhl ? 15 : 10,
+		clientSparks ? TE_EXPLFLAG_JHL_SPARKS : TE_EXPLFLAG_NONE,
 		MSG_PAS, pev->origin);
 
 	CSoundEnt::InsertSound(bits_SOUND_COMBAT, pev->origin, 1024, 3.0);
@@ -160,7 +171,12 @@ void CMortarShell::MortarExplodeTouch(CBaseEntity* pOther)
 
 	RadiusDamage(this, pOwner, pev->dmg, 64);
 
-	if (RANDOM_FLOAT(0, 1) >= 0.5)
+	if (jhl)
+	{
+		UTIL_JhlExplosionScorch(&tr, jhlScale);
+		UTIL_JhlExplosionShake(pev->origin, jhlScale);
+	}
+	else if (RANDOM_FLOAT(0, 1) >= 0.5)
 		UTIL_DecalTrace(&tr, DECAL_SCORCH2);
 	else
 		UTIL_DecalTrace(&tr, DECAL_SCORCH1);
@@ -189,7 +205,7 @@ void CMortarShell::MortarExplodeTouch(CBaseEntity* pOther)
 
 	pev->nextthink = gpGlobals->time + 0.3;
 
-	if (contents != CONTENTS_WATER)
+	if (contents != CONTENTS_WATER && !clientSparks)
 	{
 		const auto sparkCount = g_engfuncs.pfnRandomLong(0, 3);
 
@@ -200,8 +216,38 @@ void CMortarShell::MortarExplodeTouch(CBaseEntity* pOther)
 	}
 }
 
+// johnhalflife (jhl_fx_particlesystem): a mortar's launch at its muzzle as a rocket launcher's (func_tankrocket's,
+// weapon_effects.cpp's JhlTank_ParseFire, kind 1): a flash of light and fire, a cloud blown out along its shell's way.
+static void JhlMortarLaunch(const Vector& muzzle, const Vector& angles)
+{
+	if (!UTIL_JhlParticleSystem())
+		return;
+
+	// Its shell goes against its angles' forward (CMortarShell::Spawn).
+	UTIL_MakeVectors(angles);
+	const Vector direction = -gpGlobals->v_forward;
+
+	MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, muzzle);
+	WRITE_BYTE(TE_MULTIGUNSHOT);
+	WRITE_COORD_VECTOR(muzzle);
+	WRITE_CHAR(static_cast<int>(direction.x * 100));
+	WRITE_CHAR(static_cast<int>(direction.y * 100));
+	WRITE_CHAR(static_cast<int>(direction.z * 100));
+	WRITE_BYTE(1);
+	WRITE_BYTE(1);
+	WRITE_BYTE(0);
+	WRITE_COORD_VECTOR(muzzle);
+	WRITE_BYTE(0);
+	WRITE_BYTE(0);
+	WRITE_BYTE(0);
+	WRITE_BYTE(0); // No flash sprite of the map's.
+	MESSAGE_END();
+}
+
 CMortarShell* CMortarShell::CreateMortarShell(Vector vecOrigin, Vector vecAngles, CBaseEntity* pOwner, int velocity)
 {
+	JhlMortarLaunch(vecOrigin, vecAngles);
+
 	auto pShell = g_EntityDictionary->Create<CMortarShell>("mortar_shell");
 
 	pShell->SetOrigin(vecOrigin);

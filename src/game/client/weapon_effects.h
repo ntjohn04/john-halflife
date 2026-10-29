@@ -110,6 +110,11 @@ void SporeLight(cl_entity_t* spore, const char* modelname);
 void RocketGlow(cl_entity_t* rocket, const char* modelname);
 
 /**
+ *	@brief johnhalflife: Opposing Force's mortar shells' smoke trail, all the way (jhl_fx_particlesystem; HUD_AddEntity).
+ */
+void MortarShellTrail(cl_entity_t* shell, const char* modelname);
+
+/**
  *	@brief johnhalflife: a thrown hand grenade drawn turning about its middle rather than its base (jhl_fx_particlesystem;
  *	HUD_AddEntity): only where it's drawn, not where it is.
  */
