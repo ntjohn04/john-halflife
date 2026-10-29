@@ -48,6 +48,12 @@ void JhlExplosion_ImpactChunks(const Vector& position, const Vector& normal, cha
 void JhlExplosion_GroundKick(const Vector& point, const Vector& direction);
 
 /**
+ *	@brief A tentacle striking the floor under @p position (CTentacle::HandleAnimEvent; TE_LARGEFUNNEL), by the floor's
+ *	material: @p strength 0 a light tap, 1 a slam, 2 its killing swing's.
+ */
+void JhlExplosion_TentacleImpact(const Vector& position, int strength);
+
+/**
  *	@brief A big, faint smoke cloud that lingers after an explosion's vanilla smoke (steam1, which the server sends
  *	0.3 s in: 20 units up, rising 30 units/s for 1.3 s, about fireball scale × 43 units wide). Widths are per unit of
  *	the fireball's scale; opacity and gray of 255.

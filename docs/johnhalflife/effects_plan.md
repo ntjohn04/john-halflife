@@ -462,6 +462,21 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
   it (`jhl_rings.cpp`): a ring beam it moves every frame to the trains' midpoint ± its scale times half the line between
   them, kept alive a second at a time (it dies by itself when no longer tracked), dark while they're out of view,
   forgotten on a new map. Only these maps: c4a1b's ring beams (on machines) and of6a5's Gene Worm orbs are left alone.
+* Tentacles (`tentacle.cpp`; c1a4i's Blast Pit, c2a5x, c4a1b): vanilla's strikes only sounded, by a map key (silo,
+  dirt, water). Now each also sends where it struck (`TE_LARGEFUNNEL`: 0 a light tap, 1 a slam, 2 its killing
+  swing's, 200 damage), and the client looks at the floor under it, by its material (`JhlExplosion_TentacleImpact`):
+  * Metal: a light tap sparks half the time (3-5 streaks, as bullets off metal); a slam sparks harder (8-12), throws
+    a spark shower (1 in 4 two) and a little grey dust (4 puffs at 0.8).
+  * Anything else (dirt, Xen's floors, concrete): a light tap a little dust close in (the houndeye's floor dust at
+    0.6, 4 puffs); a slam the floor's color rolling out (1.3, 10 puffs), 3 billowing up (about 1.0, rising 40-80,
+    about 2.2 s) and 1-2 clods of it.
+  * The killing swing, besides, a low ring of dust (1.6, 12 puffs), set apart from its probing slams.
+  * The server, for slams only (taps come every second or two as it searches): the gargantua's stomp crater where
+    it lands and a shake, 4 within 500 units, 9 within 600 for the killing swing. No water: no tentacle is set to it.
+  * Sound: vanilla's strikes on dirt were the player's dirt footsteps (`pl_dirt1-4`); they're concrete breaking
+    (`debris/concrete1-3`) pitched a little down to sound duller, earthier: slams 85-92, taps quieter (vanilla's
+    30-50%) and a touch higher, 88-96, as the silo's taps are its strikes (`te_strike1-2`), quieter.
+  The houndeye's floor dust and the gargantua's stomp dust share the burst (`DustBurst`), as they were.
 * Gargantua (`gargantua.cpp`, `jhl_gargantua.cpp`), all in its own code, so every one:
   * Flames: in place of the white flash on its hands, where each hand's flame starts and lands is sent every update
     (`TE_FIREFIELD`); the client lights each hand (where the server had them, moved onto its attachments 1 and 2 as

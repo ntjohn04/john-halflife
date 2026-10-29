@@ -962,6 +962,14 @@ static void MsgFunc_TempEntity(const char* name, BufferReader& reader)
 		JhlGargantua_ParseStomp(reader);
 		break;
 
+	case TE_LARGEFUNNEL:
+	{
+		const Vector position = reader.ReadCoordVector();
+		const int strength = reader.ReadByte();
+		JhlExplosion_TentacleImpact(position, strength);
+		break;
+	}
+
 	case TE_BLOODSPRITE:
 	{
 		const Vector origin = reader.ReadCoordVector();

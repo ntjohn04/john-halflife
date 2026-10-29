@@ -1094,49 +1094,42 @@ void JhlSprite_PlayOnce(TEMPENTITY* sprite, float life, float fade)
 	sprite->die = gEngfuncs.GetClientTime() + life;
 }
 
-void JhlExplosion_ParseGroundDust(BufferReader& reader)
+namespace
 {
-	const Vector origin = reader.ReadCoordVector();
-	const int count = reader.ReadByte();
-	const float size = std::max(reader.ReadByte(), 1) / 10.f;
+// Dust the color of a floor of @p material, as bullet impacts' (weapon_effects.cpp's DustImpact), else a stony grey.
+color24 DustColor(char material)
+{
+	switch (material)
+	{
+	case CHAR_TEX_DIRT: return {120, 105, 85};
+	case CHAR_TEX_WOOD: return {130, 115, 95};
+	case CHAR_TEX_CONCRETE:
+	case CHAR_TEX_TILE: return {150, 150, 145};
+	default: return {140, 135, 130};
+	}
+}
 
-	if (!JhlParticleSystemEnabled())
-		return;
+// What a burst of floor dust's billows are, rising from its middle.
+struct Billows
+{
+	int Count = 0;
+	float ScaleMin = 0.6f; // × the burst's size.
+	float ScaleMax = 0.8f;
+	float RiseMin = 50;
+	float RiseMax = 110;
+	float LifeScale = 1.3f; // × the low puffs' life.
+};
 
+// @p count low puffs kicked out along the floor at @p origin: steam1 at 0.5, alpha 0.25, ±48 and ±120 units/s, each
+// playing once over 1.2 s and fading over the last 60% of it, all of it by @p size (farther, faster, bigger, longer);
+// @p billows of them rising from the middle too.
+void DustBurst(const Vector& origin, int count, float size, color24 dust, const Billows& billows = {})
+{
 	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
 
 	if (model == 0)
 		return;
 
-	// Bigger ones (a gargantua's stomp) are the floor's color, as bullet impacts' dust (weapon_effects.cpp's
-	// DustImpact), and billow up too; a houndeye's (size 1) are as they were.
-	color24 dust{255, 255, 255};
-
-	if (size > 1)
-	{
-		pmtrace_t tr;
-		gEngfuncs.pEventAPI->EV_PushPMStates();
-		gEngfuncs.pEventAPI->EV_SetTraceHull(2);
-		gEngfuncs.pEventAPI->EV_PlayerTrace(origin + Vector{0, 0, 8}, origin - Vector{0, 0, 32}, PM_WORLD_ONLY, -1, &tr);
-		gEngfuncs.pEventAPI->EV_PopPMStates();
-
-		dust = {140, 135, 130};
-
-		if (tr.fraction < 1)
-		{
-			switch (SurfaceMaterial(tr))
-			{
-			case CHAR_TEX_DIRT: dust = {120, 105, 85}; break;
-			case CHAR_TEX_WOOD: dust = {130, 115, 95}; break;
-			case CHAR_TEX_CONCRETE:
-			case CHAR_TEX_TILE: dust = {150, 150, 145}; break;
-			default: break;
-			}
-		}
-	}
-
-	// Low puffs kicked out along the floor: steam1 at 0.5, alpha 0.25, each playing once over 1.2 s and fading
-	// over the last 60% of it (all of it by the size: farther, faster, bigger, longer).
 	const float life = 1.2f * std::sqrt(size);
 
 	for (int i = 0; i < count; ++i)
@@ -1156,22 +1149,118 @@ void JhlExplosion_ParseGroundDust(BufferReader& reader)
 		JhlSprite_PlayOnce(puff, life, 0.6f);
 	}
 
-	// A third as many billowing up from the middle, bigger and slower to go.
-	for (int i = 0; size > 1 && i < count / 3; ++i)
+	for (int i = 0; i < billows.Count; ++i)
 	{
 		Vector position = origin + Vector{Random(-24, 24) * size, Random(-24, 24) * size, 16};
-		Vector velocity{Random(-30, 30), Random(-30, 30), Random(50, 110)};
+		Vector velocity{Random(-30, 30), Random(-30, 30), Random(billows.RiseMin, billows.RiseMax)};
+		const float billowLife = life * billows.LifeScale;
 
-		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, Random(0.6f, 0.8f) * size, model,
-			kRenderTransAlpha, kRenderFxNone, 0.22f, life * 1.3f, 0);
+		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, Random(billows.ScaleMin, billows.ScaleMax) * size,
+			model, kRenderTransAlpha, kRenderFxNone, 0.22f, billowLife, 0);
 
 		if (!puff)
 			continue;
 
 		puff->entity.curstate.rendercolor = dust;
 		puff->entity.angles.z = Random(0, 359);
-		JhlSprite_PlayOnce(puff, life * 1.3f, 0.6f);
+		JhlSprite_PlayOnce(puff, billowLife, 0.6f);
 	}
+}
+
+// The floor under @p origin (within @p below), and its material; false if there's none.
+bool FloorUnder(const Vector& origin, float below, pmtrace_t& tr, char& material)
+{
+	gEngfuncs.pEventAPI->EV_PushPMStates();
+	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
+	gEngfuncs.pEventAPI->EV_PlayerTrace(origin + Vector{0, 0, 8}, origin - Vector{0, 0, below}, PM_WORLD_ONLY, -1, &tr);
+	gEngfuncs.pEventAPI->EV_PopPMStates();
+
+	if (tr.fraction >= 1)
+		return false;
+
+	material = SurfaceMaterial(tr);
+	return true;
+}
+} // namespace
+
+void JhlExplosion_ParseGroundDust(BufferReader& reader)
+{
+	const Vector origin = reader.ReadCoordVector();
+	const int count = reader.ReadByte();
+	const float size = std::max(reader.ReadByte(), 1) / 10.f;
+
+	if (!JhlParticleSystemEnabled())
+		return;
+
+	// A houndeye's (size 1) as it was, white; bigger ones (a gargantua's stomp) the floor's color, a third as many
+	// billowing up from the middle, bigger and slower to go.
+	if (size <= 1)
+	{
+		DustBurst(origin, count, size, {255, 255, 255});
+		return;
+	}
+
+	pmtrace_t tr;
+	char material = 0;
+	FloorUnder(origin, 32, tr, material);
+	DustBurst(origin, count, size, DustColor(material), {.Count = count / 3});
+}
+
+void JhlExplosion_TentacleImpact(const Vector& position, int strength)
+{
+	if (!JhlParticleSystemEnabled())
+		return;
+
+	// What it hit, under where it struck (its tip is a little above the floor as it lands).
+	pmtrace_t tr;
+	char material = 0;
+
+	if (!FloorUnder(position, 96, tr, material))
+		return;
+
+	const Vector floor = tr.endpos;
+	const Vector normal = tr.plane.normal;
+	const bool slam = strength > 0;
+
+	if (IsMetal(material))
+	{
+		// Metal: a light tap sparks half the time, as bullets off metal do; a slam sparks harder, throws a spark shower
+		// (and 1 in 4 a second), and a little grey dust.
+		if (!slam)
+		{
+			if (gEngfuncs.pfnRandomLong(0, 1) == 0)
+				gEngfuncs.pEfxAPI->R_SparkStreaks(floor + normal * 2, gEngfuncs.pfnRandomLong(3, 5), -120, 120);
+			return;
+		}
+
+		gEngfuncs.pEfxAPI->R_SparkStreaks(floor + normal * 2, gEngfuncs.pfnRandomLong(8, 12), -200, 200);
+
+		Surface surface;
+		surface.Normal = normal;
+		surface.Hit = tr;
+		surface.Material = material;
+		SparkShowers(floor + normal * 4, surface, gEngfuncs.pfnRandomLong(0, 3) == 0 ? 2 : 1);
+
+		DustBurst(floor, 4, 0.8f, DustColor(material));
+	}
+	else
+	{
+		// Anything else (dirt, Xen's floors, concrete): a light tap kicks up a little dust, close in; a slam a burst of
+		// it rolling out, a cloud billowing up and a clod or two of the floor.
+		if (!slam)
+		{
+			DustBurst(floor, 4, 0.6f, DustColor(material));
+			return;
+		}
+
+		DustBurst(floor, 10, 1.3f, DustColor(material),
+			{.Count = 3, .ScaleMin = 0.75f, .ScaleMax = 0.8f, .RiseMin = 40, .RiseMax = 80, .LifeScale = 1.6f});
+		ImpactChunks(floor, normal, material, gEngfuncs.pfnRandomLong(1, 2));
+	}
+
+	// The killing swing, besides: a low ring of dust rolling out, set apart from its probing slams.
+	if (strength >= 2)
+		DustBurst(floor, 12, 1.6f, DustColor(material));
 }
 
 void JhlExplosion_ParseDisplacerSpecks(BufferReader& reader)
