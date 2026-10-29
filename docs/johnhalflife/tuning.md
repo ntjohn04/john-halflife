@@ -124,3 +124,16 @@ Server `server/entities/mortar.cpp` (`CMortar`), client `JhlExplosion_ParseMorta
 | Impact column | `UTIL_JhlGroundDust` in `MortarExplode` | 12 puffs at size 2 (shared `DustBurst`) |
 
 The shells' explosions are the shared explosion code's (`CGrenade::Explode`), as every grenade's and rocket's.
+
+## Chargers and gib shooters
+
+| Part | Knob | Value | See |
+|---|---|---|---|
+| Charger light (`chargers.cpp`, `CBaseCharger::Use`) | `TE_DLIGHT` | 70-90 units, 0.2 s, refreshed every 0.1 s it gives; health (60,205,180), HEV (255,170,70) | Any charger: `map c1a1` on |
+| Charger running dry | `UTIL_Sparks` | A spark burst as it empties | Drain one |
+| Shooter pieces' life (`effects.cpp`, `ShootThink`) | `JhlShooterGibLife` | At least 45 s, ±20% (models only) | `map c1a1f` (computers, glass, plates), `c2a4e`, `c1a1a` (cans) |
+| Shooter pieces kept | `JhlShooterGibsKept` | 64 at once; past that the oldest (by its `fuser4`, when thrown) fades | |
+
+Touches: every map's scripted debris (`env_shooter`) and `gibshooter`s; their pieces are entities, so the cap matters.
+Keep shooters close to vanilla: their count is vanilla's (extra pieces stuck together in c1a1a's vending machine), and
+no handles to their pieces are kept between maps (a reused slot named other entities).

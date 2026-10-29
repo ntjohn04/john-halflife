@@ -14,6 +14,7 @@
  ****/
 
 #include "cbase.h"
+#include "jhl_effects.h"
 
 /**
  *	@brief Base class for charger entities.
@@ -220,12 +221,37 @@ void CBaseCharger::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE u
 	}
 
 	// charge the player
+	const int juiceBefore = m_Juice;
+
 	if (TryCharge(player, chargeToUse))
 	{
 		if (m_Juice != UnlimitedJuice)
 		{
 			m_Juice = std::max(0, m_Juice - chargeToUse);
 		}
+	}
+
+	// johnhalflife (jhl_fx_particlesystem): a soft light on its face while it gives (health blue-green, the HEV's
+	// amber), a little pulsing, kept on a tenth of a second at a time; sparks as it runs dry.
+	if (UTIL_JhlParticleSystem())
+	{
+		const Vector center = (pev->absmin + pev->absmax) * 0.5f;
+		const Vector face = center + (player->EyePosition() - center).Normalize() * 8;
+		const bool health = ClassnameIs("func_healthcharger");
+
+		MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, face);
+		WRITE_BYTE(TE_DLIGHT);
+		WRITE_COORD_VECTOR(face);
+		WRITE_BYTE(RANDOM_LONG(7, 9)); // Radius, tens.
+		WRITE_BYTE(health ? 60 : 255);
+		WRITE_BYTE(health ? 205 : 170);
+		WRITE_BYTE(health ? 180 : 70);
+		WRITE_BYTE(2); // Life, tenths.
+		WRITE_BYTE(0); // Decay, tens.
+		MESSAGE_END();
+
+		if (juiceBefore > 0 && m_Juice == 0)
+			UTIL_Sparks(face);
 	}
 
 	// govern the rate of charge

@@ -1586,36 +1586,86 @@ CGib* CGibShooter::CreateGib()
 	return pGib;
 }
 
+// johnhalflife (jhl_fx_particlesystem): what a gib shooter throws, if models (not sprites: sparks, glass), lies a
+// while as debris does: at least JhlShooterGibLife, ±20%, its own life if longer (as many as vanilla's: a second piece
+// half the shots spawned in the same spot as the first, and the two stuck in each other, as c1a1a's cans in their
+// vending machine). At most JhlShooterGibsKept of them lie about at once (they're entities, and
+// a repeatable one can throw many): past that the oldest fades out. Each is marked with when it was thrown (its
+// fuser4), and the live gibs are looked through for the oldest: no handles kept between maps (entities' slots are
+// reused, so a kept one could come to name something else).
+constexpr float JhlShooterGibLife = 45;
+constexpr int JhlShooterGibsKept = 64;
+
+// Room for one more: the oldest of those lying about faded, if there are as many as are kept.
+static void JhlMakeRoomForShooterGib()
+{
+	int kept = 0;
+	CBaseEntity* oldest = nullptr;
+
+	for (CBaseEntity* gib = nullptr; (gib = UTIL_FindEntityByClassname(gib, "gib")) != nullptr;)
+	{
+		if (gib->pev->fuser4 <= 0)
+			continue;
+
+		++kept;
+
+		if (!oldest || gib->pev->fuser4 < oldest->pev->fuser4)
+			oldest = gib;
+	}
+
+	if (kept >= JhlShooterGibsKept && oldest)
+	{
+		oldest->pev->fuser4 = 0;
+		oldest->SetThink(&CBaseEntity::SUB_StartFadeOut);
+		oldest->pev->nextthink = gpGlobals->time;
+	}
+}
+
 void CGibShooter::ShootThink()
 {
 	pev->nextthink = gpGlobals->time + m_flDelay;
 
-	Vector vecShootDir;
+	const bool sprite = std::string_view{STRING(pev->model)}.ends_with(".spr");
+	const bool jhl = UTIL_JhlParticleSystem() && !sprite;
+	const int pieces = 1; // A second piece, half the shots, spawned in the same spot as the first and stuck with it.
 
-	vecShootDir = pev->movedir;
-
-	vecShootDir = vecShootDir + gpGlobals->v_right * RANDOM_FLOAT(-1, 1) * m_flVariance;
-	vecShootDir = vecShootDir + gpGlobals->v_forward * RANDOM_FLOAT(-1, 1) * m_flVariance;
-	vecShootDir = vecShootDir + gpGlobals->v_up * RANDOM_FLOAT(-1, 1) * m_flVariance;
-
-	vecShootDir = vecShootDir.Normalize();
-	CGib* pGib = CreateGib();
-
-	if (pGib)
+	for (int piece = 0; piece < pieces; ++piece)
 	{
-		pGib->pev->origin = pev->origin;
-		pGib->pev->velocity = vecShootDir * m_flGibVelocity;
+		Vector vecShootDir;
 
-		pGib->pev->avelocity.x = RANDOM_FLOAT(100, 200);
-		pGib->pev->avelocity.y = RANDOM_FLOAT(100, 300);
+		vecShootDir = pev->movedir;
 
-		float thinkTime = pGib->pev->nextthink - gpGlobals->time;
+		vecShootDir = vecShootDir + gpGlobals->v_right * RANDOM_FLOAT(-1, 1) * m_flVariance;
+		vecShootDir = vecShootDir + gpGlobals->v_forward * RANDOM_FLOAT(-1, 1) * m_flVariance;
+		vecShootDir = vecShootDir + gpGlobals->v_up * RANDOM_FLOAT(-1, 1) * m_flVariance;
 
-		pGib->m_lifeTime = (m_flGibLife * RANDOM_FLOAT(0.95, 1.05)); // +/- 5%
-		if (pGib->m_lifeTime < thinkTime)
+		vecShootDir = vecShootDir.Normalize();
+		CGib* pGib = CreateGib();
+
+		if (pGib)
 		{
-			pGib->pev->nextthink = gpGlobals->time + pGib->m_lifeTime;
-			pGib->m_lifeTime = 0;
+			pGib->pev->origin = pev->origin;
+			pGib->pev->velocity = vecShootDir * m_flGibVelocity;
+
+			pGib->pev->avelocity.x = RANDOM_FLOAT(100, 200);
+			pGib->pev->avelocity.y = RANDOM_FLOAT(100, 300);
+
+			float thinkTime = pGib->pev->nextthink - gpGlobals->time;
+
+			pGib->m_lifeTime = (m_flGibLife * RANDOM_FLOAT(0.95, 1.05)); // +/- 5%
+
+			if (jhl)
+			{
+				pGib->m_lifeTime = std::max(m_flGibLife, JhlShooterGibLife) * RANDOM_FLOAT(0.8f, 1.2f);
+				JhlMakeRoomForShooterGib();
+				pGib->pev->fuser4 = std::max(gpGlobals->time, 0.001f);
+			}
+
+			if (pGib->m_lifeTime < thinkTime)
+			{
+				pGib->pev->nextthink = gpGlobals->time + pGib->m_lifeTime;
+				pGib->m_lifeTime = 0;
+			}
 		}
 	}
 

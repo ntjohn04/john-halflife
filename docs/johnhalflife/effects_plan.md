@@ -485,6 +485,16 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
     spilled out of the buildings it's fired into), damage-free, with its damage as it was by a silent, unseen one at its own magnitude.
   * Lasers (`func_tanklaser`: Forget About Freeman's alien turret, Xen's crystals): a light the beam's own color at
     its emitter (140) and where it hits (110).
+* Chargers (`chargers.cpp`: `func_healthcharger`, `func_recharge`): while one gives, a soft light on its face toward
+  the player (the engine's `TE_DLIGHT`, 70-90 units, a fifth of a second at a time, refreshed each tenth it gives):
+  health blue-green (60,205,180), the HEV's amber (255,170,70); sparks (`UTIL_Sparks`) as it runs dry.
+* Gib shooters (`effects.cpp`: `env_shooter`, `gibshooter`; scripted debris): what they throw, if models (sprites,
+  sparks and glass, as they were), lies at least 45 s (its own life if longer), ±20%, as debris; as many as vanilla's
+  (a second piece half the shots, tried, spawned in the same spot as the first and stuck with it: c1a1a's vending
+  machine threw one or two cans). At most 64 lie about at once (they're entities; a repeatable one throws many): past
+  that the oldest fades, found among the live gibs by the time each was thrown (its `fuser4`). Kept handles to them
+  were tried first and dropped: kept between maps, a reused slot could come to name any entity, which was then
+  faded. Shooters are touched as little as can be.
 * Mortar fields (`mortar.cpp`: `func_mortar_field`, c1a3b/c1a3c We've Got Hostiles, c2a5g Surface Tension): each
   shell (`monster_mortar`, a grenade, 200 damage) explodes through `CGrenade::Explode`, so already with our
   explosions and the fixed placement. Added: seen coming in, 0.35 s before it lands (`JhlIncomingThink`, its own
