@@ -209,9 +209,12 @@ they don't use the map's model precache slots. Base scales make a typical piece 
 **Specks, lights, scorch, shake, underwater** (with `jhl_fx_particlesystem`; scales are the drawn fireball's, a
 grenade 3; RPG rockets 1.5×, explosive breakables 1.3×):
 
-* Specks: instead of the engine's 15 pure white (palette 254) ones, `EmbersAndLights` throws 25-35 embers (a grenade;
-  up to 15 more with size: an RPG rocket 30-40, a satchel 35-45, a mortar 40-50), pale yellow, cream and some white (252, 253, 254), 20-80 sideways (× √ that), 80-220 up, 1.5-2.5 s,
-  drifting and falling as the engine's (`pt_blob2`). Not under water.
+* Specks: instead of the engine's 15 pure white (palette 254) ones, `EmbersAndLights` throws 21-30 embers (a grenade;
+  up to 13 more with size: an RPG rocket 25-34, a satchel 30-38, a mortar 34-43; 15% under the first 25-35, +15,
+  which ran the engine out of particles in chains), pale yellow, cream and some white (252, 253, 254), 20-80 sideways
+  (× √ that), 80-220 up, 1.5-2.5 s, drifting and falling as the engine's (`pt_blob2`). Not under water. They and the
+  blob burst share a soft budget (`ParticleShare`): from 500 of theirs out to 1100, each new explosion throws less,
+  down to 20% (see the [tuning sheet](tuning.md#explosion-particles-clientjhl_explosionscpp-particleshare)).
 * Lights: the engine's flash (200, 0.01 s) and orange glow (150, fading 200 a second) times scale / 3 (1 to 2), ±5%;
   the glow lasts until it has faded. A third light fills the room: 1.7× the glow's radius, a little redder
   ((255,150,40) at 30%; a dlight's middle grows with its radius too, so about half the glow's there, falling off
@@ -482,6 +485,13 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
     spilled out of the buildings it's fired into), damage-free, with its damage as it was by a silent, unseen one at its own magnitude.
   * Lasers (`func_tanklaser`: Forget About Freeman's alien turret, Xen's crystals): a light the beam's own color at
     its emitter (140) and where it hits (110).
+* Mortar fields (`mortar.cpp`: `func_mortar_field`, c1a3b/c1a3c We've Got Hostiles, c2a5g Surface Tension): each
+  shell (`monster_mortar`, a grenade, 200 damage) explodes through `CGrenade::Explode`, so already with our
+  explosions and the fixed placement. Added: seen coming in, 0.35 s before it lands (`JhlIncomingThink`, its own
+  think, landing on vanilla's time; `TE_USERTRACER`) a pale, warm streak (255,200,140) at 0.55, 2.5 wide, 260 long
+  with a 140 core, falls straight onto where it lands from 1024 up at 2900 units/s, arriving as it explodes
+  (`JhlExplosion_ParseMortarIncoming`, a tracer); and where it lands the ground thrown up in a column, the floor's
+  color (`UTIL_JhlGroundDust`, 12 puffs at size 2, 4 billowing up).
 * NPC turrets (`turret.cpp`: ceiling turrets `monster_turret`, `monster_miniturret`, `monster_sentry`): vanilla's
   shots had only the engine's light (`EF_MUZZLEFLASH`). Each now also sends its muzzle and aim as a mounted gun's,
   kind 4 (`TE_MULTIGUNSHOT`, `JhlTurretShot`), drawn as a smaller gun's: a flickering `muzzleflash2` (0.35, ±15%,

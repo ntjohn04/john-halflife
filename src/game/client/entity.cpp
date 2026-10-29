@@ -962,6 +962,10 @@ static void MsgFunc_TempEntity(const char* name, BufferReader& reader)
 		JhlGargantua_ParseStomp(reader);
 		break;
 
+	case TE_USERTRACER:
+		JhlExplosion_ParseMortarIncoming(reader);
+		break;
+
 	case TE_MULTIGUNSHOT:
 		JhlTank_ParseFire(reader);
 		break;

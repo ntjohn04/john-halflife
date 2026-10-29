@@ -24,6 +24,7 @@
 #include "jhl_explosion.h"
 #include "jhl_explosions.h"
 #include "jhl_settings.h"
+#include "jhl_tracers.h"
 #include "parsemsg.h"
 #include "pm_defs.h"
 #include "pm_materials.h"
@@ -153,9 +154,9 @@ constexpr int RicochetSparkSpeedMax = 180;
 // The specks and lights every explosion makes (instead of the engine's: 15 pure white specks, palette 254, ±32
 // sideways and 80-143 up, 2 s; a 200 unit flash for 0.01 s and a 150 unit orange glow over 1 s; the same for every
 // size). Embers: hot colors, more and wider for bigger explosions (scale over EmberScale, up to EmberMoreMax).
-constexpr int EmberCountMin = 25; // A grenade's; up to EmberCountMore more for the biggest.
-constexpr int EmberCountMax = 35;
-constexpr int EmberCountMore = 15;
+constexpr int EmberCountMin = 21; // A grenade's; up to EmberCountMore more for the biggest (15% under the first 25-35,
+constexpr int EmberCountMax = 30; // +15: the engine ran out of particles under a chain of explosions).
+constexpr int EmberCountMore = 13;
 constexpr float EmberScale = 3;
 constexpr float EmberMoreMax = 2.5f;
 constexpr int EmberColors[] = {252, 252, 253, 253, 254}; // Pale yellow, cream, some white.
@@ -760,6 +761,50 @@ void ImpactChunks(const Vector& position, const Vector& normal, char material, i
 	}
 }
 
+// The particles explosions' embers and blobs have out (the engine's particles are everyone's: sparks, tracers, blood
+// too; it has no way to ask how many are free): under ParticlesSoft, explosions throw all theirs; from there to
+// ParticlesHard, each throws less, down to ParticlesLeastShare of them, so a chain of big ones thins out its later ones
+// (when the air's already full of them) rather than running the engine out. Kept as when each batch goes, and how many.
+constexpr int ParticlesSoft = 500;
+constexpr int ParticlesHard = 1100;
+constexpr float ParticlesLeastShare = 0.2f;
+
+struct ParticleBatch
+{
+	float Gone = 0;
+	int Count = 0;
+};
+
+ParticleBatch g_ParticleBatches[128];
+int g_NextParticleBatch = 0;
+
+// How many of @p count an explosion throws now.
+int ParticleShare(int count)
+{
+	const float now = gEngfuncs.GetClientTime();
+	int out = 0;
+
+	for (ParticleBatch& batch : g_ParticleBatches)
+	{
+		// (A new map or a loaded game restarts the clock: one going further off than a particle lasts is from before.)
+		if (batch.Gone > now + 5)
+			batch = {};
+
+		if (batch.Gone > now)
+			out += batch.Count;
+	}
+
+	const float over = std::clamp(static_cast<float>(out - ParticlesSoft) / (ParticlesHard - ParticlesSoft), 0.f, 1.f);
+	return static_cast<int>(std::round(count * (1 - over * (1 - ParticlesLeastShare))));
+}
+
+// @p count particles thrown, going by @p gone.
+void ParticlesThrown(int count, float gone)
+{
+	g_ParticleBatches[g_NextParticleBatch] = {gone, count};
+	g_NextParticleBatch = (g_NextParticleBatch + 1) % std::size(g_ParticleBatches);
+}
+
 // An explosion's specks and lights, by its size (see EmberCountMin).
 void EmbersAndLights(const Vector& origin, float scale, int flags, bool embers)
 {
@@ -768,9 +813,10 @@ void EmbersAndLights(const Vector& origin, float scale, int flags, bool embers)
 
 	if (embers && (flags & TE_EXPLFLAG_NOPARTICLES) == 0)
 	{
-		// A grenade 25-35, an RPG rocket 30-40, a satchel 35-45, a mortar 40-50.
+		// A grenade 21-30, an RPG rocket 25-34, a satchel 30-38, a mortar 34-43 (fewer when many are out).
 		const int added = static_cast<int>(EmberCountMore * (more - 1) / (EmberMoreMax - 1));
-		const int count = gEngfuncs.pfnRandomLong(EmberCountMin + added, EmberCountMax + added);
+		const int count = ParticleShare(gEngfuncs.pfnRandomLong(EmberCountMin + added, EmberCountMax + added));
+		ParticlesThrown(count, now + EmberLifeMax);
 
 		for (int i = 0; i < count; ++i)
 		{
@@ -1041,8 +1087,11 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 void JhlExplosion_Blob(const Vector& origin, int count)
 {
 	// The engine's R_BlobExplosion (Quake's), with any count: half pt_blob (colors 66-71, swelling and slowing),
-	// half pt_blob2 (150-155, spreading flat), living 1 or 1.4 s.
+	// half pt_blob2 (150-155, spreading flat), living 1 or 1.4 s. Fewer when many are out (ParticleShare).
 	const float now = gEngfuncs.GetClientTime();
+
+	count = ParticleShare(count);
+	ParticlesThrown(count, now + 1.4f);
 
 	for (int i = 0; i < count; ++i)
 	{
@@ -1204,6 +1253,31 @@ void JhlExplosion_ParseGroundDust(BufferReader& reader)
 	char material = 0;
 	FloorUnder(origin, 32, tr, material);
 	DustBurst(origin, count, size, DustColor(material), {.Count = count / 3});
+}
+
+void JhlExplosion_ParseMortarIncoming(BufferReader& reader)
+{
+	const Vector impact = reader.ReadCoordVector();
+
+	if (!JhlParticleSystemEnabled())
+		return;
+
+	// A pale, warm streak falling straight onto where it lands from 1024 up, its head arriving as it explodes (the server
+	// sends it CMortar's JhlIncomingLead, 0.35 s, before: 1024 / its speed), a hotter core inside.
+	static const JhlTracerStyle Incoming{
+		.Color = {255, 200, 140},
+		.Brightness = 0.55f,
+		.Width = 2.5f,
+		.Length = 260,
+		.Speed = 2900,
+		.StartOffsetMax = 0,
+		.CoreColor = {255, 240, 220},
+		.CoreBrightness = 0.8f,
+		.CoreWidth = 1,
+		.CoreLength = 140,
+	};
+
+	JhlTracer_Fire(impact + Vector{0, 0, 1024}, impact, Incoming);
 }
 
 void JhlExplosion_TentacleImpact(const Vector& position, int strength)

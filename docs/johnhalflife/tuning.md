@@ -26,6 +26,22 @@ Every temp entity's bounce sound: debris, gibs, shells, links.
 See: break a crate, a few grenades on a floor, an M249 burst. Too sparse: raise `DebrisBudget`. Still stacking:
 widen `DebrisApart` or `DebrisSoon`.
 
+### Explosion particles (`client/jhl_explosions.cpp`, `ParticleShare`)
+
+Every explosion's embers (the pale specks) and blob burst, from the engine's one pool of particles (shared with
+sparks, tracers and blood; when it runs out it prints "not enough free particles" and drops what asked). It can't be
+asked how many are free, so the explosions count their own.
+
+| Knob | Value | Sets |
+|---|---|---|
+| `EmberCountMin`-`Max`, `EmberCountMore` | 21-30, +13 for the biggest | Embers an explosion (15% under the first 25-35, +15) |
+| `ParticlesSoft` | 500 | Under this many of theirs out, explosions throw all theirs |
+| `ParticlesHard`, `ParticlesLeastShare` | 1100, 20% | From Soft to Hard, each new one throws less, down to this share |
+| Blob | 64, 256 for large (`JhlExplosion_Blob` callers) | Also under the budget |
+
+See: chain satchels or several grenades at once. Still running out: lower `ParticlesHard` or `ParticlesSoft`. Big
+explosions looking thin early in a chain: raise `ParticlesSoft`.
+
 ### Floor dust (`client/jhl_explosions.cpp`, `DustBurst`)
 
 Shared by the houndeye's blast (size 1, white, as it was), the gargantua's stomp (size 2.5) and the tentacles. Its
@@ -95,3 +111,16 @@ Server `server/entities/func_tank.cpp` (`CFuncTank::Fire`, `CFuncTankMortar::Fir
 
 Touches: every map's turrets and every usable one; the cannon's damage now comes from a second, silent, unseen
 `env_explosion` at the map's magnitude.
+
+## Mortar fields (`func_mortar_field`)
+
+Server `server/entities/mortar.cpp` (`CMortar`), client `JhlExplosion_ParseMortarIncoming` in
+`client/jhl_explosions.cpp`. See: `map c1a3b` or `c1a3c` (We've Got Hostiles), `map c2a5g` (Surface Tension).
+
+| Part | Knob | Value |
+|---|---|---|
+| Incoming streak's lead | `JhlIncomingLead` (server) | 0.35 s before it lands; keep the client's speed at about 1024 / this |
+| Incoming streak | `Incoming` style (client) | (255,200,140) 0.55, 2.5 wide, 260 long, 140 core, 2900 units/s from 1024 up |
+| Impact column | `UTIL_JhlGroundDust` in `MortarExplode` | 12 puffs at size 2 (shared `DustBurst`) |
+
+The shells' explosions are the shared explosion code's (`CGrenade::Explode`), as every grenade's and rocket's.

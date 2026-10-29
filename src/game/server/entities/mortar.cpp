@@ -14,11 +14,15 @@
  ****/
 
 #include "cbase.h"
+#include "jhl_effects.h"
 
 /**
  *	@brief the "LaBuznik" mortar device
  *	Drops bombs from above
  */
+// johnhalflife: a shell's last moment, seen coming in (CMortar::JhlIncomingThink).
+static void JhlMortarIncoming(CBaseEntity* mortar, float impactTime);
+
 class CFuncMortarField : public CBaseToggle
 {
 	DECLARE_CLASS(CFuncMortarField, CBaseToggle);
@@ -164,6 +168,7 @@ void CFuncMortarField::FieldUse(CBaseEntity* pActivator, CBaseEntity* pCaller, U
 
 		CBaseEntity* pMortar = Create("monster_mortar", tr.vecEndPos, Vector(0, 0, 0), pActivator);
 		pMortar->pev->nextthink = gpGlobals->time + t;
+		JhlMortarIncoming(pMortar, gpGlobals->time + t);
 		t += RANDOM_FLOAT(0.2, 0.5);
 
 		if (i == 0)
@@ -182,12 +187,44 @@ public:
 
 	void MortarExplode();
 
+	/**
+	 *	@brief johnhalflife (jhl_fx_particlesystem): its streak falling onto where it lands, sent JhlIncomingLead before
+	 *	it does (the client's, a tracer: JhlTracer_Fire), then on to exploding on time.
+	 */
+	void JhlIncomingThink();
+
 	int m_spriteTexture;
 };
 
+// How long before it lands its streak's sent: as long as the client's takes to fall (jhl_explosions.cpp).
+constexpr float JhlIncomingLead = 0.35f;
+
 BEGIN_DATAMAP(CMortar)
 DEFINE_FUNCTION(MortarExplode),
+	DEFINE_FUNCTION(JhlIncomingThink),
 	END_DATAMAP();
+
+static void JhlMortarIncoming(CBaseEntity* mortar, float impactTime)
+{
+	if (!UTIL_JhlParticleSystem())
+		return;
+
+	auto shell = static_cast<CMortar*>(mortar);
+	shell->SetThink(&CMortar::JhlIncomingThink);
+	shell->pev->nextthink = std::max(gpGlobals->time, impactTime - JhlIncomingLead);
+	shell->pev->dmgtime = impactTime;
+}
+
+void CMortar::JhlIncomingThink()
+{
+	MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, pev->origin);
+	WRITE_BYTE(TE_USERTRACER);
+	WRITE_COORD_VECTOR(pev->origin);
+	MESSAGE_END();
+
+	SetThink(&CMortar::MortarExplode);
+	pev->nextthink = pev->dmgtime;
+}
 
 LINK_ENTITY_TO_CLASS(monster_mortar, CMortar);
 
@@ -264,6 +301,9 @@ void CMortar::MortarExplode()
 
 	Explode(&tr, DMG_BLAST | DMG_MORTAR);
 	UTIL_ScreenShake(tr.vecEndPos, 25.0, 150.0, 1.0, 750);
+
+	// johnhalflife: an artillery shell's, not a grenade's: the ground thrown up in a column, the floor's color.
+	UTIL_JhlGroundDust(tr.vecEndPos, 12, 20);
 
 #if 0
 	int pitch = RANDOM_LONG(95, 124);
