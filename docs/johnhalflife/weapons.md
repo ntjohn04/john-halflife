@@ -88,6 +88,9 @@ Switching to a weapon plays a draw sound from a table keyed by view model (`weap
 * The snark and shock rifle are left out; their own deploy animations already make a sound.
 * Played from the server: weapon switches go through the `selectweapon` command and are never predicted,
   so a predicted sound would skip the local player.
+* The satchel's two swaps without a switch sound as switching does: throwing a charge and taking out the radio plays
+  the radio's sound (`satchel_flap.wav`), and taking out another charge after detonating plays the charge's
+  (`satchel_pickup.wav`) (`CSatchel::Throw`, `CSatchel::WeaponIdle`; from the server, as the switch's).
 
 ### Weapon pickup
 Picking up a weapon or a weapon box plays one of the stock `items/gunpickup1-4.wav` at random. Vanilla
