@@ -148,3 +148,15 @@ Server `server/entities/op4mortar.cpp`, client `MortarShellTrail` and `JhlTank_P
 | Explosion | `MortarExplodeTouch` | As a grenade's of its damage: scale 90, 15 fps (vanilla's overflowed to about 24× a grenade's) |
 | Launch | `JhlMortarLaunch` | The rocket launcher's: light 260, flash 0.5, 5 puffs along its shell's way |
 | Trail | `MortarTrailSpacing`, `MortarTrailScaleMin`-`Max`, `MortarTrailLifeScale`, `MortarTrailAlpha` | 40 units, 0.45-0.7, 0.7 the RPG trail's life, 0.4 |
+
+## Pit worm
+
+Server `server/entities/NPCs/racex/pitworm_up.cpp`, client `JhlPitWorm_Drawn` in `client/jhl_gargantua.cpp`. See:
+`map of4a4`.
+
+| Part | Knob | Value |
+|---|---|---|
+| Eye light, on the pit | `PitWormEyeDim`, `PitWormEyeBlazing`, `PitWormEyeFlicker`, `PitWormEyeColor` | 220 open, 480 firing, ±10%, (90,255,110); out while blinking |
+| Eye light, on its face | `PitWormEyeModelDim`, `PitWormEyeModelBlazing`, `PitWormEyeAhead` | 50 open, 90 firing, 24 units ahead of its eye |
+| Beam core | `ShootBeam` | `laserbeam`, width 10 (its beam 32), (210,255,200), 110, scroll 40 |
+| Beam burn | `JhlBeamBurn` | Small scorch; light 110-140 (60,255,70) for 0.2 s each update |

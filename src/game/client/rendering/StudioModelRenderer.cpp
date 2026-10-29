@@ -1617,8 +1617,9 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 
 			memcpy(ent->attachment, m_pCurrentEntity->attachment, sizeof(Vector) * 4);
 
-			// johnhalflife: a gargantua's flames' cores onto its hands as just drawn.
+			// johnhalflife: a gargantua's flames' cores onto its hands, a pit worm's eye's light, as just drawn.
 			JhlGargantua_Drawn(m_pCurrentEntity);
+			JhlPitWorm_Drawn(m_pCurrentEntity);
 		}
 	}
 

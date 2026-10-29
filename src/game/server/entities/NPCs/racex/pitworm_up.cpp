@@ -14,6 +14,7 @@
  ****/
 
 #include "cbase.h"
+#include "jhl_effects.h"
 
 const auto PITWORM_UP_AE_HITGROUND = 1;
 const auto PITWORM_UP_AE_SHOOTBEAM = 2;
@@ -165,6 +166,14 @@ public:
 
 	CBeam* m_pBeam;
 	CSprite* m_pSprite;
+
+	/**
+	 *	@brief johnhalflife (jhl_fx_particlesystem): its beam's hot core (not saved: a temporary beam, gone on save and
+	 *	restore, as its beam's strands are), and the beam's effects where it burns: a light and a scorch.
+	 */
+	EHANDLE m_hJhlCore;
+	void JhlBeamBurn(const TraceResult& tr);
+	void JhlBeamOff();
 
 	bool m_fAttacking;
 	bool m_fLockHeight;
@@ -483,6 +492,7 @@ void COFPitWormUp::HuntThink()
 			UTIL_Remove(m_pSprite);
 			m_pBeam = nullptr;
 			m_pSprite = nullptr;
+			JhlBeamOff();
 		}
 	}
 
@@ -810,11 +820,34 @@ void COFPitWormUp::ShootBeam()
 			}
 			else if (tr.flFraction != 1.0)
 			{
-				UTIL_DecalTrace(&tr, DECAL_GUNSHOT1 + RANDOM_LONG(0, 4));
+				if (UTIL_JhlParticleSystem())
+					JhlBeamBurn(tr);
+				else
+					UTIL_DecalTrace(&tr, DECAL_GUNSHOT1 + RANDOM_LONG(0, 4));
+
 				m_pBeam->DoSparks(tr.vecEndPos, tr.vecEndPos);
 			}
 
 			m_pBeam->DoSparks(vecEyePos, vecEyePos);
+
+			// johnhalflife: a hot core down the middle of it (the same sprite, thinner, paler, fainter), and its eye
+			// marked as blazing for the client (its renderamt: drawn normally, it's unused; jhl_gargantua.cpp's
+			// JhlPitWorm_Drawn lights it).
+			if (UTIL_JhlParticleSystem())
+			{
+				if (CBeam* core = CBeam::BeamCreate("sprites/laserbeam.spr", 10); core)
+				{
+					core->PointEntInit(tr.vecEndPos, entindex());
+					core->SetEndAttachment(1);
+					core->SetColor(210, 255, 200);
+					core->SetBrightness(110);
+					core->SetScrollRate(40);
+					core->pev->spawnflags |= SF_BEAM_TEMPORARY;
+					m_hJhlCore = core;
+				}
+
+				pev->renderamt = 1;
+			}
 
 			m_flBeamExpireTime = gpGlobals->time + 0.9;
 
@@ -881,6 +914,9 @@ void COFPitWormUp::StrafeBeam()
 
 	m_pBeam->pev->origin = tr.vecEndPos;
 
+	if (CBaseEntity* core = m_hJhlCore; core)
+		core->pev->origin = tr.vecEndPos;
+
 	auto pHit = Instance(tr.pHit);
 
 	if (pHit && pHit->pev->takedamage != DAMAGE_NO)
@@ -896,7 +932,11 @@ void COFPitWormUp::StrafeBeam()
 	}
 	else if (tr.flFraction != 1.0)
 	{
-		UTIL_DecalTrace(&tr, DECAL_GUNSHOT1 + g_engfuncs.pfnRandomLong(0, 4));
+		if (UTIL_JhlParticleSystem())
+			JhlBeamBurn(tr);
+		else
+			UTIL_DecalTrace(&tr, DECAL_GUNSHOT1 + g_engfuncs.pfnRandomLong(0, 4));
+
 		m_pBeam->DoSparks(tr.vecEndPos, tr.vecEndPos);
 	}
 
@@ -1345,6 +1385,34 @@ void COFPitWormUp::HandleAnimEvent(MonsterEvent_t* pEvent)
 	}
 }
 
+void COFPitWormUp::JhlBeamBurn(const TraceResult& tr)
+{
+	// A scorch where it burns (vanilla's were bullet holes), and a light its green there, a moment at a time.
+	UTIL_DecalTrace(const_cast<TraceResult*>(&tr), DECAL_SMALLSCORCH1 + RANDOM_LONG(0, 2));
+
+	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, tr.vecEndPos);
+	WRITE_BYTE(TE_DLIGHT);
+	WRITE_COORD_VECTOR(tr.vecEndPos + tr.vecPlaneNormal * 8);
+	WRITE_BYTE(RANDOM_LONG(11, 14)); // Radius, tens.
+	WRITE_BYTE(60);
+	WRITE_BYTE(255);
+	WRITE_BYTE(70);
+	WRITE_BYTE(2); // Life, tenths.
+	WRITE_BYTE(0);
+	MESSAGE_END();
+}
+
+void COFPitWormUp::JhlBeamOff()
+{
+	if (CBaseEntity* core = m_hJhlCore; core)
+		UTIL_Remove(core);
+
+	m_hJhlCore = nullptr;
+
+	if (UTIL_JhlParticleSystem())
+		pev->renderamt = 0;
+}
+
 void COFPitWormUp::UpdateOnRemove()
 {
 	RemoveEffects();
@@ -1353,6 +1421,8 @@ void COFPitWormUp::UpdateOnRemove()
 
 void COFPitWormUp::RemoveEffects()
 {
+	JhlBeamOff();
+
 	if (m_pBeam)
 	{
 		UTIL_Remove(m_pBeam);

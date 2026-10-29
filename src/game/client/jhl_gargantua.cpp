@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "hud.h"
+#include "com_model.h"
 #include "beamdef.h"
 #include "event_api.h"
 #include "r_efx.h"
@@ -349,6 +350,52 @@ void JhlGargantua_Drawn(cl_entity_t* ent)
 			core->target = hand;
 			core->delta = core->target - core->source;
 		}
+	}
+}
+
+// The pit worm's eye (its attachment 0; pit_worm_up.mdl): lit its beam's green, dim while open (skin 0), out as it
+// blinks (skins 1-5), blazing while it fires (the server marks its renderamt 1: COFPitWormUp::ShootBeam), flickering:
+// a light on the pit around it (its eye hangs in the open middle of it: a small one lit nothing), and one on models,
+// so its own head glows (as vanilla's while it fires, TE_ELIGHT).
+constexpr int PitWormEyeKey = 40960; // + its index.
+constexpr float PitWormEyeDim = 220;
+constexpr float PitWormEyeBlazing = 480;
+constexpr float PitWormEyeModelDim = 50;		// Small, so it lights its face, not its body below.
+constexpr float PitWormEyeModelBlazing = 90;
+constexpr float PitWormEyeAhead = 24;		// A little ahead of its eye, out of its head.
+constexpr float PitWormEyeFlicker = 0.1f;
+constexpr color24 PitWormEyeColor{90, 255, 110};
+
+void JhlPitWorm_Drawn(cl_entity_t* ent)
+{
+	if (!JhlParticleSystemEnabled() || !ent->model || !std::strstr(ent->model->name, "pit_worm_up.mdl") || ent->curstate.skin != 0 ||
+		ent->attachment[0] == g_vecZero)
+	{
+		return;
+	}
+
+	const bool blazing = ent->curstate.renderamt == 1;
+
+	const float flicker = Random(1 - PitWormEyeFlicker, 1 + PitWormEyeFlicker);
+
+	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(PitWormEyeKey + ent->index); light)
+	{
+		light->origin = ent->attachment[0];
+		light->radius = (blazing ? PitWormEyeBlazing : PitWormEyeDim) * flicker;
+		light->color = PitWormEyeColor;
+		light->die = gEngfuncs.GetClientTime() + 0.05f;
+		light->decay = 0;
+	}
+
+	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocElight(PitWormEyeKey + ent->index); light)
+	{
+		Vector forward;
+		AngleVectors(ent->angles, &forward, nullptr, nullptr);
+		light->origin = ent->attachment[0] + forward * PitWormEyeAhead;
+		light->radius = (blazing ? PitWormEyeModelBlazing : PitWormEyeModelDim) * flicker;
+		light->color = PitWormEyeColor;
+		light->die = gEngfuncs.GetClientTime() + 0.05f;
+		light->decay = 0;
 	}
 }
 

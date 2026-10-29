@@ -516,6 +516,17 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
   a random frame and turn, 0.07 s), a little more light (0.8 a gun's), a wisp 35% of the time, and its brass, one a
   shot, out to its right: rifle casings for the ceiling turret's 12 mm, 9 mm brass for the others. Their deaths are
   as they were (the engine's smoke, `UTIL_Sparks`, already our spark bursts).
+* Pit worm (`pitworm_up.cpp`, of4a4), all in its own code:
+  * Eye: lights its beam's green (90,255,110) on its eye (attachment 0, as drawn: `JhlPitWorm_Drawn`), while open
+    (skin 0), out as it blinks (skins 1-5), stronger while it fires (the server marks its `renderamt` 1 while its
+    beam's out), flickering ±10%: one on the pit, 220 open, 480 firing (its eye hangs in the open middle of the pit:
+    smaller lit nothing), and one on models, so its face glows, small (50, 90 firing) and 24 units ahead of its eye
+    (bigger, it lit its body below most).
+  * Beam: a hot core down its middle (`laserbeam`, 10 wide in tenths against its 32, (210,255,200), 110, scrolling),
+    a temporary beam (gone on save and restore) moved with it and removed with it. Where it burns the world, a small
+    scorch (in place of vanilla's bullet holes) and a light its green (110-140, a fifth of a second at a time).
+  * Claws: left as they were. A tentacle's slam under each arm's claw tips as they struck was tried and dropped:
+    its claws' bones aren't where its strikes land.
 * Tentacles (`tentacle.cpp`; c1a4i's Blast Pit, c2a5x, c4a1b): vanilla's strikes only sounded, by a map key (silo,
   dirt, water). Now each also sends where it struck (`TE_LARGEFUNNEL`: 0 a light tap, 1 a slam, 2 its killing
   swing's, 200 damage), and the client looks at the floor under it, by its material (`JhlExplosion_TentacleImpact`):
