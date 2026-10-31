@@ -106,11 +106,17 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 		return false;
 	}
 
-	ALCint attribs[3] = {0};
+	ALCint attribs[7] = {0};
 
 	// We only need 1.
 	attribs[0] = ALC_MAX_AUXILIARY_SENDS;
 	attribs[1] = 1;
+
+	// johnhalflife: every sound playing takes a source, and OpenAL Soft allows 256 unless asked for more.
+	attribs[2] = ALC_MONO_SOURCES;
+	attribs[3] = RequestedMonoSources;
+	attribs[4] = ALC_STEREO_SOURCES;
+	attribs[5] = RequestedStereoSources;
 
 	m_Context.reset(alcCreateContext(m_Device.get(), attribs));
 
@@ -150,6 +156,15 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 	{
 		m_Logger->error("OpenAL does not provide enough auxiliary send slots for EFX use (requested {}, got {})", attribs[1], auxSendsCount);
 		return false;
+	}
+
+	{
+		ALCint monoSources = 0;
+		ALCint stereoSources = 0;
+		alcGetIntegerv(m_Device.get(), ALC_MONO_SOURCES, 1, &monoSources);
+		alcGetIntegerv(m_Device.get(), ALC_STEREO_SOURCES, 1, &stereoSources);
+		m_Logger->debug("OpenAL sources: {} mono, {} stereo (requested {}, {})",
+			monoSources, stereoSources, RequestedMonoSources, RequestedStereoSources);
 	}
 
 	if (!CheckOpenALExtension("AL_SOFT_loop_points", *m_Logger))
@@ -215,6 +230,8 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 	m_HRTFImplementation = g_ConCommands.CreateCVar("snd_hrtf_implementation", "", FCVAR_ARCHIVE);
 	g_ConCommands.CreateCommand("snd_hrtf_list_implementations", [this](const auto&)
 		{ PrintHRTFImplementations(); });
+	g_ConCommands.CreateCommand("snd_channels", [this](const auto&)
+		{ PrintChannels(); });
 
 	m_SupportsHRTF = alcIsExtensionPresent(m_Device.get(), "ALC_SOFT_HRTF") != ALC_FALSE;
 
@@ -465,6 +482,11 @@ void GameSoundSystem::StartSound(int entityIndex, int channelIndex, SoundData&& 
 
 	Channel* newChannel = FindOrCreateChannel(entityIndex, channelIndex);
 
+	if (!newChannel)
+	{
+		return;
+	}
+
 	const std::string_view soundOrSentence = GetSoundName(sound);
 
 	if (SetupChannel(*newChannel, entityIndex, channelIndex, std::move(sound), origin, volume, pitch, attenuation, false))
@@ -670,13 +692,196 @@ Channel* GameSoundSystem::CreateChannel()
 {
 	Channel channel;
 
+	// Clear errors left by earlier calls so a failure here is this one's.
+	alGetError();
+
 	channel.Source = OpenALSource::Create();
+
+	// johnhalflife: out of sources, the sound played on no source at all and was silent, and so was every sound after
+	// it until enough of those playing ended. As the engine did with its channels full, one about to end is taken over.
+	if (alGetError() != AL_NO_ERROR || !channel.Source.IsValid())
+	{
+		channel.Source = OpenALSource{};
+		return StealChannel();
+	}
 
 	UpdateSourceEffect(channel.Source);
 
 	m_Channels.push_back(std::move(channel));
 
 	return &m_Channels.back();
+}
+
+float GameSoundSystem::GetChannelAudibility(const Channel& channel) const
+{
+	ALint isRelative = AL_FALSE;
+	alGetSourcei(channel.Source.Id, AL_SOURCE_RELATIVE, &isRelative);
+
+	ALfloat gain = 0;
+	alGetSourcef(channel.Source.Id, AL_GAIN, &gain);
+
+	if (isRelative != AL_FALSE)
+	{
+		return gain;
+	}
+
+	Vector position, listener;
+	ALfloat rolloff = 0;
+	alGetSourcefv(channel.Source.Id, AL_POSITION, position);
+	alGetListenerfv(AL_POSITION, listener);
+	alGetSourcef(channel.Source.Id, AL_ROLLOFF_FACTOR, &rolloff);
+
+	// AL_LINEAR_DISTANCE, its reference distance 0 (SetupChannel).
+	const float distance = std::min((position - listener).Length(), NominalClippingDistance);
+	return gain * std::max(0.f, 1 - rolloff * distance / NominalClippingDistance);
+}
+
+float GameSoundSystem::GetChannelTimeLeft(const Channel& channel) const
+{
+	ALint buffer = 0, size = 0, bits = 0, channels = 0, frequency = 0, offset = 0;
+	alGetSourcei(channel.Source.Id, AL_BUFFER, &buffer);
+
+	if (buffer == 0)
+	{
+		return 0;
+	}
+
+	alGetBufferi(buffer, AL_SIZE, &size);
+	alGetBufferi(buffer, AL_BITS, &bits);
+	alGetBufferi(buffer, AL_CHANNELS, &channels);
+	alGetBufferi(buffer, AL_FREQUENCY, &frequency);
+	alGetSourcei(channel.Source.Id, AL_SAMPLE_OFFSET, &offset);
+
+	if (bits <= 0 || channels <= 0 || frequency <= 0)
+	{
+		return 0;
+	}
+
+	const float samples = size * 8.f / (bits * channels);
+	return std::max(0.f, samples - offset) / frequency / std::max(channel.Pitch / 100.f, 0.01f);
+}
+
+Channel* GameSoundSystem::StealChannel()
+{
+	// johnhalflife: of the one-shot sounds playing (never a sentence, nor a looping sound: nothing would start it again),
+	// one that can't be heard, else the one closest to ending.
+	Channel* best = nullptr;
+	bool bestSilent = false;
+	float bestTimeLeft = 0;
+
+	for (auto& channel : m_Channels)
+	{
+		if (!std::holds_alternative<SoundIndex>(channel.Sound) || !channel.Source.IsValid())
+			continue;
+
+		if (m_SoundCache->GetSound(std::get<SoundIndex>(channel.Sound))->IsLooping)
+			continue;
+
+		const bool silent = GetChannelAudibility(channel) < 0.01f;
+		const float timeLeft = GetChannelTimeLeft(channel);
+
+		if (!best || (silent && !bestSilent) || (silent == bestSilent && timeLeft < bestTimeLeft))
+		{
+			best = &channel;
+			bestSilent = silent;
+			bestTimeLeft = timeLeft;
+		}
+	}
+
+	// Said at most every few seconds, with what's playing, so a log shows what filled them.
+	++m_StolenSinceWarning;
+
+	if (const float now = gEngfuncs.GetClientTime(); now >= m_NextStealWarning || now < m_NextStealWarning - 10)
+	{
+		m_NextStealWarning = now + 5;
+		m_Logger->warn("Out of sound sources ({} sounds playing): {} sound(s) took over another's since the last warning{}. "
+					   "Playing most: {}",
+			m_Channels.size(), m_StolenSinceWarning, best ? "" : ", this one couldn't (only loops and sentences playing)",
+			DescribeChannels(6));
+		m_StolenSinceWarning = 0;
+	}
+
+	if (!best)
+	{
+		return nullptr;
+	}
+
+	m_Logger->trace("Taking over \"{}\": entity {}, channel {}", GetSoundName(best->Sound), best->EntityIndex, best->ChannelIndex);
+	ClearChannel(*best);
+	return best;
+}
+
+std::string GameSoundSystem::DescribeChannels(std::size_t most) const
+{
+	struct Count
+	{
+		std::string_view Name;
+		int Playing = 0;
+		bool Looping = false;
+	};
+
+	std::vector<Count> counts;
+
+	for (const auto& channel : m_Channels)
+	{
+		const std::string_view name = GetSoundName(channel.Sound);
+		const bool looping = std::holds_alternative<SoundIndex>(channel.Sound) &&
+							 m_SoundCache->GetSound(std::get<SoundIndex>(channel.Sound))->IsLooping;
+
+		auto it = std::find_if(counts.begin(), counts.end(), [&](const Count& c)
+			{ return c.Name == name; });
+
+		if (it == counts.end())
+			counts.push_back({name, 1, looping});
+		else
+			++it->Playing;
+	}
+
+	std::sort(counts.begin(), counts.end(), [](const Count& a, const Count& b)
+		{ return a.Playing > b.Playing; });
+
+	std::string text;
+
+	for (std::size_t i = 0; i < counts.size() && i < most; ++i)
+	{
+		text += fmt::format("{}{} x{}{}", i > 0 ? ", " : "", counts[i].Name, counts[i].Playing, counts[i].Looping ? " (looping)" : "");
+	}
+
+	if (counts.size() > most)
+	{
+		text += fmt::format(", and {} other sounds", counts.size() - most);
+	}
+
+	return text;
+}
+
+void GameSoundSystem::PrintChannels()
+{
+	if (!MakeCurrent())
+	{
+		return;
+	}
+
+	int looping = 0;
+	int silent = 0;
+
+	for (const auto& channel : m_Channels)
+	{
+		if (std::holds_alternative<SoundIndex>(channel.Sound) && m_SoundCache->GetSound(std::get<SoundIndex>(channel.Sound))->IsLooping)
+			++looping;
+
+		if (GetChannelAudibility(channel) < 0.01f)
+			++silent;
+	}
+
+	ALCint monoSources = 0;
+	ALCint stereoSources = 0;
+	alcGetIntegerv(m_Device.get(), ALC_MONO_SOURCES, 1, &monoSources);
+	alcGetIntegerv(m_Device.get(), ALC_STEREO_SOURCES, 1, &stereoSources);
+
+	Con_Printf("%d sounds playing (%d looping, %d out of earshot), of %d sources\n",
+		static_cast<int>(m_Channels.size()), looping, silent, monoSources + stereoSources);
+	Con_Printf("%s\n", DescribeChannels(m_Channels.size()).c_str());
 }
 
 void GameSoundSystem::ClearChannel(Channel& channel)

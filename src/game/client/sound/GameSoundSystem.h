@@ -17,6 +17,7 @@
 
 #include <array>
 #include <memory>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -75,6 +76,32 @@ private:
 	std::string_view GetSoundName(const SoundData& sound) const;
 
 	Channel* CreateChannel();
+
+	/**
+	 *	@brief johnhalflife: with no source left, a one-shot sound to take over (one out of earshot, else the one
+	 *	closest to ending), cleared; null if only loops and sentences are playing.
+	 */
+	Channel* StealChannel();
+
+	/**
+	 *	@brief johnhalflife: how loud a channel is where the listener is (its volume, after distance), 0-1.
+	 */
+	float GetChannelAudibility(const Channel& channel) const;
+
+	/**
+	 *	@brief johnhalflife: seconds left of a channel's sound.
+	 */
+	float GetChannelTimeLeft(const Channel& channel) const;
+
+	/**
+	 *	@brief johnhalflife: the sounds playing most, by name, with how many of each.
+	 */
+	std::string DescribeChannels(std::size_t most) const;
+
+	/**
+	 *	@brief johnhalflife: @c cl_snd_channels, every sound playing.
+	 */
+	void PrintChannels();
 
 	/**
 	 *	@brief Clears a channel in preparation to be reused.
@@ -143,6 +170,12 @@ private:
 	bool m_Paused{false};
 
 	float m_LastKnownVolume{-1};
+
+	// johnhalflife: sources asked of OpenAL (its default is 256 in all), and when running out was last said.
+	static constexpr ALCint RequestedMonoSources = 1024;
+	static constexpr ALCint RequestedStereoSources = 64;
+	float m_NextStealWarning{0};
+	int m_StolenSinceWarning{0};
 
 	std::vector<SoundIndex> m_PrecacheMap;
 };

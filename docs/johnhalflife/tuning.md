@@ -196,3 +196,16 @@ Server `CIchthyosaur::HandleAnimEvent` in `server/entities/NPCs/aliens/ichthyosa
 | Bite bubbles | `BiteBubbleCount`, `BiteBubbleSpeedMin`/`Max` | 26, thrown out at 50-130 from 32 ahead of it, mostly forward (vanilla 16 rising in a 16-unit cube) |
 | Their slowing and rise | `BiteBubbleDrag`, `BiteBubbleBuoyancy` | 3, 2.5 (exponential, a second); rising at 80-140 as vanilla's |
 | Their life | `BiteBubbleLife`, `BiteBubbleFade` | 1.6 s ±25%, fading over the last 40% |
+
+## Sound system
+
+Client `GameSoundSystem` in `client/sound/GameSoundSystem.cpp` (the Unified SDK's OpenAL sound system; not gated: it only
+acts where a sound would otherwise have played silently). Every sound playing holds an OpenAL source; OpenAL Soft allows
+256 unless asked, and the SDK neither asked nor checked, so past that new sounds (gunfire, explosions) were silent until
+enough ended. `cl_snd_channels` lists what's playing.
+
+| Part | Knob | Value |
+|---|---|---|
+| Sources asked for | `RequestedMonoSources`, `RequestedStereoSources` | 1024 mono, 64 stereo |
+| Out of sources | `StealChannel` | A one-shot out of earshot, else the one closest to ending, is taken over (never a loop or sentence) |
+| Out of sources, said | `m_NextStealWarning` | A console warning at most every 5 s: how many took over, and the sounds playing most |
