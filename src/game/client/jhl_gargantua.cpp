@@ -448,6 +448,78 @@ void JhlGeneWorm_Drawn(cl_entity_t* ent)
 	}
 }
 
+// The Gonarch's spit (bigmomma.cpp's CBMortar, mommaspit.spr): white droplets falling away from it as it flies, as a
+// flying gib's blood drips (client_gibs.cpp's EmitBloodTrail), every GonarchDropSpacing along its path (the engine's
+// palette's white, 254, and a white a little grey, 15), on top of its own sprays.
+constexpr float GonarchDropSpacing = 8;
+constexpr int GonarchDropsMostAFrame = 6;
+constexpr int GonarchDropColors[] = {254, 254, 15};
+
+struct GonarchSpit
+{
+	int Index = 0;
+	float LastSeen = 0;
+	Vector LastDrop;
+	Vector LastOrigin;
+};
+
+std::vector<GonarchSpit> g_GonarchSpits;
+
+void JhlGonarchSpit_Track(cl_entity_t* ent, const char* modelname)
+{
+	if (!JhlParticleSystemEnabled() || !modelname || !std::strstr(modelname, "mommaspit.spr"))
+		return;
+
+	const float now = gEngfuncs.GetClientTime();
+
+	std::erase_if(g_GonarchSpits, [&](const GonarchSpit& s)
+		{ return now - s.LastSeen > 0.2f || now < s.LastSeen; });
+
+	auto it = std::find_if(g_GonarchSpits.begin(), g_GonarchSpits.end(), [&](const GonarchSpit& s)
+		{ return s.Index == ent->index; });
+
+	if (it == g_GonarchSpits.end())
+	{
+		g_GonarchSpits.push_back({ent->index, now, ent->origin, ent->origin});
+		return;
+	}
+
+	const float elapsed = std::max(now - it->LastSeen, 0.001f);
+	const Vector velocity = (ent->origin - it->LastOrigin) / elapsed;
+	it->LastSeen = now;
+	it->LastOrigin = ent->origin;
+
+	Vector moved = ent->origin - it->LastDrop;
+	float distance = moved.Length();
+
+	if (distance < GonarchDropSpacing)
+		return;
+
+	const Vector direction = moved / distance;
+
+	for (int drops = 0; distance >= GonarchDropSpacing && drops < GonarchDropsMostAFrame; ++drops)
+	{
+		it->LastDrop = it->LastDrop + direction * GonarchDropSpacing;
+		distance -= GonarchDropSpacing;
+
+		particle_t* drop = gEngfuncs.pEfxAPI->R_AllocParticle(nullptr);
+
+		if (!drop)
+			break;
+
+		drop->org = it->LastDrop + Vector{Random(-4, 4), Random(-4, 4), Random(-4, 4)};
+		drop->vel = velocity * 0.1f + Vector{Random(-12, 12), Random(-12, 12), Random(-12, 6)};
+		drop->color = static_cast<short>(GonarchDropColors[gEngfuncs.pfnRandomLong(0, std::size(GonarchDropColors) - 1)]);
+		gEngfuncs.pEfxAPI->R_GetPackedColor(&drop->packedColor, drop->color);
+		drop->type = pt_grav;
+		drop->die = now + Random(0.6f, 1.0f);
+	}
+
+	// A hitch: on from where it is.
+	if (distance >= GonarchDropSpacing)
+		it->LastDrop = ent->origin;
+}
+
 void JhlGargantua_ParseStomp(BufferReader& reader)
 {
 	const int index = reader.ReadShort();
@@ -543,5 +615,6 @@ void JhlGargantua_Reset()
 {
 	g_Flames.clear();
 	g_Eyes.clear();
+	g_GonarchSpits.clear();
 	g_Stomps.clear();
 }

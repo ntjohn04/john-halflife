@@ -177,3 +177,11 @@ Server `server/entities/NPCs/racex/geneworm.cpp`, `server/entities/func_tank.cpp
 | Heart light | `JhlHeartLight` | 240-280 on the cavern, the orb's color |
 | Smacks | `AE_GENEWORM_HIT_WALL`, `JhlGeneWormSmack` | Cavern: `tentacle/te_strike2.wav` 75-85, heard across it; swipes: `te_strike1.wav` 82-92 at 0.85, heard across it, on its own channel |
 | Recoil when manned | `CFuncTank::Fire` | Machine gun 0.3°, rocket 2, cannon 3, laser 1.5 |
+
+## Gonarch
+
+Client `JhlGonarchSpit_Track` in `client/jhl_gargantua.cpp`. See: `map c4a2`.
+
+| Part | Knob | Value |
+|---|---|---|
+| Spit droplets | `GonarchDropSpacing`, `GonarchDropsMostAFrame`, `GonarchDropColors` | Every 8 units, at most 6 a frame, palette 254/254/15 (white), 0.6-1 s |

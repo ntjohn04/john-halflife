@@ -49,6 +49,11 @@ void JhlPitWorm_Drawn(cl_entity_t* ent);
 void JhlGeneWorm_Drawn(cl_entity_t* ent);
 
 /**
+ *	@brief johnhalflife: the Gonarch's spit dripping white droplets as it flies (HUD_AddEntity).
+ */
+void JhlGonarchSpit_Track(cl_entity_t* ent, const char* modelname);
+
+/**
  *	@brief johnhalflife: the stretch a gargantua's stomp covered since it was last moved (CStomp::Think; TE_LAVASPLASH):
  *	its head is drawn moving along it smoothly, a light low over the floor, and the ground's torn up along it.
  */

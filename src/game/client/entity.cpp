@@ -66,6 +66,7 @@ int DLLEXPORT HUD_AddEntity(int type, cl_entity_t* ent, const char* modelname)
 		MortarShellTrail(ent, modelname);
 		GrenadePivot(ent, modelname);
 		JhlGargantua_Track(ent, modelname);
+		JhlGonarchSpit_Track(ent, modelname);
 		break;
 	case ET_BEAM:
 		// johnhalflife: an armed tripmine's light.

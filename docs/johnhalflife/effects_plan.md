@@ -534,6 +534,9 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
   a random frame and turn, 0.07 s), a little more light (0.8 a gun's), a wisp 35% of the time, and its brass, one a
   shot, out to its right: rifle casings for the ceiling turret's 12 mm, 9 mm brass for the others. Their deaths are
   as they were (the engine's smoke, `UTIL_Sparks`, already our spark bursts).
+* Gonarch (`bigmomma.cpp`, c4a2): its spit (`CBMortar`, `mommaspit.spr`) drips white droplets as it flies, as a
+  flying gib's blood drips (`JhlGonarchSpit_Track`: a falling particle every 8 units along its path, the palette's
+  white 254 and a slightly grey 15, 0.6-1 s), on top of its own sprays and splat.
 * Gene worm (`geneworm.cpp`, of6a5):
   * Eyes: lit yellow (255,205,60) on each (attachments 3, its left, and 2, its right, as drawn: `JhlGeneWorm_Drawn`),
     each out once shot out (its skin: 1 its left, 2 its right, 3 both): 260 on the cavern, 70 on its face 30 ahead,
