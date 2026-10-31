@@ -755,7 +755,7 @@ void CBreakable::Die()
 
 	// johnhalflife (jhl_fx_particlesystem): the sheet above misses what rests on it but isn't on its top (sunk into it,
 	// or lying beyond the sheet), which was left in the air, held by nothing (c4a2b's Gonarch's legs, sack and shell, as
-	// the floor under it goes). Also woken: everything whose ground is this, and everything resting anywhere in it.
+	// the floor under it goes). Also woken: everything whose ground is this, and loose things (not monsters, players) resting anywhere in it.
 	if (UTIL_JhlParticleSystem())
 	{
 		const Vector volumeMins = pev->absmin;
@@ -773,7 +773,8 @@ void CBreakable::Die()
 								volumeMins.z <= other->v.absmax.z && volumeMaxs.x >= other->v.absmin.x &&
 								volumeMaxs.y >= other->v.absmin.y && volumeMaxs.z >= other->v.absmin.z;
 
-			if (other->v.groundentity == edict() || inside)
+			// Monsters and players beside it (touching its sides) aren't on it: they keep their footing.
+			if (other->v.groundentity == edict() || (inside && (other->v.flags & (FL_MONSTER | FL_CLIENT)) == 0))
 			{
 				ClearBits(other->v.flags, FL_ONGROUND);
 				other->v.groundentity = nullptr;
