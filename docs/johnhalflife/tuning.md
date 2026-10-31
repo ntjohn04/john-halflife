@@ -197,44 +197,19 @@ Server `CIchthyosaur::HandleAnimEvent` in `server/entities/NPCs/aliens/ichthyosa
 | Their slowing and rise | `BiteBubbleDrag`, `BiteBubbleBuoyancy` | 3, 2.5 (exponential, a second); rising at 80-140 as vanilla's |
 | Their life | `BiteBubbleLife`, `BiteBubbleFade` | 1.6 s ±25%, fading over the last 40% |
 
-## Sound system
+## Sound
 
-Client `GameSoundSystem` in `client/sound/GameSoundSystem.cpp` (the Unified SDK's OpenAL sound system; not gated: it only
-acts where a sound would otherwise have played silently). Every sound playing holds an OpenAL source; OpenAL Soft allows
-256 unless asked, and the SDK neither asked nor checked, so past that new sounds (gunfire, explosions) were silent until
-enough ended. `cl_snd_channels` lists what's playing.
+`client/sound/` (see [Sound](sound.md)). `jhl_snd_vanilla` for all but the sources; `cl_snd_channels` shows what's playing.
 
 | Part | Knob | Value |
 |---|---|---|
 | Sources asked for | `RequestedMonoSources`, `RequestedStereoSources` | 1024 mono, 64 stereo |
-| Out of sources | `StealChannel` | A one-shot out of earshot, else the one closest to ending, is taken over (never a loop or sentence) |
-| Out of sources, said | `m_NextStealWarning` | A console warning at most every 5 s: how many took over, and the sounds playing most |
-
-Room types (`client/sound/HalfLifeSoundEffects.cpp`): the SDK plays them through the old EAX presets (room 22: an arena
-reverb, 7.3 s); Steam Half-Life plays them through the engine's own software DSP (room 22: no reverb, an echo every
-0.38 s). `jhl_snd_room_vanilla 1` (default) plays the engine's: its presets (Xash3D's `s_dsp.c`) made into an EAX reverb
-on the first send and an echo effect on a second; `0` the SDK's.
-
-| Part | Knob | Value |
-|---|---|---|
-| Reverb (two delay lines: size, 0.71 size, feedback refl) | `SetupVanillaReverb`, `VanillaReverbLevel` | Decay their -60 dB time, averaged; level 0.029 each from the engine's mix, x1 |
-| Reverb loop lowpass (rvblp) | `TwoTapAverageHF` | 0.937 a time round at 5 kHz, as the decay's high frequency ratio |
-| Echo (delay, feedback, dlylp) | `SetupVanillaEcho`, `VanillaEchoLevel` | In at a quarter, x1; damping 0.2 with dlylp |
-| Echo past OpenAL's longest | `MaxEchoDelay` | 0.207 s (outdoors, caverns: 0.3-0.38), feedback lowered to die as fast |
-| Each room's level, measured | `VanillaReverbTrim`, `VanillaEchoTrim` | A click in every room type, vanilla and here (`jhl_roomtest.cfg` in `valve/` and the mod, run at the menu; loopback recordings), each room's response against room 0's: the reverb came 7-23 dB under vanilla's (now within ~3 in most rooms), echoes over it outdoors (20-22, -9 to -11) and in room 1 (-15) |
-| Feedback | `EngineFeedback` | Kept as the engine keeps it, (int)(255 x value) / 256: 0.999 is 0.992 (room 27 dies away at ~8 dB a second, as measured; room 28's reverb had run away) |
-| Water rooms (14-16; 14 under water) | `VanillaLowpass`, `VanillaLowpassHFGain` | The whole sound lowpassed, direct too (the engine's five-tap average: about a tenth left by 4-5 kHz): 0.1 |
-| Not done | | The left channel delay (vanilla delays the left 2-40 ms in many rooms, confirmed by the recordings; an effect send can't delay the dry sound) |
-
-Mixing (`jhl_snd_mix_vanilla 1`, default; `0` OpenAL's own): as the engine's software mixer (Xash3D's `s_main.c`,
-`s_mix.c`), switched live (the device is reset; sounds already loaded keep how they were loaded until the next map
-load).
-
-| Part | Knob | Value |
-|---|---|---|
-| Mixing rate | `SoundCache::EngineMixRate` | 22050 Hz: each sound stepped to it as it loads, interpolating linearly, as the engine's mixer (a loopback recording of vanilla playing `scientist/absolutely.wav`: 5.5-8 kHz -29.2 dB; linear stepping -28.8, not interpolating -23.5); the device itself stays at its own rate (OpenAL's Windows output ignores a 22050 request: `cl_snd_channels` shows it) |
-| Pitch | `SoundCache::GetPitched` | Off its own pitch (nearly everything: voices 100-103 a line, guns 98-102), a sound is pitched as the engine pitches it: stepped through at its own rate without interpolating, then to 22050 Hz linearly, made once a sound and pitch, played at that pitch's own rate (OpenAL pitches only a change while playing). The uneven steps scatter distortion through the band, vanilla's grain: a scientist recorded in vanilla, between his voice's harmonics 1.5-8 kHz, -16.2/-16.1/-14.3 dB; simulated at pitch 102 this way -15.5/-15.6/-14.4, pitched cleanly -18.0/-18.0/-16.8 (the same at pitch 100, why a console `play` matched). Dialogue words too, and mouths read the pitched samples |
-| 22050 Hz to the device | `jhl_snd_mix_vanilla_upsample` | 0 (default): OpenAL's 23rd order sinc, as the recording (nothing above 11 kHz, -85 dB: DirectSound's conversion, hw.dll's output, is clean); 1 Linear, 2 Nearest leave highs above 11 kHz. Switched live |
-| Ear volumes | `ApplyVanillaSpatialization` | Each ear volume x (1 - distance x attenuation / 1000) x (1 -+ side), 0-1; the player's own sounds and sounds without attenuation full in both (OpenAL: 0.6 each centred, constant-ish power) |
-| Played through OpenAL's panning | `StereoPanGains` | OpenAL Soft 1.22's plain stereo panning, measured on a loopback device (0-60 degrees), inverted: each ear gets the engine's volume, within 0.0002 |
-| Output | `ALC_OUTPUT_LIMITER_SOFT`, `ALC_OUTPUT_MODE_SOFT` | No limiter (clips, as the engine's CLIP16), plain stereo; no HRTF |
+| Out of sources | `StealChannel`, `m_NextStealWarning` | A one-shot out of earshot, else the one closest to ending, taken over; a warning at most every 5 s |
+| Mixing rate | `SoundCache::EngineMixRate` | 22050 Hz, linear on load; then OpenAL's 23rd order sinc to the device (`m_VanillaResampler`) |
+| Pitch | `SoundCache::GetPitched` | Stepped at the sound's own rate without interpolating, then to 22050 Hz linearly |
+| Ear volumes | `ApplyVanillaSpatialization`, `StereoPanGains` | `(1 - distance x attenuation / 1000) x (1 -+ side)`; OpenAL Soft 1.22's panning measured 0-60 degrees |
+| Output | `BuildDeviceAttributes` | Plain stereo, no limiter, no HRTF |
+| Room levels | `VanillaReverbLevel`, `VanillaEchoLevel`; `VanillaReverbTrim`, `VanillaEchoTrim` | 1, 1; per room, dB, as measured against vanilla |
+| Room feedback | `EngineFeedback` | `(int)(255 x value) / 256` |
+| Longest echo | `MaxEchoDelay` | 0.207 s (OpenAL's); feedback lowered to die away as fast |
+| Water rooms | `VanillaLowpass`, `VanillaLowpassHFGain` | Rooms 14-16 lowpass the direct sound and the effects: 0.1 |

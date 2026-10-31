@@ -82,7 +82,7 @@ public:
 	void Clear();
 
 	/**
-	 *	@brief johnhalflife: sounds loaded from now on stepped to the engine's mixing rate (jhl_snd_mix_vanilla).
+	 *	@brief johnhalflife: sounds loaded from now on stepped to the engine's mixing rate (jhl_snd_vanilla).
 	 */
 	void SetEngineRate(bool engineRate)
 	{
@@ -92,7 +92,7 @@ public:
 	bool IsEngineRate() const { return m_EngineRate; }
 
 	/**
-	 *	@brief johnhalflife (jhl_snd_mix_vanilla): the sound at a pitch, pitched as the engine pitches it, made the first
+	 *	@brief johnhalflife (jhl_snd_vanilla): the sound at a pitch, pitched as the engine pitches it, made the first
 	 *	time it's asked for; null if it can't be (not loaded at the engine's rate).
 	 */
 	const PitchedSound* GetPitched(Sound& sound, int pitch);

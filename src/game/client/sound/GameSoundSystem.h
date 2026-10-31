@@ -72,20 +72,20 @@ private:
 
 	/**
 	 *	@brief The device's settings: HRTF (cl_snd_hrtf_enabled) and, johnhalflife, the sources and sends asked for and
-	 *	the engine's mixing (jhl_snd_mix_vanilla: 22050 Hz, plain stereo, no limiter, no HRTF).
+	 *	the engine's mixing (jhl_snd_vanilla: plain stereo, no limiter, no HRTF).
 	 */
 	void BuildDeviceAttributes(std::vector<ALCint>& attribs);
 	void AddHRTFAttributes(std::vector<ALCint>& attribs);
 	void ResetDevice();
 
 	/**
-	 *	@brief johnhalflife: a channel's resampler and spatialization, as jhl_snd_mix_vanilla has them.
+	 *	@brief johnhalflife: a channel's resampler and spatialization, as jhl_snd_vanilla has them.
 	 */
 	void ApplySourceMode(Channel& channel);
 
 	/**
 	 *	@brief johnhalflife: the resampler sounds play with: OpenAL's default, or with the engine's mixing the one
-	 *	taking them from 22050 Hz to the device's rate (jhl_snd_mix_vanilla_upsample).
+	 *	taking them from 22050 Hz to the device's rate.
 	 */
 	ALint GetResampler() const;
 
@@ -183,9 +183,8 @@ private:
 
 	std::array<ALuint, RoomEffectCount> m_RoomEffects{};
 
-	// johnhalflife: room types as the engine's software DSP has them (jhl_snd_room_vanilla): its reverb on the first
+	// johnhalflife: room types as the engine's software DSP has them (jhl_snd_vanilla): its reverb on the first
 	// send, its echo on a second.
-	cvar_t* m_VanillaRooms{};
 	std::array<ALuint, RoomEffectCount> m_VanillaReverbEffects{};
 	std::array<ALuint, RoomEffectCount> m_VanillaEchoEffects{};
 	ALuint m_EchoEffectSlot{0};
@@ -197,7 +196,7 @@ private:
 
 	ALuint m_Filter{0};
 
-	// johnhalflife: the engine's water rooms' lowpass on the direct sound (jhl_snd_room_vanilla).
+	// johnhalflife: the engine's water rooms' lowpass on the direct sound (jhl_snd_vanilla).
 	static constexpr float VanillaLowpassHFGain = 0.1f;
 	ALuint m_DirectFilter{0};
 	bool m_DirectLowpass{false};
@@ -224,17 +223,15 @@ private:
 	float m_NextStealWarning{0};
 	int m_StolenSinceWarning{0};
 
-	// johnhalflife: the engine's mixing (jhl_snd_mix_vanilla).
+	// johnhalflife: the engine's mixing (jhl_snd_vanilla).
 	static constexpr ALCint VanillaMixFrequency = 22050;
-	cvar_t* m_VanillaMixCvar{};
+	cvar_t* m_VanillaCvar{};
 	bool m_VanillaMix{false};
 	ALCint m_DefaultFrequency{0};
 	bool m_SupportsOutputMode{false};
 	bool m_SupportsLimiter{false};
 	bool m_SupportsResampler{false};
-	ALint m_UpsampleResamplers[3]{-1, -1, -1}; // jhl_snd_mix_vanilla_upsample: sinc, Linear, Nearest.
-	cvar_t* m_VanillaUpsampleCvar{};
-	int m_AppliedUpsample{0};
+	ALint m_VanillaResampler{-1};
 	ALint m_DefaultResampler{0};
 	float m_ListenerOrigin[3]{};
 	float m_ListenerRight[3]{};

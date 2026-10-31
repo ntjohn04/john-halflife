@@ -149,7 +149,7 @@ bool SentencesSystem::SetSentenceWord(Channel& channel, SentenceChannel& sentenc
 		// Mix sentence-wide and word-specific pitch values.
 		const int pitch = std::clamp(channel.Pitch + (word.Parameters.Pitch - PITCH_NORM), 1, 255);
 
-		// johnhalflife (jhl_snd_mix_vanilla): off its own pitch, the word pitched as the engine pitches it (a voice is
+		// johnhalflife (jhl_snd_vanilla): off its own pitch, the word pitched as the engine pitches it (a voice is
 		// 100-103, so nearly every word), played at that pitch's own rate.
 		ALuint wordBuffer = wordSound->Buffer.Id;
 		const std::vector<float>* wordSamples = &wordSound->Samples;

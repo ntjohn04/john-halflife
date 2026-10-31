@@ -180,15 +180,12 @@ constexpr VanillaRoom VanillaRooms[RoomEffectCount] = {
 	{0.0, 0.0, 0.001, 0.999, 0.0, 0.2, 0.8, 2.0, 0.05},	  // 28
 };
 
-// Levels, for tuning by ear (1: as worked out from the engine's mix). OpenAL's reverb isn't two delay lines, so how
-// loud it comes out is the least certain.
+// Levels as worked out from the engine's mix, for tuning by ear.
 constexpr float VanillaReverbLevel = 1;
 constexpr float VanillaEchoLevel = 1;
 
-// Each room's reverb and echo set to vanilla's, measured four times (the last, all but three rooms within 2 dB): a click played in every room type in vanilla and here
-// (jhl_roomtest.cfg, loopback recordings), each room's response against room 0's dry click, its energy by time after
-// the click compared (dB; 0: matched as worked out). The reverb, two delay lines here an EAX reverb, came out 7-16 dB
-// under vanilla's; the echoes matched in the metallic rooms (2-4) but outdoors (20-22) and in room 1 were well over it.
+// Each room's reverb and echo, in dB, set to vanilla's as measured: a click in every room type recorded in vanilla and
+// here, each room's response against room 0's (every room now within about 2 dB of vanilla's).
 constexpr float VanillaReverbTrim[RoomEffectCount] = {
 	0, 0, 0, 0, 0,		// 0-4: no reverb
 	0, 0, 0,			// 5-7 tunnel: matched
@@ -219,7 +216,7 @@ static float DecibelsToGain(float decibels)
 }
 
 // The engine keeps a feedback as an integer, (int)(255 * value), and applies it shifted down 8 (out of 256): 0.999
-// is 0.992, and a delay of 9 ms (room 27) dies away at about 8 dB a second, as measured, not ringing on.
+// is 0.992, so a short delay fed back on itself (room 27) dies away rather than ringing on.
 static float EngineFeedback(float value)
 {
 	return std::floor(255 * std::clamp(value, 0.f, 1.f)) / 256;

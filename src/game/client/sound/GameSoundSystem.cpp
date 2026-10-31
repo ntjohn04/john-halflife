@@ -133,11 +133,10 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 		return false;
 	}
 
-	// johnhalflife: the engine's mixing (jhl_snd_mix_vanilla), from the start; the device's own rate to go back to.
-	m_VanillaMixCvar = gEngfuncs.pfnRegisterVariable("jhl_snd_mix_vanilla", "1", FCVAR_ARCHIVE);
-	m_VanillaMix = m_VanillaMixCvar->value != 0;
-	m_VanillaUpsampleCvar = gEngfuncs.pfnRegisterVariable("jhl_snd_mix_vanilla_upsample", "0", FCVAR_ARCHIVE);
-	m_AppliedUpsample = static_cast<int>(m_VanillaUpsampleCvar->value);
+	// johnhalflife: Steam Half-Life's own mixing and room effects (jhl_snd_vanilla), from the start; the device's own
+	// rate to go back to.
+	m_VanillaCvar = gEngfuncs.pfnRegisterVariable("jhl_snd_vanilla", "1", FCVAR_ARCHIVE);
+	m_VanillaMix = m_VanillaCvar->value != 0;
 	m_SupportsOutputMode = alcIsExtensionPresent(m_Device.get(), "ALC_SOFT_output_mode") != ALC_FALSE;
 	m_SupportsLimiter = alcIsExtensionPresent(m_Device.get(), "ALC_SOFT_output_limiter") != ALC_FALSE;
 	alcGetIntegerv(m_Device.get(), ALC_FREQUENCY, 1, &m_DefaultFrequency);
@@ -211,29 +210,22 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 		return false;
 	}
 
-	// johnhalflife (jhl_snd_mix_vanilla): sounds are stepped to the engine's 22050 Hz as they load (SoundCache), as its
-	// mixer does; OpenAL then takes them to the device's rate as the system takes the engine's output, filtered: its
-	// best sinc. (Stepping straight to 48 kHz, Nearest, mirrored highs far up: tinny; Linear at 48 kHz: OpenAL's own.)
+	// johnhalflife (jhl_snd_vanilla): sounds come to the engine's 22050 Hz as they load (SoundCache); OpenAL takes them
+	// from there to the device's rate with its best sinc, as the system takes the engine's output (cleanly: nothing
+	// above 11 kHz).
 	m_SupportsResampler = alIsExtensionPresent("AL_SOFT_source_resampler") != AL_FALSE;
 
 	if (m_SupportsResampler)
 	{
 		m_DefaultResampler = alGetInteger(AL_DEFAULT_RESAMPLER_SOFT);
 
-		// jhl_snd_mix_vanilla_upsample picks which: 0 the best sinc, 1 Linear, 2 Nearest (the system's own is unknown, and
-		// a cheap one lets the 8-bit sounds' noise through as hiss).
-		const std::initializer_list<std::string_view> wanted[] = {{"23rd order Sinc", "11th order Sinc"}, {"Linear"}, {"Nearest", "Point"}};
-
-		for (std::size_t kind = 0; kind < std::size(wanted); ++kind)
+		for (const std::string_view name : {"23rd order Sinc", "11th order Sinc"})
 		{
-			for (const std::string_view name : wanted[kind])
+			for (ALint i = 0; i < alGetInteger(AL_NUM_RESAMPLERS_SOFT) && m_VanillaResampler < 0; ++i)
 			{
-				for (ALint i = 0; i < alGetInteger(AL_NUM_RESAMPLERS_SOFT) && m_UpsampleResamplers[kind] < 0; ++i)
+				if (name == alGetStringiSOFT(AL_RESAMPLER_NAME_SOFT, i))
 				{
-					if (name == alGetStringiSOFT(AL_RESAMPLER_NAME_SOFT, i))
-					{
-						m_UpsampleResamplers[kind] = i;
-					}
+					m_VanillaResampler = i;
 				}
 			}
 		}
@@ -265,8 +257,8 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 
 	alFilteri(m_Filter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
 
-	// johnhalflife: the engine's water rooms lowpass the whole sound (a five-tap average at 22050 Hz: about a tenth
-	// left by 4-5 kHz), the direct sound too; under water, its room 14 (jhl_snd_room_vanilla).
+	// johnhalflife: the engine's water rooms (14-16; 14 under water) lowpass the whole mix, the direct sound too (a
+	// five-tap average at 22050 Hz: about a tenth left by 4-5 kHz).
 	alGenFilters(1, &m_DirectFilter);
 	alFilteri(m_DirectFilter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
 	alFilterf(m_DirectFilter, AL_LOWPASS_GAINHF, VanillaLowpassHFGain);
@@ -282,9 +274,7 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 		return false;
 	}
 
-	// johnhalflife: the engine's software DSP rooms.
-	m_VanillaRooms = gEngfuncs.pfnRegisterVariable("jhl_snd_room_vanilla", "1", FCVAR_ARCHIVE);
-
+	// johnhalflife: the engine's software DSP rooms (jhl_snd_vanilla).
 	alGenEffects(m_VanillaReverbEffects.size(), m_VanillaReverbEffects.data());
 	alGenEffects(m_VanillaEchoEffects.size(), m_VanillaEchoEffects.data());
 
@@ -396,22 +386,8 @@ void GameSoundSystem::Update()
 		}
 	}
 
-	// johnhalflife: the last step to the device, switched.
-	if (const int upsample = static_cast<int>(m_VanillaUpsampleCvar->value); m_AppliedUpsample != upsample)
-	{
-		m_AppliedUpsample = upsample;
-
-		if (m_SupportsResampler)
-		{
-			for (auto& channel : m_Channels)
-			{
-				alSourcei(channel.Source.Id, AL_SOURCE_RESAMPLER_SOFT, GetResampler());
-			}
-		}
-	}
-
-	// johnhalflife: the engine's mixing switched on or off.
-	if (const bool vanillaMix = m_VanillaMixCvar->value != 0; m_VanillaMix != vanillaMix)
+	// johnhalflife: the engine's sound switched on or off (jhl_snd_vanilla; its rooms follow in UpdateRoomEffect).
+	if (const bool vanillaMix = m_VanillaCvar->value != 0; m_VanillaMix != vanillaMix)
 	{
 		m_VanillaMix = vanillaMix;
 		ResetDevice();
@@ -732,7 +708,7 @@ void GameSoundSystem::BuildDeviceAttributes(std::vector<ALCint>& attribs)
 {
 	attribs.clear();
 
-	// johnhalflife: 2, the second for the engine's room echo (jhl_snd_room_vanilla); the SDK's rooms only need 1.
+	// johnhalflife: 2, the second for the engine's room echo (jhl_snd_vanilla); the SDK's rooms only need 1.
 	attribs.insert(attribs.end(), {ALC_MAX_AUXILIARY_SENDS, 2});
 
 	// johnhalflife: every sound playing takes a source, and OpenAL Soft allows 256 unless asked for more.
@@ -914,8 +890,7 @@ ALint GameSoundSystem::GetResampler() const
 		return m_DefaultResampler;
 	}
 
-	const ALint resampler = m_UpsampleResamplers[std::clamp(m_AppliedUpsample, 0, 2)];
-	return resampler >= 0 ? resampler : m_DefaultResampler;
+	return m_VanillaResampler >= 0 ? m_VanillaResampler : m_DefaultResampler;
 }
 
 void GameSoundSystem::ApplySourceMode(Channel& channel)
@@ -1193,9 +1168,9 @@ void GameSoundSystem::PrintChannels()
 	if (m_SupportsHRTF)
 		alcGetIntegerv(m_Device.get(), ALC_HRTF_SOFT, 1, &hrtf);
 
-	Con_Printf("Mixing: vanilla %s (cvar %s, upsample %d), %d Hz, output mode %#x (basic stereo %#x), limiter %d, HRTF %d, "
+	Con_Printf("Mixing: vanilla %s (jhl_snd_vanilla %s), %d Hz, output mode %#x (basic stereo %#x), limiter %d, HRTF %d, "
 			   "resampler %d (vanilla %d, default %d)\n",
-		m_VanillaMix ? "on" : "off", m_VanillaMixCvar->string, m_AppliedUpsample, frequency, outputMode, ALC_STEREO_BASIC_SOFT, limiter, hrtf,
+		m_VanillaMix ? "on" : "off", m_VanillaCvar->string, frequency, outputMode, ALC_STEREO_BASIC_SOFT, limiter, hrtf,
 		m_Channels.empty() || !m_SupportsResampler ? -1 : [&]
 		{ ALint r = -1; alGetSourcei(m_Channels.front().Source.Id, AL_SOURCE_RESAMPLER_SOFT, &r); return r; }(),
 		GetResampler(), m_DefaultResampler);
@@ -1361,7 +1336,7 @@ bool GameSoundSystem::SetupChannel(Channel& channel, int entityIndex, int channe
 			{
 				auto& soundData = *m_SoundCache->GetSound(sound);
 
-				// johnhalflife (jhl_snd_mix_vanilla): off its own pitch, the sound pitched as the engine pitches it, played
+				// johnhalflife (jhl_snd_vanilla): off its own pitch, the sound pitched as the engine pitches it, played
 				// at that pitch's own rate.
 				channel.BufferPitch = PITCH_NORM;
 				ALuint buffer = soundData.Buffer.Id;
@@ -1504,7 +1479,7 @@ bool GameSoundSystem::AlterChannel(int entityIndex, int channelIndex, const Soun
 	if ((flags & SND_CHANGE_PITCH) != 0)
 	{
 		channelToAlter.Pitch = pitch;
-		// johnhalflife: relative to the pitch its buffer was made at (jhl_snd_mix_vanilla), cleanly from there.
+		// johnhalflife: relative to the pitch its buffer was made at (jhl_snd_vanilla), cleanly from there.
 		alSourcef(channelToAlter.Source.Id, AL_PITCH, pitch / static_cast<float>(channelToAlter.BufferPitch));
 	}
 
@@ -1535,10 +1510,10 @@ void GameSoundSystem::UpdateRoomEffect()
 			roomType = 0;
 		}
 
-		// johnhalflife: the engine's water rooms lowpass the whole mix, its effects too (jhl_snd_room_vanilla).
+		// johnhalflife: the engine's water rooms lowpass the whole mix, its effects too (jhl_snd_vanilla).
 		float hfGain = isUnderwater ? UnderwaterLowPassHFGain : NormalLowPassHFGain;
 
-		if (m_VanillaRoomsWork && m_VanillaRooms->value != 0 && VanillaLowpass(roomType))
+		if (m_VanillaRoomsWork && m_VanillaCvar->value != 0 && VanillaLowpass(roomType))
 		{
 			hfGain = NormalLowPassHFGain * VanillaLowpassHFGain;
 		}
@@ -1553,7 +1528,7 @@ void GameSoundSystem::UpdateRoomEffect()
 		}
 
 		// johnhalflife: the engine's rooms or the SDK's, switched as the cvar changes.
-		const bool vanilla = m_VanillaRoomsWork && m_VanillaRooms->value != 0;
+		const bool vanilla = m_VanillaRoomsWork && m_VanillaCvar->value != 0;
 
 		if (m_PreviousVanilla != vanilla)
 		{

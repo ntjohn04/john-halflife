@@ -146,16 +146,9 @@ DESCRIPTION INFO_OPTIONS
 		{ "1.000000" }
 	}
 
-	"jhl_snd_room_vanilla"
+	"jhl_snd_vanilla"
 	{
-		"JHL | Sound: vanilla room echoes and reverb"
-		{ BOOL }
-		{ "1" }
-	}
-
-	"jhl_snd_mix_vanilla"
-	{
-		"JHL | Sound: vanilla mixing (22 kHz, ear volumes, clipping)"
+		"JHL | Sound: Half-Life's own mixing and room effects"
 		{ BOOL }
 		{ "1" }
 	}

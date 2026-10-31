@@ -109,7 +109,7 @@ struct SoundIndex final
  *	@details Sounds should always be referred to using a @see SoundIndex.
  */
 /**
- *	@brief johnhalflife (jhl_snd_mix_vanilla): a sound at one pitch, pitched as the engine pitches it.
+ *	@brief johnhalflife (jhl_snd_vanilla): a sound at one pitch, pitched as the engine pitches it.
  */
 struct PitchedSound
 {
@@ -125,7 +125,7 @@ struct Sound
 	std::vector<float> Samples; // For sentences, to update mouths.
 	bool IsLooping{false};
 
-	// johnhalflife (jhl_snd_mix_vanilla): the sound as loaded, before it was stepped to the engine's rate, its loop in
+	// johnhalflife (jhl_snd_vanilla): the sound as loaded, before it was stepped to the engine's rate, its loop in
 	// its own frames, and the pitches it's been played at (SoundCache::GetPitched).
 	std::vector<float> NativeSamples;
 	int NativeRate{0};
@@ -178,14 +178,14 @@ struct Channel
 	int Pitch{PITCH_NORM};
 	int CreatedOnFrame{0};
 
-	// johnhalflife (jhl_snd_mix_vanilla): what the engine's own spatialization works from, each frame. Volume is
+	// johnhalflife (jhl_snd_vanilla): what the engine's own spatialization works from, each frame. Volume is
 	// a sentence's current word's for sentences.
 	float Origin[3]{};
 	float Volume{1};
 	float Attenuation{1};
 	bool Relative{false};
 
-	// johnhalflife (jhl_snd_mix_vanilla): the pitch its buffer was made at (100: none; OpenAL pitches the rest).
+	// johnhalflife (jhl_snd_vanilla): the pitch its buffer was made at (100: none; OpenAL pitches the rest).
 	int BufferPitch{PITCH_NORM};
 
 	OpenALSource Source;

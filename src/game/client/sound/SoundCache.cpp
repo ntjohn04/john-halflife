@@ -129,11 +129,9 @@ bool SoundCache::LoadSound(Sound& sound)
 	// See https://openal-soft.org/openal-extensions/SOFT_loop_points.txt
 	auto cuePoints = TryLoadCuePoints(absolutePath, data.samples.size(), data.channelCount);
 
-	// johnhalflife (jhl_snd_mix_vanilla): the engine's mixer runs at 22050 Hz: a sound at its own pitch comes to it
-	// interpolated linearly (a recording of vanilla playing scientist/absolutely.wav: 5.5-8 kHz, where an 11 kHz
-	// sound's steps mirror into, -29.2 dB; linear -28.8, not interpolating -23.5): done here, once, so OpenAL takes it
-	// from 22050 Hz to the device's rate filtered, as the system takes the engine's output (nothing above 11 kHz in the
-	// recording, -85 dB). Pitched, it's made from the sound as loaded (GetPitched), kept for that.
+	// johnhalflife (jhl_snd_vanilla): the engine mixes at 22050 Hz, a sound at its own pitch brought to it interpolated
+	// linearly: done here, once, so OpenAL takes it on to the device's rate filtered, as the system takes the engine's
+	// output. The sound as loaded is kept, for its pitched versions (GetPitched).
 	if (m_EngineRate && data.sampleRate > 0 && data.channelCount > 0)
 	{
 		sound.NativeSamples = data.samples;
@@ -240,11 +238,9 @@ const PitchedSound* SoundCache::GetPitched(Sound& sound, int pitch)
 	}
 
 	// The engine pitches a sound by stepping through it at its own rate without interpolating (fixed point, truncated),
-	// and only then brings it to its 22050 Hz: off the sound's own pitch, the uneven steps scatter distortion through
-	// the whole band, the grain of vanilla's sound (nearly everything plays a little off pitch: voices 100-103, guns
-	// 98-102). A recording of a scientist in vanilla, between his voice's harmonics, 1.5-8 kHz: -16.2, -16.1, -14.3 dB;
-	// simulated at pitch 102 this way -15.5, -15.6, -14.4; pitched cleanly after (OpenAL's) -18.0, -18.0, -16.8. A sound
-	// faster than 22050 Hz is pitched from its 22050 Hz version.
+	// and only then brings it to its 22050 Hz: off the sound's own pitch the uneven steps scatter a faint distortion
+	// through the whole band, the grain of vanilla's sound (nearly everything plays a little off pitch: voices 100-103,
+	// guns 98-102). A sound faster than 22050 Hz is pitched from its 22050 Hz version.
 	const std::size_t channels = static_cast<std::size_t>(sound.ChannelCount);
 	const double pitchStep = pitch / 100.0;
 	const bool slower = sound.NativeRate <= EngineMixRate;
