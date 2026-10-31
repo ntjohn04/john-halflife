@@ -55,6 +55,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_fx_particlesystem", "1"},
 	{"jhl_fx_tracers", "1"},
 	{"jhl_hud_scale", "1"},
+	{"jhl_snd_room_vanilla", "1"},
 	{"crosshair_scale", "2"},
 	{"default_fov", "105"},
 	{"fps_override", "1"},

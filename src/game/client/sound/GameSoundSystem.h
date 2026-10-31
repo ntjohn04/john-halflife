@@ -151,6 +151,16 @@ private:
 
 	std::array<ALuint, RoomEffectCount> m_RoomEffects{};
 
+	// johnhalflife: room types as the engine's software DSP has them (jhl_snd_room_vanilla): its reverb on the first
+	// send, its echo on a second.
+	cvar_t* m_VanillaRooms{};
+	std::array<ALuint, RoomEffectCount> m_VanillaReverbEffects{};
+	std::array<ALuint, RoomEffectCount> m_VanillaEchoEffects{};
+	ALuint m_EchoEffectSlot{0};
+	bool m_HasEchoSend{false};
+	bool m_VanillaRoomsWork{true};
+	bool m_PreviousVanilla{false};
+
 	ALuint m_AuxiliaryEffectSlot{0};
 
 	ALuint m_Filter{0};

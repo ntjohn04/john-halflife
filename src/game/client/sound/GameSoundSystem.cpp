@@ -45,8 +45,19 @@ GameSoundSystem::~GameSoundSystem()
 		alDeleteAuxiliaryEffectSlots(1, &m_AuxiliaryEffectSlot);
 		m_AuxiliaryEffectSlot = 0;
 
+		if (m_EchoEffectSlot != 0)
+		{
+			alDeleteAuxiliaryEffectSlots(1, &m_EchoEffectSlot);
+			m_EchoEffectSlot = 0;
+		}
+
 		alDeleteEffects(m_RoomEffects.size(), m_RoomEffects.data());
 		std::memset(m_RoomEffects.data(), 0, m_RoomEffects.size() * sizeof(ALuint));
+
+		alDeleteEffects(m_VanillaReverbEffects.size(), m_VanillaReverbEffects.data());
+		m_VanillaReverbEffects.fill(0);
+		alDeleteEffects(m_VanillaEchoEffects.size(), m_VanillaEchoEffects.data());
+		m_VanillaEchoEffects.fill(0);
 	}
 
 	g_Logging.RemoveLogger(m_SentencesLogger);
@@ -108,9 +119,9 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 
 	ALCint attribs[7] = {0};
 
-	// We only need 1.
+	// johnhalflife: 2, the second for the engine's room echo (jhl_snd_room_vanilla); the SDK's rooms only need 1.
 	attribs[0] = ALC_MAX_AUXILIARY_SENDS;
-	attribs[1] = 1;
+	attribs[1] = 2;
 
 	// johnhalflife: every sound playing takes a source, and OpenAL Soft allows 256 unless asked for more.
 	attribs[2] = ALC_MONO_SOURCES;
@@ -156,6 +167,13 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 	{
 		m_Logger->error("OpenAL does not provide enough auxiliary send slots for EFX use (requested {}, got {})", attribs[1], auxSendsCount);
 		return false;
+	}
+
+	m_HasEchoSend = auxSendsCount >= 2;
+
+	if (!m_HasEchoSend)
+	{
+		m_Logger->warn("OpenAL provides one auxiliary send: the engine's room echo is left out");
 	}
 
 	{
@@ -207,6 +225,30 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 	{
 		m_Logger->error("Error setting up room effects");
 		return false;
+	}
+
+	// johnhalflife: the engine's software DSP rooms.
+	m_VanillaRooms = gEngfuncs.pfnRegisterVariable("jhl_snd_room_vanilla", "1", FCVAR_ARCHIVE);
+
+	alGenEffects(m_VanillaReverbEffects.size(), m_VanillaReverbEffects.data());
+	alGenEffects(m_VanillaEchoEffects.size(), m_VanillaEchoEffects.data());
+
+	if (m_HasEchoSend)
+	{
+		alGenAuxiliaryEffectSlots(1, &m_EchoEffectSlot);
+	}
+
+	for (unsigned int roomType = 0; roomType < RoomEffectCount; ++roomType)
+	{
+		SetupVanillaReverb(m_VanillaReverbEffects[roomType], roomType);
+		SetupVanillaEcho(m_VanillaEchoEffects[roomType], roomType);
+	}
+
+	// Not worth all sound: without them, the SDK's rooms.
+	if (const ALenum error = alGetError(); error != AL_NO_ERROR)
+	{
+		m_Logger->error("Error setting up the engine's room effects ({:#x}): using the SDK's", error);
+		m_VanillaRoomsWork = false;
 	}
 
 	// Immediately initialize the slot to a valid effect.
@@ -1162,10 +1204,27 @@ void GameSoundSystem::UpdateRoomEffect()
 			m_PreviousHFGain = -1;
 		}
 
+		// johnhalflife: the engine's rooms or the SDK's, switched as the cvar changes.
+		const bool vanilla = m_VanillaRoomsWork && m_VanillaRooms->value != 0;
+
+		if (m_PreviousVanilla != vanilla)
+		{
+			m_PreviousVanilla = vanilla;
+			m_PreviousRoomType = -1;
+		}
+
 		if (m_PreviousRoomType != roomType)
 		{
 			m_PreviousRoomType = roomType;
-			alAuxiliaryEffectSloti(m_AuxiliaryEffectSlot, AL_EFFECTSLOT_EFFECT, static_cast<ALint>(m_RoomEffects[roomType]));
+			alAuxiliaryEffectSloti(m_AuxiliaryEffectSlot, AL_EFFECTSLOT_EFFECT,
+				static_cast<ALint>(vanilla ? m_VanillaReverbEffects[roomType] : m_RoomEffects[roomType]));
+
+			if (m_HasEchoSend)
+			{
+				alAuxiliaryEffectSloti(m_EchoEffectSlot, AL_EFFECTSLOT_EFFECT,
+					vanilla ? static_cast<ALint>(m_VanillaEchoEffects[roomType]) : AL_EFFECT_NULL);
+				alAuxiliaryEffectSlotf(m_EchoEffectSlot, AL_EFFECTSLOT_GAIN, vanilla ? VanillaEchoGain(roomType) : 0.f);
+			}
 		}
 
 		if (m_PreviousHFGain != hfGain)
@@ -1184,12 +1243,22 @@ void GameSoundSystem::UpdateRoomEffect()
 	{
 		m_PreviousRoomOn = roomOn;
 		alAuxiliaryEffectSloti(m_AuxiliaryEffectSlot, AL_EFFECTSLOT_EFFECT, AL_EFFECT_NULL);
+
+		if (m_HasEchoSend)
+		{
+			alAuxiliaryEffectSloti(m_EchoEffectSlot, AL_EFFECTSLOT_EFFECT, AL_EFFECT_NULL);
+		}
 	}
 }
 
 void GameSoundSystem::UpdateSourceEffect(OpenALSource& source)
 {
 	alSource3i(source.Id, AL_AUXILIARY_SEND_FILTER, static_cast<ALint>(m_AuxiliaryEffectSlot), 0, m_Filter);
+
+	if (m_HasEchoSend)
+	{
+		alSource3i(source.Id, AL_AUXILIARY_SEND_FILTER, static_cast<ALint>(m_EchoEffectSlot), 1, m_Filter);
+	}
 }
 
 void GameSoundSystem::UpdateSounds()

@@ -25,4 +25,12 @@ namespace sound
 constexpr int RoomEffectCount = 29;
 
 void SetupEffect(ALuint effectId, unsigned int roomType);
+
+/**
+ *	@brief johnhalflife: a room's reverb as the engine's own software DSP has it (Steam Half-Life's; the table above is
+ *	the long gone EAX one's), and its echo (an echo effect, on a second send), with that echo's level.
+ */
+void SetupVanillaReverb(ALuint effectId, unsigned int roomType);
+void SetupVanillaEcho(ALuint effectId, unsigned int roomType);
+float VanillaEchoGain(unsigned int roomType);
 }

@@ -209,3 +209,16 @@ enough ended. `cl_snd_channels` lists what's playing.
 | Sources asked for | `RequestedMonoSources`, `RequestedStereoSources` | 1024 mono, 64 stereo |
 | Out of sources | `StealChannel` | A one-shot out of earshot, else the one closest to ending, is taken over (never a loop or sentence) |
 | Out of sources, said | `m_NextStealWarning` | A console warning at most every 5 s: how many took over, and the sounds playing most |
+
+Room types (`client/sound/HalfLifeSoundEffects.cpp`): the SDK plays them through the old EAX presets (room 22: an arena
+reverb, 7.3 s); Steam Half-Life plays them through the engine's own software DSP (room 22: no reverb, an echo every
+0.38 s). `jhl_snd_room_vanilla 1` (default) plays the engine's: its presets (Xash3D's `s_dsp.c`) made into an EAX reverb
+on the first send and an echo effect on a second; `0` the SDK's.
+
+| Part | Knob | Value |
+|---|---|---|
+| Reverb (two delay lines: size, 0.71 size, feedback refl) | `SetupVanillaReverb`, `VanillaReverbLevel` | Decay their -60 dB time, averaged; level 0.029 each from the engine's mix, x1 |
+| Reverb loop lowpass (rvblp) | `TwoTapAverageHF` | 0.937 a time round at 5 kHz, as the decay's high frequency ratio |
+| Echo (delay, feedback, dlylp) | `SetupVanillaEcho`, `VanillaEchoLevel` | In at a quarter, x1; damping 0.2 with dlylp |
+| Echo past OpenAL's longest | `MaxEchoDelay` | 0.207 s (outdoors, caverns: 0.3-0.38), feedback lowered to die as fast |
+| Not done | | The left channel delay (left: delays the dry sound) |

@@ -146,6 +146,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "1.000000" }
 	}
 
+	"jhl_snd_room_vanilla"
+	{
+		"JHL | Sound: vanilla room echoes and reverb"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"crosshair_scale"
 	{
 		"Vanilla | Crosshair scale"
