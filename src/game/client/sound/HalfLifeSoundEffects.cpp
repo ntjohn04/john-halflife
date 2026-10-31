@@ -185,7 +185,7 @@ constexpr VanillaRoom VanillaRooms[RoomEffectCount] = {
 constexpr float VanillaReverbLevel = 1;
 constexpr float VanillaEchoLevel = 1;
 
-// Each room's reverb and echo set to vanilla's, measured three times (the last with these): a click played in every room type in vanilla and here
+// Each room's reverb and echo set to vanilla's, measured four times (the last, all but three rooms within 2 dB): a click played in every room type in vanilla and here
 // (jhl_roomtest.cfg, loopback recordings), each room's response against room 0's dry click, its energy by time after
 // the click compared (dB; 0: matched as worked out). The reverb, two delay lines here an EAX reverb, came out 7-16 dB
 // under vanilla's; the echoes matched in the metallic rooms (2-4) but outdoors (20-22) and in room 1 were well over it.
@@ -198,7 +198,7 @@ constexpr float VanillaReverbTrim[RoomEffectCount] = {
 	15, 9, 10,			// 17-19 concrete
 	0, 0, 0,			// 20-22 outside: no reverb
 	10, 11, 11,			// 23-25 cavern
-	30, 0, 24,			// 26-28 weirdo (27: none; 28: its feedback, rounded as the engine's, had run away)
+	30, 0, 27,			// 26-28 weirdo (27: none; 28: its feedback, rounded as the engine's, had run away)
 };
 
 constexpr float VanillaEchoTrim[RoomEffectCount] = {
@@ -206,7 +206,7 @@ constexpr float VanillaEchoTrim[RoomEffectCount] = {
 	0, 0, 0,			// 5-7 tunnel
 	0, 0, 0,			// 8-10: no echo
 	0, 0, 0,			// 11-13: no echo
-	0, 0, -3,			// 14-16 water
+	0, -3, -6,			// 14-16 water
 	0, 0, -8,			// 17-19 concrete (19: as outdoors)
 	-11, -11, -9,		// 20-22 outside
 	0, 0, 0,			// 23-25 cavern
