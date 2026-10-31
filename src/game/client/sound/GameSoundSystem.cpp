@@ -1527,13 +1527,20 @@ void GameSoundSystem::UpdateRoomEffect()
 
 		const auto cvar = isUnderwater ? m_WaterRoomType : m_RoomType;
 
-		const float hfGain = isUnderwater ? UnderwaterLowPassHFGain : NormalLowPassHFGain;
 
 		int roomType = static_cast<int>(cvar->value);
 
 		if (roomType < 0 || roomType >= RoomEffectCount)
 		{
 			roomType = 0;
+		}
+
+		// johnhalflife: the engine's water rooms lowpass the whole mix, its effects too (jhl_snd_room_vanilla).
+		float hfGain = isUnderwater ? UnderwaterLowPassHFGain : NormalLowPassHFGain;
+
+		if (m_VanillaRoomsWork && m_VanillaRooms->value != 0 && VanillaLowpass(roomType))
+		{
+			hfGain = NormalLowPassHFGain * VanillaLowpassHFGain;
 		}
 
 		if (m_PreviousRoomOn != roomOn)
