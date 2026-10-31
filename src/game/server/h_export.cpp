@@ -101,6 +101,7 @@ NEW_DLL_FUNCTIONS gNewDLLFunctions =
 	{
 		OnFreeEntPrivateData, // pfnOnFreeEntPrivateData
 		GameDLLShutdown,
+		ShouldCollide, // pfnShouldCollide
 };
 
 extern "C" {

@@ -184,6 +184,16 @@ the client (`JhlDebris_ParseBreakModel`) makes the same shards for 60 s, up to 2
 | Computers | by size, 2.5 s | as other breakables, plus 2-3 of the explosions' spark showers going up, living half as long (`UTIL_JhlSparkShowers`: TE_SPARKS through the SDK's message, position and count) |
 | NPC gibs | (see Gibs) | unchanged: 7×, 60 s, now in the budget |
 
+**Breakable floors let go of what's on them** (`CBreakable::Die`): vanilla wakes only what's settled in an 8-unit
+sheet on a breakable's top, so something resting on it but sunk into it, or beyond the sheet, was left hanging in the
+air once it broke (c4a2b's Gonarch's legs, sack and shell, sometimes, as the floor under it goes: 4-5 s in vanilla,
+longer with our env_shooter pieces). Also woken: everything whose ground is the breakable, and everything resting
+anywhere in its volume.
+
+**Gibs pass through gibs** (`ShouldCollide`, cbase.cpp): two thrown into the same spot (an env_shooter's, from its one
+origin) were stuck in each other and crept down through the air a few units a second instead of falling (c4a2b's
+Gonarch's legs again: vanilla too, though its gibs fade in 4 s).
+
 **Surface debris** (`SurfaceDebris`, `jhl_explosions.cpp`): every two-fireball explosion that hit a surface (not
 in water or mid-air) throws pieces of it, from where it hit: 6-18 for a grenade, up to twice that for bigger
 explosions (scale / 3). Each piece picks its own model (from the material's), size (the model's scale ±15%),

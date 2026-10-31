@@ -753,6 +753,34 @@ void CBreakable::Die()
 		}
 	}
 
+	// johnhalflife (jhl_fx_particlesystem): the sheet above misses what rests on it but isn't on its top (sunk into it,
+	// or lying beyond the sheet), which was left in the air, held by nothing (c4a2b's Gonarch's legs, sack and shell, as
+	// the floor under it goes). Also woken: everything whose ground is this, and everything resting anywhere in it.
+	if (UTIL_JhlParticleSystem())
+	{
+		const Vector volumeMins = pev->absmin;
+		const Vector volumeMaxs = pev->absmax + Vector(0, 0, 8);
+		edict_t* entity = UTIL_GetEntityList();
+
+		for (int i = 1; entity && i < gpGlobals->maxEntities; ++i)
+		{
+			edict_t* other = entity + i;
+
+			if (0 != other->free || other == edict() || (other->v.flags & FL_ONGROUND) == 0)
+				continue;
+
+			const bool inside = volumeMins.x <= other->v.absmax.x && volumeMins.y <= other->v.absmax.y &&
+								volumeMins.z <= other->v.absmax.z && volumeMaxs.x >= other->v.absmin.x &&
+								volumeMaxs.y >= other->v.absmin.y && volumeMaxs.z >= other->v.absmin.z;
+
+			if (other->v.groundentity == edict() || inside)
+			{
+				ClearBits(other->v.flags, FL_ONGROUND);
+				other->v.groundentity = nullptr;
+			}
+		}
+	}
+
 	// Don't fire something that could fire myself
 	pev->targetname = string_t::Null;
 

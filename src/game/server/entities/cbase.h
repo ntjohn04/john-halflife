@@ -89,3 +89,4 @@ void SaveGlobalState(SAVERESTOREDATA* pSaveData);
 void RestoreGlobalState(SAVERESTOREDATA* pSaveData);
 void ResetGlobalState();
 void OnFreeEntPrivateData(edict_t* pEdict);
+int ShouldCollide(edict_t* pentTouched, edict_t* pentOther);

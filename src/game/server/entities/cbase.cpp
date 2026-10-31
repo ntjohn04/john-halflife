@@ -16,6 +16,7 @@
 #include <unordered_map>
 
 #include "cbase.h"
+#include "jhl_effects.h"
 #include "ServerLibrary.h"
 #include "pm_shared.h"
 #include "world.h"
@@ -234,6 +235,20 @@ void DispatchSave(edict_t* pent, SAVERESTOREDATA* pSaveData)
 
 		pTable->size = pSaveData->size - pTable->location; // Size of entity block is data size written to block
 	}
+}
+
+// johnhalflife (jhl_fx_particlesystem): gibs pass through gibs. Two thrown into the same spot (an env_shooter's, from
+// its one origin) were stuck in each other, and crept down through the air a few units a second instead of falling
+// (c4a2b's Gonarch's legs, as the floor under them goes: vanilla too, though its gibs fade in 4 s).
+int ShouldCollide(edict_t* pentTouched, edict_t* pentOther)
+{
+	if (UTIL_JhlParticleSystem() && pentTouched && pentOther && 0 == strcmp(STRING(pentTouched->v.classname), "gib") &&
+		0 == strcmp(STRING(pentOther->v.classname), "gib"))
+	{
+		return 0;
+	}
+
+	return 1;
 }
 
 void OnFreeEntPrivateData(edict_t* pEdict)
