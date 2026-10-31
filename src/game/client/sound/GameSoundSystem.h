@@ -69,7 +69,37 @@ private:
 	bool MakeCurrent();
 
 	void PrintHRTFImplementations();
-	void ConfigureHRTF(bool enabled);
+
+	/**
+	 *	@brief The device's settings: HRTF (cl_snd_hrtf_enabled) and, johnhalflife, the sources and sends asked for and
+	 *	the engine's mixing (jhl_snd_mix_vanilla: 22050 Hz, plain stereo, no limiter, no HRTF).
+	 */
+	void BuildDeviceAttributes(std::vector<ALCint>& attribs);
+	void AddHRTFAttributes(std::vector<ALCint>& attribs);
+	void ResetDevice();
+
+	/**
+	 *	@brief johnhalflife: a channel's resampler and spatialization, as jhl_snd_mix_vanilla has them.
+	 */
+	void ApplySourceMode(Channel& channel);
+
+	/**
+	 *	@brief johnhalflife: the resampler sounds play with: OpenAL's default, or with the engine's mixing the one
+	 *	taking them from 22050 Hz to the device's rate (jhl_snd_mix_vanilla_upsample).
+	 */
+	ALint GetResampler() const;
+
+	/**
+	 *	@brief johnhalflife: the engine's spatialization (SND_Spatialize): each ear (1 - distance) * (1 -+ the source's
+	 *	side), its own sounds and sounds without attenuation full in both, played through OpenAL's panning inverted.
+	 */
+	void ApplyVanillaSpatialization(Channel& channel);
+	void GetVanillaEarVolumes(const Channel& channel, float& left, float& right) const;
+
+	/**
+	 *	@brief johnhalflife: back to OpenAL's own spatialization.
+	 */
+	void RestoreSpatialization(Channel& channel);
 
 	void SetVolume();
 
@@ -186,6 +216,21 @@ private:
 	static constexpr ALCint RequestedStereoSources = 64;
 	float m_NextStealWarning{0};
 	int m_StolenSinceWarning{0};
+
+	// johnhalflife: the engine's mixing (jhl_snd_mix_vanilla).
+	static constexpr ALCint VanillaMixFrequency = 22050;
+	cvar_t* m_VanillaMixCvar{};
+	bool m_VanillaMix{false};
+	ALCint m_DefaultFrequency{0};
+	bool m_SupportsOutputMode{false};
+	bool m_SupportsLimiter{false};
+	bool m_SupportsResampler{false};
+	ALint m_UpsampleResamplers[3]{-1, -1, -1}; // jhl_snd_mix_vanilla_upsample: sinc, Linear, Nearest.
+	cvar_t* m_VanillaUpsampleCvar{};
+	int m_AppliedUpsample{0};
+	ALint m_DefaultResampler{0};
+	float m_ListenerOrigin[3]{};
+	float m_ListenerRight[3]{};
 
 	std::vector<SoundIndex> m_PrecacheMap;
 };

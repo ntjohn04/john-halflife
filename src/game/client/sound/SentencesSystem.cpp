@@ -182,6 +182,7 @@ bool SentencesSystem::SetSentenceWord(Channel& channel, SentenceChannel& sentenc
 		const float pitch = std::clamp(channel.Pitch + (word.Parameters.Pitch - PITCH_NORM), 1, 255) / 100.f;
 
 		alSourcef(channel.Source.Id, AL_GAIN, word.Parameters.Volume / 100.f);
+		channel.Volume = word.Parameters.Volume / 100.f;
 		alSourcef(channel.Source.Id, AL_PITCH, pitch);
 
 		return true;

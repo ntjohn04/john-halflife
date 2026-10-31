@@ -81,6 +81,16 @@ public:
 
 	void Clear();
 
+	/**
+	 *	@brief johnhalflife: sounds loaded from now on stepped to the engine's mixing rate (jhl_snd_mix_vanilla).
+	 */
+	void SetEngineRate(bool engineRate)
+	{
+		m_EngineRate = engineRate;
+	}
+
+	static constexpr int EngineMixRate = 22050;
+
 private:
 	std::optional<std::tuple<ALint, ALint>> TryLoadCuePoints(
 		const std::string& fileName, ALint sampleCount, int channelCount);
@@ -92,5 +102,7 @@ private:
 	std::set<std::size_t, LookupComparer> m_SoundLookup{LookupComparer{&m_Sounds}};
 
 	std::unique_ptr<nqr::NyquistIO> m_Loader;
+
+	bool m_EngineRate{false};
 };
 }

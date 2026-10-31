@@ -153,6 +153,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"jhl_snd_mix_vanilla"
+	{
+		"JHL | Sound: vanilla mixing (22 kHz, ear volumes, clipping)"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"crosshair_scale"
 	{
 		"Vanilla | Crosshair scale"

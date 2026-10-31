@@ -222,3 +222,15 @@ on the first send and an echo effect on a second; `0` the SDK's.
 | Echo (delay, feedback, dlylp) | `SetupVanillaEcho`, `VanillaEchoLevel` | In at a quarter, x1; damping 0.2 with dlylp |
 | Echo past OpenAL's longest | `MaxEchoDelay` | 0.207 s (outdoors, caverns: 0.3-0.38), feedback lowered to die as fast |
 | Not done | | The left channel delay (left: delays the dry sound) |
+
+Mixing (`jhl_snd_mix_vanilla 1`, default; `0` OpenAL's own): as the engine's software mixer (Xash3D's `s_main.c`,
+`s_mix.c`), switched live (the device is reset; sounds already loaded keep how they were loaded until the next map
+load).
+
+| Part | Knob | Value |
+|---|---|---|
+| Mixing rate | `SoundCache::EngineMixRate` | 22050 Hz: each sound stepped to it as it loads, interpolating linearly, as the engine's mixer (a loopback recording of vanilla playing `scientist/absolutely.wav`: 5.5-8 kHz -29.2 dB; linear stepping -28.8, not interpolating -23.5); the device itself stays at its own rate (OpenAL's Windows output ignores a 22050 request: `cl_snd_channels` shows it) |
+| 22050 Hz to the device | `jhl_snd_mix_vanilla_upsample` | 0 (default): OpenAL's 23rd order sinc, as the recording (nothing above 11 kHz, -85 dB: DirectSound's conversion, hw.dll's output, is clean); 1 Linear, 2 Nearest leave highs above 11 kHz. Switched live |
+| Ear volumes | `ApplyVanillaSpatialization` | Each ear volume x (1 - distance x attenuation / 1000) x (1 -+ side), 0-1; the player's own sounds and sounds without attenuation full in both (OpenAL: 0.6 each centred, constant-ish power) |
+| Played through OpenAL's panning | `StereoPanGains` | OpenAL Soft 1.22's plain stereo panning, measured on a loopback device (0-60 degrees), inverted: each ear gets the engine's volume, within 0.0002 |
+| Output | `ALC_OUTPUT_LIMITER_SOFT`, `ALC_OUTPUT_MODE_SOFT` | No limiter (clips, as the engine's CLIP16), plain stereo; no HRTF |

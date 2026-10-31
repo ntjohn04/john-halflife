@@ -14,6 +14,7 @@
  ****/
 
 #include <exception>
+#include <numbers>
 #include <type_traits>
 
 #include <fmt/format.h>
@@ -30,6 +31,18 @@
 
 namespace sound
 {
+// johnhalflife: positions kept as plain floats in Channel (SoundDefs.h has no Vector).
+static void StoreVector(const Vector& from, float to[3])
+{
+	to[0] = from.x;
+	to[1] = from.y;
+	to[2] = from.z;
+}
+
+static Vector LoadVector(const float from[3])
+{
+	return {from[0], from[1], from[2]};
+}
 GameSoundSystem::~GameSoundSystem()
 {
 	if (MakeCurrent())
@@ -117,19 +130,24 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 		return false;
 	}
 
-	ALCint attribs[7] = {0};
+	// johnhalflife: the engine's mixing (jhl_snd_mix_vanilla), from the start; the device's own rate to go back to.
+	m_VanillaMixCvar = gEngfuncs.pfnRegisterVariable("jhl_snd_mix_vanilla", "1", FCVAR_ARCHIVE);
+	m_VanillaMix = m_VanillaMixCvar->value != 0;
+	m_VanillaUpsampleCvar = gEngfuncs.pfnRegisterVariable("jhl_snd_mix_vanilla_upsample", "0", FCVAR_ARCHIVE);
+	m_AppliedUpsample = static_cast<int>(m_VanillaUpsampleCvar->value);
+	m_SupportsOutputMode = alcIsExtensionPresent(m_Device.get(), "ALC_SOFT_output_mode") != ALC_FALSE;
+	m_SupportsLimiter = alcIsExtensionPresent(m_Device.get(), "ALC_SOFT_output_limiter") != ALC_FALSE;
+	alcGetIntegerv(m_Device.get(), ALC_FREQUENCY, 1, &m_DefaultFrequency);
 
-	// johnhalflife: 2, the second for the engine's room echo (jhl_snd_room_vanilla); the SDK's rooms only need 1.
-	attribs[0] = ALC_MAX_AUXILIARY_SENDS;
-	attribs[1] = 2;
+	if (m_DefaultFrequency <= 0)
+	{
+		m_DefaultFrequency = 48000;
+	}
 
-	// johnhalflife: every sound playing takes a source, and OpenAL Soft allows 256 unless asked for more.
-	attribs[2] = ALC_MONO_SOURCES;
-	attribs[3] = RequestedMonoSources;
-	attribs[4] = ALC_STEREO_SOURCES;
-	attribs[5] = RequestedStereoSources;
+	std::vector<ALCint> attribs;
+	BuildDeviceAttributes(attribs);
 
-	m_Context.reset(alcCreateContext(m_Device.get(), attribs));
+	m_Context.reset(alcCreateContext(m_Device.get(), attribs.data()));
 
 	if (!m_Context)
 	{
@@ -188,6 +206,34 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 	if (!CheckOpenALExtension("AL_SOFT_loop_points", *m_Logger))
 	{
 		return false;
+	}
+
+	// johnhalflife (jhl_snd_mix_vanilla): sounds are stepped to the engine's 22050 Hz as they load (SoundCache), as its
+	// mixer does; OpenAL then takes them to the device's rate as the system takes the engine's output, filtered: its
+	// best sinc. (Stepping straight to 48 kHz, Nearest, mirrored highs far up: tinny; Linear at 48 kHz: OpenAL's own.)
+	m_SupportsResampler = alIsExtensionPresent("AL_SOFT_source_resampler") != AL_FALSE;
+
+	if (m_SupportsResampler)
+	{
+		m_DefaultResampler = alGetInteger(AL_DEFAULT_RESAMPLER_SOFT);
+
+		// jhl_snd_mix_vanilla_upsample picks which: 0 the best sinc, 1 Linear, 2 Nearest (the system's own is unknown, and
+		// a cheap one lets the 8-bit sounds' noise through as hiss).
+		const std::initializer_list<std::string_view> wanted[] = {{"23rd order Sinc", "11th order Sinc"}, {"Linear"}, {"Nearest", "Point"}};
+
+		for (std::size_t kind = 0; kind < std::size(wanted); ++kind)
+		{
+			for (const std::string_view name : wanted[kind])
+			{
+				for (ALint i = 0; i < alGetInteger(AL_NUM_RESAMPLERS_SOFT) && m_UpsampleResamplers[kind] < 0; ++i)
+				{
+					if (name == alGetStringiSOFT(AL_RESAMPLER_NAME_SOFT, i))
+					{
+						m_UpsampleResamplers[kind] = i;
+					}
+				}
+			}
+		}
 	}
 
 	alGenEffects(m_RoomEffects.size(), m_RoomEffects.data());
@@ -266,6 +312,7 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 	alDopplerFactor(0.f);
 
 	m_SoundCache = std::make_unique<SoundCache>(m_CacheLogger);
+	m_SoundCache->SetEngineRate(m_VanillaMix);
 	m_Sentences = std::make_unique<SentencesSystem>(m_SentencesLogger, m_SoundCache.get());
 
 	m_HRTFEnabled = g_ConCommands.CreateCVar("snd_hrtf_enabled", "0", FCVAR_ARCHIVE);
@@ -336,7 +383,36 @@ void GameSoundSystem::Update()
 		if (const bool hrtfEnabled = m_HRTFEnabled->value != 0; m_CachedHRTFEnabled != hrtfEnabled)
 		{
 			m_CachedHRTFEnabled = hrtfEnabled;
-			ConfigureHRTF(hrtfEnabled);
+			ResetDevice();
+		}
+	}
+
+	// johnhalflife: the last step to the device, switched.
+	if (const int upsample = static_cast<int>(m_VanillaUpsampleCvar->value); m_AppliedUpsample != upsample)
+	{
+		m_AppliedUpsample = upsample;
+
+		if (m_SupportsResampler)
+		{
+			for (auto& channel : m_Channels)
+			{
+				alSourcei(channel.Source.Id, AL_SOURCE_RESAMPLER_SOFT, GetResampler());
+			}
+		}
+	}
+
+	// johnhalflife: the engine's mixing switched on or off.
+	if (const bool vanillaMix = m_VanillaMixCvar->value != 0; m_VanillaMix != vanillaMix)
+	{
+		m_VanillaMix = vanillaMix;
+		ResetDevice();
+
+		// Sounds already loaded keep how they were loaded (they're playing) until the next map load clears the cache.
+		m_SoundCache->SetEngineRate(vanillaMix);
+
+		for (auto& channel : m_Channels)
+		{
+			ApplySourceMode(channel);
 		}
 	}
 
@@ -363,6 +439,9 @@ void GameSoundSystem::Update()
 
 	alListenerfv(AL_POSITION, origin);
 	alListenerfv(AL_ORIENTATION, orientation);
+
+	StoreVector(origin, m_ListenerOrigin);
+	StoreVector(right, m_ListenerRight);
 
 	// Update volume if changed. If we're currently blocked then volume is 0, so don't update it.
 	if (!m_Blocked && m_LastKnownVolume != m_Volume->value)
@@ -640,8 +719,60 @@ void GameSoundSystem::PrintHRTFImplementations()
 	}
 }
 
-void GameSoundSystem::ConfigureHRTF(bool enabled)
+void GameSoundSystem::BuildDeviceAttributes(std::vector<ALCint>& attribs)
 {
+	attribs.clear();
+
+	// johnhalflife: 2, the second for the engine's room echo (jhl_snd_room_vanilla); the SDK's rooms only need 1.
+	attribs.insert(attribs.end(), {ALC_MAX_AUXILIARY_SENDS, 2});
+
+	// johnhalflife: every sound playing takes a source, and OpenAL Soft allows 256 unless asked for more.
+	attribs.insert(attribs.end(), {ALC_MONO_SOURCES, RequestedMonoSources, ALC_STEREO_SOURCES, RequestedStereoSources});
+
+	// johnhalflife: the engine mixes at 22050 Hz, in plain stereo, clipping (CLIP16) where OpenAL would limit.
+	attribs.insert(attribs.end(), {ALC_FREQUENCY, m_VanillaMix ? VanillaMixFrequency : m_DefaultFrequency});
+
+	if (m_SupportsOutputMode)
+	{
+		attribs.insert(attribs.end(), {ALC_OUTPUT_MODE_SOFT, m_VanillaMix ? ALC_STEREO_BASIC_SOFT : ALC_ANY_SOFT});
+	}
+
+	if (m_SupportsLimiter)
+	{
+		attribs.insert(attribs.end(), {ALC_OUTPUT_LIMITER_SOFT, m_VanillaMix ? ALC_FALSE : ALC_DONT_CARE_SOFT});
+	}
+
+	if (m_SupportsHRTF)
+	{
+		AddHRTFAttributes(attribs);
+	}
+
+	attribs.push_back(0);
+}
+
+void GameSoundSystem::ResetDevice()
+{
+	// alcResetDeviceSOFT comes with ALC_SOFT_HRTF.
+	if (!m_SupportsHRTF)
+	{
+		m_Logger->warn("OpenAL can't reset the device: sound settings apply on restart");
+		return;
+	}
+
+	std::vector<ALCint> attribs;
+	BuildDeviceAttributes(attribs);
+
+	if (ALC_FALSE == alcResetDeviceSOFT(m_Device.get(), attribs.data()))
+	{
+		m_Logger->error("Failed to reset device: {}", alcGetString(m_Device.get(), alcGetError(m_Device.get())));
+	}
+}
+
+void GameSoundSystem::AddHRTFAttributes(std::vector<ALCint>& attribs)
+{
+	// johnhalflife: never with the engine's mixing, which has none (and HRTF needs 44.1 or 48 kHz).
+	const bool enabled = m_CachedHRTFEnabled && !m_VanillaMix;
+
 	ALCint numHRTF;
 	alcGetIntegerv(m_Device.get(), ALC_NUM_HRTF_SPECIFIERS_SOFT, 1, &numHRTF);
 
@@ -651,11 +782,7 @@ void GameSoundSystem::ConfigureHRTF(bool enabled)
 		return;
 	}
 
-	ALCint attribs[5]{0};
-
-	int i = 0;
-	attribs[i++] = ALC_HRTF_SOFT;
-	attribs[i++] = enabled ? ALC_TRUE : ALC_FALSE;
+	attribs.insert(attribs.end(), {ALC_HRTF_SOFT, enabled ? ALC_TRUE : ALC_FALSE});
 
 	if (enabled)
 	{
@@ -683,20 +810,12 @@ void GameSoundSystem::ConfigureHRTF(bool enabled)
 		if (implementationIndex != -1)
 		{
 			m_Logger->debug("Using HRTF implementation \"{}\" (index {})", m_HRTFImplementation->string, implementationIndex);
-			attribs[i++] = ALC_HRTF_ID_SOFT;
-			attribs[i++] = implementationIndex;
+			attribs.insert(attribs.end(), {ALC_HRTF_ID_SOFT, implementationIndex});
 		}
 		else
 		{
 			m_Logger->debug("Using default HRTF implementation");
 		}
-	}
-
-	attribs[i++] = 0;
-
-	if (ALC_FALSE == alcResetDeviceSOFT(m_Device.get(), attribs))
-	{
-		m_Logger->error("Failed to reset device: {}", alcGetString(m_Device.get(), alcGetError(m_Device.get())));
 	}
 }
 
@@ -749,9 +868,136 @@ Channel* GameSoundSystem::CreateChannel()
 
 	UpdateSourceEffect(channel.Source);
 
+	// johnhalflife: its resampler now; its spatialization as it's set up.
+	if (m_SupportsResampler)
+	{
+		alSourcei(channel.Source.Id, AL_SOURCE_RESAMPLER_SOFT,
+			GetResampler());
+	}
+
 	m_Channels.push_back(std::move(channel));
 
 	return &m_Channels.back();
+}
+
+// johnhalflife: OpenAL Soft 1.22's stereo panning (plain stereo, ALC_STEREO_BASIC_SOFT), measured by rendering a mono
+// source on a loopback device: for a source 0-60 degrees to one side, its near and far ear's gain (past 60, all near).
+// Inverted, it plays the engine's own ear volumes exactly.
+constexpr float StereoPanGains[61][2] = {
+	{0.59566f, 0.59566f}, {0.60872f, 0.58254f}, {0.62170f, 0.56936f}, {0.63460f, 0.55614f}, {0.64740f, 0.54287f},
+	{0.66011f, 0.52958f}, {0.67270f, 0.51627f}, {0.68518f, 0.50294f}, {0.69753f, 0.48962f}, {0.70974f, 0.47630f},
+	{0.72181f, 0.46299f}, {0.73373f, 0.44972f}, {0.74549f, 0.43647f}, {0.75708f, 0.42327f}, {0.76849f, 0.41012f},
+	{0.77972f, 0.39704f}, {0.79076f, 0.38402f}, {0.80160f, 0.37109f}, {0.81223f, 0.35824f}, {0.82265f, 0.34549f},
+	{0.83285f, 0.33285f}, {0.84281f, 0.32032f}, {0.85255f, 0.30791f}, {0.86204f, 0.29563f}, {0.87128f, 0.28350f},
+	{0.88027f, 0.27151f}, {0.88900f, 0.25968f}, {0.89747f, 0.24802f}, {0.90566f, 0.23653f}, {0.91357f, 0.22521f},
+	{0.92120f, 0.21409f}, {0.92854f, 0.20316f}, {0.93558f, 0.19244f}, {0.94233f, 0.18192f}, {0.94878f, 0.17163f},
+	{0.95491f, 0.16156f}, {0.96074f, 0.15172f}, {0.96625f, 0.14212f}, {0.97144f, 0.13277f}, {0.97630f, 0.12366f},
+	{0.98084f, 0.11482f}, {0.98505f, 0.10624f}, {0.98893f, 0.09793f}, {0.99248f, 0.08989f}, {0.99568f, 0.08214f},
+	{0.99855f, 0.07467f}, {1.00107f, 0.06749f}, {1.00325f, 0.06061f}, {1.00509f, 0.05403f}, {1.00658f, 0.04776f},
+	{1.00772f, 0.04180f}, {1.00852f, 0.03615f}, {1.00896f, 0.03082f}, {1.00906f, 0.02581f}, {1.00881f, 0.02112f},
+	{1.00821f, 0.01676f}, {1.00726f, 0.01274f}, {1.00596f, 0.00905f}, {1.00432f, 0.00569f}, {1.00233f, 0.00268f},
+	{1.00000f, 0.00000f}};
+
+ALint GameSoundSystem::GetResampler() const
+{
+	if (!m_VanillaMix)
+	{
+		return m_DefaultResampler;
+	}
+
+	const ALint resampler = m_UpsampleResamplers[std::clamp(m_AppliedUpsample, 0, 2)];
+	return resampler >= 0 ? resampler : m_DefaultResampler;
+}
+
+void GameSoundSystem::ApplySourceMode(Channel& channel)
+{
+	if (m_SupportsResampler)
+	{
+		alSourcei(channel.Source.Id, AL_SOURCE_RESAMPLER_SOFT,
+			GetResampler());
+	}
+
+	if (m_VanillaMix)
+	{
+		ApplyVanillaSpatialization(channel);
+	}
+	else
+	{
+		RestoreSpatialization(channel);
+	}
+}
+
+void GameSoundSystem::GetVanillaEarVolumes(const Channel& channel, float& left, float& right) const
+{
+	left = channel.Volume;
+	right = channel.Volume;
+
+	// Its own sounds, and sounds without attenuation (both played relative), full in both ears.
+	if (!channel.Relative)
+	{
+		const Vector toSound = LoadVector(channel.Origin) - LoadVector(m_ListenerOrigin);
+		const float distance = toSound.Length();
+		const float falloff = 1 - distance * channel.Attenuation / NominalClippingDistance;
+		const float side = distance > 0 ? DotProduct(toSound / distance, LoadVector(m_ListenerRight)) : 0;
+
+		left = channel.Volume * falloff * (1 - side);
+		right = channel.Volume * falloff * (1 + side);
+	}
+
+	// The engine's channel volumes are 0-255.
+	left = std::clamp(left, 0.f, 1.f);
+	right = std::clamp(right, 0.f, 1.f);
+}
+
+void GameSoundSystem::ApplyVanillaSpatialization(Channel& channel)
+{
+	float left, right;
+	GetVanillaEarVolumes(channel, left, right);
+
+	const float nearEar = std::max(left, right);
+	const float farEar = std::min(left, right);
+
+	float degrees = 0;
+	float gain = 0;
+
+	if (nearEar > 0)
+	{
+		// The angle whose far to near ear ratio is this one's (falling from 1 at 0 to 0 at 60), then the gain for the
+		// near ear's volume.
+		const float ratio = farEar / nearEar;
+		int i = 0;
+
+		while (i < 59 && StereoPanGains[i + 1][1] / StereoPanGains[i + 1][0] > ratio)
+		{
+			++i;
+		}
+
+		const float upper = StereoPanGains[i][1] / StereoPanGains[i][0];
+		const float lower = StereoPanGains[i + 1][1] / StereoPanGains[i + 1][0];
+		const float t = upper > lower ? std::clamp((upper - ratio) / (upper - lower), 0.f, 1.f) : 0.f;
+
+		degrees = i + t;
+		gain = nearEar / (StereoPanGains[i][0] + (StereoPanGains[i + 1][0] - StereoPanGains[i][0]) * t);
+	}
+
+	const float angle = (right >= left ? degrees : -degrees) * std::numbers::pi_v<float> / 180;
+	const Vector position{std::sin(angle), 0, -std::cos(angle)};
+
+	alSourcei(channel.Source.Id, AL_SOURCE_RELATIVE, AL_TRUE);
+	alSourcefv(channel.Source.Id, AL_POSITION, position);
+	alSourcef(channel.Source.Id, AL_ROLLOFF_FACTOR, 0);
+	alSourcef(channel.Source.Id, AL_MAX_GAIN, 4);
+	alSourcef(channel.Source.Id, AL_GAIN, gain);
+}
+
+void GameSoundSystem::RestoreSpatialization(Channel& channel)
+{
+	alSourcei(channel.Source.Id, AL_SOURCE_RELATIVE, channel.Relative ? AL_TRUE : AL_FALSE);
+	const Vector position = channel.Relative ? vec3_origin : LoadVector(channel.Origin);
+	alSourcefv(channel.Source.Id, AL_POSITION, position);
+	alSourcef(channel.Source.Id, AL_ROLLOFF_FACTOR, channel.Attenuation);
+	alSourcef(channel.Source.Id, AL_MAX_GAIN, 1);
+	alSourcef(channel.Source.Id, AL_GAIN, channel.Volume);
 }
 
 float GameSoundSystem::GetChannelAudibility(const Channel& channel) const
@@ -924,6 +1170,51 @@ void GameSoundSystem::PrintChannels()
 	Con_Printf("%d sounds playing (%d looping, %d out of earshot), of %d sources\n",
 		static_cast<int>(m_Channels.size()), looping, silent, monoSources + stereoSources);
 	Con_Printf("%s\n", DescribeChannels(m_Channels.size()).c_str());
+
+	// johnhalflife: how the device is really mixing, and what the loudest sounds are given.
+	ALCint frequency = 0, outputMode = 0, limiter = -1, hrtf = 0;
+	alcGetIntegerv(m_Device.get(), ALC_FREQUENCY, 1, &frequency);
+	if (m_SupportsOutputMode)
+		alcGetIntegerv(m_Device.get(), ALC_OUTPUT_MODE_SOFT, 1, &outputMode);
+	if (m_SupportsLimiter)
+		alcGetIntegerv(m_Device.get(), ALC_OUTPUT_LIMITER_SOFT, 1, &limiter);
+	if (m_SupportsHRTF)
+		alcGetIntegerv(m_Device.get(), ALC_HRTF_SOFT, 1, &hrtf);
+
+	Con_Printf("Mixing: vanilla %s (cvar %s, upsample %d), %d Hz, output mode %#x (basic stereo %#x), limiter %d, HRTF %d, "
+			   "resampler %d (vanilla %d, default %d)\n",
+		m_VanillaMix ? "on" : "off", m_VanillaMixCvar->string, m_AppliedUpsample, frequency, outputMode, ALC_STEREO_BASIC_SOFT, limiter, hrtf,
+		m_Channels.empty() || !m_SupportsResampler ? -1 : [&]
+		{ ALint r = -1; alGetSourcei(m_Channels.front().Source.Id, AL_SOURCE_RESAMPLER_SOFT, &r); return r; }(),
+		GetResampler(), m_DefaultResampler);
+
+	std::vector<const Channel*> loudest;
+
+	for (const auto& channel : m_Channels)
+		loudest.push_back(&channel);
+
+	std::sort(loudest.begin(), loudest.end(), [this](const Channel* a, const Channel* b)
+		{ return GetChannelAudibility(*a) > GetChannelAudibility(*b); });
+
+	for (std::size_t i = 0; i < loudest.size() && i < 12; ++i)
+	{
+		const Channel& channel = *loudest[i];
+		float left = 0, right = 0;
+		GetVanillaEarVolumes(channel, left, right);
+
+		ALint relative = 0;
+		ALfloat gain = 0, rolloff = 0;
+		Vector position;
+		alGetSourcei(channel.Source.Id, AL_SOURCE_RELATIVE, &relative);
+		alGetSourcef(channel.Source.Id, AL_GAIN, &gain);
+		alGetSourcef(channel.Source.Id, AL_ROLLOFF_FACTOR, &rolloff);
+		alGetSourcefv(channel.Source.Id, AL_POSITION, position);
+
+		Con_Printf("  %s: volume %.2f attn %.2f%s | engine's ears L %.2f R %.2f | given gain %.2f, relative %d, "
+				   "at %.2f %.2f %.2f, rolloff %.2f\n",
+			std::string{GetSoundName(channel.Sound)}.c_str(), channel.Volume, channel.Attenuation,
+			channel.Relative ? " (own/everywhere)" : "", left, right, gain, relative, position.x, position.y, position.z, rolloff);
+	}
 }
 
 void GameSoundSystem::ClearChannel(Channel& channel)
@@ -1041,6 +1332,13 @@ bool GameSoundSystem::SetupChannel(Channel& channel, int entityIndex, int channe
 	alSourcei(channel.Source.Id, AL_SOURCE_RELATIVE, isRelative ? AL_TRUE : AL_FALSE);
 	alSourcei(channel.Source.Id, AL_LOOPING, AL_FALSE);
 
+	// johnhalflife: for the engine's spatialization (a sentence sets its own word's volume next).
+	StoreVector(origin, channel.Origin);
+	channel.Volume = volume;
+	channel.Attenuation = attenuation;
+	channel.Relative = isRelative;
+	alSourcef(channel.Source.Id, AL_MAX_GAIN, 1);
+
 	alSourcei(channel.Source.Id, AL_BUFFER, NullBuffer);
 
 	const bool success = std::visit([&, this](auto&& sound)
@@ -1131,6 +1429,11 @@ bool GameSoundSystem::SetupChannel(Channel& channel, int entityIndex, int channe
 		}
 	}
 
+	if (m_VanillaMix)
+	{
+		ApplyVanillaSpatialization(channel);
+	}
+
 	return true;
 }
 
@@ -1159,6 +1462,12 @@ bool GameSoundSystem::AlterChannel(int entityIndex, int channelIndex, const Soun
 	if ((flags & SND_CHANGE_VOL) != 0)
 	{
 		alSourcef(channelToAlter.Source.Id, AL_GAIN, volume);
+		channelToAlter.Volume = volume;
+
+		if (m_VanillaMix)
+		{
+			ApplyVanillaSpatialization(channelToAlter);
+		}
 	}
 
 	if ((flags & SND_CHANGE_PITCH) != 0)
@@ -1326,26 +1635,26 @@ void GameSoundSystem::Spatialize(Channel& channel, int messagenum)
 		auto entity = gEngfuncs.GetEntityByIndex(channel.EntityIndex);
 
 		// Entities without a model are not sent to the client so there is no point in updating their position.
-		if (entity && entity->model && entity->curstate.messagenum == messagenum)
+		// Don't update relative sources (always vec3_origin).
+		if (entity && entity->model && entity->curstate.messagenum == messagenum && !channel.Relative)
 		{
-			ALint isRelative = AL_FALSE;
-			alGetSourcei(channel.Source.Id, AL_SOURCE_RELATIVE, &isRelative);
+			const Vector position = entity->model->type == mod_brush
+										? entity->origin + (entity->model->mins + entity->model->maxs) * 0.5f
+										: entity->origin;
 
-			// Don't update relative sources (always vec3_origin).
-			if (isRelative != AL_FALSE)
-			{
-				return;
-			}
+			StoreVector(position, channel.Origin);
 
-			if (entity->model->type == mod_brush)
+			if (!m_VanillaMix)
 			{
-				alSourcefv(channel.Source.Id, AL_POSITION, entity->origin + (entity->model->mins + entity->model->maxs) * 0.5f);
-			}
-			else
-			{
-				alSourcefv(channel.Source.Id, AL_POSITION, entity->origin);
+				alSourcefv(channel.Source.Id, AL_POSITION, position);
 			}
 		}
+	}
+
+	// johnhalflife: the engine's spatialization follows the listener too, every frame.
+	if (m_VanillaMix)
+	{
+		ApplyVanillaSpatialization(channel);
 	}
 }
 }

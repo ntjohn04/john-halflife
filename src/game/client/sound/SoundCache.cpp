@@ -126,11 +126,54 @@ bool SoundCache::LoadSound(Sound& sound)
 
 	m_Logger->trace("Loading sound {} into buffer {}", absolutePath, sound.Buffer.Id);
 
+	// See https://openal-soft.org/openal-extensions/SOFT_loop_points.txt
+	auto cuePoints = TryLoadCuePoints(absolutePath, data.samples.size(), data.channelCount);
+
+	// johnhalflife (jhl_snd_mix_vanilla): the engine's mixer runs at 22050 Hz and steps through a sound at its own rate,
+	// interpolating linearly between its samples (a recording of vanilla playing scientist/absolutely.wav: 5.5-8 kHz,
+	// where an 11 kHz sound's steps mirror into, -29.2 dB; linear stepping -28.8, not interpolating -23.5): done here,
+	// once, so OpenAL takes it from 22050 Hz to the device's rate filtered, as the system takes the engine's output
+	// (nothing above 11 kHz in the recording, -85 dB). Not straight to 48 kHz: that kept highs above 11 kHz.
+	if (m_EngineRate && data.sampleRate > 0 && data.sampleRate != EngineMixRate && data.channelCount > 0)
+	{
+		const std::size_t channels = static_cast<std::size_t>(data.channelCount);
+		const std::size_t frames = data.samples.size() / channels;
+		const double step = static_cast<double>(data.sampleRate) / EngineMixRate;
+		const std::size_t outFrames = static_cast<std::size_t>(frames / step);
+
+		std::vector<float> stepped(outFrames * channels);
+
+		for (std::size_t i = 0; i < outFrames; ++i)
+		{
+			const double position = i * step;
+			const std::size_t from = std::min(static_cast<std::size_t>(position), frames - 1);
+			const std::size_t next = std::min(from + 1, frames - 1);
+			const float fraction = static_cast<float>(position - static_cast<double>(from));
+
+			for (std::size_t c = 0; c < channels; ++c)
+			{
+				const float a = data.samples[from * channels + c];
+				const float b = data.samples[next * channels + c];
+				stepped[i * channels + c] = a + (b - a) * fraction;
+			}
+		}
+
+		if (cuePoints)
+		{
+			const auto scale = [&](ALint frame)
+			{ return static_cast<ALint>(std::min<std::size_t>(static_cast<std::size_t>(frame / step), outFrames)); };
+
+			// OpenAL refuses a loop that doesn't start before it ends.
+			const ALint end = std::max<ALint>(scale(std::get<1>(*cuePoints)), 1);
+			cuePoints = std::tuple<ALint, ALint>{std::min(scale(std::get<0>(*cuePoints)), end - 1), end};
+		}
+
+		data.samples = std::move(stepped);
+		data.sampleRate = EngineMixRate;
+	}
+
 	alBufferData(sound.Buffer.Id, format,
 		data.samples.data(), data.samples.size() * sizeof(float), data.sampleRate);
-
-	// See https://openal-soft.org/openal-extensions/SOFT_loop_points.txt
-	const auto cuePoints = TryLoadCuePoints(absolutePath, data.samples.size(), data.channelCount);
 
 	if (cuePoints)
 	{

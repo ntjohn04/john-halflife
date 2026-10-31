@@ -158,6 +158,13 @@ struct Channel
 	int Pitch{PITCH_NORM};
 	int CreatedOnFrame{0};
 
+	// johnhalflife (jhl_snd_mix_vanilla): what the engine's own spatialization works from, each frame. Volume is
+	// a sentence's current word's for sentences.
+	float Origin[3]{};
+	float Volume{1};
+	float Attenuation{1};
+	bool Relative{false};
+
 	OpenALSource Source;
 };
 }
