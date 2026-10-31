@@ -77,6 +77,7 @@ private:
 	void BuildDeviceAttributes(std::vector<ALCint>& attribs);
 	void AddHRTFAttributes(std::vector<ALCint>& attribs);
 	void ResetDevice();
+	void UpdateDeviceRate();
 
 	/**
 	 *	@brief johnhalflife: a channel's resampler and spatialization, as jhl_snd_vanilla has them.

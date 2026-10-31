@@ -312,6 +312,7 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 
 	m_SoundCache = std::make_unique<SoundCache>(m_CacheLogger);
 	m_SoundCache->SetEngineRate(m_VanillaMix);
+	UpdateDeviceRate();
 	m_Sentences = std::make_unique<SentencesSystem>(m_SentencesLogger, m_SoundCache.get());
 
 	m_HRTFEnabled = g_ConCommands.CreateCVar("snd_hrtf_enabled", "0", FCVAR_ARCHIVE);
@@ -735,6 +736,19 @@ void GameSoundSystem::BuildDeviceAttributes(std::vector<ALCint>& attribs)
 	attribs.push_back(0);
 }
 
+void GameSoundSystem::UpdateDeviceRate()
+{
+	// johnhalflife: the rate the device really mixes at (OpenAL may not give the one asked for), for sounds at the
+	// engine's rate to be converted to.
+	ALCint frequency = 0;
+	alcGetIntegerv(m_Device.get(), ALC_FREQUENCY, 1, &frequency);
+
+	if (m_SoundCache)
+	{
+		m_SoundCache->SetDeviceRate(frequency);
+	}
+}
+
 void GameSoundSystem::ResetDevice()
 {
 	// alcResetDeviceSOFT comes with ALC_SOFT_HRTF.
@@ -751,6 +765,8 @@ void GameSoundSystem::ResetDevice()
 	{
 		m_Logger->error("Failed to reset device: {}", alcGetString(m_Device.get(), alcGetError(m_Device.get())));
 	}
+
+	UpdateDeviceRate();
 }
 
 void GameSoundSystem::AddHRTFAttributes(std::vector<ALCint>& attribs)

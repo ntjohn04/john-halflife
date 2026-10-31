@@ -92,6 +92,20 @@ public:
 	bool IsEngineRate() const { return m_EngineRate; }
 
 	/**
+	 *	@brief johnhalflife: the device's mixing rate, which sounds at the engine's rate are converted to (0: none).
+	 */
+	void SetDeviceRate(int deviceRate)
+	{
+		m_DeviceRate = deviceRate;
+	}
+
+	/**
+	 *	@brief johnhalflife: samples at the engine's 22050 Hz to the device's rate, as the system converts the engine's
+	 *	output (flat to near 11 kHz); a loop (frames, -1: none) is wrapped round so its seam stays seamless.
+	 */
+	std::vector<float> ToDeviceRate(const std::vector<float>& samples, std::size_t channels, ALint loopStart, ALint loopEnd) const;
+
+	/**
 	 *	@brief johnhalflife (jhl_snd_vanilla): the sound at a pitch, pitched as the engine pitches it, made the first
 	 *	time it's asked for; null if it can't be (not loaded at the engine's rate).
 	 */
@@ -120,5 +134,6 @@ private:
 	std::unique_ptr<nqr::NyquistIO> m_Loader;
 
 	bool m_EngineRate{false};
+	int m_DeviceRate{0};
 };
 }

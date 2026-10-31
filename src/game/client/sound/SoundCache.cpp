@@ -13,6 +13,9 @@
  *
  ****/
 
+#include <numbers>
+#include <optional>
+
 #include <AL/alext.h>
 
 #include "cbase.h"
@@ -130,8 +133,9 @@ bool SoundCache::LoadSound(Sound& sound)
 	auto cuePoints = TryLoadCuePoints(absolutePath, data.samples.size(), data.channelCount);
 
 	// johnhalflife (jhl_snd_vanilla): the engine mixes at 22050 Hz, a sound at its own pitch brought to it interpolated
-	// linearly: done here, once, so OpenAL takes it on to the device's rate filtered, as the system takes the engine's
-	// output. The sound as loaded is kept, for its pitched versions (GetPitched).
+	// linearly; the system then takes the engine's output to the device's rate, flat to near 11 kHz: both done here,
+	// once (ToDeviceRate), so OpenAL plays it at the device's rate as it is. The sound as loaded is kept, for its
+	// pitched versions (GetPitched).
 	if (m_EngineRate && data.sampleRate > 0 && data.channelCount > 0)
 	{
 		sound.NativeSamples = data.samples;
@@ -157,6 +161,22 @@ bool SoundCache::LoadSound(Sound& sound)
 
 			data.samples = std::move(stepped);
 			data.sampleRate = EngineMixRate;
+		}
+
+		if (m_DeviceRate > 0 && m_DeviceRate != EngineMixRate)
+		{
+			const std::size_t channels = static_cast<std::size_t>(data.channelCount);
+			auto converted = ToDeviceRate(data.samples, channels,
+				cuePoints ? std::get<0>(*cuePoints) : -1, cuePoints ? std::get<1>(*cuePoints) : -1);
+
+			if (cuePoints)
+			{
+				cuePoints = ScaleLoop(std::get<0>(*cuePoints), std::get<1>(*cuePoints),
+					static_cast<double>(EngineMixRate) / m_DeviceRate, converted.size() / channels);
+			}
+
+			data.samples = std::move(converted);
+			data.sampleRate = m_DeviceRate;
 		}
 	}
 
@@ -215,6 +235,148 @@ std::vector<float> SoundCache::Resample(const std::vector<float>& samples, std::
 	return out;
 }
 
+// The system's conversion of the engine's 22050 Hz output to the device's rate, as in recordings of vanilla: flat to
+// near 11 kHz, nothing above (OpenAL's own sinc resamplers roll off from 6 kHz, -19 dB by 10 kHz, which muffled 22 kHz
+// sounds). A Kaiser windowed sinc, 64 taps, cut off at 10.9 kHz, tabled at 512 phases.
+constexpr int ConverterHalf = 32;
+constexpr int ConverterPhases = 512;
+constexpr double ConverterCutoff = 10900;
+constexpr double ConverterBeta = 5.65; // About 60 dB down past the cut off.
+
+static double BesselI0(double x)
+{
+	double sum = 1;
+	double term = 1;
+
+	for (int k = 1; k < 30; ++k)
+	{
+		const double half = x / (2 * k);
+		term *= half * half;
+		sum += term;
+	}
+
+	return sum;
+}
+
+static const std::vector<float>& ConverterTable()
+{
+	static const std::vector<float> table = []
+	{
+		constexpr int taps = 2 * ConverterHalf;
+		std::vector<float> result(static_cast<std::size_t>(ConverterPhases + 1) * taps);
+		const double cutoff = ConverterCutoff / SoundCache::EngineMixRate; // Cycles a sample.
+		const double norm = BesselI0(ConverterBeta);
+
+		for (int phase = 0; phase <= ConverterPhases; ++phase)
+		{
+			const double fraction = static_cast<double>(phase) / ConverterPhases;
+			double sum = 0;
+
+			for (int k = 0; k < taps; ++k)
+			{
+				const double distance = k - ConverterHalf + 1 - fraction;
+				const double x = 2 * cutoff * distance;
+				const double sinc = x == 0 ? 1 : std::sin(std::numbers::pi * x) / (std::numbers::pi * x);
+				const double r = distance / ConverterHalf;
+				const double window = std::abs(r) < 1 ? BesselI0(ConverterBeta * std::sqrt(1 - r * r)) / norm : 0;
+				const double value = 2 * cutoff * sinc * window;
+				result[static_cast<std::size_t>(phase) * taps + k] = static_cast<float>(value);
+				sum += value;
+			}
+
+			// Unity at 0 Hz every phase, so steady sound doesn't ripple.
+			for (int k = 0; k < taps; ++k)
+			{
+				result[static_cast<std::size_t>(phase) * taps + k] /= static_cast<float>(sum);
+			}
+		}
+
+		return result;
+	}();
+
+	return table;
+}
+
+std::vector<float> SoundCache::ToDeviceRate(const std::vector<float>& samples, std::size_t channels, ALint loopStart, ALint loopEnd) const
+{
+	const std::size_t frames = samples.size() / channels;
+
+	if (frames == 0 || m_DeviceRate <= 0)
+	{
+		return samples;
+	}
+
+	const auto& table = ConverterTable();
+	constexpr int taps = 2 * ConverterHalf;
+	const double step = static_cast<double>(EngineMixRate) / m_DeviceRate;
+	const std::size_t outFrames = std::max<std::size_t>(static_cast<std::size_t>(frames / step), 1);
+	const bool looping = loopStart >= 0 && loopEnd > loopStart && static_cast<std::size_t>(loopEnd) <= frames;
+
+	// A frame past the end: round the loop for a looping sound (so its seam stays seamless), else silence.
+	const auto frameAt = [&](std::ptrdiff_t index) -> std::ptrdiff_t
+	{
+		if (index < 0)
+		{
+			return -1;
+		}
+
+		if (looping && index >= loopEnd)
+		{
+			return loopStart + (index - loopEnd) % (loopEnd - loopStart);
+		}
+
+		return index < static_cast<std::ptrdiff_t>(frames) ? index : -1;
+	};
+
+	std::vector<float> out(outFrames * channels);
+
+	for (std::size_t i = 0; i < outFrames; ++i)
+	{
+		const double position = i * step;
+		auto base = static_cast<std::ptrdiff_t>(position);
+		int phase = static_cast<int>((position - static_cast<double>(base)) * ConverterPhases + 0.5);
+
+		if (phase == ConverterPhases)
+		{
+			phase = 0;
+			++base;
+		}
+
+		const float* kernel = &table[static_cast<std::size_t>(phase) * taps];
+		const std::ptrdiff_t first = base - ConverterHalf + 1;
+		const bool inside = first >= 0 && first + taps <= static_cast<std::ptrdiff_t>(frames) && (!looping || first + taps <= loopEnd);
+
+		for (std::size_t c = 0; c < channels; ++c)
+		{
+			float sum = 0;
+
+			if (inside)
+			{
+				const float* source = &samples[static_cast<std::size_t>(first) * channels + c];
+
+				for (int k = 0; k < taps; ++k)
+				{
+					sum += source[static_cast<std::size_t>(k) * channels] * kernel[k];
+				}
+			}
+			else
+			{
+				for (int k = 0; k < taps; ++k)
+				{
+					if (const auto index = frameAt(first + k); index >= 0)
+					{
+						sum += samples[static_cast<std::size_t>(index) * channels + c] * kernel[k];
+					}
+				}
+			}
+
+			out[i * channels + c] = sum;
+		}
+	}
+
+	return out;
+}
+
 std::tuple<ALint, ALint> SoundCache::ScaleLoop(ALint start, ALint end, double step, std::size_t frames)
 {
 	const auto scale = [&](ALint frame)
@@ -240,32 +402,54 @@ const PitchedSound* SoundCache::GetPitched(Sound& sound, int pitch)
 	// The engine pitches a sound by stepping through it at its own rate without interpolating (fixed point, truncated),
 	// and only then brings it to its 22050 Hz: off the sound's own pitch the uneven steps scatter a faint distortion
 	// through the whole band, the grain of vanilla's sound (nearly everything plays a little off pitch: voices 100-103,
-	// guns 98-102). A sound faster than 22050 Hz is pitched from its 22050 Hz version.
+	// guns 98-102). A sound faster than 22050 Hz is pitched from its 22050 Hz version. Then, as the sound itself, on to
+	// the device's rate.
 	const std::size_t channels = static_cast<std::size_t>(sound.ChannelCount);
 	const double pitchStep = pitch / 100.0;
+	const double toEngine = static_cast<double>(sound.NativeRate) / EngineMixRate;
 	const bool slower = sound.NativeRate <= EngineMixRate;
 
-	std::vector<float> samples = Resample(slower ? sound.NativeSamples : sound.Samples, channels, pitchStep, false);
+	std::vector<float> samples = slower ? Resample(sound.NativeSamples, channels, pitchStep, false)
+										: Resample(Resample(sound.NativeSamples, channels, toEngine, true), channels, pitchStep, false);
 
 	if (slower && sound.NativeRate != EngineMixRate)
 	{
-		samples = Resample(samples, channels, static_cast<double>(sound.NativeRate) / EngineMixRate, true);
+		samples = Resample(samples, channels, toEngine, true);
 	}
 
-	// Native frames to these: through the pitch, and to 22050 Hz.
-	const double totalStep = pitchStep * sound.NativeRate / EngineMixRate;
+	// Its loop, in these frames: through the pitch, at 22050 Hz.
+	std::optional<std::tuple<ALint, ALint>> loop;
+
+	if (sound.NativeLoopStart >= 0)
+	{
+		loop = ScaleLoop(sound.NativeLoopStart, sound.NativeLoopEnd, pitchStep * toEngine, samples.size() / channels);
+	}
+
+	int rate = EngineMixRate;
+
+	if (m_DeviceRate > 0 && m_DeviceRate != EngineMixRate)
+	{
+		samples = ToDeviceRate(samples, channels, loop ? std::get<0>(*loop) : -1, loop ? std::get<1>(*loop) : -1);
+
+		if (loop)
+		{
+			loop = ScaleLoop(std::get<0>(*loop), std::get<1>(*loop), static_cast<double>(EngineMixRate) / m_DeviceRate,
+				samples.size() / channels);
+		}
+
+		rate = m_DeviceRate;
+	}
 
 	PitchedSound pitched;
 	pitched.Buffer = OpenALBuffer::Create();
 
 	alGetError();
 
-	alBufferData(pitched.Buffer.Id, sound.Format, samples.data(), samples.size() * sizeof(float), EngineMixRate);
+	alBufferData(pitched.Buffer.Id, sound.Format, samples.data(), samples.size() * sizeof(float), rate);
 
-	if (sound.NativeLoopStart >= 0)
+	if (loop)
 	{
-		const auto loop = ScaleLoop(sound.NativeLoopStart, sound.NativeLoopEnd, totalStep, samples.size() / channels);
-		const ALint loopPoints[2] = {std::get<0>(loop), std::get<1>(loop)};
+		const ALint loopPoints[2] = {std::get<0>(*loop), std::get<1>(*loop)};
 		alBufferiv(pitched.Buffer.Id, AL_LOOP_POINTS_SOFT, loopPoints);
 	}
 

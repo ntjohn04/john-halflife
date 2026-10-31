@@ -11,7 +11,7 @@ OpenAL sound back. Each part below was checked against loopback recordings of va
 
 | Part | What it does | Where |
 |---|---|---|
-| Mixing rate | Sounds are brought to the engine's 22050 Hz as they load, interpolating linearly, then OpenAL takes them to the device's rate with its best sinc, as the system takes the engine's output. Nothing above 11 kHz, as vanilla. | `SoundCache::LoadSound` |
+| Mixing rate | Sounds are brought to the engine's 22050 Hz as they load, interpolating linearly, then converted to the device's rate as the system converts the engine's output: flat to 10.5 kHz, nothing above 11 kHz (a 64-tap windowed sinc; OpenAL's own resamplers roll off from 6 kHz, which muffled 22 kHz sounds such as the guns). OpenAL then plays them as they are. | `SoundCache::LoadSound`, `ToDeviceRate` |
 | Pitch | Off a sound's own pitch (nearly everything: voices 100-103 a line, guns 98-102), it is pitched as the engine pitches it: stepped through at its own rate without interpolating, then brought to 22050 Hz. The uneven steps are the faint grain of vanilla's sound. Made once per sound and pitch; dialogue words too. | `SoundCache::GetPitched`, `SentencesSystem::SetSentenceWord` |
 | Ear volumes | The engine's spatialization: each ear `(1 - distance × attenuation / 1000) × (1 ∓ side)`, the player's own sounds and sounds without attenuation full in both ears. Played through OpenAL's stereo panning inverted (measured on a loopback device), so each ear gets exactly that. | `ApplyVanillaSpatialization`, `StereoPanGains` |
 | Output | Plain stereo, no limiter (loud overlaps clip, as the engine's), no HRTF. | `BuildDeviceAttributes` |

@@ -205,7 +205,8 @@ Server `CIchthyosaur::HandleAnimEvent` in `server/entities/NPCs/aliens/ichthyosa
 |---|---|---|
 | Sources asked for | `RequestedMonoSources`, `RequestedStereoSources` | 1024 mono, 64 stereo |
 | Out of sources | `StealChannel`, `m_NextStealWarning` | A one-shot out of earshot, else the one closest to ending, taken over; a warning at most every 5 s |
-| Mixing rate | `SoundCache::EngineMixRate` | 22050 Hz, linear on load; then OpenAL's 23rd order sinc to the device (`m_VanillaResampler`) |
+| Mixing rate | `SoundCache::EngineMixRate` | 22050 Hz, linear on load |
+| To the device's rate | `ToDeviceRate`: `ConverterCutoff`, `ConverterHalf`, `ConverterBeta` | 10.9 kHz, 64 taps, Kaiser 5.65: flat to 10.5 kHz (-0.5 dB), -3.8 at 10.8, images under -66 dB; on load, so OpenAL needn't resample |
 | Pitch | `SoundCache::GetPitched` | Stepped at the sound's own rate without interpolating, then to 22050 Hz linearly |
 | Ear volumes | `ApplyVanillaSpatialization`, `StereoPanGains` | `(1 - distance x attenuation / 1000) x (1 -+ side)`; OpenAL Soft 1.22's panning measured 0-60 degrees |
 | Output | `BuildDeviceAttributes` | Plain stereo, no limiter, no HRTF |
