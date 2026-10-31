@@ -129,47 +129,37 @@ bool SoundCache::LoadSound(Sound& sound)
 	// See https://openal-soft.org/openal-extensions/SOFT_loop_points.txt
 	auto cuePoints = TryLoadCuePoints(absolutePath, data.samples.size(), data.channelCount);
 
-	// johnhalflife (jhl_snd_mix_vanilla): the engine's mixer runs at 22050 Hz and steps through a sound at its own rate,
-	// interpolating linearly between its samples (a recording of vanilla playing scientist/absolutely.wav: 5.5-8 kHz,
-	// where an 11 kHz sound's steps mirror into, -29.2 dB; linear stepping -28.8, not interpolating -23.5): done here,
-	// once, so OpenAL takes it from 22050 Hz to the device's rate filtered, as the system takes the engine's output
-	// (nothing above 11 kHz in the recording, -85 dB). Not straight to 48 kHz: that kept highs above 11 kHz.
-	if (m_EngineRate && data.sampleRate > 0 && data.sampleRate != EngineMixRate && data.channelCount > 0)
+	// johnhalflife (jhl_snd_mix_vanilla): the engine's mixer runs at 22050 Hz: a sound at its own pitch comes to it
+	// interpolated linearly (a recording of vanilla playing scientist/absolutely.wav: 5.5-8 kHz, where an 11 kHz
+	// sound's steps mirror into, -29.2 dB; linear -28.8, not interpolating -23.5): done here, once, so OpenAL takes it
+	// from 22050 Hz to the device's rate filtered, as the system takes the engine's output (nothing above 11 kHz in the
+	// recording, -85 dB). Pitched, it's made from the sound as loaded (GetPitched), kept for that.
+	if (m_EngineRate && data.sampleRate > 0 && data.channelCount > 0)
 	{
-		const std::size_t channels = static_cast<std::size_t>(data.channelCount);
-		const std::size_t frames = data.samples.size() / channels;
-		const double step = static_cast<double>(data.sampleRate) / EngineMixRate;
-		const std::size_t outFrames = static_cast<std::size_t>(frames / step);
-
-		std::vector<float> stepped(outFrames * channels);
-
-		for (std::size_t i = 0; i < outFrames; ++i)
-		{
-			const double position = i * step;
-			const std::size_t from = std::min(static_cast<std::size_t>(position), frames - 1);
-			const std::size_t next = std::min(from + 1, frames - 1);
-			const float fraction = static_cast<float>(position - static_cast<double>(from));
-
-			for (std::size_t c = 0; c < channels; ++c)
-			{
-				const float a = data.samples[from * channels + c];
-				const float b = data.samples[next * channels + c];
-				stepped[i * channels + c] = a + (b - a) * fraction;
-			}
-		}
+		sound.NativeSamples = data.samples;
+		sound.NativeRate = data.sampleRate;
+		sound.ChannelCount = data.channelCount;
 
 		if (cuePoints)
 		{
-			const auto scale = [&](ALint frame)
-			{ return static_cast<ALint>(std::min<std::size_t>(static_cast<std::size_t>(frame / step), outFrames)); };
-
-			// OpenAL refuses a loop that doesn't start before it ends.
-			const ALint end = std::max<ALint>(scale(std::get<1>(*cuePoints)), 1);
-			cuePoints = std::tuple<ALint, ALint>{std::min(scale(std::get<0>(*cuePoints)), end - 1), end};
+			sound.NativeLoopStart = std::get<0>(*cuePoints);
+			sound.NativeLoopEnd = std::get<1>(*cuePoints);
 		}
 
-		data.samples = std::move(stepped);
-		data.sampleRate = EngineMixRate;
+		if (data.sampleRate != EngineMixRate)
+		{
+			const double step = static_cast<double>(data.sampleRate) / EngineMixRate;
+			auto stepped = Resample(data.samples, static_cast<std::size_t>(data.channelCount), step, true);
+
+			if (cuePoints)
+			{
+				cuePoints = ScaleLoop(std::get<0>(*cuePoints), std::get<1>(*cuePoints), step,
+					stepped.size() / static_cast<std::size_t>(data.channelCount));
+			}
+
+			data.samples = std::move(stepped);
+			data.sampleRate = EngineMixRate;
+		}
 	}
 
 	alBufferData(sound.Buffer.Id, format,
@@ -197,12 +187,124 @@ bool SoundCache::LoadSound(Sound& sound)
 	return true;
 }
 
+std::vector<float> SoundCache::Resample(const std::vector<float>& samples, std::size_t channels, double step, bool interpolate)
+{
+	const std::size_t frames = samples.size() / channels;
+
+	if (frames == 0 || step <= 0)
+	{
+		return {};
+	}
+
+	const std::size_t outFrames = std::max<std::size_t>(static_cast<std::size_t>(frames / step), 1);
+	std::vector<float> out(outFrames * channels);
+
+	for (std::size_t i = 0; i < outFrames; ++i)
+	{
+		const double position = i * step;
+		const std::size_t from = std::min(static_cast<std::size_t>(position), frames - 1);
+		const std::size_t next = std::min(from + 1, frames - 1);
+		const float fraction = interpolate ? static_cast<float>(position - static_cast<double>(from)) : 0.f;
+
+		for (std::size_t c = 0; c < channels; ++c)
+		{
+			const float a = samples[from * channels + c];
+			const float b = samples[next * channels + c];
+			out[i * channels + c] = a + (b - a) * fraction;
+		}
+	}
+
+	return out;
+}
+
+std::tuple<ALint, ALint> SoundCache::ScaleLoop(ALint start, ALint end, double step, std::size_t frames)
+{
+	const auto scale = [&](ALint frame)
+	{ return static_cast<ALint>(std::min<std::size_t>(static_cast<std::size_t>(frame / step), frames)); };
+
+	// OpenAL refuses a loop that doesn't start before it ends.
+	const ALint scaledEnd = std::max<ALint>(scale(end), 1);
+	return {std::min(scale(start), scaledEnd - 1), scaledEnd};
+}
+
+const PitchedSound* SoundCache::GetPitched(Sound& sound, int pitch)
+{
+	if (auto it = sound.Pitched.find(pitch); it != sound.Pitched.end())
+	{
+		return &it->second;
+	}
+
+	if (sound.NativeSamples.empty() || sound.NativeRate <= 0 || pitch <= 0)
+	{
+		return nullptr;
+	}
+
+	// The engine pitches a sound by stepping through it at its own rate without interpolating (fixed point, truncated),
+	// and only then brings it to its 22050 Hz: off the sound's own pitch, the uneven steps scatter distortion through
+	// the whole band, the grain of vanilla's sound (nearly everything plays a little off pitch: voices 100-103, guns
+	// 98-102). A recording of a scientist in vanilla, between his voice's harmonics, 1.5-8 kHz: -16.2, -16.1, -14.3 dB;
+	// simulated at pitch 102 this way -15.5, -15.6, -14.4; pitched cleanly after (OpenAL's) -18.0, -18.0, -16.8. A sound
+	// faster than 22050 Hz is pitched from its 22050 Hz version.
+	const std::size_t channels = static_cast<std::size_t>(sound.ChannelCount);
+	const double pitchStep = pitch / 100.0;
+	const bool slower = sound.NativeRate <= EngineMixRate;
+
+	std::vector<float> samples = Resample(slower ? sound.NativeSamples : sound.Samples, channels, pitchStep, false);
+
+	if (slower && sound.NativeRate != EngineMixRate)
+	{
+		samples = Resample(samples, channels, static_cast<double>(sound.NativeRate) / EngineMixRate, true);
+	}
+
+	// Native frames to these: through the pitch, and to 22050 Hz.
+	const double totalStep = pitchStep * sound.NativeRate / EngineMixRate;
+
+	PitchedSound pitched;
+	pitched.Buffer = OpenALBuffer::Create();
+
+	alGetError();
+
+	alBufferData(pitched.Buffer.Id, sound.Format, samples.data(), samples.size() * sizeof(float), EngineMixRate);
+
+	if (sound.NativeLoopStart >= 0)
+	{
+		const auto loop = ScaleLoop(sound.NativeLoopStart, sound.NativeLoopEnd, totalStep, samples.size() / channels);
+		const ALint loopPoints[2] = {std::get<0>(loop), std::get<1>(loop)};
+		alBufferiv(pitched.Buffer.Id, AL_LOOP_POINTS_SOFT, loopPoints);
+	}
+
+	if (const auto error = alGetError(); error != AL_NO_ERROR)
+	{
+		m_Logger->error("OpenAL error {} ({}) while making \"{}\" at pitch {}", alGetString(error), error, sound.Name.c_str(), pitch);
+		return nullptr;
+	}
+
+	pitched.Samples = std::move(samples);
+
+	return &sound.Pitched.emplace(pitch, std::move(pitched)).first->second;
+}
+
+const std::vector<float>& SoundCache::GetSamples(const Sound& sound, int pitch)
+{
+	if (pitch != PITCH_NORM)
+	{
+		if (auto it = sound.Pitched.find(pitch); it != sound.Pitched.end())
+		{
+			return it->second.Samples;
+		}
+	}
+
+	return sound.Samples;
+}
+
 void SoundCache::ClearBuffers()
 {
 	for (auto& sound : m_Sounds)
 	{
 		sound.Samples.clear();
 		sound.Buffer.Delete();
+		sound.NativeSamples.clear();
+		sound.Pitched.clear();
 	}
 }
 

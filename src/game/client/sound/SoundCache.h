@@ -89,6 +89,22 @@ public:
 		m_EngineRate = engineRate;
 	}
 
+	bool IsEngineRate() const { return m_EngineRate; }
+
+	/**
+	 *	@brief johnhalflife (jhl_snd_mix_vanilla): the sound at a pitch, pitched as the engine pitches it, made the first
+	 *	time it's asked for; null if it can't be (not loaded at the engine's rate).
+	 */
+	const PitchedSound* GetPitched(Sound& sound, int pitch);
+
+	/**
+	 *	@brief johnhalflife: the samples a sound plays at a pitch (its pitched version's, if made), for mouths.
+	 */
+	static const std::vector<float>& GetSamples(const Sound& sound, int pitch);
+
+	static std::vector<float> Resample(const std::vector<float>& samples, std::size_t channels, double step, bool interpolate);
+	static std::tuple<ALint, ALint> ScaleLoop(ALint start, ALint end, double step, std::size_t frames);
+
 	static constexpr int EngineMixRate = 22050;
 
 private:

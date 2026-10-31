@@ -1046,7 +1046,10 @@ float GameSoundSystem::GetChannelTimeLeft(const Channel& channel) const
 	}
 
 	const float samples = size * 8.f / (bits * channels);
-	return std::max(0.f, samples - offset) / frequency / std::max(channel.Pitch / 100.f, 0.01f);
+	ALfloat pitch = 1;
+	alGetSourcef(channel.Source.Id, AL_PITCH, &pitch);
+
+	return std::max(0.f, samples - offset) / frequency / std::max(pitch, 0.01f);
 }
 
 Channel* GameSoundSystem::StealChannel()
@@ -1347,9 +1350,24 @@ bool GameSoundSystem::SetupChannel(Channel& channel, int entityIndex, int channe
 
 			if constexpr (std::is_same_v<T, SoundIndex>)
 			{
-				const auto& soundData = *m_SoundCache->GetSound(sound);
+				auto& soundData = *m_SoundCache->GetSound(sound);
 
-				alSourcei(channel.Source.Id, AL_BUFFER, soundData.Buffer.Id);
+				// johnhalflife (jhl_snd_mix_vanilla): off its own pitch, the sound pitched as the engine pitches it, played
+				// at that pitch's own rate.
+				channel.BufferPitch = PITCH_NORM;
+				ALuint buffer = soundData.Buffer.Id;
+
+				if (m_VanillaMix && pitch != PITCH_NORM)
+				{
+					if (const PitchedSound* pitched = m_SoundCache->GetPitched(soundData, pitch); pitched)
+					{
+						buffer = pitched->Buffer.Id;
+						channel.BufferPitch = pitch;
+						alSourcef(channel.Source.Id, AL_PITCH, 1);
+					}
+				}
+
+				alSourcei(channel.Source.Id, AL_BUFFER, buffer);
 				alSourcei(channel.Source.Id, AL_LOOPING, soundData.IsLooping ? AL_TRUE : AL_FALSE);
 			}
 			else if constexpr (std::is_same_v<T, SentenceChannel>)
@@ -1404,14 +1422,18 @@ bool GameSoundSystem::SetupChannel(Channel& channel, int entityIndex, int channe
 
 				// if (offset == 0)
 				{
+					// johnhalflife: the buffer it plays, which with the engine's mixing may be a pitched version.
+					ALint otherBuffer = static_cast<ALint>(soundData.Buffer.Id);
+					alGetSourcei(otherChannel.Source.Id, AL_BUFFER, &otherBuffer);
+
 					ALint frequency = 0;
-					alGetBufferi(soundData.Buffer.Id, AL_FREQUENCY, &frequency);
+					alGetBufferi(otherBuffer, AL_FREQUENCY, &frequency);
 
 					ALint channels = 0;
-					alGetBufferi(soundData.Buffer.Id, AL_CHANNELS, &channels);
+					alGetBufferi(otherBuffer, AL_CHANNELS, &channels);
 
 					ALint size = 0;
-					alGetBufferi(soundData.Buffer.Id, AL_SIZE, &size);
+					alGetBufferi(otherBuffer, AL_SIZE, &size);
 
 					// Need to convert the frequency to bytes for this to work.
 					const ALint sampleSizeInBytes = channels * sizeof(float);
@@ -1473,7 +1495,8 @@ bool GameSoundSystem::AlterChannel(int entityIndex, int channelIndex, const Soun
 	if ((flags & SND_CHANGE_PITCH) != 0)
 	{
 		channelToAlter.Pitch = pitch;
-		alSourcef(channelToAlter.Source.Id, AL_PITCH, pitch / 100.f);
+		// johnhalflife: relative to the pitch its buffer was made at (jhl_snd_mix_vanilla), cleanly from there.
+		alSourcef(channelToAlter.Source.Id, AL_PITCH, pitch / static_cast<float>(channelToAlter.BufferPitch));
 	}
 
 	if ((flags & SND_STOP) != 0)

@@ -59,7 +59,8 @@ public:
 	void MoveMouth(Channel& channel, const Sound& sound);
 
 private:
-	bool CreateTimeCompressedBuffer(const Channel& channel, SentenceChannel& sentenceChannel, const Sound& sound);
+	bool CreateTimeCompressedBuffer(const Channel& channel, SentenceChannel& sentenceChannel, const Sound& sound,
+		ALuint soundBuffer, const std::vector<float>& soundSamples);
 
 	bool UpdateSentencePlayback(Channel& channel, SentenceChannel& sentenceChannel);
 

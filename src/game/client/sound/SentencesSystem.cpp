@@ -146,6 +146,25 @@ bool SentencesSystem::SetSentenceWord(Channel& channel, SentenceChannel& sentenc
 
 	if (auto wordSound = m_SoundCache->GetSound(word.Index); wordSound && m_SoundCache->LoadSound(*wordSound))
 	{
+		// Mix sentence-wide and word-specific pitch values.
+		const int pitch = std::clamp(channel.Pitch + (word.Parameters.Pitch - PITCH_NORM), 1, 255);
+
+		// johnhalflife (jhl_snd_mix_vanilla): off its own pitch, the word pitched as the engine pitches it (a voice is
+		// 100-103, so nearly every word), played at that pitch's own rate.
+		ALuint wordBuffer = wordSound->Buffer.Id;
+		const std::vector<float>* wordSamples = &wordSound->Samples;
+		channel.BufferPitch = PITCH_NORM;
+
+		if (m_SoundCache->IsEngineRate() && pitch != PITCH_NORM)
+		{
+			if (const PitchedSound* pitched = m_SoundCache->GetPitched(*wordSound, pitch); pitched)
+			{
+				wordBuffer = pitched->Buffer.Id;
+				wordSamples = &pitched->Samples;
+				channel.BufferPitch = pitch;
+			}
+		}
+
 		if (word.Parameters.TimeCompress != 0)
 		{
 			if (!sentenceChannel.TimeCompressBuffer.IsValid())
@@ -156,7 +175,7 @@ bool SentencesSystem::SetSentenceWord(Channel& channel, SentenceChannel& sentenc
 			// Detach buffer first so it can be modified.
 			alSourcei(channel.Source.Id, AL_BUFFER, NullBuffer);
 
-			if (!CreateTimeCompressedBuffer(channel, sentenceChannel, *wordSound))
+			if (!CreateTimeCompressedBuffer(channel, sentenceChannel, *wordSound, wordBuffer, *wordSamples))
 			{
 				return false;
 			}
@@ -165,12 +184,12 @@ bool SentencesSystem::SetSentenceWord(Channel& channel, SentenceChannel& sentenc
 		}
 		else
 		{
-			alSourcei(channel.Source.Id, AL_BUFFER, wordSound->Buffer.Id);
+			alSourcei(channel.Source.Id, AL_BUFFER, wordBuffer);
 
 			if (word.Parameters.Start != 0)
 			{
 				ALint size = 0;
-				alGetBufferi(wordSound->Buffer.Id, AL_SIZE, &size);
+				alGetBufferi(wordBuffer, AL_SIZE, &size);
 
 				const ALint startOffset = static_cast<ALint>(size * (word.Parameters.Start / 100.f));
 
@@ -178,12 +197,9 @@ bool SentencesSystem::SetSentenceWord(Channel& channel, SentenceChannel& sentenc
 			}
 		}
 
-		// Mix sentence-wide and word-specific pitch values.
-		const float pitch = std::clamp(channel.Pitch + (word.Parameters.Pitch - PITCH_NORM), 1, 255) / 100.f;
-
 		alSourcef(channel.Source.Id, AL_GAIN, word.Parameters.Volume / 100.f);
 		channel.Volume = word.Parameters.Volume / 100.f;
-		alSourcef(channel.Source.Id, AL_PITCH, pitch);
+		alSourcef(channel.Source.Id, AL_PITCH, pitch / static_cast<float>(channel.BufferPitch));
 
 		return true;
 	}
@@ -264,9 +280,17 @@ void SentencesSystem::MoveMouth(Channel& channel, const Sound& sound)
 	ALint sampleOffset = 0;
 	alGetSourcei(channel.Source.Id, AL_SAMPLE_OFFSET, &sampleOffset);
 
+	// johnhalflife: the samples it's playing (a pitched version's, with the engine's mixing), and none past their end.
+	const std::vector<float>& samples = SoundCache::GetSamples(sound, channel.BufferPitch);
+
+	if (sampleOffset < 0 || static_cast<std::size_t>(sampleOffset) >= samples.size())
+	{
+		return;
+	}
+
 	const std::size_t maxSamples = static_cast<std::size_t>(frequency * MouthSampleRange);
 
-	const std::size_t samplesToCheck = std::min(maxSamples, sound.Samples.size() - static_cast<std::size_t>(sampleOffset));
+	const std::size_t samplesToCheck = std::min(maxSamples, samples.size() - static_cast<std::size_t>(sampleOffset));
 
 	const auto entity = gEngfuncs.GetEntityByIndex(channel.EntityIndex);
 
@@ -282,7 +306,7 @@ void SentencesSystem::MoveMouth(Channel& channel, const Sound& sound)
 
 	for (std::size_t sampleIndex = 0; sampleIndex < samplesToCheck && mouth.sndcount < MouthSamplesRequired; ++mouth.sndcount)
 	{
-		const float sample = sound.Samples[static_cast<std::size_t>(sampleOffset) + sampleIndex];
+		const float sample = samples[static_cast<std::size_t>(sampleOffset) + sampleIndex];
 
 		// Rescale the sample range from [-1, 1] to [-128, 127].
 		const int scaledSample = std::clamp(
@@ -306,7 +330,8 @@ void SentencesSystem::MoveMouth(Channel& channel, const Sound& sound)
 	}
 }
 
-bool SentencesSystem::CreateTimeCompressedBuffer(const Channel& channel, SentenceChannel& sentenceChannel, const Sound& sound)
+bool SentencesSystem::CreateTimeCompressedBuffer(const Channel& channel, SentenceChannel& sentenceChannel, const Sound& sound,
+	ALuint soundBuffer, const std::vector<float>& soundSamples)
 {
 	const auto& sentence = m_Sentences[sentenceChannel.Sentence];
 	const auto& word = sentence.Words[sentenceChannel.CurrentWord];
@@ -321,7 +346,7 @@ bool SentencesSystem::CreateTimeCompressedBuffer(const Channel& channel, Sentenc
 	const std::size_t channelCount = wordSound.Format == AL_FORMAT_MONO_FLOAT32 ? 1 : 2;
 
 	ALint size = 0;
-	alGetBufferi(sound.Buffer.Id, AL_SIZE, &size);
+	alGetBufferi(soundBuffer, AL_SIZE, &size);
 
 	const ALint startOffset = static_cast<ALint>(size * (word.Parameters.Start / 100.f));
 	const ALint endOffsetFromEnd = static_cast<ALint>(size * ((100 - word.Parameters.End) / 100.f));
@@ -336,7 +361,7 @@ bool SentencesSystem::CreateTimeCompressedBuffer(const Channel& channel, Sentenc
 
 	const std::size_t chunkSize = numberOfLogicalSamples / TimeCompressChunkCount;
 
-	const std::size_t startIndex = static_cast<std::size_t>((wordSound.Samples.size() / static_cast<float>(channelCount)) * (word.Parameters.Start / 100.f));
+	const std::size_t startIndex = static_cast<std::size_t>((soundSamples.size() / static_cast<float>(channelCount)) * (word.Parameters.Start / 100.f));
 
 	bool isFirstIteration = true;
 
@@ -358,14 +383,14 @@ bool SentencesSystem::CreateTimeCompressedBuffer(const Channel& channel, Sentenc
 
 		compressedData.insert(
 			compressedData.end(),
-			wordSound.Samples.begin() + (readIndex * channelCount),
-			wordSound.Samples.begin() + (chunkEndPos * channelCount));
+			soundSamples.begin() + (readIndex * channelCount),
+			soundSamples.begin() + (chunkEndPos * channelCount));
 
 		readIndex = chunkEndPos;
 	}
 
 	ALint frequency = -1;
-	alGetBufferi(wordSound.Buffer.Id, AL_FREQUENCY, &frequency);
+	alGetBufferi(soundBuffer, AL_FREQUENCY, &frequency);
 
 	// Clear error state.
 	alGetError();

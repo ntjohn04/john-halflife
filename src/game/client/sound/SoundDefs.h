@@ -15,7 +15,9 @@
 
 #pragma once
 
+#include <map>
 #include <variant>
+#include <vector>
 
 #include <EASTL/fixed_vector.h>
 
@@ -106,6 +108,15 @@ struct SoundIndex final
  *	@brief A single sound.
  *	@details Sounds should always be referred to using a @see SoundIndex.
  */
+/**
+ *	@brief johnhalflife (jhl_snd_mix_vanilla): a sound at one pitch, pitched as the engine pitches it.
+ */
+struct PitchedSound
+{
+	OpenALBuffer Buffer;
+	std::vector<float> Samples;
+};
+
 struct Sound
 {
 	RelativeFilename Name;
@@ -113,6 +124,15 @@ struct Sound
 	ALenum Format = 0;
 	std::vector<float> Samples; // For sentences, to update mouths.
 	bool IsLooping{false};
+
+	// johnhalflife (jhl_snd_mix_vanilla): the sound as loaded, before it was stepped to the engine's rate, its loop in
+	// its own frames, and the pitches it's been played at (SoundCache::GetPitched).
+	std::vector<float> NativeSamples;
+	int NativeRate{0};
+	int ChannelCount{1};
+	int NativeLoopStart{-1};
+	int NativeLoopEnd{-1};
+	std::map<int, PitchedSound> Pitched;
 
 	explicit Sound(const RelativeFilename& filename)
 		: Name(filename)
@@ -164,6 +184,9 @@ struct Channel
 	float Volume{1};
 	float Attenuation{1};
 	bool Relative{false};
+
+	// johnhalflife (jhl_snd_mix_vanilla): the pitch its buffer was made at (100: none; OpenAL pitches the rest).
+	int BufferPitch{PITCH_NORM};
 
 	OpenALSource Source;
 };
