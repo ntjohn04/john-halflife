@@ -129,7 +129,7 @@ The shells' explosions are the shared explosion code's (`CGrenade::Explode`), as
 
 | Part | Knob | Value | See |
 |---|---|---|---|
-| Charger light (`chargers.cpp`, `CBaseCharger::Use`) | `TE_DLIGHT` | 70-90 units, 0.2 s, refreshed every 0.1 s it gives; health (60,205,180), HEV (255,170,70) | Any charger: `map c1a1` on |
+| Charger light (`chargers.cpp`, `CBaseCharger::Use`) | `TE_DLIGHT` | 60-70 units, 0.2 s, refreshed every 0.1 s it gives; health (48,164,144), HEV (204,136,56) | Any charger: `map c1a1` on |
 | Charger running dry | `UTIL_Sparks` | A spark burst as it empties | Drain one |
 | Shooter pieces' life (`effects.cpp`, `ShootThink`) | `JhlShooterGibLife` | At least 45 s, ±20% (models only) | `map c1a1f` (computers, glass, plates), `c2a4e`, `c1a1a` (cans) |
 | Shooter pieces kept | `JhlShooterGibsKept` | 64 at once; past that the oldest (by its `fuser4`, when thrown) fades | |
@@ -185,3 +185,14 @@ Client `JhlGonarchSpit_Track` in `client/jhl_gargantua.cpp`. See: `map c4a2`.
 | Part | Knob | Value |
 |---|---|---|
 | Spit droplets | `GonarchDropSpacing`, `GonarchDropsMostAFrame`, `GonarchDropColors` | Every 8 units, at most 6 a frame, palette 254/254/15 (white), 0.6-1 s |
+
+## Ichthyosaur
+
+Server `CIchthyosaur::HandleAnimEvent` in `server/entities/NPCs/aliens/ichthyosaur.cpp`; client
+`JhlExplosion_ParseBiteBubbles` in `client/jhl_explosions.cpp`. See: `map c2a3`.
+
+| Part | Knob | Value |
+|---|---|---|
+| Bite bubbles | `BiteBubbleCount`, `BiteBubbleSpeedMin`/`Max` | 26, thrown out at 50-130 from 32 ahead of it, mostly forward (vanilla 16 rising in a 16-unit cube) |
+| Their slowing and rise | `BiteBubbleDrag`, `BiteBubbleBuoyancy` | 3, 2.5 (exponential, a second); rising at 80-140 as vanilla's |
+| Their life | `BiteBubbleLife`, `BiteBubbleFade` | 1.6 s ±25%, fading over the last 40% |

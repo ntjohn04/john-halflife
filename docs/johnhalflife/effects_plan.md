@@ -504,8 +504,13 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
   * Whoever's manning one feels each shot: a kick of the view by its kind (machine gun 0.3°, rocket 2, cannon 3,
     laser 1.5, ±20%, a little sideways).
 * Chargers (`chargers.cpp`: `func_healthcharger`, `func_recharge`): while one gives, a soft light on its face toward
-  the player (the engine's `TE_DLIGHT`, 70-90 units, a fifth of a second at a time, refreshed each tenth it gives):
-  health blue-green (60,205,180), the HEV's amber (255,170,70); sparks (`UTIL_Sparks`) as it runs dry.
+  the player (the engine's `TE_DLIGHT`, 60-70 units, a fifth of a second at a time, refreshed each tenth it gives):
+  health blue-green (48,164,144), the HEV's amber (204,136,56); sparks (`UTIL_Sparks`) as it runs dry.
+* Ichthyosaur (`ichthyosaur.cpp`): its bite's bubbles (vanilla's 16 in a 16-unit cube, 32 ahead, placed by an aim
+  only set with its enemy in sight) at its mouth always, and drawn on the client (`TE_BUBBLES` on `gmsgTempEntity`:
+  `JhlExplosion_ParseBiteBubbles`): 26 of the engine's bubbles, sized as its own, thrown out mostly ahead at 50-130,
+  slowing as the water takes them and coming round to rise as vanilla's (80-140), fading over their last 40% of
+  about 1.6 s; gone on leaving the water or meeting the world.
 * Gib shooters (`effects.cpp`: `env_shooter`, `gibshooter`; scripted debris): what they throw, if models (sprites,
   sparks and glass, as they were), lies at least 45 s (its own life if longer), ±20%, as debris; as many as vanilla's
   (a second piece half the shots, tried, spawned in the same spot as the first and stuck with it: c1a1a's vending

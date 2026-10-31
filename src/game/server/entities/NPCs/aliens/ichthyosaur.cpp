@@ -15,6 +15,7 @@
 
 #include "cbase.h"
 #include "flyingmonster.h"
+#include "jhl_effects.h"
 #include "nodes.h"
 
 #define SEARCH_RETRY 16
@@ -413,8 +414,24 @@ void CIchthyosaur::HandleAnimEvent(MonsterEvent_t* pEvent)
 
 	if (bDidAttack)
 	{
-		Vector vecSrc = pev->origin + gpGlobals->v_forward * 32;
-		UTIL_Bubbles(vecSrc - Vector(8, 8, 8), vecSrc + Vector(8, 8, 8), 16);
+		// johnhalflife (jhl_fx_particlesystem): the burst at its mouth (vanilla's aim was only set with its enemy in
+		// sight, else left from whoever set it last), drawn on the client spreading out from it (TE_BUBBLES, ours).
+		if (UTIL_JhlParticleSystem())
+		{
+			UTIL_MakeAimVectors(pev->angles);
+			const Vector vecSrc = pev->origin + gpGlobals->v_forward * 32;
+
+			MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, vecSrc);
+			WRITE_BYTE(TE_BUBBLES);
+			WRITE_COORD_VECTOR(vecSrc);
+			WRITE_COORD_VECTOR(gpGlobals->v_forward * 100);
+			MESSAGE_END();
+		}
+		else
+		{
+			Vector vecSrc = pev->origin + gpGlobals->v_forward * 32;
+			UTIL_Bubbles(vecSrc - Vector(8, 8, 8), vecSrc + Vector(8, 8, 8), 16);
+		}
 	}
 }
 

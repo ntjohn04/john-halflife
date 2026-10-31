@@ -1337,6 +1337,83 @@ void JhlExplosion_TentacleImpact(const Vector& position, int strength)
 		DustBurst(floor, 12, 1.6f, DustColor(material));
 }
 
+// The ichthyosaur's bite: a burst of bubbles (the engine's bubble.spr, sized and rising as its TE_BUBBLES: 1/4-1/16,
+// 80-140 a second) thrown out from its mouth, mostly ahead, slowing as the water takes them, turning to rise, fading
+// out over their last BiteBubbleFade of BiteBubbleLife; gone on leaving the water or meeting the world.
+constexpr int BiteBubbleCount = 26;
+constexpr float BiteBubbleSpeedMin = 50;
+constexpr float BiteBubbleSpeedMax = 130;
+constexpr float BiteBubbleDrag = 3;	  // Of their thrown speed, a second (exponential).
+constexpr float BiteBubbleBuoyancy = 2.5f; // How fast they come round to rising.
+constexpr float BiteBubbleLife = 1.6f;
+constexpr float BiteBubbleFade = 0.4f;
+
+static bool InWater(Vector position)
+{
+	const int contents = gEngfuncs.PM_PointContents(position, nullptr);
+	return contents == CONTENTS_WATER || contents == CONTENTS_SLIME || contents == CONTENTS_LAVA;
+}
+
+// A bite bubble (curstate.fuser1: when it was made; fuser2: its life; fuser3: how fast it rises).
+static void BiteBubbleThink(TEMPENTITY* bubble, float frametime, float currenttime)
+{
+	auto& state = bubble->entity.curstate;
+
+	if (!InWater(bubble->entity.origin))
+	{
+		bubble->die = currenttime;
+		return;
+	}
+
+	Vector& velocity = bubble->entity.baseline.origin;
+	const float drag = std::exp(-BiteBubbleDrag * frametime);
+	velocity.x *= drag;
+	velocity.y *= drag;
+	velocity.z += (state.fuser3 - velocity.z) * (1 - std::exp(-BiteBubbleBuoyancy * frametime));
+
+	const float p = std::clamp((currenttime - state.fuser1) / state.fuser2, 0.f, 1.f);
+	state.renderamt = static_cast<int>(255 * std::clamp((1 - p) / BiteBubbleFade, 0.f, 1.f));
+}
+
+void JhlExplosion_ParseBiteBubbles(BufferReader& reader)
+{
+	const Vector origin = reader.ReadCoordVector();
+	Vector forward = reader.ReadCoordVector();
+
+	if (!JhlParticleSystemEnabled())
+		return;
+
+	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/bubble.spr");
+
+	if (model == 0 || !InWater(origin))
+		return;
+
+	forward = forward.Normalize();
+	const float now = gEngfuncs.GetClientTime();
+
+	for (int i = 0; i < BiteBubbleCount; ++i)
+	{
+		const Vector scatter{gEngfuncs.pfnRandomFloat(-1, 1), gEngfuncs.pfnRandomFloat(-1, 1), gEngfuncs.pfnRandomFloat(-1, 1)};
+		const Vector direction = (forward * 0.7f + scatter.Normalize()).Normalize();
+		Vector velocity = direction * gEngfuncs.pfnRandomFloat(BiteBubbleSpeedMin, BiteBubbleSpeedMax);
+		Vector position = origin + Vector{gEngfuncs.pfnRandomFloat(-4, 4), gEngfuncs.pfnRandomFloat(-4, 4), gEngfuncs.pfnRandomFloat(-4, 4)};
+		const float life = BiteBubbleLife * gEngfuncs.pfnRandomFloat(0.75f, 1.25f);
+
+		TEMPENTITY* bubble = gEngfuncs.pEfxAPI->R_TempSprite(position, velocity, 1 / gEngfuncs.pfnRandomFloat(4, 16), model,
+			kRenderTransAlpha, kRenderFxNone, 1, life, FTENT_COLLIDEWORLD | FTENT_COLLIDEKILL);
+
+		if (!bubble)
+			break;
+
+		bubble->entity.curstate.frame = gEngfuncs.pfnRandomLong(0, std::max(0, static_cast<int>(bubble->frameMax) - 1));
+		bubble->entity.curstate.fuser1 = now;
+		bubble->entity.curstate.fuser2 = life;
+		bubble->entity.curstate.fuser3 = gEngfuncs.pfnRandomFloat(80, 140);
+		bubble->flags |= FTENT_CLIENTCUSTOM;
+		bubble->callback = BiteBubbleThink;
+	}
+}
+
 void JhlExplosion_ParseDisplacerSpecks(BufferReader& reader)
 {
 	const Vector origin = reader.ReadCoordVector();

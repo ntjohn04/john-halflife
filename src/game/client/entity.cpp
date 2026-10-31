@@ -980,6 +980,10 @@ static void MsgFunc_TempEntity(const char* name, BufferReader& reader)
 		break;
 	}
 
+	case TE_BUBBLES:
+		JhlExplosion_ParseBiteBubbles(reader);
+		break;
+
 	case TE_BLOODSPRITE:
 	{
 		const Vector origin = reader.ReadCoordVector();

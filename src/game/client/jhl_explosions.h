@@ -54,6 +54,11 @@ void JhlExplosion_GroundKick(const Vector& point, const Vector& direction);
 void JhlExplosion_TentacleImpact(const Vector& position, int strength);
 
 /**
+ *	@brief johnhalflife: the ichthyosaur's bite, a burst of bubbles spreading from its mouth (TE_BUBBLES, our own).
+ */
+void JhlExplosion_ParseBiteBubbles(BufferReader& reader);
+
+/**
  *	@brief A mortar shell seen coming in (CMortar::JhlIncomingThink; TE_USERTRACER): a streak falling onto where it's
  *	about to land.
  */
