@@ -242,10 +242,10 @@ void CBaseCharger::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE u
 		MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, face);
 		WRITE_BYTE(TE_DLIGHT);
 		WRITE_COORD_VECTOR(face);
-		WRITE_BYTE(RANDOM_LONG(7, 9)); // Radius, tens.
-		WRITE_BYTE(health ? 60 : 255);
-		WRITE_BYTE(health ? 205 : 170);
-		WRITE_BYTE(health ? 180 : 70);
+		WRITE_BYTE(RANDOM_LONG(6, 7)); // Radius, tens.
+		WRITE_BYTE(health ? 48 : 204);
+		WRITE_BYTE(health ? 164 : 136);
+		WRITE_BYTE(health ? 144 : 56);
 		WRITE_BYTE(2); // Life, tenths.
 		WRITE_BYTE(0); // Decay, tens.
 		MESSAGE_END();
