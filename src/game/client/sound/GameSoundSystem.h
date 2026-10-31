@@ -154,6 +154,8 @@ private:
 
 	void UpdateSourceEffect(OpenALSource& source);
 
+	void SetDirectLowpass(bool lowpass);
+
 	void UpdateSounds();
 
 	bool UpdateSound(Channel& channel);
@@ -194,6 +196,11 @@ private:
 	ALuint m_AuxiliaryEffectSlot{0};
 
 	ALuint m_Filter{0};
+
+	// johnhalflife: the engine's water rooms' lowpass on the direct sound (jhl_snd_room_vanilla).
+	static constexpr float VanillaLowpassHFGain = 0.1f;
+	ALuint m_DirectFilter{0};
+	bool m_DirectLowpass{false};
 
 	int m_CurrentGameFrame{0};
 

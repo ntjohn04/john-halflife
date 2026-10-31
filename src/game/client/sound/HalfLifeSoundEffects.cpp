@@ -185,6 +185,46 @@ constexpr VanillaRoom VanillaRooms[RoomEffectCount] = {
 constexpr float VanillaReverbLevel = 1;
 constexpr float VanillaEchoLevel = 1;
 
+// Each room's reverb and echo set to vanilla's, measured twice (the second time with these): a click played in every room type in vanilla and here
+// (jhl_roomtest.cfg, loopback recordings), each room's response against room 0's dry click, its energy by time after
+// the click compared (dB; 0: matched as worked out). The reverb, two delay lines here an EAX reverb, came out 7-16 dB
+// under vanilla's; the echoes matched in the metallic rooms (2-4) but outdoors (20-22) and in room 1 were well over it.
+constexpr float VanillaReverbTrim[RoomEffectCount] = {
+	0, 0, 0, 0, 0,		// 0-4: no reverb
+	0, 0, 0,			// 5-7 tunnel: matched
+	12, 10, 7,			// 8-10 chamber
+	21, 18, 18,			// 11-13 bright
+	0, 0, 0,			// 14-16 water: no reverb
+	15, 9, 10,			// 17-19 concrete
+	0, 0, 0,			// 20-22 outside: no reverb
+	10, 11, 11,			// 23-25 cavern
+	23, 0, 15,			// 26-28 weirdo (27: none; 28: its feedback, rounded as the engine's, had run away)
+};
+
+constexpr float VanillaEchoTrim[RoomEffectCount] = {
+	0, -15, 0, 0, 0,	// 0-4: room 1's faint 65 ms echo barely there in vanilla
+	0, 0, 0,			// 5-7 tunnel
+	0, 0, 0,			// 8-10: no echo
+	0, 0, 0,			// 11-13: no echo
+	0, 0, -3,			// 14-16 water
+	0, 0, -8,			// 17-19 concrete (19: as outdoors)
+	-11, -11, -9,		// 20-22 outside
+	0, 0, 0,			// 23-25 cavern
+	0, -6, 0,			// 26-28
+};
+
+static float DecibelsToGain(float decibels)
+{
+	return std::pow(10.f, decibels / 20);
+}
+
+// The engine keeps a feedback as an integer, (int)(255 * value), and applies it shifted down 8 (out of 256): 0.999
+// is 0.992, and a delay of 9 ms (room 27) dies away at about 8 dB a second, as measured, not ringing on.
+static float EngineFeedback(float value)
+{
+	return std::floor(255 * std::clamp(value, 0.f, 1.f)) / 256;
+}
+
 // The longest echo delay OpenAL takes (AL_ECHO_MAX_DELAY): longer ones (outdoors, caverns: 0.3-0.38 s) are made this,
 // their feedback lowered to die away as fast.
 constexpr float MaxEchoDelay = 0.207f;
@@ -204,7 +244,7 @@ void SetupVanillaReverb(ALuint effectId, unsigned int roomType)
 	EFXEAXREVERBPROPERTIES reverb = EFX_REVERB_PRESET_GENERIC;
 
 	const float size = std::min(room.Size, 0.1f);
-	const float feedback = std::min(room.Reflectivity, 0.999f);
+	const float feedback = EngineFeedback(room.Reflectivity);
 
 	if (size > 0 && feedback > 0)
 	{
@@ -222,7 +262,12 @@ void SetupVanillaReverb(ALuint effectId, unsigned int roomType)
 		reverb.flLateReverbDelay = std::clamp(size * 0.29f, 0.f, 0.1f);
 
 		// Two lines (their loudness, broadband: 1 / sqrt(1 - feedback^2) each) at about 0.029 each.
-		reverb.flGain = std::clamp(0.0286f * std::sqrt(2.f) / std::sqrt(1 - feedback * feedback) * VanillaReverbLevel, 0.f, 1.f);
+		const float level = 0.0286f * std::sqrt(2.f) / std::sqrt(1 - feedback * feedback) * VanillaReverbLevel *
+							DecibelsToGain(VanillaReverbTrim[roomType < RoomEffectCount ? roomType : 0]);
+
+		// Past what its overall gain takes (1), the rest on its late reverb (to 10).
+		reverb.flGain = std::min(level, 1.f);
+		reverb.flLateReverbGain = std::min(reverb.flLateReverbGain * std::max(level, 1.f), 10.f);
 
 		// Two delay lines are sparse and grainy beside a full reverb.
 		reverb.flDiffusion = 0.5f;
@@ -270,7 +315,7 @@ void SetupVanillaEcho(ALuint effectId, unsigned int roomType)
 	const auto& room = GetVanillaRoom(roomType);
 
 	float delay = room.Delay;
-	float feedback = std::min(room.Feedback, AL_ECHO_MAX_FEEDBACK);
+	float feedback = std::min(EngineFeedback(room.Feedback), AL_ECHO_MAX_FEEDBACK);
 
 	if (delay > MaxEchoDelay)
 	{
@@ -292,9 +337,16 @@ void SetupVanillaEcho(ALuint effectId, unsigned int roomType)
 	alEffectf(effectId, AL_ECHO_SPREAD, 0);
 }
 
+bool VanillaLowpass(unsigned int roomType)
+{
+	return GetVanillaRoom(roomType).Lowpass != 0;
+}
+
 float VanillaEchoGain(unsigned int roomType)
 {
 	// In at a quarter; its two taps, together, are twice one.
-	return GetVanillaRoom(roomType).Delay > 0 ? 0.25f * 0.5f * VanillaEchoLevel : 0.f;
+	return GetVanillaRoom(roomType).Delay > 0
+			   ? 0.25f * 0.5f * VanillaEchoLevel * DecibelsToGain(VanillaEchoTrim[roomType < RoomEffectCount ? roomType : 0])
+			   : 0.f;
 }
 }

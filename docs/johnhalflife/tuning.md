@@ -221,7 +221,10 @@ on the first send and an echo effect on a second; `0` the SDK's.
 | Reverb loop lowpass (rvblp) | `TwoTapAverageHF` | 0.937 a time round at 5 kHz, as the decay's high frequency ratio |
 | Echo (delay, feedback, dlylp) | `SetupVanillaEcho`, `VanillaEchoLevel` | In at a quarter, x1; damping 0.2 with dlylp |
 | Echo past OpenAL's longest | `MaxEchoDelay` | 0.207 s (outdoors, caverns: 0.3-0.38), feedback lowered to die as fast |
-| Not done | | The left channel delay (left: delays the dry sound) |
+| Each room's level, measured | `VanillaReverbTrim`, `VanillaEchoTrim` | A click in every room type, vanilla and here (`jhl_roomtest.cfg` in `valve/` and the mod, run at the menu; loopback recordings), each room's response against room 0's: the reverb came 7-23 dB under vanilla's (now within ~3 in most rooms), echoes over it outdoors (20-22, -9 to -11) and in room 1 (-15) |
+| Feedback | `EngineFeedback` | Kept as the engine keeps it, (int)(255 x value) / 256: 0.999 is 0.992 (room 27 dies away at ~8 dB a second, as measured; room 28's reverb had run away) |
+| Water rooms (14-16; 14 under water) | `VanillaLowpass`, `VanillaLowpassHFGain` | The whole sound lowpassed, direct too (the engine's five-tap average: about a tenth left by 4-5 kHz): 0.1 |
+| Not done | | The left channel delay (vanilla delays the left 2-40 ms in many rooms, confirmed by the recordings; an effect send can't delay the dry sound) |
 
 Mixing (`jhl_snd_mix_vanilla 1`, default; `0` OpenAL's own): as the engine's software mixer (Xash3D's `s_main.c`,
 `s_mix.c`), switched live (the device is reset; sounds already loaded keep how they were loaded until the next map

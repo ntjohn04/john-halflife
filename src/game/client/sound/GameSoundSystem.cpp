@@ -55,6 +55,9 @@ GameSoundSystem::~GameSoundSystem()
 		alDeleteFilters(1, &m_Filter);
 		m_Filter = 0;
 
+		alDeleteFilters(1, &m_DirectFilter);
+		m_DirectFilter = 0;
+
 		alDeleteAuxiliaryEffectSlots(1, &m_AuxiliaryEffectSlot);
 		m_AuxiliaryEffectSlot = 0;
 
@@ -261,6 +264,12 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 	}
 
 	alFilteri(m_Filter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+
+	// johnhalflife: the engine's water rooms lowpass the whole sound (a five-tap average at 22050 Hz: about a tenth
+	// left by 4-5 kHz), the direct sound too; under water, its room 14 (jhl_snd_room_vanilla).
+	alGenFilters(1, &m_DirectFilter);
+	alFilteri(m_DirectFilter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+	alFilterf(m_DirectFilter, AL_LOWPASS_GAINHF, VanillaLowpassHFGain);
 
 	for (unsigned int roomType = 0; auto& effect : m_RoomEffects)
 	{
@@ -1557,6 +1566,8 @@ void GameSoundSystem::UpdateRoomEffect()
 					vanilla ? static_cast<ALint>(m_VanillaEchoEffects[roomType]) : AL_EFFECT_NULL);
 				alAuxiliaryEffectSlotf(m_EchoEffectSlot, AL_EFFECTSLOT_GAIN, vanilla ? VanillaEchoGain(roomType) : 0.f);
 			}
+
+			SetDirectLowpass(vanilla && VanillaLowpass(roomType));
 		}
 
 		if (m_PreviousHFGain != hfGain)
@@ -1580,6 +1591,23 @@ void GameSoundSystem::UpdateRoomEffect()
 		{
 			alAuxiliaryEffectSloti(m_EchoEffectSlot, AL_EFFECTSLOT_EFFECT, AL_EFFECT_NULL);
 		}
+
+		SetDirectLowpass(false);
+	}
+}
+
+void GameSoundSystem::SetDirectLowpass(bool lowpass)
+{
+	if (m_DirectLowpass == lowpass)
+	{
+		return;
+	}
+
+	m_DirectLowpass = lowpass;
+
+	for (auto& channel : m_Channels)
+	{
+		alSourcei(channel.Source.Id, AL_DIRECT_FILTER, static_cast<ALint>(lowpass ? m_DirectFilter : AL_FILTER_NULL));
 	}
 }
 
@@ -1591,6 +1619,8 @@ void GameSoundSystem::UpdateSourceEffect(OpenALSource& source)
 	{
 		alSource3i(source.Id, AL_AUXILIARY_SEND_FILTER, static_cast<ALint>(m_EchoEffectSlot), 1, m_Filter);
 	}
+
+	alSourcei(source.Id, AL_DIRECT_FILTER, static_cast<ALint>(m_DirectLowpass ? m_DirectFilter : AL_FILTER_NULL));
 }
 
 void GameSoundSystem::UpdateSounds()

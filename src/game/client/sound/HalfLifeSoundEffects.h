@@ -33,4 +33,10 @@ void SetupEffect(ALuint effectId, unsigned int roomType);
 void SetupVanillaReverb(ALuint effectId, unsigned int roomType);
 void SetupVanillaEcho(ALuint effectId, unsigned int roomType);
 float VanillaEchoGain(unsigned int roomType);
+
+/**
+ *	@brief johnhalflife: whether the engine lowpasses the whole sound in a room (its water rooms, 14-16: room 14 is
+ *	the one under water), the direct sound too.
+ */
+bool VanillaLowpass(unsigned int roomType);
 }
