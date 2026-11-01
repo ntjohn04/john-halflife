@@ -39,12 +39,8 @@ All are client settings; set them in the console.
 | `jhl_visuals_weaponwallpush` | 1 | Weapon pulls back near walls | [Camera](camera_movement.md#weapon-lag-and-wall-push) |
 | `jhl_visuals_flushfaces` | 1 | Signs, posters and panels built flush with walls drawn steady (they flickered in OpenGL and vanished in software) | [Visuals](visuals.md) |
 | `jhl_visuals_16bitcolor` | 0 | The software renderer's 16-bit color: every frame cut to 565, as it drew | [Visuals](visuals.md#16-bit-color-jhl_visuals_16bitcolor) |
-| `jhl_visuals_softwarewater` | 0 | The software renderer's rippling water: its ripple simulation in place of OpenGL's sine wobble | [Visuals](visuals.md#rippling-water-jhl_visuals_softwarewater) |
-| `jhl_visuals_modeloverbright` | 1 | The software renderer's model lighting: models lit up to 4/3 as the world is | [Visuals](visuals.md#model-lighting-jhl_visuals_modeloverbright-default-1) |
-| `jhl_visuals_underwaterview` | 0 | The software renderer's 320 x 200 view under water | [Visuals](visuals.md#under-water-jhl_visuals_underwaterview-jhl_visuals_underwaterfog) |
-| `jhl_visuals_underwaterfog` | 0 | The software renderer's underwater fog, by depth, in place of OpenGL's | [Visuals](visuals.md#under-water-jhl_visuals_underwaterview-jhl_visuals_underwaterfog) |
-| `jhl_visuals_softwaresampling` | 1 | With texture filtering off, point sampled with mipmaps as in software | [Visuals](visuals.md#texture-sampling-and-the-sky-jhl_visuals_softwaresampling-jhl_visuals_skyfiltering-default-1) |
-| `jhl_visuals_skyfiltering` | 1 | The sky filtered as the world is (pixelated with filtering off) | [Visuals](visuals.md#texture-sampling-and-the-sky-jhl_visuals_softwaresampling-jhl_visuals_skyfiltering-default-1) |
+| `jhl_visuals_softwarewater` | 1 | The software renderer's water: its ripple simulation in place of OpenGL's sine wobble, and under water its 320 x 200 view and fog by depth | [Visuals](visuals.md#software-renderer-touches) |
+| `jhl_visuals_renderfixes` | 1 | Models lit up to 4/3 as the world is; with texture filtering off, textures point sampled with mipmaps and the sky pixelated as the world is | [Visuals](visuals.md#software-renderer-touches) |
 | `jhl_physics_fpsfix` | 1 | Pushables, +use walking, grenades and gibs sliding, debris settling and fire rates acting at any frame rate as at 72 fps | [Physics](physics.md) |
 | `jhl_weapons_smoothrecoil` | 1 | Spring-damped recoil (0 = original punches) | [Weapons](weapons.md#recoil) |
 | `jhl_fx_bulletimpacts` | 1 | Bullet impact sparks/dust and water splashes | [Weapons](weapons.md#bullet-impacts) |

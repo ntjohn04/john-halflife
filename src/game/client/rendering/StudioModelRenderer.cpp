@@ -2127,7 +2127,7 @@ void CStudioModelRenderer::StudioRenderFinal_Hardware()
 
 			IEngineStudio.GL_SetRenderMode(rendermode);
 
-			// johnhalflife: lit as the software renderer lit models (jhl_visuals_modeloverbright).
+			// johnhalflife: lit as the software renderer lit models (jhl_visuals_renderfixes).
 			const bool overbright = JhlSoftwareLook_BeginModel(rendermode, m_pCurrentEntity->curstate.renderfx);
 			IEngineStudio.StudioDrawPoints();
 

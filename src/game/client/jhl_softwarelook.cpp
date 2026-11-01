@@ -26,15 +26,24 @@
 namespace
 {
 cvar_t* g_16BitColor = nullptr;
-cvar_t* g_ModelOverbright = nullptr;
-cvar_t* g_UnderwaterView = nullptr;
-cvar_t* g_UnderwaterFog = nullptr;
-cvar_t* g_SoftwareSampling = nullptr;
+cvar_t* g_RenderFixes = nullptr; // Model lighting, and (jhl_skyboxes.cpp) sampling and the sky's.
+cvar_t* g_SoftwareWater = nullptr;  // jhl_visuals_softwarewater (jhl_softwarewater.cpp's): its view under water too.
 cvar_t* g_TextureMode = nullptr;
 cvar_t* g_PreferFiltering = nullptr;
 bool g_SetTextureMode = false; // gl_texturemode is this setting's.
 
 JhlGL& gl = g_JhlGL;
+
+// The software water's setting, its view under water with it (registered by jhl_softwarewater.cpp, after this).
+bool SoftwareWaterOn()
+{
+	if (!g_SoftwareWater)
+	{
+		g_SoftwareWater = gEngfuncs.pfnGetCvarPointer("jhl_visuals_softwarewater");
+	}
+
+	return g_SoftwareWater && 0 != g_SoftwareWater->value;
+}
 
 enum class State
 {
@@ -300,16 +309,13 @@ bool g_EngineFogOff = false;
 void JhlSoftwareLook_Initialize()
 {
 	g_16BitColor = gEngfuncs.pfnRegisterVariable("jhl_visuals_16bitcolor", "0", FCVAR_ARCHIVE);
-	g_ModelOverbright = gEngfuncs.pfnRegisterVariable("jhl_visuals_modeloverbright", "1", FCVAR_ARCHIVE);
-	g_UnderwaterView = gEngfuncs.pfnRegisterVariable("jhl_visuals_underwaterview", "0", FCVAR_ARCHIVE);
-	g_UnderwaterFog = gEngfuncs.pfnRegisterVariable("jhl_visuals_underwaterfog", "0", FCVAR_ARCHIVE);
-	g_SoftwareSampling = gEngfuncs.pfnRegisterVariable("jhl_visuals_softwaresampling", "1", FCVAR_ARCHIVE);
+	g_RenderFixes = gEngfuncs.pfnRegisterVariable("jhl_visuals_renderfixes", "1", FCVAR_ARCHIVE);
 }
 
 bool JhlSoftwareLook_BeginModel(int renderMode, int renderFx)
 {
 	// Lit models only: additive ones and glow shells aren't lit.
-	if (0 == g_ModelOverbright->value || renderMode == kRenderTransAdd || renderMode == kRenderGlow ||
+	if (0 == g_RenderFixes->value || renderMode == kRenderTransAdd || renderMode == kRenderGlow ||
 		renderFx == kRenderFxGlowShell || !JhlGL_Available())
 	{
 		return false;
@@ -574,7 +580,7 @@ static bool CopyDepth(const GLint (&viewport)[4], GLint drawFramebuffer)
 
 void JhlSoftwareLook_CaptureView()
 {
-	if ((0 == g_UnderwaterFog->value) || !Ready())
+	if (!SoftwareWaterOn() || !Ready())
 	{
 		return;
 	}
@@ -627,12 +633,12 @@ void JhlSoftwareLook_RunFrame()
 	constexpr const char* Software = "GL_NEAREST_MIPMAP_NEAREST";
 	const bool unfiltered = 0 == g_PreferFiltering->value;
 
-	if (0 != g_SoftwareSampling->value && unfiltered && 0 == stricmp(g_TextureMode->string, Unfiltered))
+	if (0 != g_RenderFixes->value && unfiltered && 0 == stricmp(g_TextureMode->string, Unfiltered))
 	{
 		gEngfuncs.Cvar_Set(g_TextureMode->name, Software);
 		g_SetTextureMode = true;
 	}
-	else if (g_SetTextureMode && (0 == g_SoftwareSampling->value || !unfiltered))
+	else if (g_SetTextureMode && (0 == g_RenderFixes->value || !unfiltered))
 	{
 		// Turned off: back to the menu's mode, if it's still this setting's.
 		if (unfiltered && 0 == stricmp(g_TextureMode->string, Software))
@@ -651,7 +657,7 @@ void JhlSoftwareLook_SetupView()
 	// then covers nothing, and the engine's set up stays as it is. Put back as soon as it's not wanted.
 	bool off = false;
 
-	if (0 != g_UnderwaterFog->value && !g_FogFailed && JhlGL_Available())
+	if (SoftwareWaterOn() && !g_FogFailed && JhlGL_Available())
 	{
 		const int contents = gEngfuncs.PM_PointContents(v_origin, nullptr);
 		off = contents <= CONTENTS_WATER && contents != CONTENTS_TRANSLUCENT;
@@ -676,8 +682,8 @@ void JhlSoftwareLook_ViewDrawn()
 	// 200 (Quake's, never raised): narrowed to 320 wide keeping its shape, then no more than 200 tall (its width kept,
 	// so its pixels aren't square), and stretched back over the view; fogged as it's stretched (see g_UnderwaterPass).
 	// The HUD is drawn after, as sharp as ever.
-	const bool lowResolution = 0 != g_UnderwaterView->value;
-	bool fog = 0 != g_UnderwaterFog->value && !g_FogFailed;
+	const bool lowResolution = SoftwareWaterOn();
+	bool fog = lowResolution && !g_FogFailed;
 
 	if ((!lowResolution && !fog) || !Ready())
 	{

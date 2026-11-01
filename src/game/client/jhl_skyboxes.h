@@ -15,7 +15,7 @@
 
 #pragma once
 
-// johnhalflife (jhl_visuals_skyfiltering, default 1): the sky filtered as everything else is. The engine uploads the
+// johnhalflife (jhl_visuals_renderfixes, default 1): the sky filtered as everything else is. The engine uploads the
 // sky's six images (gfx/env/<sky><rt bk lf ft up dn>.tga) smooth, without mipmaps, and gl_texturemode only reaches
 // textures with mipmaps (GL_Texturemode_f), so with texture filtering off the world is pixelated and the sky smooth;
 // the software renderer point sampled the sky as it did all else. Here the engine's sky textures are found (the GL

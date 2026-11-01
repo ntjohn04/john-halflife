@@ -22,13 +22,13 @@
 // on screenshots of the same view: software's red and blue are multiples of 8, green of 4, from 0. Each frame, once the
 // HUD is drawn, the client copies it and draws it back cut down the same way.
 
-// jhl_visuals_modeloverbright (default 1): both renderers light the world texture x light / 192, so the brightest
+// jhl_visuals_renderfixes (default 1), model lighting: both renderers light the world texture x light / 192, so the brightest
 // light makes a surface 4/3 as bright as its texture; the software renderer lit models the same way, OpenGL never let a
 // model's light go past its texture (measured on screenshots of the same view: software's models 1.33 times as bright,
 // at every brightness, its world the same). While the engine draws a model's polygons, the second texture unit
 // multiplies their lit colour by 4/3, clamped as software clamps.
 
-// jhl_visuals_softwaresampling (default 1): the menu's texture filtering off sets gl_texturemode GL_NEAREST, point
+// jhl_visuals_renderfixes too, sampling: the menu's texture filtering off sets gl_texturemode GL_NEAREST, point
 // sampled without mipmaps, so distant textures sparkle; software point sampled with mipmaps. With filtering off, the
 // mode is made GL_NEAREST_MIPMAP_NEAREST (filtering turned on sets its own mode as ever; only this change is undone).
 
@@ -46,11 +46,11 @@ void JhlSoftwareLook_RunFrame();
 bool JhlSoftwareLook_BeginModel(int renderMode, int renderFx);
 void JhlSoftwareLook_EndModel();
 
-// jhl_visuals_underwaterview (default 0): under water, the software renderer drew the view into its warp buffer,
+// jhl_visuals_softwarewater (default 1), with the water: under water, the software renderer drew the view into its warp buffer,
 // 320 x 200 (Quake's), and stretched it over the screen: big, not quite square pixels, the HUD sharp on top (measured on
 // a screenshot: 4.5 x 5.4 pixels at 1440 x 1080). The view, once drawn, is drawn again from the middles of those blocks.
 
-// jhl_visuals_underwaterfog (default 0): under water, software fogged its view as it stretched it: each pixel mixed
+// jhl_visuals_softwarewater too: under water, software fogged its view as it stretched it: each pixel mixed
 // toward the water's colour by a blend picked by its depth (64 of them, by 32768 / distance), never less than 32 of 256,
 // colour and density from the water's palette as the engine's own fog takes them. OpenGL fogs linearly from the eye to
 // 1536 - 4 x density instead. The engine's fog is kept off (see JhlSoftwareLook_SetupView) and software's put on, by

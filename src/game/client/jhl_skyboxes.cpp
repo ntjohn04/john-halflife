@@ -290,7 +290,8 @@ void ApplyFilter(GLint filter)
 
 void JhlSkyboxes_Initialize()
 {
-	g_SkyFiltering = gEngfuncs.pfnRegisterVariable("jhl_visuals_skyfiltering", "1", FCVAR_ARCHIVE);
+	// jhl_visuals_renderfixes (jhl_softwarelook.cpp's, registered before this).
+	g_SkyFiltering = gEngfuncs.pfnGetCvarPointer("jhl_visuals_renderfixes");
 }
 
 void JhlSkyboxes_Update()
@@ -326,7 +327,7 @@ void JhlSkyboxes_Update()
 	}
 
 	// Off: as the engine left them (smooth).
-	if (0 == g_SkyFiltering->value)
+	if (!g_SkyFiltering || 0 == g_SkyFiltering->value)
 	{
 		if (0 != g_AppliedFilter)
 		{

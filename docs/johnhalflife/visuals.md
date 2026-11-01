@@ -33,10 +33,14 @@ many entities were found.
 Half-Life's software renderer (sw.dll) and its OpenGL renderer (hw.dll) were compared in their code and on
 screenshots of the same view. They light the world identically: the same light gamma table, light × texture ÷ 192 so
 the brightest light is 1.33× (OpenGL's `gl_overbright`, on by default, matches), the same tone curve. Several touches
-differ, each its own setting. The OpenGL drawing they need is in `jhl_gl.cpp` (looked up through SDL;
+differ, in two settings, and 16-bit color on its own:
+* `jhl_visuals_renderfixes` (default 1): models lit as the world is, and with texture filtering off textures
+  point sampled with mipmaps and the sky pixelated like the world: OpenGL made consistent with itself.
+* `jhl_visuals_softwarewater` (default 1): the water's ripples, and under water the 320 × 200 view and fog.
+* `jhl_visuals_16bitcolor` (default 0): the 16-bit frame. The OpenGL drawing they need is in `jhl_gl.cpp` (looked up through SDL;
 the client doesn't link OpenGL), the map reading in `jhl_bsp.cpp` (shared with the flush faces above).
 
-### Model lighting (`jhl_visuals_modeloverbright`, default 1)
+### Model lighting (`jhl_visuals_renderfixes`)
 
 Both renderers light the world texture × light ÷ 192, so the brightest light makes a surface 4/3 as bright as its
 texture. Software lit models the same way; OpenGL never let a model's light go past its texture, so its models look
@@ -53,7 +57,7 @@ this cut also accounts for most of software looking a little darker (what's left
 is drawn (software's HUD was 16-bit too), the client copies the frame and draws it back cut the same way
 (`jhl_softwarelook.cpp`).
 
-### Under water (`jhl_visuals_underwaterview`, `jhl_visuals_underwaterfog`)
+### Under water (`jhl_visuals_softwarewater`)
 
 In water, slime or lava, software drew the view into Quake's warp buffer, 320 × 200, never raised: narrowed to 320
 wide keeping its shape, then no more than 200 tall (its width kept, so its pixels aren't square: 4.5 × 5.4 at
@@ -63,24 +67,24 @@ the last from 520 units in), `((64 − blend) × far >> 6) + near` of 256, never
 far = (512 − near) × density >> 8. OpenGL fogs linearly from the eye to 1536 − 4 × density instead. Both take colour
 and density from the water's palette (entry 3's colour, entry 4's red), from the water drawn last.
 
-* `jhl_visuals_underwaterview`: once the view is drawn (before the HUD), it's drawn again from the middles of those
+* The view: once it's drawn (before the HUD), it's drawn again from the middles of those
   320 × 200 blocks (`JhlSoftwareLook_ViewDrawn`).
-* `jhl_visuals_underwaterfog`: the engine's own fog is kept off under water without touching the engine: OpenGL is
+* The fog: the engine's own fog is kept off under water without touching the engine: OpenGL is
   told to fog by a fog coordinate of 0 (`GL_FOG_COORD_SRC`), so linear fog starting at 0 covers nothing, put back as
   soon as the view is out of the water (`JhlSoftwareLook_SetupView`). The view's depth is copied and software's fog
   put on by it, with the projection taken while the world is drawn; its colour from the water drawn here (the
   software water), else from the engine's fog set up. (Taking the engine's fog off a finished frame can't work: far
   enough out it has covered all there was.)
 
-### Texture sampling and the sky (`jhl_visuals_softwaresampling`, `jhl_visuals_skyfiltering`, default 1)
+### Texture sampling and the sky (`jhl_visuals_renderfixes`)
 
 The 25th anniversary menu's texture filtering is `gl_texturemode`: on, `GL_LINEAR_MIPMAP_LINEAR`; off, `GL_NEAREST`
 (and `r_prefertexturefiltering 0`), point sampled without mipmaps, so distant textures sparkle. Software point sampled
-with mipmaps: with filtering off, `jhl_visuals_softwaresampling` makes it `GL_NEAREST_MIPMAP_NEAREST` (filtering on
+with mipmaps: with filtering off, it's made `GL_NEAREST_MIPMAP_NEAREST` (filtering on
 sets its own mode as ever; only this setting's change is undone).
 
 The engine uploads the sky's six images smooth and without mipmaps, and `gl_texturemode` only reaches textures with
-mipmaps, so with filtering off the world was pixelated and the sky smooth. `jhl_visuals_skyfiltering` finds the
+mipmaps, so with filtering off the world was pixelated and the sky smooth. Now the client finds the
 engine's sky textures (the GL textures of the sky images' size whose picture is the image's, `gfx/env/<sky>*.tga`)
 and gives them the world's filtering (`jhl_skyboxes.cpp`).
 
@@ -109,4 +113,3 @@ so gamma and filtering match). Water is what the engine treats as water: names s
   (render modes normal, texture and additive). Opaque entities partly water have their water drawn over the engine's;
   see-through ones partly water are left to the engine.
 
-`jhl_softwarewater_info` (temporary) lists what was made of the map's water.

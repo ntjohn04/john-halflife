@@ -17,7 +17,6 @@
 #include <array>
 #include <cmath>
 #include <numbers>
-#include <map>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -109,10 +108,6 @@ std::vector<WaterEntity> g_Entities; // This frame's, until the see-through ones
 // The fog of the water drawn last, and when (the engine takes its fog from the water it drew last).
 int g_LastFog[4]{};
 float g_LastFogTime = -1;
-
-// What was made of the map's water and its entities, for jhl_softwarewater_info.
-std::vector<std::string> g_TextureReport;
-std::map<int, std::string> g_EntityReport; // By model.
 
 // The engine's rule for water (Mod_LoadTextures): names starting with '!', "laser" or "water". Sky and scrolling
 // textures aren't.
@@ -242,8 +237,6 @@ void LoadMap(const char* mapName)
 {
 	FreeTextures();
 	g_Models.clear();
-	g_TextureReport.clear();
-	g_EntityReport.clear();
 	g_MapReady = false;
 
 	const JhlBsp* bsp = JhlBsp_Get(mapName);
@@ -269,13 +262,12 @@ void LoadMap(const char* mapName)
 
 		if (LoadTexture(water, EngineTexture(worldEntity->model, *bsp, static_cast<int>(miptex), why, water), why))
 		{
-			g_TextureReport.push_back(water.Name + ": " + std::to_string(water.Width) + " x " + std::to_string(water.Height));
 			textureByMiptex[miptex] = static_cast<int>(g_Textures.size());
 			g_Textures.push_back(std::move(water));
 		}
 		else
 		{
-			g_TextureReport.push_back(water.Name + ": not used, " + why);
+			gEngfuncs.Con_DPrintf("johnhalflife: water texture %s left to the engine: %s\n", water.Name.c_str(), why.c_str());
 		}
 	}
 
@@ -594,41 +586,7 @@ bool JhlSoftwareWater_LastFog(int (&fog)[4])
 
 void JhlSoftwareWater_Initialize()
 {
-	g_SoftwareWater = gEngfuncs.pfnRegisterVariable("jhl_visuals_softwarewater", "0", FCVAR_ARCHIVE);
-
-	// TODO(johnhalflife): temporary, remove once software water is settled (with g_TextureReport, g_EntityReport and
-	// the reasons recorded for them).
-	gEngfuncs.pfnAddCommand("jhl_softwarewater_info", []
-		{
-			if (0 == g_SoftwareWater->value)
-			{
-				gEngfuncs.Con_Printf("jhl_visuals_softwarewater is off\n");
-				return;
-			}
-
-			if (!JhlGL_Available())
-			{
-				gEngfuncs.Con_Printf("Software water needs the OpenGL renderer\n");
-				return;
-			}
-
-			gEngfuncs.Con_Printf("Software water in %s: %s\n", g_MapName.c_str(), g_MapReady ? "ready" : "map not read");
-
-			for (const auto& line : g_TextureReport)
-			{
-				gEngfuncs.Con_Printf("  texture %s\n", line.c_str());
-			}
-
-			for (std::size_t m = 0; m < g_Models.size(); ++m)
-			{
-				if (g_Models[m].HasWater)
-				{
-					const auto report = g_EntityReport.find(static_cast<int>(m));
-					gEngfuncs.Con_Printf("  model *%d: %s%s\n", static_cast<int>(m), g_Models[m].AllWater ? "all water" : "partly water",
-						m == 0 ? " (the world: drawn over the engine's)" : report != g_EntityReport.end() ? (", " + report->second).c_str() : ", not seen yet");
-				}
-			}
-		});
+	g_SoftwareWater = gEngfuncs.pfnRegisterVariable("jhl_visuals_softwarewater", "1", FCVAR_ARCHIVE);
 }
 
 bool JhlSoftwareWater_Add(cl_entity_t* ent)
@@ -662,17 +620,11 @@ bool JhlSoftwareWater_Add(cl_entity_t* ent)
 	{
 		// All water: drawn here, not by the engine.
 		water.Hidden = true;
-		g_EntityReport[modelIndex] = "drawn here, rendermode " + std::to_string(renderMode);
 	}
 	else if (renderMode != RenderNormal)
 	{
 		// See-through and partly water: left to the engine.
-		g_EntityReport[modelIndex] = "left to the engine: rendermode " + std::to_string(renderMode) + (model.AllWater ? "" : ", not all water");
 		return false;
-	}
-	else
-	{
-		g_EntityReport[modelIndex] = "drawn over the engine's (opaque, not all water)";
 	}
 
 	g_Entities.push_back(water);

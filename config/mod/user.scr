@@ -120,42 +120,14 @@ DESCRIPTION INFO_OPTIONS
 
 	"jhl_visuals_softwarewater"
 	{
-		"JHL | Visuals: software renderer's rippling water"
-		{ BOOL }
-		{ "0" }
-	}
-
-	"jhl_visuals_modeloverbright"
-	{
-		"JHL | Visuals: software renderer's model lighting"
-		{ BOOL }
-		{ "0"1" }
-	}
-
-	"jhl_visuals_underwaterview"
-	{
-		"JHL | Visuals: software renderer's low-resolution underwater view"
-		{ BOOL }
-		{ "0" }
-	}
-
-	"jhl_visuals_underwaterfog"
-	{
-		"JHL | Visuals: software renderer's underwater fog"
-		{ BOOL }
-		{ "0" }
-	}
-
-	"jhl_visuals_softwaresampling"
-	{
-		"JHL | Visuals: unfiltered textures mipmapped as in software"
+		"JHL | Visuals: software renderer's water (ripples, view and fog under water)"
 		{ BOOL }
 		{ "1" }
 	}
 
-	"jhl_visuals_skyfiltering"
+	"jhl_visuals_renderfixes"
 	{
-		"JHL | Visuals: sky filtered as the world is"
+		"JHL | Visuals: models, sky and textures lit and sampled as the world is"
 		{ BOOL }
 		{ "1" }
 	}

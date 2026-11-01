@@ -1921,7 +1921,7 @@ void DLLEXPORT V_CalcRefdef(ref_params_t* pparams)
 	// johnhalflife: the shotgun's shells, thrown as it's pumped.
 	ShotgunShells_Update(gEngfuncs.GetClientTime());
 
-	// johnhalflife: the engine's fog kept off under water, for the software renderer's (jhl_visuals_underwaterfog).
+	// johnhalflife: the engine's fog kept off under water, for the software renderer's (jhl_visuals_softwarewater).
 	JhlSoftwareLook_SetupView();
 
 	/*

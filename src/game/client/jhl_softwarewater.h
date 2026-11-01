@@ -15,7 +15,8 @@
 
 #pragma once
 
-// johnhalflife (jhl_visuals_softwarewater): water as Half-Life's software renderer drew it, on the OpenGL renderer.
+// johnhalflife (jhl_visuals_softwarewater, default 1): water as Half-Life's software renderer drew it, on the OpenGL
+// renderer; the same setting has its view under water (jhl_softwarelook.h).
 //
 // The software renderer's water (sw.dll) is a ripple simulation: a 128 x 128 field of heights, shared by all water,
 // stepped as a wave (each cell: half its four neighbours, less what it was, losing 1/64), a drop of random size landing
