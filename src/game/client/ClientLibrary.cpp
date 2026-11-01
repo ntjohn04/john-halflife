@@ -22,6 +22,7 @@
 #include "client_gibs.h"
 #include "weapon_effects.h"
 #include "jhl_settings.h"
+#include "jhl_setup.h"
 #include "jhl_flushfaces.h"
 #include "jhl_softwarelook.h"
 #include "jhl_softwarewater.h"
@@ -138,6 +139,7 @@ void ClientLibrary::RunFrame()
 	GameLibrary::RunFrame();
 
 	JhlSettings_RunFrame();
+	JhlSetup_RunFrame();
 	JhlSoftwareLook_RunFrame();
 	FxTest_RunFrame();
 

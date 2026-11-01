@@ -103,13 +103,13 @@ def make_list(half_life, release_zip):
             games = valve_copy(z.read(info))
             if not games:
                 ship.append(name)
-            elif "valve" not in games and name.lower().startswith(("models/", "sprites/")) and os.path.basename(name).lower() in code:
+            elif "valve" not in games and name.lower().startswith(("models/", "sprites/", "events/")) and os.path.basename(name).lower() in code:
                 ship.append(name)
                 named += 1
 
     with open(LIST, "w", encoding="utf-8", newline="\n") as out:
         out.write("// The Unified SDK release's files johnhalflife's release ships (package_release.py --make-list): its own\n"
-                  "// work, and the Opposing Force and Blue Shift models and sprites the game code names. Paths in the mod folder.\n")
+                  "// work, and the Opposing Force and Blue Shift models, sprites and event scripts the game code names. Paths in the mod folder.\n")
         out.write("\n".join(ship) + "\n")
     print(f"package_release: {len(ship)} files in {LIST} ({named} of them the expansions' models and sprites)")
 

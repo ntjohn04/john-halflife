@@ -43,16 +43,19 @@ namespace fs = std::filesystem;
 namespace
 {
 // Raise when what the setup makes changes, so installed folders are set up again.
-constexpr int SetupVersion = 3;
+constexpr int SetupVersion = 4;
 
 constexpr const char* BaseFolder = "johnhalflife";
 constexpr const char* StampFile = "jhl_setup.txt";
 constexpr const char* FilesList = "jhl_setup_files.txt";
 constexpr const char* MapsList = "jhl_setup_maps.txt";
 
-// The setup runs as the client loads, before the console can show anything: its messages wait until it can.
+// The setup runs as the client loads, before the console keeps anything: its messages wait a few frames, as
+// jhl_settings.cpp's first launch message does.
+constexpr int FramesBeforeMessages = 5;
 bool g_DeferMessages = false;
 std::string g_DeferredMessages;
+int g_FrameCount = 0;
 
 void Log(const char* format, ...)
 {
@@ -491,14 +494,16 @@ void JhlSetup_Run()
 
 void JhlSetup_Init()
 {
-	g_DeferMessages = false;
-
-	if (!g_DeferredMessages.empty())
-	{
-		gEngfuncs.Con_Printf("%s", g_DeferredMessages.c_str());
-		g_DeferredMessages.clear();
-	}
-
 	gEngfuncs.pfnAddCommand("jhl_setup", []()
 		{ Setup(true); });
+}
+
+void JhlSetup_RunFrame()
+{
+	if (!g_DeferMessages || ++g_FrameCount < FramesBeforeMessages)
+		return;
+
+	g_DeferMessages = false;
+	gEngfuncs.Con_Printf("%s", g_DeferredMessages.c_str());
+	g_DeferredMessages.clear();
 }

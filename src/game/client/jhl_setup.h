@@ -16,3 +16,8 @@ void JhlSetup_Run();
  *	@brief Adds jhl_setup, which runs the setup again whatever the stamp says.
  */
 void JhlSetup_Init();
+
+/**
+ *	@brief Shows the first start's messages in the console, a few frames in (before then it doesn't keep them).
+ */
+void JhlSetup_RunFrame();

@@ -1,5 +1,5 @@
 // The Unified SDK release's files johnhalflife's release ships (package_release.py --make-list): its own
-// work, and the Opposing Force and Blue Shift models and sprites the game code names. Paths in the mod folder.
+// work, and the Opposing Force and Blue Shift models, sprites and event scripts the game code names. Paths in the mod folder.
 campaigns/001HalfLife.json
 campaigns/002OpposingForce.json
 campaigns/003BlueShift.json
