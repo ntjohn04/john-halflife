@@ -43,7 +43,7 @@ namespace fs = std::filesystem;
 namespace
 {
 // Raise when what the setup makes changes, so installed folders are set up again.
-constexpr int SetupVersion = 4;
+constexpr int SetupVersion = 5;
 
 constexpr const char* BaseFolder = "johnhalflife";
 constexpr const char* StampFile = "jhl_setup.txt";
@@ -422,7 +422,16 @@ void ConvertMaps(const fs::path& root, SetupStats& stats)
 			continue;
 		}
 
-		WriteContents(root / BaseFolder / "maps" / (map + ".bsp"), converted, stats);
+		const fs::path bsp = root / BaseFolder / "maps" / (map + ".bsp");
+		WriteContents(bsp, converted, stats);
+
+		// The map's node graph (the release has the Unified SDK's) must be newer than the map, or the game takes it
+		// for out of date and builds it again the first time the map loads (server nodes.cpp CheckNODFile).
+		const fs::path graph = root / BaseFolder / "maps" / "graphs" / (map + ".nod");
+		std::error_code timeError;
+
+		if (IsFile(graph) && fs::last_write_time(graph, timeError) <= fs::last_write_time(bsp, timeError))
+			fs::last_write_time(graph, fs::file_time_type::clock::now(), timeError);
 	}
 }
 
