@@ -25,6 +25,7 @@
 #include "jhl_flushfaces.h"
 #include "jhl_softwarelook.h"
 #include "jhl_softwarewater.h"
+#include "jhl_skyboxes.h"
 #include "jhl_egon.h"
 #include "fx_test.h"
 #include "ClientLibrary.h"
@@ -70,6 +71,7 @@ bool ClientLibrary::Initialize()
 	JhlFlushFaces_Initialize();
 	JhlSoftwareLook_Initialize();
 	JhlSoftwareWater_Initialize();
+	JhlSkyboxes_Initialize();
 	FxTest_Initialize();
 
 	return true;
@@ -136,6 +138,7 @@ void ClientLibrary::RunFrame()
 	GameLibrary::RunFrame();
 
 	JhlSettings_RunFrame();
+	JhlSoftwareLook_RunFrame();
 	FxTest_RunFrame();
 
 	// Force the download cvar to enabled so we can download network data.

@@ -138,6 +138,8 @@ target_sources(client PRIVATE
 	jhl_grapple.cpp
 	jhl_grapple.h
 	jhl_shockbeams.cpp
+	jhl_skyboxes.cpp
+	jhl_skyboxes.h
 	jhl_shockbeams.h
 	jhl_rings.cpp
 	jhl_rings.h

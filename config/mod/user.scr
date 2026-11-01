@@ -146,6 +146,20 @@ DESCRIPTION INFO_OPTIONS
 		{ "0" }
 	}
 
+	"jhl_visuals_softwaresampling"
+	{
+		"JHL | Visuals: unfiltered textures mipmapped as in software"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"jhl_visuals_skyfiltering"
+	{
+		"JHL | Visuals: sky filtered as the world is"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"jhl_weapons_smoothrecoil"
 	{
 		"JHL | Weapons: smooth recoil"

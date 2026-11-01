@@ -28,7 +28,16 @@
 // at every brightness, its world the same). While the engine draws a model's polygons, the second texture unit
 // multiplies their lit colour by 4/3, clamped as software clamps.
 
+// jhl_visuals_softwaresampling (default 1): the menu's texture filtering off sets gl_texturemode GL_NEAREST, point
+// sampled without mipmaps, so distant textures sparkle; software point sampled with mipmaps. With filtering off, the
+// mode is made GL_NEAREST_MIPMAP_NEAREST (filtering turned on sets its own mode as ever; only this change is undone).
+
 void JhlSoftwareLook_Initialize();
+
+/**
+ *	@brief Every client frame: the texture mode for software sampling.
+ */
+void JhlSoftwareLook_RunFrame();
 
 /**
  *	@brief Around the engine drawing a studio model's polygons (StudioDrawPoints): gives them software's light, if on.

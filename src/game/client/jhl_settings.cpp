@@ -55,6 +55,8 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_visuals_modeloverbright", "1"},
 	{"jhl_visuals_underwaterview", "0"},
 	{"jhl_visuals_underwaterfog", "0"},
+	{"jhl_visuals_softwaresampling", "1"},
+	{"jhl_visuals_skyfiltering", "1"},
 	{"jhl_weapons_smoothrecoil", "1"},
 	{"jhl_physics_fpsfix", "1"},
 	{"jhl_fx_bulletimpacts", "1"},

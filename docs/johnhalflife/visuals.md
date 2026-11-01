@@ -72,6 +72,27 @@ and density from the water's palette (entry 3's colour, entry 4's red), from the
   software water), else from the engine's fog set up. (Taking the engine's fog off a finished frame can't work: far
   enough out it has covered all there was.)
 
+### Texture sampling and the sky (`jhl_visuals_softwaresampling`, `jhl_visuals_skyfiltering`, default 1)
+
+The 25th anniversary menu's texture filtering is `gl_texturemode`: on, `GL_LINEAR_MIPMAP_LINEAR`; off, `GL_NEAREST`
+(and `r_prefertexturefiltering 0`), point sampled without mipmaps, so distant textures sparkle. Software point sampled
+with mipmaps: with filtering off, `jhl_visuals_softwaresampling` makes it `GL_NEAREST_MIPMAP_NEAREST` (filtering on
+sets its own mode as ever; only this setting's change is undone).
+
+The engine uploads the sky's six images smooth and without mipmaps, and `gl_texturemode` only reaches textures with
+mipmaps, so with filtering off the world was pixelated and the sky smooth. `jhl_visuals_skyfiltering` finds the
+engine's sky textures (the GL textures of the sky images' size whose picture is the image's, `gfx/env/<sky>*.tga`)
+and gives them the world's filtering (`jhl_skyboxes.cpp`).
+
+### Display (launch options and resolution)
+
+* OpenGL draws the view at the chosen resolution and stretches it to the desktop smoothly (hard-coded in the engine's
+  present); software set the monitor to its resolution. Most of OpenGL's blur at a resolution below the desktop's is
+  this stretch: a resolution the screen shows 1:1 (the desktop's, or 4:3 at its height, such as 1920 × 1440 on a
+  1440p screen) has none.
+* OpenGL multisamples (anti-aliases) the view by default, with no setting; the `-nomsaa` launch option turns it off,
+  as software had none. With `developer 1`, the console says how many samples the view is drawn with.
+
 ### Rippling water (`jhl_visuals_softwarewater`)
 
 Software's water isn't Quake's sine wobble: it's a ripple simulation. A 128 × 128 field of heights shared by all water

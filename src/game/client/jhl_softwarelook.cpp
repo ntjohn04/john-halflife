@@ -29,6 +29,10 @@ cvar_t* g_16BitColor = nullptr;
 cvar_t* g_ModelOverbright = nullptr;
 cvar_t* g_UnderwaterView = nullptr;
 cvar_t* g_UnderwaterFog = nullptr;
+cvar_t* g_SoftwareSampling = nullptr;
+cvar_t* g_TextureMode = nullptr;
+cvar_t* g_PreferFiltering = nullptr;
+bool g_SetTextureMode = false; // gl_texturemode is this setting's.
 
 JhlGL& gl = g_JhlGL;
 
@@ -299,6 +303,7 @@ void JhlSoftwareLook_Initialize()
 	g_ModelOverbright = gEngfuncs.pfnRegisterVariable("jhl_visuals_modeloverbright", "1", FCVAR_ARCHIVE);
 	g_UnderwaterView = gEngfuncs.pfnRegisterVariable("jhl_visuals_underwaterview", "0", FCVAR_ARCHIVE);
 	g_UnderwaterFog = gEngfuncs.pfnRegisterVariable("jhl_visuals_underwaterfog", "0", FCVAR_ARCHIVE);
+	g_SoftwareSampling = gEngfuncs.pfnRegisterVariable("jhl_visuals_softwaresampling", "1", FCVAR_ARCHIVE);
 }
 
 bool JhlSoftwareLook_BeginModel(int renderMode, int renderFx)
@@ -603,6 +608,40 @@ void JhlSoftwareLook_CaptureView()
 	view.Projection[1] = projection[14];
 	view.Projection[2] = range[0];
 	view.Projection[3] = range[1];
+}
+
+void JhlSoftwareLook_RunFrame()
+{
+	if (!g_TextureMode || !g_PreferFiltering)
+	{
+		g_TextureMode = gEngfuncs.pfnGetCvarPointer("gl_texturemode");
+		g_PreferFiltering = gEngfuncs.pfnGetCvarPointer("r_prefertexturefiltering");
+
+		if (!g_TextureMode || !g_PreferFiltering)
+		{
+			return;
+		}
+	}
+
+	constexpr const char* Unfiltered = "GL_NEAREST";
+	constexpr const char* Software = "GL_NEAREST_MIPMAP_NEAREST";
+	const bool unfiltered = 0 == g_PreferFiltering->value;
+
+	if (0 != g_SoftwareSampling->value && unfiltered && 0 == stricmp(g_TextureMode->string, Unfiltered))
+	{
+		gEngfuncs.Cvar_Set(g_TextureMode->name, Software);
+		g_SetTextureMode = true;
+	}
+	else if (g_SetTextureMode && (0 == g_SoftwareSampling->value || !unfiltered))
+	{
+		// Turned off: back to the menu's mode, if it's still this setting's.
+		if (unfiltered && 0 == stricmp(g_TextureMode->string, Software))
+		{
+			gEngfuncs.Cvar_Set(g_TextureMode->name, Unfiltered);
+		}
+
+		g_SetTextureMode = false;
+	}
 }
 
 void JhlSoftwareLook_SetupView()
