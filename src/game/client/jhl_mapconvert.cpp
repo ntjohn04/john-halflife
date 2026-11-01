@@ -125,7 +125,7 @@ std::string FormatReal(T value)
 		if (digits.size() > 1)
 			text += "." + digits.substr(1);
 
-		char exponentText[8];
+		char exponentText[16];
 		std::snprintf(exponentText, sizeof(exponentText), "E%c%02d", exponent < 0 ? '-' : '+', std::abs(exponent));
 		text += exponentText;
 	}

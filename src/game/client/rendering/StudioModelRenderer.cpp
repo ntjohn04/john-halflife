@@ -856,7 +856,7 @@ static bool JhlSameViewModel(const char* drawn, const char* wanted)
 		return slash ? slash + 1 : path;
 	};
 
-	return 0 == _stricmp(fileName(drawn), fileName(wanted));
+	return 0 == stricmp(fileName(drawn), fileName(wanted));
 }
 
 struct JhlCasingDrop

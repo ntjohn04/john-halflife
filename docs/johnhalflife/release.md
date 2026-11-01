@@ -65,6 +65,27 @@ A game the player doesn't own is skipped, and its campaign isn't offered. The C+
 the ContentInstaller's: the same maps, byte for byte. Each upgrade is reviewed against 1998 as it's ported (keep
 the bug fixes, revert the drift).
 
+## Linux build
+
+The release has the Linux game code next to the Windows one (`client.so`, `server.so` and `libopenal-hlu.so.1` beside
+the `.dll`s; `liblist.gam` names both). It's built in Ubuntu 22.04, so it needs glibc 2.34 at most and runs on 22.04
+and newer; the C++ library is linked in. `scripts/linux/build.sh` builds it and installs it to a staging folder
+(`~/jhl-build-linux/install`; the install sets the client's RUNPATH to `$ORIGIN`, so it finds OpenAL beside it).
+
+Once, in Ubuntu 22.04 (WSL works: `wsl --install -d Ubuntu-22.04`):
+
+```
+sudo dpkg --add-architecture i386
+sudo apt update
+sudo apt install -y build-essential g++-11-multilib libgl1-mesa-dev:i386 cmake ninja-build git zip unzip curl     pkg-config autoconf automake autoconf-archive libtool m4 bison flex gettext python3
+```
+
+and CMake 3.23 or newer (22.04 has 3.22): Kitware's release unpacked in `~/tools` is what the script uses.
+
+* `vgui.so` (Valve's, next to `hl_linux`) has no SONAME: linked by its path, the client recorded that path and couldn't
+  have found it; it's linked as `-l:vgui.so` (`src/game/client/CMakeLists.txt`).
+* Every game folder's client needs `libopenal-hlu.so.1`; the install linked it only in the base folder.
+
 ## Steam
 
 * The Unified SDK's models are Valve's, recompiled with Opposing Force's and Blue Shift's sequences merged in. A

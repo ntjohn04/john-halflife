@@ -299,13 +299,16 @@ jhl_install_expansion(bs)
 jhl_install_expansion(uplink)
 
 if (UNIX)
-	# Create a symbolic link to the OpenAL library so the dependency can be located at runtime.
-	INSTALL(CODE "execute_process( \
-		COMMAND ${CMAKE_COMMAND} -E create_symlink \
-		\"./libopenal-hlu.so.1.22.2\" \
-		\"${CMAKE_INSTALL_PREFIX}/cl_dlls/libopenal-hlu.so.1\"   \
-		)"
-	)
+	# Create a symbolic link to the OpenAL library so the dependency can be located at runtime
+	# (johnhalflife: in each game folder, whose client needs it as much).
+	foreach(folder . ../johnhalflife_op4 ../johnhalflife_bs ../johnhalflife_uplink)
+		INSTALL(CODE "execute_process( \
+			COMMAND ${CMAKE_COMMAND} -E create_symlink \
+			\"./libopenal-hlu.so.1.22.2\" \
+			\"\${CMAKE_INSTALL_PREFIX}/${folder}/cl_dlls/libopenal-hlu.so.1\"   \
+			)"
+		)
+	endforeach()
 endif()
 
 if (MSVC)
