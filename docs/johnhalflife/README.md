@@ -11,6 +11,7 @@ and versions are on the [front page](../../README.md).
 * [Sound](sound.md): Half-Life's own mixing and room effects on the SDK's OpenAL sound system
 * [Effects plan](effects_plan.md): the plan the effects (v0.2.0 to v0.8.0) were built from, with what each does
 * [Effects test command](effects_test.md): `jhl_fx_test`, for designing particle effects
+* [Release](release.md): the install targets, what's shipped and what's made from the player's games
 * [Tuning sheet](tuning.md): the numbers on the changes since `v0.7.0-prealpha` (shared systems, gargantua,
   tentacles, mounted guns), where each is and where to see it
 
