@@ -37,12 +37,13 @@ FOLDERS = ("johnhalflife", "johnhalflife_op4", "johnhalflife_bs", "johnhalflife_
 
 # The Unified SDK's release files never shipped: its tools and installer, developer files, its test maps (and the TFC
 # textures only zoo_npcs uses), the Visual C++ installer, its readme, files johnhalflife has its own of (the icon is
-# Half-Life's, from the first start). Its node graphs of Valve's maps are shipped: without them the game builds each
-# the first time its map loads, a hitch vanilla (which has its own) doesn't have; the first start keeps them newer
-# than the maps it writes, or the game would take them for out of date.
+# Half-Life's, from the first start; its default_config.cfg is its author's own config, the first start writes key
+# bindings instead). Its node graphs of Valve's maps are shipped: without them the game builds each the first time its
+# map loads, a hitch vanilla (which has its own) doesn't have; the first start keeps them newer than the maps it
+# writes, or the game would take them for out of date.
 DROP = [r"^tools/", r"^installer/", r"^redist/", r"^halflife-unified\.fgd$", r"^README\.txt$",
         r"^maps/(test_|zoo_|hlu_technology_demonstration)", r"^maps/graphs/(test_|zoo_|hlu_technology_demonstration)",
-        r"^game\.(ico|tga)$",
+        r"^game\.(ico|tga)$", r"^default_config\.cfg$",
         r"^tfc2?\.wad$", r"^liblist\.gam$", r"^delta\.lst$", r"^cl_dlls/", r"^dlls/", r"^user\.scr", r"^settings\.scr",
         r"^resource/GameMenu\.res$"]
 

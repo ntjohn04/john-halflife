@@ -43,7 +43,7 @@ namespace fs = std::filesystem;
 namespace
 {
 // Raise when what the setup makes changes, so installed folders are set up again.
-constexpr int SetupVersion = 5;
+constexpr int SetupVersion = 6;
 
 constexpr const char* BaseFolder = "johnhalflife";
 constexpr const char* StampFile = "jhl_setup.txt";
@@ -470,10 +470,45 @@ void Setup(bool force)
 
 	ConvertMaps(root, stats);
 
-	// The Unified SDK's key bindings for a game folder with no config of its own yet (the ContentInstaller did this);
-	// never over the player's own.
-	if (std::string defaults; ReadFile(root / BaseFolder / "default_config.cfg", defaults))
+	// Key bindings for a game folder with no config of its own yet, never over the player's own: the keyboard tab's
+	// "Use Defaults" ones (gfx/shell/kb_def.lst, Opposing Force's: Half-Life's and slots 6 to 10). The Unified SDK's
+	// ContentInstaller installed its default_config.cfg instead, which is its author's own config (his name, 60 fps,
+	// a strafe roll three times ours, his binds); the engine's defaults and the recommended settings
+	// (jhl_settings.cpp, on first launch) set the rest.
+	std::string keys;
+
+	if (ReadFile(root / BaseFolder / "gfx" / "shell" / "kb_def.lst", keys) || ReadFile(root / "valve" / "gfx" / "shell" / "kb_def.lst", keys))
 	{
+		std::string defaults = "unbindall\n";
+		std::istringstream lines(keys);
+
+		// Each line: "KEY" "command", the key's backslash written twice.
+		for (std::string line; std::getline(lines, line);)
+		{
+			std::vector<std::string> quoted;
+
+			for (std::size_t start = line.find('"'); start != std::string::npos && quoted.size() < 2; start = line.find('"', start))
+			{
+				const std::size_t end = line.find('"', start + 1);
+
+				if (end == std::string::npos)
+					break;
+
+				quoted.push_back(line.substr(start + 1, end - start - 1));
+				start = end + 1;
+			}
+
+			if (quoted.size() == 2 && !quoted[0].empty() && !quoted[1].empty())
+			{
+				if (quoted[0] == "\\\\")
+					quoted[0] = "\\";
+
+				defaults += "bind \"" + quoted[0] + "\" \"" + quoted[1] + "\"\n";
+			}
+		}
+
+		defaults += "+mlook\n";
+
 		for (const auto& menu : MenuFolders)
 		{
 			const fs::path config = root / menu.Folder / "config.cfg";

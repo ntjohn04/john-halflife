@@ -28,18 +28,14 @@ struct RecommendedSetting
 	const char* Value;
 };
 
-// Applied on first launch. Raise the version when changing this list so existing players get the new values once.
-constexpr int RecommendedSettingsVersion = 1;
+// The dialog's settings are applied on first launch too (the defaults are the recommended values). Raise the version
+// when changing the list so existing players get the new values once. 2: all of them, not only crosshair_scale,
+// m_rawinput and jhl_gore (a clean install's config had someone's own settings: 60 fps, a strafe roll three times ours).
+constexpr int RecommendedSettingsVersion = 2;
 
-constexpr RecommendedSetting FirstLaunchSettings[] = {
-	{"crosshair_scale", "2"},
-	{"m_rawinput", "1"},
-	// The content lock isn't used; make sure blood and gibs are on.
-	{"jhl_gore", "1"},
-};
-
-// Applied by a reset: every setting listed in the John Settings dialog (config/mod/user.scr), and only those.
-// Keep in sync with that file, whose defaults should match.
+// Applied on first launch and by a reset: every setting listed in the John Settings dialog (config/mod/user.scr), and
+// only those. Keep in sync with that file, whose defaults should match. jhl_gore: the content lock isn't used, so
+// blood and gibs are on.
 constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_camera_bob", "1"},
 	{"jhl_camera_viewroll", "1"},
@@ -179,7 +175,7 @@ void JhlSettings_RunFrame()
 
 		if (g_RecommendedVersion->value < RecommendedSettingsVersion)
 		{
-			Apply(FirstLaunchSettings);
+			Apply(DialogSettings);
 			gEngfuncs.Cvar_Set(g_RecommendedVersion->name, std::to_string(RecommendedSettingsVersion).c_str());
 			gEngfuncs.Con_Printf("johnhalflife: first launch, recommended settings applied\n");
 		}
