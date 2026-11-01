@@ -25,7 +25,7 @@ release zip `HalfLifeUnified-V1.0.0.zip`, its ContentInstaller, our build):
 | Byte-for-byte copies of Opposing Force's and Blue Shift's (sounds, models, sprites, gfx, WADs, classes) | ~1,320 | 92 MB | Copy from the player's `gearbox` and `bshift` at first start (`jhl_setup_files.txt`) |
 | ... of which the models and sprites the game code names (every map precaches every weapon, Opposing Force's too, and johnhalflife's effects use some of its sprites) | 80 | 7.6 MB | Also ship: a missing model is a fatal error, so without them Half-Life wouldn't start a map for a player without Opposing Force |
 | Half-Life's, Opposing Force's and Blue Shift's maps, converted (the Unified SDK's map upgrades) | 220 | 379 MB | Convert at first start |
-| Node graphs for them | 338 | 18 MB | Made by the engine as each map first loads |
+| Node graphs for them (the Unified SDK's) | 328 | 17 MB | Ship: without them each map builds its graph the first time it loads (a hitch vanilla, which ships its own, doesn't have); the first start keeps them newer than the maps it writes |
 | Opposing Force's and Blue Shift's soundtracks (`media/`) | 38 | 66 MB | Copy at first start |
 | Made by our build from the player's games: Half-Life's shell, hornet splats in `decals.wad`, each game's own shared-name files, vanilla NPC speeds, the menu art | ~130 | | Make at first start |
 | Uplink's maps (`hldemo1` to `3`), converted | 3 | | Open: Valve's maps, not in a player's install; see below |
@@ -84,7 +84,7 @@ The packager needs no Half-Life install: the Unified SDK's files it ships are li
 made once on a machine with the games: `package_release.py --make-list`, `restore_npc_speeds.py --make-table`; again
 if the Unified SDK's release changes).
 
-v0.12.0's zip: 87 MB (183 MB extracted, 649 files). Most of it is the game code, a copy in each of the four game
+v0.12.0's zip: 89 MB (200 MB extracted, 971 files). Most of it is the game code, a copy in each of the four game
 folders, Windows' and Linux's; then the Unified SDK's models (50 MB).
 
 ## Linux build
