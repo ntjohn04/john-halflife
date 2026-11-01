@@ -41,6 +41,7 @@
 #include "ServerLibrary.h"
 
 #include "ctf/ctf_goals.h"
+#include "utils/filesystem_utils.h"
 
 unsigned int g_ulFrameCount;
 
@@ -1274,24 +1275,31 @@ void ClientPrecache()
 	UTIL_PrecacheSound("player/pl_snow3.wav");
 	UTIL_PrecacheSound("player/pl_snow4.wav");
 
-	UTIL_PrecacheSound("player/pl_wood1.wav"); // walk on wood
-	UTIL_PrecacheSound("player/pl_wood2.wav");
-	UTIL_PrecacheSound("player/pl_wood3.wav");
-	UTIL_PrecacheSound("player/pl_wood4.wav");
+	// johnhalflife: MMod's sounds (mmod_port) only if they're installed; without them the game plays vanilla's.
+	const auto precacheIfThere = [](const char* sound)
+	{
+		if (FileSystem_SoundExists(sound))
+			UTIL_PrecacheSound(sound);
+	};
 
-	UTIL_PrecacheSound("player/pl_jump1.wav"); // jump
-	UTIL_PrecacheSound("player/pl_jump2.wav");
-	UTIL_PrecacheSound("player/pl_jump3.wav");
+	precacheIfThere("player/pl_wood1.wav"); // walk on wood
+	precacheIfThere("player/pl_wood2.wav");
+	precacheIfThere("player/pl_wood3.wav");
+	precacheIfThere("player/pl_wood4.wav");
 
-	UTIL_PrecacheSound("player/pl_jumpland1.wav"); // land from a jump or fall
-	UTIL_PrecacheSound("player/pl_jumpland2.wav");
-	UTIL_PrecacheSound("player/pl_jumpland3.wav");
+	precacheIfThere("player/pl_jump1.wav"); // jump
+	precacheIfThere("player/pl_jump2.wav");
+	precacheIfThere("player/pl_jump3.wav");
 
-	UTIL_PrecacheSound("items/power_jump.wav"); // long jump
+	precacheIfThere("player/pl_jumpland1.wav"); // land from a jump or fall
+	precacheIfThere("player/pl_jumpland2.wav");
+	precacheIfThere("player/pl_jumpland3.wav");
+
+	precacheIfThere("items/power_jump.wav"); // long jump
 
 	for (const auto& deploySound : GetWeaponDeploySounds()) // switch to a weapon
 	{
-		UTIL_PrecacheSound(deploySound.Sound);
+		precacheIfThere(deploySound.Sound);
 	}
 
 	UTIL_PrecacheSound("debris/wood1.wav"); // hit wood texture

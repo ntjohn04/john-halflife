@@ -19,6 +19,7 @@
 
 #ifdef CLIENT_DLL
 #include "com_weapons.h"
+#include "utils/filesystem_utils.h"
 #endif
 
 BEGIN_DATAMAP(CBasePlayerWeapon)
@@ -278,7 +279,8 @@ const char* GetWeaponDeploySound(std::string_view viewModel)
 	{
 		if (equalsIgnoreCase(entry.ViewModel, viewModel))
 		{
-			return entry.Sound;
+			// MMod's (mmod_port): without it, no sound, as in vanilla.
+			return FileSystem_SoundExists(entry.Sound) ? entry.Sound : nullptr;
 		}
 	}
 

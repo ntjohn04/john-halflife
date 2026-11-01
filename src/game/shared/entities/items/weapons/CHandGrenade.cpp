@@ -15,6 +15,7 @@
 
 #include "cbase.h"
 #include "CHandGrenade.h"
+#include "utils/filesystem_utils.h"
 
 #define HANDGRENADE_PRIMARY_VOLUME 450
 
@@ -42,7 +43,9 @@ void CHandGrenade::Precache()
 	PrecacheModel(STRING(m_WorldModel));
 	PrecacheModel("models/v_grenade.mdl");
 	PrecacheModel("models/p_grenade.mdl");
-	PrecacheSound(GrenadePinPullSound);
+	// Without MMod, no sound, as in vanilla.
+	if (FileSystem_SoundExists(GrenadePinPullSound))
+		PrecacheSound(GrenadePinPullSound);
 }
 
 bool CHandGrenade::GetWeaponInfo(WeaponInfo& info)
@@ -132,7 +135,8 @@ void CHandGrenade::ItemPostFrame()
 	if (0 != m_flPinPullSoundTime && gpGlobals->time >= m_flPinPullSoundTime)
 	{
 		m_flPinPullSoundTime = 0;
-		m_pPlayer->EmitSound(CHAN_ITEM, GrenadePinPullSound, VOL_NORM, ATTN_NORM);
+		if (FileSystem_SoundExists(GrenadePinPullSound))
+			m_pPlayer->EmitSound(CHAN_ITEM, GrenadePinPullSound, VOL_NORM, ATTN_NORM);
 	}
 #endif
 
