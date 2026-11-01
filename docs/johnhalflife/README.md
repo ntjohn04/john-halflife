@@ -81,8 +81,8 @@ a copy of the game code.
 | `johnhalflife_uplink` | John Half-Life: Uplink | `hldemo1` / `t0a0` | `config/expansions/uplink/` |
 
 * The build installs the game code, `delta.lst` and the settings files into each folder.
-* Menu files used unchanged are copied from the player's own Valve install at install time, so they match their
-  version of the game and are never committed (`cmake/JhlInstallValveMenu.cmake`): Half-Life's main menu,
+* Menu files used unchanged are copied from the player's own Valve install on the first start, so they match their
+  version of the game and are never shipped (`client/jhl_setup.cpp`): Half-Life's main menu,
   without its hint text next to each button
   (`GameMenu.res`, shared by all four, so the Unified SDK's Campaign Select is gone; its map,
   `hlu_campaignselect`, still works from the console), background layouts and tiles, logo and icon, then the
@@ -102,7 +102,7 @@ a copy of the game code.
 * Files the three games each have their own version of under one name (two scientist lines, Barney's
   "icanhear", `misc/talk.wav`, `common/null.wav`, the RPG's laser dot, `640_logo.spr`) were left by the Unified
   SDK's installer as Opposing Force's or Blue Shift's for every game. The build copies each game's own into its
-  folder from the player's install (`cmake/JhlInstallGameFiles.cmake`).
+  folder from the player's install on the first start (`client/jhl_setup.cpp`).
 
 ## The Unified SDK's models
 

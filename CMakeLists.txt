@@ -255,36 +255,9 @@ else()
 	message(WARNING "Python 3 wasn't found: NPCs will walk and run slightly slower than in vanilla")
 endif()
 
-# Valve menu files used unchanged, copied from the player's own install (see the script).
-function(jhl_install_valve_menu target)
-	set(own "${ARGV1}")
-	set(hd "${ARGV2}")
-	install(CODE "set(JHL_TARGET \"${target}\")
-		set(JHL_OWN \"${own}\")
-		set(JHL_HD \"${hd}\")
-		include(\"${CMAKE_CURRENT_SOURCE_DIR}/cmake/JhlInstallValveMenu.cmake\")")
-endfunction()
-
-jhl_install_valve_menu(johnhalflife "" HD)
-
-# Half-Life's brass shell (the Glock's, the MP5's, the Desert Eagle's, NPCs'), copied from the player's own install
-# over the Opposing Force one the Unified SDK's release puts in the mod folder: a 9 mm's shape, as Half-Life had it
-# (docs/johnhalflife/weapons.md#spent-casings).
-install(CODE "set(valveShell \"\${CMAKE_INSTALL_PREFIX}/../valve/models/shell.mdl\")
-	if (EXISTS \"\${valveShell}\")
-		file(COPY_FILE \"\${valveShell}\" \"\${CMAKE_INSTALL_PREFIX}/models/shell.mdl\")
-	else()
-		message(WARNING \"Half-Life's shell.mdl not found next to the mod; the mod keeps the one it has\")
-	endif()")
-
-# Opposing Force's shell (burnt-looking) for the Desert Eagle, an Opposing Force gun, as its M249's and sniper rifle's
-# casings, under its own name (Half-Life's has its).
-install(CODE "set(gearboxShell \"\${CMAKE_INSTALL_PREFIX}/../gearbox/models/shell.mdl\")
-	if (EXISTS \"\${gearboxShell}\")
-		file(COPY_FILE \"\${gearboxShell}\" \"\${CMAKE_INSTALL_PREFIX}/models/shell_op4.mdl\")
-	else()
-		message(WARNING \"Opposing Force's shell.mdl not found next to the mod; the Desert Eagle uses Half-Life's\")
-	endif()")
+# Valve's files the mod folders need (the menu art, Opposing Force's and Blue Shift's files, Half-Life's shell, each
+# game's own versions of shared files) are put in place by the game itself on the first start, from the player's own
+# games (client jhl_setup.cpp, docs/johnhalflife/release.md#first-start).
 
 # CMake doesn't currently support installing imported libraries of type UNKNOWN.
 # See https://gitlab.kitware.com/cmake/cmake/-/issues/22406
@@ -294,10 +267,7 @@ install(FILES $<TARGET_FILE:OpenAL::OpenAL> DESTINATION cl_dlls)
 
 # John Half-Life's expansions: thin mod folders next to the base one that borrow all its content through
 # fallback_dir, each with its own name, main menu and saves (docs/johnhalflife/README.md#expansions).
-# valveDir is the matching Valve game, whose menu art overrides Half-Life's; without one the expansion keeps
-# Half-Life's, including its widescreen background.
 function(jhl_install_expansion name)
-	set(valveDir "${ARGV1}")
 	set(dir ../johnhalflife_${name})
 
 	install(TARGETS client
@@ -316,19 +286,11 @@ function(jhl_install_expansion name)
 	install(DIRECTORY config/mod/ DESTINATION ${dir})
 	install(DIRECTORY config/expansions/${name}/ DESTINATION ${dir})
 
-	if (valveDir)
-		jhl_install_valve_menu(johnhalflife_${name} ${valveDir})
-	else()
-		jhl_install_valve_menu(johnhalflife_${name} "" HD)
-	endif()
 endfunction()
 
-jhl_install_expansion(op4 gearbox)
-jhl_install_expansion(bs bshift)
+jhl_install_expansion(op4)
+jhl_install_expansion(bs)
 jhl_install_expansion(uplink)
-
-# Each game's own version of files the three games share names for, from the player's own install (see the script).
-install(CODE "include(\"${CMAKE_CURRENT_SOURCE_DIR}/cmake/JhlInstallGameFiles.cmake\")")
 
 if (UNIX)
 	# Create a symbolic link to the OpenAL library so the dependency can be located at runtime.

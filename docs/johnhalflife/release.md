@@ -46,7 +46,12 @@ the folder up and writes a version stamp, so later starts skip it:
 2. Converts each game's maps into the mod folder: the map's entities rewritten by the upgrades the Unified SDK's
    ContentInstaller applies (ported to C++, on `jhl_bsp`), everything else in the BSP left as it is.
 3. Copies Opposing Force's and Blue Shift's files and soundtracks.
-4. Makes the rest: what `cmake/` and `scripts/` do at install time today.
+4. Copies Half-Life's menu art (its main menu without the hint text, background, logo, icon) into each folder,
+   then the folder's own Valve game's over it.
+
+What's made from files we ship is made by the build and shipped as made: the hornet splats added to the Unified
+SDK's `decals.wad` (`scripts/make_hornet_decals.py`) and the vanilla speeds in its models
+(`scripts/restore_npc_speeds.py`).
 
 A game the player doesn't own is skipped, and its campaign isn't offered. The C++ conversion is checked against
 the ContentInstaller's: the same maps, byte for byte. Each upgrade is reviewed against 1998 as it's ported (keep
