@@ -256,7 +256,6 @@ cfg/skill_coop.json
 cfg/skill_multiplayer.json
 class_signs.wad
 decals.wad
-default_config.cfg
 game_big.tga
 gfx/shell/kb_act.lst
 gfx/vgui/640_arrowlt.tga
