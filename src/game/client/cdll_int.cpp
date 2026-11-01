@@ -50,6 +50,7 @@
 #include "jhl_gargantua.h"
 #include "jhl_flushfaces.h"
 #include "jhl_softwarelook.h"
+#include "jhl_setup.h"
 #include "weapon_effects.h"
 
 extern bool g_ResetMousePosition;
@@ -127,6 +128,9 @@ static bool CL_InitClient()
 		return false;
 	}
 
+	// johnhalflife: the first start sets the mod's folders up from the player's games.
+	JhlSetup_Run();
+
 	if (!g_Client.Initialize())
 	{
 		return false;
@@ -188,6 +192,7 @@ void DLLEXPORT HUD_Init()
 {
 	g_Client.HudInit();
 	InitInput();
+	JhlSetup_Init();
 	gHUD.Init();
 	Scheme_Init();
 }

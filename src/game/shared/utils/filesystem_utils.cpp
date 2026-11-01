@@ -185,6 +185,11 @@ const std::string& FileSystem_GetModDirectoryName()
 	return g_ModDirectoryName;
 }
 
+const std::string& FileSystem_GetGameDirectory()
+{
+	return g_GameDirectory;
+}
+
 void FileSystem_FixSlashes(std::string& fileName)
 {
 	std::replace(fileName.begin(), fileName.end(), AlternatePathSeparatorChar, DefaultPathSeparatorChar);
