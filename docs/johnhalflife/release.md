@@ -1,0 +1,61 @@
+# Release
+
+The install targets, in order:
+
+1. **Community zip:** download, extract into the Half-Life folder, start John Half-Life (as a Steam custom game).
+   Nothing else to install or run.
+2. **Steam release:** the same game as a Steam product, someday. It needs Valve's approval, so it isn't planned
+   around yet, but nothing is built in a way that rules it out.
+
+What a player's folder needs comes from three places: files we ship, files taken from the player's own games, and
+files made from those on the player's computer. Nothing of Valve's is shipped that the player's games already
+have; what's made from Valve's files is made on the player's computer, when the game first starts.
+
+## What's in the folder now
+
+Measured on the development install (2026-11-01), every file sorted by where it came from (the Unified SDK's
+release zip `HalfLifeUnified-V1.0.0.zip`, its ContentInstaller, our build):
+
+| Kind | Files | Size | Release |
+|---|---|---|---|
+| johnhalflife's (game code, settings, menu, expansion folders) | 16 + expansions | 9 MB | Ship |
+| The Unified SDK's own: `cfg/` (248 JSON), campaigns, scripts, stats, titles, sentences and materials JSON, HUD sprites and JSON (66), `class_signs.wad`, `ravelin.wad` | ~330 | 2 MB | Ship |
+| The Unified SDK's models, recompiled with sequences merged from the three games | 128 | 43 MB | Ship in the zip, as the Unified SDK does; see [Steam](#steam) |
+| Byte-for-byte copies of Half-Life's files (sounds, models, sprites, gfx, events) | ~1,760 | 46 MB | Drop: the engine finds them in `valve` |
+| Byte-for-byte copies of Opposing Force's and Blue Shift's (sounds, models, sprites, gfx, WADs, classes) | ~1,320 | 92 MB | Copy from the player's `gearbox` and `bshift` at first start |
+| Half-Life's, Opposing Force's and Blue Shift's maps, converted (the Unified SDK's map upgrades) | 220 | 379 MB | Convert at first start |
+| Node graphs for them | 338 | 18 MB | Made by the engine as each map first loads |
+| Opposing Force's and Blue Shift's soundtracks (`media/`) | 38 | 66 MB | Copy at first start |
+| Made by our build from the player's games: Half-Life's shell, hornet splats in `decals.wad`, each game's own shared-name files, vanilla NPC speeds, the menu art | ~130 | | Make at first start |
+| Uplink's maps (`hldemo1` to `3`), converted | 3 | | Open: Valve's maps, not in a player's install; see below |
+| The Unified SDK's test maps (`test_*`, `zoo_*`, `hlu_technology_demonstration`) and the TFC WADs only `zoo_npcs` uses | 45 | 32 MB | Drop |
+| The Unified SDK's tools, installer files, FGD, `VC_redist.x86.exe` | ~100 | 20 MB | Drop (link the C++ runtime statically, as Valve's DLLs need nothing installed) |
+| MMod's files | 29 | 0.4 MB | Never shipped; each must be replaced or cleared first ([MMod assets](../../README.md#mmod-assets)) |
+| The player's (saves, config, logs, spray) | | | Never shipped |
+
+So the zip is about 55 MB: our files, the Unified SDK's own and its models.
+
+## First start
+
+The client DLL loads before the main menu. On the first start, and after an update changes what it makes, it sets
+the folder up and writes a version stamp, so later starts skip it:
+
+1. Finds the player's games through the engine (`valve`, and `gearbox` and `bshift` if installed) rather than
+   assuming they're next to the mod.
+2. Converts each game's maps into the mod folder: the map's entities rewritten by the upgrades the Unified SDK's
+   ContentInstaller applies (ported to C++, on `jhl_bsp`), everything else in the BSP left as it is.
+3. Copies Opposing Force's and Blue Shift's files and soundtracks.
+4. Makes the rest: what `cmake/` and `scripts/` do at install time today.
+
+A game the player doesn't own is skipped, and its campaign isn't offered. The C++ conversion is checked against
+the ContentInstaller's: the same maps, byte for byte. Each upgrade is reviewed against 1998 as it's ported (keep
+the bug fixes, revert the drift).
+
+## Steam
+
+* The Unified SDK's models are Valve's, recompiled with Opposing Force's and Blue Shift's sequences merged in. A
+  Steam release can't give those to players who don't own the expansions; it would need them made on the
+  player's computer (from their games, or as patches on them) or Valve's agreement.
+* Uplink was a free demo, but its maps are still Valve's.
+* A Steam release may install outside the Half-Life folder, which is why the first start finds the games through
+  the engine.
