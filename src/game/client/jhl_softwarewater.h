@@ -33,6 +33,12 @@ struct cl_entity_t;
 void JhlSoftwareWater_Initialize();
 
 /**
+ *	@brief The fog (red, green, blue, density) of the water drawn here last, as the engine would take it from that
+ *	water's palette; false if none was drawn lately.
+ */
+bool JhlSoftwareWater_LastFog(int (&fog)[4]);
+
+/**
  *	@brief An entity being added this frame (HUD_AddEntity). True if the engine shouldn't draw it: its water is drawn here.
  */
 bool JhlSoftwareWater_Add(cl_entity_t* ent);

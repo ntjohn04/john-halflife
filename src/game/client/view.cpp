@@ -32,6 +32,7 @@ void V_DropPunchAngle(float frametime, Vector& punchangle);
 #include "r_studioint.h"
 #include "com_model.h"
 #include "kbutton.h"
+#include "jhl_softwarelook.h"
 
 extern engine_studio_api_t IEngineStudio;
 
@@ -1919,6 +1920,9 @@ void DLLEXPORT V_CalcRefdef(ref_params_t* pparams)
 
 	// johnhalflife: the shotgun's shells, thrown as it's pumped.
 	ShotgunShells_Update(gEngfuncs.GetClientTime());
+
+	// johnhalflife: the engine's fog kept off under water, for the software renderer's (jhl_visuals_underwaterfog).
+	JhlSoftwareLook_SetupView();
 
 	/*
 	// Example of how to overlay the whole screen with red at 50 % alpha

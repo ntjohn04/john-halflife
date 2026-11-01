@@ -47,6 +47,7 @@ bool LoadAll()
 	auto& gl = g_JhlGL;
 	bool ok = true;
 	ok = Load(gl.GetIntegerv, "glGetIntegerv") && ok;
+	ok = Load(gl.GetFloatv, "glGetFloatv") && ok;
 	ok = Load(gl.GetError, "glGetError") && ok;
 	ok = Load(gl.IsTexture, "glIsTexture") && ok;
 	ok = Load(gl.GenTextures, "glGenTextures") && ok;
@@ -74,6 +75,8 @@ bool LoadAll()
 	ok = Load(gl.BlendFunc, "glBlendFunc") && ok;
 	ok = Load(gl.PolygonOffset, "glPolygonOffset") && ok;
 	ok = Load(gl.TexEnvi, "glTexEnvi") && ok;
+	ok = Load(gl.Fogi, "glFogi") && ok;
+	ok = Load(gl.FogCoordf, "glFogCoordf") && ok;
 	ok = Load(gl.TexEnvf, "glTexEnvf") && ok;
 	ok = Load(gl.TexEnvfv, "glTexEnvfv") && ok;
 	ok = Load(gl.GetTexEnviv, "glGetTexEnviv") && ok;
@@ -101,10 +104,13 @@ bool LoadAll()
 	ok = Load(gl.GetUniformLocation, "glGetUniformLocation") && ok;
 	ok = Load(gl.Uniform1i, "glUniform1i") && ok;
 	ok = Load(gl.Uniform2i, "glUniform2i") && ok;
+	ok = Load(gl.Uniform2f, "glUniform2f") && ok;
+	ok = Load(gl.Uniform4f, "glUniform4f") && ok;
 	ok = Load(gl.GenFramebuffers, "glGenFramebuffers") && ok;
 	ok = Load(gl.BindFramebuffer, "glBindFramebuffer") && ok;
 	ok = Load(gl.FramebufferTexture2D, "glFramebufferTexture2D") && ok;
 	ok = Load(gl.CheckFramebufferStatus, "glCheckFramebufferStatus") && ok;
+	ok = Load(gl.GetFramebufferAttachmentParameteriv, "glGetFramebufferAttachmentParameteriv") && ok;
 	ok = Load(gl.BlitFramebuffer, "glBlitFramebuffer") && ok;
 	ok = Load(gl.GenerateMipmap, "glGenerateMipmap") && ok;
 	return ok;

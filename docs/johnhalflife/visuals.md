@@ -32,7 +32,7 @@ many entities were found.
 
 Half-Life's software renderer (sw.dll) and its OpenGL renderer (hw.dll) were compared in their code and on
 screenshots of the same view. They light the world identically: the same light gamma table, light × texture ÷ 192 so
-the brightest light is 1.33× (OpenGL's `gl_overbright`, on by default, matches), the same tone curve. Three touches
+the brightest light is 1.33× (OpenGL's `gl_overbright`, on by default, matches), the same tone curve. Several touches
 differ, each its own setting. The OpenGL drawing they need is in `jhl_gl.cpp` (looked up through SDL;
 the client doesn't link OpenGL), the map reading in `jhl_bsp.cpp` (shared with the flush faces above).
 
@@ -53,6 +53,25 @@ this cut also accounts for most of software looking a little darker (what's left
 is drawn (software's HUD was 16-bit too), the client copies the frame and draws it back cut the same way
 (`jhl_softwarelook.cpp`).
 
+### Under water (`jhl_visuals_underwaterview`, `jhl_visuals_underwaterfog`)
+
+In water, slime or lava, software drew the view into Quake's warp buffer, 320 × 200, never raised: narrowed to 320
+wide keeping its shape, then no more than 200 tall (its width kept, so its pixels aren't square: 4.5 × 5.4 at
+1440 × 1080, measured on a screenshot), stretched over the screen, the HUD drawn sharp on top. And it fogged the view as
+it stretched it: each pixel mixed toward the water's colour by one of 64 blends picked by its depth (32768 ÷ distance,
+the last from 520 units in), `((64 − blend) × far >> 6) + near` of 256, never less than 32, near = density ÷ 2,
+far = (512 − near) × density >> 8. OpenGL fogs linearly from the eye to 1536 − 4 × density instead. Both take colour
+and density from the water's palette (entry 3's colour, entry 4's red), from the water drawn last.
+
+* `jhl_visuals_underwaterview`: once the view is drawn (before the HUD), it's drawn again from the middles of those
+  320 × 200 blocks (`JhlSoftwareLook_ViewDrawn`).
+* `jhl_visuals_underwaterfog`: the engine's own fog is kept off under water without touching the engine: OpenGL is
+  told to fog by a fog coordinate of 0 (`GL_FOG_COORD_SRC`), so linear fog starting at 0 covers nothing, put back as
+  soon as the view is out of the water (`JhlSoftwareLook_SetupView`). The view's depth is copied and software's fog
+  put on by it, with the projection taken while the world is drawn; its colour from the water drawn here (the
+  software water), else from the engine's fog set up. (Taking the engine's fog off a finished frame can't work: far
+  enough out it has covered all there was.)
+
 ### Rippling water (`jhl_visuals_softwarewater`)
 
 Software's water isn't Quake's sine wobble: it's a ripple simulation. A 128 × 128 field of heights shared by all water
@@ -69,5 +88,4 @@ so gamma and filtering match). Water is what the engine treats as water: names s
   (render modes normal, texture and additive). Opaque entities partly water have their water drawn over the engine's;
   see-through ones partly water are left to the engine.
 
-Not reproduced: software's lower-resolution view under water (it rendered at most 640 wide and stretched it).
 `jhl_softwarewater_info` (temporary) lists what was made of the map's water.

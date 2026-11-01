@@ -37,6 +37,32 @@ void JhlSoftwareLook_Initialize();
 bool JhlSoftwareLook_BeginModel(int renderMode, int renderFx);
 void JhlSoftwareLook_EndModel();
 
+// jhl_visuals_underwaterview (default 0): under water, the software renderer drew the view into its warp buffer,
+// 320 x 200 (Quake's), and stretched it over the screen: big, not quite square pixels, the HUD sharp on top (measured on
+// a screenshot: 4.5 x 5.4 pixels at 1440 x 1080). The view, once drawn, is drawn again from the middles of those blocks.
+
+// jhl_visuals_underwaterfog (default 0): under water, software fogged its view as it stretched it: each pixel mixed
+// toward the water's colour by a blend picked by its depth (64 of them, by 32768 / distance), never less than 32 of 256,
+// colour and density from the water's palette as the engine's own fog takes them. OpenGL fogs linearly from the eye to
+// 1536 - 4 x density instead. The engine's fog is kept off (see JhlSoftwareLook_SetupView) and software's put on, by
+// the view's depth.
+
+/**
+ *	@brief The view is set up, not yet drawn (V_CalcRefdef, at its end): keeps the engine's fog off under water, for the
+ *	underwater fog.
+ */
+void JhlSoftwareLook_SetupView();
+
+/**
+ *	@brief The engine is drawing the world (HUD_DrawNormalTriangles): its fog and projection, for the underwater fog.
+ */
+void JhlSoftwareLook_CaptureView();
+
+/**
+ *	@brief The view is drawn, not yet the HUD (HUD_Redraw, before it).
+ */
+void JhlSoftwareLook_ViewDrawn();
+
 /**
  *	@brief The frame is drawn, HUD and all (HUD_Redraw, after it).
  */

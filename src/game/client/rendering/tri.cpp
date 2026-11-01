@@ -22,6 +22,7 @@
 #include "view.h"
 #include "jhl_blastring.h"
 #include "jhl_softwarewater.h"
+#include "jhl_softwarelook.h"
 
 void RenderFog()
 {
@@ -37,7 +38,8 @@ void RenderFog()
  */
 void DLLEXPORT HUD_DrawNormalTriangles()
 {
-	// johnhalflife: water as the software renderer drew it.
+	// johnhalflife: the engine's fog and view, for the underwater fog; water as the software renderer drew it.
+	JhlSoftwareLook_CaptureView();
 	JhlSoftwareWater_DrawOpaque();
 
 	gHUD.m_Spectator.DrawOverview();

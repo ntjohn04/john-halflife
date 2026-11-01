@@ -40,6 +40,9 @@ All are client settings; set them in the console.
 | `jhl_visuals_flushfaces` | 1 | Signs, posters and panels built flush with walls drawn steady (they flickered in OpenGL and vanished in software) | [Visuals](visuals.md) |
 | `jhl_visuals_16bitcolor` | 0 | The software renderer's 16-bit color: every frame cut to 565, as it drew | [Visuals](visuals.md#16-bit-color-jhl_visuals_16bitcolor) |
 | `jhl_visuals_softwarewater` | 0 | The software renderer's rippling water: its ripple simulation in place of OpenGL's sine wobble | [Visuals](visuals.md#rippling-water-jhl_visuals_softwarewater) |
+| `jhl_visuals_modeloverbright` | 1 | The software renderer's model lighting: models lit up to 4/3 as the world is | [Visuals](visuals.md#model-lighting-jhl_visuals_modeloverbright-default-1) |
+| `jhl_visuals_underwaterview` | 0 | The software renderer's 320 x 200 view under water | [Visuals](visuals.md#under-water-jhl_visuals_underwaterview-jhl_visuals_underwaterfog) |
+| `jhl_visuals_underwaterfog` | 0 | The software renderer's underwater fog, by depth, in place of OpenGL's | [Visuals](visuals.md#under-water-jhl_visuals_underwaterview-jhl_visuals_underwaterfog) |
 | `jhl_physics_fpsfix` | 1 | Pushables, +use walking, grenades and gibs sliding, debris settling and fire rates acting at any frame rate as at 72 fps | [Physics](physics.md) |
 | `jhl_weapons_smoothrecoil` | 1 | Spring-damped recoil (0 = original punches) | [Weapons](weapons.md#recoil) |
 | `jhl_fx_bulletimpacts` | 1 | Bullet impact sparks/dust and water splashes | [Weapons](weapons.md#bullet-impacts) |

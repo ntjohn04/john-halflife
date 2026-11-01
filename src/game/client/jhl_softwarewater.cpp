@@ -76,6 +76,8 @@ struct WaterTexture
 	std::vector<std::uint32_t> Source; // RGBA, as the engine uploaded it.
 	GLuint Tile = 0;
 	bool Mipmapped = false;
+	int Fog[4]{}; // Its fog under water: colour and density, from its palette (see EngineTexture).
+	bool HasFog = false;
 };
 
 // A model's water faces, by texture.
@@ -103,6 +105,10 @@ bool g_MapReady = false;
 std::vector<WaterTexture> g_Textures;
 std::vector<WaterModel> g_Models;
 std::vector<WaterEntity> g_Entities; // This frame's, until the see-through ones are drawn.
+
+// The fog of the water drawn last, and when (the engine takes its fog from the water it drew last).
+int g_LastFog[4]{};
+float g_LastFogTime = -1;
 
 // What was made of the map's water and its entities, for jhl_softwarewater_info.
 std::vector<std::string> g_TextureReport;
@@ -141,7 +147,7 @@ void FreeTextures()
 // The engine's GL texture for a map texture, from the world model's texture list: texture_t as the OpenGL renderer has
 // it, its GL texture number after its name and size (R_RenderBrushPoly binds texture + 0x18). Only if the list is the
 // map's, name for name.
-int EngineTexture(const model_t* world, const JhlBsp& bsp, int miptex, std::string& why)
+int EngineTexture(const model_t* world, const JhlBsp& bsp, int miptex, std::string& why, WaterTexture& water)
 {
 	if (!world || world->numtextures != static_cast<int>(bsp.TextureNames.size()) || !world->textures ||
 		miptex < 0 || miptex >= world->numtextures)
@@ -161,6 +167,21 @@ int EngineTexture(const model_t* world, const JhlBsp& bsp, int miptex, std::stri
 
 	int number = 0;
 	std::memcpy(&number, reinterpret_cast<const std::byte*>(texture) + 0x18, sizeof(number));
+
+	// Its fog under water, as both renderers take it when they draw it (EmitWaterPolys, and sw.dll's turbulence):
+	// the palette (texture + 0x44) entry 3's colour, and entry 4's red for its density.
+	const std::uint8_t* palette = nullptr;
+	std::memcpy(&palette, reinterpret_cast<const std::byte*>(texture) + 0x44, sizeof(palette));
+
+	if (palette)
+	{
+		water.Fog[0] = palette[9];
+		water.Fog[1] = palette[10];
+		water.Fog[2] = palette[11];
+		water.Fog[3] = palette[12];
+		water.HasFog = true;
+	}
+
 	return number;
 }
 
@@ -246,7 +267,7 @@ void LoadMap(const char* mapName)
 		water.Name = bsp->TextureNames[miptex];
 		std::string why;
 
-		if (LoadTexture(water, EngineTexture(worldEntity->model, *bsp, static_cast<int>(miptex), why), why))
+		if (LoadTexture(water, EngineTexture(worldEntity->model, *bsp, static_cast<int>(miptex), why, water), why))
 		{
 			g_TextureReport.push_back(water.Name + ": " + std::to_string(water.Width) + " x " + std::to_string(water.Height));
 			textureByMiptex[miptex] = static_cast<int>(g_Textures.size());
@@ -486,6 +507,12 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 				continue;
 			}
 
+			if (g_Textures[t].HasFog)
+			{
+				std::copy(std::begin(g_Textures[t].Fog), std::end(g_Textures[t].Fog), g_LastFog);
+				g_LastFogTime = gEngfuncs.GetClientTime();
+			}
+
 			const auto& texinfo = bsp.Texinfo[face.Texinfo];
 
 			gl.Begin(GL_POLYGON);
@@ -530,6 +557,12 @@ struct WaterDrawState
 		gl.TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 		gl.Disable(GL_CULL_FACE); // Faces facing away are left out above.
+
+		// Fogged under water as the engine fogs the world (it turns its fog off around the client's drawing).
+		if (const int contents = gEngfuncs.PM_PointContents(v_origin, nullptr); contents <= CONTENTS_WATER && contents != CONTENTS_TRANSLUCENT)
+		{
+			gl.Enable(GL_FOG);
+		}
 		gl.Disable(GL_ALPHA_TEST);
 		gl.Enable(GL_DEPTH_TEST);
 		gl.DepthFunc(GL_LEQUAL);
@@ -543,6 +576,20 @@ struct WaterDrawState
 		gl.UseProgram(Program);
 	}
 };
+}
+
+bool JhlSoftwareWater_LastFog(int (&fog)[4])
+{
+	// Drawn this frame or the last few.
+	const float time = gEngfuncs.GetClientTime();
+
+	if (0 == g_SoftwareWater->value || g_LastFogTime < 0 || time < g_LastFogTime || time - g_LastFogTime > 0.5f)
+	{
+		return false;
+	}
+
+	std::copy(std::begin(g_LastFog), std::end(g_LastFog), fog);
+	return true;
 }
 
 void JhlSoftwareWater_Initialize()

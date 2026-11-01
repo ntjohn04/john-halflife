@@ -200,6 +200,9 @@ int DLLEXPORT HUD_Redraw(float time, int intermission)
 	// johnhalflife: the view is drawn; brush entities moved out of walls go back.
 	JhlFlushFaces_Restore();
 
+	// johnhalflife: the view is drawn, not yet the HUD.
+	JhlSoftwareLook_ViewDrawn();
+
 	gHUD.Redraw(time, 0 != intermission);
 
 	// johnhalflife: the frame is drawn, HUD and all.

@@ -132,6 +132,20 @@ DESCRIPTION INFO_OPTIONS
 		{ "0"1" }
 	}
 
+	"jhl_visuals_underwaterview"
+	{
+		"JHL | Visuals: software renderer's low-resolution underwater view"
+		{ BOOL }
+		{ "0" }
+	}
+
+	"jhl_visuals_underwaterfog"
+	{
+		"JHL | Visuals: software renderer's underwater fog"
+		{ BOOL }
+		{ "0" }
+	}
+
 	"jhl_weapons_smoothrecoil"
 	{
 		"JHL | Weapons: smooth recoil"

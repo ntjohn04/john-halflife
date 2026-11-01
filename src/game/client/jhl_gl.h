@@ -23,6 +23,7 @@
 struct JhlGL
 {
 	decltype(&::glGetIntegerv) GetIntegerv = nullptr;
+	decltype(&::glGetFloatv) GetFloatv = nullptr;
 	decltype(&::glGetError) GetError = nullptr;
 	decltype(&::glIsTexture) IsTexture = nullptr;
 	decltype(&::glGenTextures) GenTextures = nullptr;
@@ -50,6 +51,8 @@ struct JhlGL
 	decltype(&::glBlendFunc) BlendFunc = nullptr;
 	decltype(&::glPolygonOffset) PolygonOffset = nullptr;
 	decltype(&::glTexEnvi) TexEnvi = nullptr;
+	decltype(&::glFogi) Fogi = nullptr;
+	PFNGLFOGCOORDFPROC FogCoordf = nullptr;
 	decltype(&::glTexEnvf) TexEnvf = nullptr;
 	decltype(&::glTexEnvfv) TexEnvfv = nullptr;
 	decltype(&::glGetTexEnviv) GetTexEnviv = nullptr;
@@ -77,10 +80,13 @@ struct JhlGL
 	PFNGLGETUNIFORMLOCATIONPROC GetUniformLocation = nullptr;
 	PFNGLUNIFORM1IPROC Uniform1i = nullptr;
 	PFNGLUNIFORM2IPROC Uniform2i = nullptr;
+	PFNGLUNIFORM2FPROC Uniform2f = nullptr;
+	PFNGLUNIFORM4FPROC Uniform4f = nullptr;
 	PFNGLGENFRAMEBUFFERSPROC GenFramebuffers = nullptr;
 	PFNGLBINDFRAMEBUFFERPROC BindFramebuffer = nullptr;
 	PFNGLFRAMEBUFFERTEXTURE2DPROC FramebufferTexture2D = nullptr;
 	PFNGLCHECKFRAMEBUFFERSTATUSPROC CheckFramebufferStatus = nullptr;
+	PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC GetFramebufferAttachmentParameteriv = nullptr;
 	PFNGLBLITFRAMEBUFFERPROC BlitFramebuffer = nullptr;
 	PFNGLGENERATEMIPMAPPROC GenerateMipmap = nullptr;
 };
