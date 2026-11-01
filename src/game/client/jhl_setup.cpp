@@ -26,7 +26,6 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
-#include <optional>
 #include <sstream>
 #include <string>
 #include <system_error>
@@ -37,7 +36,6 @@
 #include "cl_util.h"
 #include "jhl_mapconvert.h"
 #include "jhl_setup.h"
-#include "jhl_setupwindow.h"
 #include "utils/filesystem_utils.h"
 
 namespace fs = std::filesystem;
@@ -376,7 +374,7 @@ void Write(const fs::path& destination, const Source& source, SetupStats& stats)
 }
 
 // The maps, converted one at a time (together they're hundreds of megabytes): each line the game folder and the map.
-void ConvertMaps(const fs::path& root, SetupStats& stats, JhlSetupWindow* window)
+void ConvertMaps(const fs::path& root, SetupStats& stats)
 {
 	std::ifstream list(root / BaseFolder / MapsList);
 
@@ -402,8 +400,6 @@ void ConvertMaps(const fs::path& root, SetupStats& stats, JhlSetupWindow* window
 		const std::string& line = lines[i];
 		const auto tab = line.find('\t');
 
-		if (window)
-			window->Show("Converting maps (" + std::to_string(i + 1) + " of " + std::to_string(lines.size()) + ")...");
 
 		const std::string game = line.substr(0, tab);
 		const std::string map = line.substr(tab + 1);
@@ -449,15 +445,8 @@ void Setup(bool force)
 	SetupStats stats;
 	Plan plan;
 
-	// On the first start (not jhl_setup in the game): the window, and the messages kept for the console.
-	std::optional<JhlSetupWindow> window;
-
-	if (!force)
-	{
-		g_DeferMessages = true;
-		window.emplace();
-		window->Show("Copying files...");
-	}
+	// On the first start (not jhl_setup in the game) the console isn't up yet: the messages wait for it.
+	g_DeferMessages = !force;
 
 	PlanGameFiles(root, plan, stats);
 	PlanMenu(root, plan);
@@ -467,7 +456,7 @@ void Setup(bool force)
 		Write(file.first, file.second, stats);
 	}
 
-	ConvertMaps(root, stats, window ? &*window : nullptr);
+	ConvertMaps(root, stats);
 
 	const auto seconds = std::chrono::duration<float>(std::chrono::steady_clock::now() - start).count();
 
