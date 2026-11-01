@@ -65,6 +65,28 @@ A game the player doesn't own is skipped, and its campaign isn't offered. The C+
 the ContentInstaller's: the same maps, byte for byte. Each upgrade is reviewed against 1998 as it's ported (keep
 the bug fixes, revert the drift).
 
+## Making a release
+
+One zip for Windows and Linux, made by hand when there's one to make (no automated builds):
+
+1. Windows: build, then install to a staging folder (not the game):
+   `cmake --install <build folder> --config Release --prefix <staging>/windows/johnhalflife`
+2. Linux (Ubuntu 22.04, e.g. WSL): `scripts/linux/build.sh` (installs to `~/jhl-build-linux/install`).
+3. `python scripts/package_release.py --windows <staging>/windows --linux <Linux staging> --unified
+   HalfLifeUnified-V1.0.0.zip` (from Windows, WSL's Linux staging is
+   `\\wsl.localhost\Ubuntu-22.04\home\<user>\jhl-build-linux\install`). It writes
+   `dist/johnhalflife-v<version>-<release type>.zip`.
+4. Version, changelog row and tag as for any version ([Versioning](README.md#versioning)); upload the zip to the
+   GitHub release.
+
+The packager needs no Half-Life install: the Unified SDK's files it ships are listed in
+`scripts/release_unified_files.txt` and the vanilla NPC speeds in `scripts/npc_speeds.txt` (names and numbers only,
+made once on a machine with the games: `package_release.py --make-list`, `restore_npc_speeds.py --make-table`; again
+if the Unified SDK's release changes).
+
+v0.12.0's zip: 87 MB (183 MB extracted, 649 files). Most of it is the game code, a copy in each of the four game
+folders, Windows' and Linux's; then the Unified SDK's models (50 MB).
+
 ## Linux build
 
 The release has the Linux game code next to the Windows one (`client.so`, `server.so` and `libopenal-hlu.so.1` beside
