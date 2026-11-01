@@ -248,6 +248,13 @@ else()
 	message(WARNING "Python 3 wasn't found: the hornet gun's dart splats won't be added to decals.wad")
 endif()
 
+# The vanilla walking and running speeds, back in the Unified SDK's recompiled models (see the script).
+if (Python3_Interpreter_FOUND)
+	install(CODE "execute_process(COMMAND \"${Python3_EXECUTABLE}\" -I \"${CMAKE_CURRENT_SOURCE_DIR}/scripts/restore_npc_speeds.py\" \"\${CMAKE_INSTALL_PREFIX}\")")
+else()
+	message(WARNING "Python 3 wasn't found: NPCs will walk and run slightly slower than in vanilla")
+endif()
+
 # Valve menu files used unchanged, copied from the player's own install (see the script).
 function(jhl_install_valve_menu target)
 	set(own "${ARGV1}")
@@ -319,6 +326,9 @@ endfunction()
 jhl_install_expansion(op4 gearbox)
 jhl_install_expansion(bs bshift)
 jhl_install_expansion(uplink)
+
+# Each game's own version of files the three games share names for, from the player's own install (see the script).
+install(CODE "include(\"${CMAKE_CURRENT_SOURCE_DIR}/cmake/JhlInstallGameFiles.cmake\")")
 
 if (UNIX)
 	# Create a symbolic link to the OpenAL library so the dependency can be located at runtime.

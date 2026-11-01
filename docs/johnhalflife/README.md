@@ -98,6 +98,24 @@ a copy of the game code.
   They're listed in `config/mod/cfg/BlueShiftConfig.json` and `OpposingForceConfig.json`, copies of the Unified
   SDK's files (assets repository, `cfgsrc/cfg`) with a `Skill` section added; if those change upstream, copy
   them again.
+* Files the three games each have their own version of under one name (two scientist lines, Barney's
+  "icanhear", `misc/talk.wav`, `common/null.wav`, the RPG's laser dot, `640_logo.spr`) were left by the Unified
+  SDK's installer as Opposing Force's or Blue Shift's for every game. The build copies each game's own into its
+  folder from the player's install (`cmake/JhlInstallGameFiles.cmake`).
+
+## The Unified SDK's models
+
+Compared with vanilla's (2026-11, LD models), the Unified SDK's models keep the same textures (re-encoded, or
+the same art on re-laid-out sheets), render flags and view model sequence order. Renamed or split sequences are
+matched by its upgraded maps. They add sequences, bodygroups and hitboxes (neck boxes count as head; Opposing
+Force's ally grunts and black ops can take headshots, which Gearbox's models didn't allow); these are kept.
+
+* **Walking and running speed:** recompiled from decompiled sources, the models' linear movement came out
+  (frames - 1) / frames of vanilla's, so NPCs moved 2 to 6% slower. `scripts/restore_npc_speeds.py` puts the
+  vanilla values back into the installed models at install time (88 sequences), from the player's own games.
+* **Open:** Blue Shift's scientists use Half-Life's `scientist.mdl` and its frame rates; vanilla Blue Shift's
+  walked and ran slower (a run at 207 units/s, Half-Life's 293). The Unified SDK's `models/bshift/scientist.mdl`
+  is unused and mixes the two games' rates.
 * Settings and saves are per folder, as with the real games.
 * The engine adds the `fallback_dir` folder under the search path ID `GAME_FALLBACK`. The Unified SDK reads its
   config files (model/sound replacement, skill, server config, map cycle) from `GAMECONFIG`, the mod's own folder
