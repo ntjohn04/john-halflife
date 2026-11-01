@@ -21,9 +21,12 @@
 #include <algorithm>
 #include <chrono>
 #include <cctype>
+#include <cstdarg>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <system_error>
@@ -34,6 +37,7 @@
 #include "cl_util.h"
 #include "jhl_mapconvert.h"
 #include "jhl_setup.h"
+#include "jhl_setupwindow.h"
 #include "utils/filesystem_utils.h"
 
 namespace fs = std::filesystem;
@@ -41,12 +45,30 @@ namespace fs = std::filesystem;
 namespace
 {
 // Raise when what the setup makes changes, so installed folders are set up again.
-constexpr int SetupVersion = 2;
+constexpr int SetupVersion = 3;
 
 constexpr const char* BaseFolder = "johnhalflife";
 constexpr const char* StampFile = "jhl_setup.txt";
 constexpr const char* FilesList = "jhl_setup_files.txt";
 constexpr const char* MapsList = "jhl_setup_maps.txt";
+
+// The setup runs as the client loads, before the console can show anything: its messages wait until it can.
+bool g_DeferMessages = false;
+std::string g_DeferredMessages;
+
+void Log(const char* format, ...)
+{
+	char text[1024];
+	va_list args;
+	va_start(args, format);
+	std::vsnprintf(text, sizeof(text), format, args);
+	va_end(args);
+
+	if (g_DeferMessages)
+		g_DeferredMessages += text;
+	else
+		gEngfuncs.Con_Printf("%s", text);
+}
 
 // Each game folder's menu: its own Valve game's art over Half-Life's, and whether it has Half-Life's widescreen
 // background (hd_background in its liblist.gam).
@@ -153,7 +175,7 @@ void PlanGameFiles(const fs::path& root, Plan& plan, SetupStats& stats)
 
 	if (!list)
 	{
-		gEngfuncs.Con_Printf("jhl_setup: %s/%s not found\n", BaseFolder, FilesList);
+		Log("jhl_setup: %s/%s not found\n", BaseFolder, FilesList);
 		++stats.Failed;
 		return;
 	}
@@ -232,7 +254,7 @@ void PlanMenu(const fs::path& root, Plan& plan)
 
 	if (!IsFolder(valve / "resource"))
 	{
-		gEngfuncs.Con_Printf("jhl_setup: Half-Life's resource folder not found; the menus keep what they have\n");
+		Log("jhl_setup: Half-Life's resource folder not found; the menus keep what they have\n");
 		return;
 	}
 
@@ -263,7 +285,7 @@ void PlanMenu(const fs::path& root, Plan& plan)
 			}
 			else
 			{
-				gEngfuncs.Con_Printf("jhl_setup: %s not installed; %s uses Half-Life's menu art\n", menu.OwnGame, menu.Folder);
+				Log("jhl_setup: %s not installed; %s uses Half-Life's menu art\n", menu.OwnGame, menu.Folder);
 			}
 		}
 
@@ -324,7 +346,7 @@ void WriteContents(const fs::path& destination, const std::string& contents, Set
 
 	if (!file)
 	{
-		gEngfuncs.Con_Printf("jhl_setup: couldn't write %s\n", destination.generic_string().c_str());
+		Log("jhl_setup: couldn't write %s\n", destination.generic_string().c_str());
 		++stats.Failed;
 		return;
 	}
@@ -340,7 +362,7 @@ void Write(const fs::path& destination, const Source& source, SetupStats& stats)
 
 		if (!ReadFile(*path, contents))
 		{
-			gEngfuncs.Con_Printf("jhl_setup: couldn't read %s\n", path->generic_string().c_str());
+			Log("jhl_setup: couldn't read %s\n", path->generic_string().c_str());
 			++stats.Failed;
 			return;
 		}
@@ -354,27 +376,34 @@ void Write(const fs::path& destination, const Source& source, SetupStats& stats)
 }
 
 // The maps, converted one at a time (together they're hundreds of megabytes): each line the game folder and the map.
-void ConvertMaps(const fs::path& root, SetupStats& stats)
+void ConvertMaps(const fs::path& root, SetupStats& stats, JhlSetupWindow* window)
 {
 	std::ifstream list(root / BaseFolder / MapsList);
 
 	if (!list)
 	{
-		gEngfuncs.Con_Printf("jhl_setup: %s/%s not found\n", BaseFolder, MapsList);
+		Log("jhl_setup: %s/%s not found\n", BaseFolder, MapsList);
 		++stats.Failed;
 		return;
 	}
 
-	std::string line, original, converted, error;
+	std::vector<std::string> lines;
 
-	while (std::getline(list, line))
+	for (std::string line; std::getline(list, line);)
 	{
+		if (!line.starts_with("//") && line.find('\t') != std::string::npos)
+			lines.push_back(line);
+	}
+
+	std::string original, converted, error;
+
+	for (std::size_t i = 0; i < lines.size(); ++i)
+	{
+		const std::string& line = lines[i];
 		const auto tab = line.find('\t');
 
-		if (line.starts_with("//") || tab == std::string::npos)
-		{
-			continue;
-		}
+		if (window)
+			window->Show("Converting maps (" + std::to_string(i + 1) + " of " + std::to_string(lines.size()) + ")...");
 
 		const std::string game = line.substr(0, tab);
 		const std::string map = line.substr(tab + 1);
@@ -389,7 +418,7 @@ void ConvertMaps(const fs::path& root, SetupStats& stats)
 
 		if (!JhlMapConvert(original, kind, map, converted, error))
 		{
-			gEngfuncs.Con_Printf("jhl_setup: %s/maps/%s.bsp: %s\n", game.c_str(), map.c_str(), error.c_str());
+			Log("jhl_setup: %s/maps/%s.bsp: %s\n", game.c_str(), map.c_str(), error.c_str());
 			++stats.Failed;
 			continue;
 		}
@@ -420,6 +449,16 @@ void Setup(bool force)
 	SetupStats stats;
 	Plan plan;
 
+	// On the first start (not jhl_setup in the game): the window, and the messages kept for the console.
+	std::optional<JhlSetupWindow> window;
+
+	if (!force)
+	{
+		g_DeferMessages = true;
+		window.emplace();
+		window->Show("Copying files...");
+	}
+
 	PlanGameFiles(root, plan, stats);
 	PlanMenu(root, plan);
 
@@ -428,11 +467,11 @@ void Setup(bool force)
 		Write(file.first, file.second, stats);
 	}
 
-	ConvertMaps(root, stats);
+	ConvertMaps(root, stats, window ? &*window : nullptr);
 
 	const auto seconds = std::chrono::duration<float>(std::chrono::steady_clock::now() - start).count();
 
-	gEngfuncs.Con_Printf("jhl_setup: %d files written, %d already in place, %d not in the installed games, %d failed (%.1f s)\n",
+	Log("jhl_setup: %d files written, %d already in place, %d not in the installed games, %d failed (%.1f s)\n",
 		stats.Written, stats.Unchanged, stats.Missing, stats.Failed, seconds);
 
 	// A failure is tried again on the next start.
@@ -450,6 +489,14 @@ void JhlSetup_Run()
 
 void JhlSetup_Init()
 {
+	g_DeferMessages = false;
+
+	if (!g_DeferredMessages.empty())
+	{
+		gEngfuncs.Con_Printf("%s", g_DeferredMessages.c_str());
+		g_DeferredMessages.clear();
+	}
+
 	gEngfuncs.pfnAddCommand("jhl_setup", []()
 		{ Setup(true); });
 }
