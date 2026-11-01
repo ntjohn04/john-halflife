@@ -1,33 +1,38 @@
-"""Gives an installed John Half-Life's models their vanilla movement speeds back.
+"""Gives John Half-Life's models (the Unified SDK's) their vanilla movement speeds back.
 
 A sequence's ground speed (how fast an NPC walks or runs with it) is its linear movement times its frame rate over its
 frame count less one (server animation.cpp GetSequenceInfo). The Unified SDK's models were recompiled from decompiled
 sources, which works the linear movement out over one frame fewer: it comes out (frames - 1) / frames of vanilla's, so
 every NPC moved 2 to 6% slower than in vanilla (a running grunt 287 units/s in place of 304).
 
-For each model in the mod folder, each sequence that a vanilla model of the same name also has, with the same frame
-count and frame rate and with that shortfall, gets the vanilla linear movement. Sequences made or changed by the
-Unified SDK keep theirs. Vanilla models are read from the player's own games; nothing of Valve's is committed to the
-repository. Running it again changes nothing.
+npc_speeds.txt lists each such sequence with the vanilla linear movement (numbers, nothing of Valve's), so this needs no
+Half-Life install: it's run by the build on the installed mod folder and by the release packager. A sequence is only
+changed if it still has the shortfall (or has the vanilla value already), so a model the Unified SDK changes since is
+left alone; running it again changes nothing.
 
-Usage: python restore_npc_speeds.py <mod folder>
+Usage:
+  python restore_npc_speeds.py <mod folder>
+  python restore_npc_speeds.py --make-table <Half-Life folder> <Unified SDK release zip>
+      (writes npc_speeds.txt, comparing the release's models with the player's vanilla ones)
 """
 
 import os
 import struct
 import sys
+import zipfile
 
 SEQUENCE_SIZE = 176
 FPS = 32
 NUMFRAMES = 56
 LINEAR = 76
+TABLE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "npc_speeds.txt")
 
 
 def sequences(data):
     numseq, seqindex = struct.unpack_from("<2i", data, 164)
     for i in range(numseq):
         o = seqindex + i * SEQUENCE_SIZE
-        label = bytes(data[o:o + 32]).split(b"\0", 1)[0].lower()
+        label = bytes(data[o:o + 32]).split(b"\0", 1)[0].decode("latin-1").lower()
         fps = struct.unpack_from("<f", data, o + FPS)[0]
         frames = struct.unpack_from("<i", data, o + NUMFRAMES)[0]
         yield label, o, fps, frames, struct.unpack_from("<3f", data, o + LINEAR)
@@ -37,44 +42,82 @@ def length(v):
     return sum(x * x for x in v) ** 0.5
 
 
-def restore(path, vanilla_path):
-    data = bytearray(open(path, "rb").read())
-    vanilla = open(vanilla_path, "rb").read()
-    if data[:4] != b"IDST" or vanilla[:4] != b"IDST":
-        return 0
-    wanted = {label: (fps, frames, linear) for label, _, fps, frames, linear in sequences(vanilla)}
-    fixed = 0
-    for label, o, fps, frames, linear in sequences(data):
-        v = wanted.get(label)
-        if not v or v[0] != fps or v[1] != frames or frames < 2 or v[2] == linear:
-            continue
-        expected = length(v[2]) * (frames - 1) / frames
-        if expected < 1 or abs(length(linear) - expected) > 0.01 * expected:
-            continue
-        struct.pack_into("<3f", data, o + LINEAR, *v[2])
-        fixed += 1
-    if fixed:
-        open(path, "wb").write(data)
-    return fixed
+def has_shortfall(linear, frames, vanilla):
+    expected = length(vanilla) * (frames - 1) / frames
+    return expected >= 1 and abs(length(linear) - expected) <= 0.01 * expected
 
 
-def main():
-    mod = sys.argv[1]
-    root = os.path.dirname(os.path.abspath(mod))
-    total = 0
-    # A model in models/op4 or models/bshift is that game's; one in models/ is Half-Life's, or the expansion's own
-    # if Half-Life has none of that name.
-    for sub, games in (("", ("valve", "gearbox", "bshift")), ("op4", ("gearbox",)), ("bshift", ("bshift",))):
-        folder = os.path.join(mod, "models", sub)
-        if not os.path.isdir(folder):
-            continue
-        for name in sorted(os.listdir(folder)):
-            if not name.endswith(".mdl"):
+def make_table(half_life, release_zip):
+    """Each of the release's models against the vanilla one of its name: the sequences short by a frame."""
+    rows = []
+    with zipfile.ZipFile(release_zip) as z:
+        for info in sorted(z.infolist(), key=lambda i: i.filename):
+            name = info.filename.replace("\\", "/")
+            name = name.split("/", 1)[1] if name.lower().startswith("hlu/") else name
+            if not name.lower().startswith("models/") or not name.lower().endswith(".mdl"):
                 continue
-            vanilla = next((p for p in (os.path.join(root, g, "models", name) for g in games) if os.path.exists(p)), None)
-            if vanilla:
-                total += restore(os.path.join(folder, name), vanilla)
-    print(f"restore_npc_speeds: {total} sequences given their vanilla movement")
+            # A model in models/op4 or models/bshift is that game's; one in models/ is Half-Life's, or an expansion's
+            # if Half-Life has none of that name.
+            parts = name.split("/")
+            if len(parts) == 3 and parts[1] in ("op4", "bshift"):
+                games = ("gearbox",) if parts[1] == "op4" else ("bshift",)
+            elif len(parts) == 2:
+                games = ("valve", "gearbox", "bshift")
+            else:
+                continue
+            vanilla_path = next((p for p in (os.path.join(half_life, g, "models", parts[-1]) for g in games) if os.path.exists(p)), None)
+            if not vanilla_path:
+                continue
+            data = z.read(info)
+            vanilla = open(vanilla_path, "rb").read()
+            if data[:4] != b"IDST" or vanilla[:4] != b"IDST":
+                continue
+            wanted = {label: (fps, frames, linear) for label, _, fps, frames, linear in sequences(vanilla)}
+            for label, _, fps, frames, linear in sequences(data):
+                v = wanted.get(label)
+                if v and v[0] == fps and v[1] == frames and frames >= 2 and v[2] != linear and has_shortfall(linear, frames, v[2]):
+                    rows.append((name, label, v[2]))
+    with open(TABLE, "w", encoding="utf-8", newline="\n") as out:
+        out.write("// The vanilla linear movement of each sequence of the Unified SDK's models that's a frame short of it\n"
+                  "// (restore_npc_speeds.py). Each line: the model, the sequence, x y z.\n")
+        for name, label, v in rows:
+            out.write(f"{name}\t{label}\t" + " ".join(f"{x:.9g}" for x in v) + "\n")
+    print(f"restore_npc_speeds: {len(rows)} sequences in {TABLE}")
 
 
-main()
+def restore(mod):
+    table = {}
+    for line in open(TABLE, encoding="utf-8"):
+        if line.startswith("//") or not line.strip():
+            continue
+        name, label, values = line.rstrip("\n").split("\t")
+        table.setdefault(name, {})[label] = tuple(struct.unpack("<3f", struct.pack("<3f", *map(float, values.split()))))
+
+    fixed = 0
+    for name, wanted in table.items():
+        path = os.path.join(mod, *name.split("/"))
+        if not os.path.exists(path):
+            continue
+        data = bytearray(open(path, "rb").read())
+        if data[:4] != b"IDST":
+            continue
+        changed = 0
+        for label, o, fps, frames, linear in sequences(data):
+            v = wanted.get(label)
+            if v and frames >= 2 and linear != v and has_shortfall(linear, frames, v):
+                struct.pack_into("<3f", data, o + LINEAR, *v)
+                changed += 1
+        if changed:
+            open(path, "wb").write(data)
+            fixed += changed
+    print(f"restore_npc_speeds: {fixed} sequences given their vanilla movement")
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 4 and sys.argv[1] == "--make-table":
+        make_table(sys.argv[2], sys.argv[3])
+    elif len(sys.argv) == 2:
+        restore(sys.argv[1])
+    else:
+        print(__doc__)
+        sys.exit(2)
