@@ -22,7 +22,8 @@ release zip `HalfLifeUnified-V1.0.0.zip`, its ContentInstaller, our build):
 | The Unified SDK's own: `cfg/` (248 JSON), campaigns, scripts, stats, titles, sentences and materials JSON, HUD sprites and JSON (66), `class_signs.wad`, `ravelin.wad` | ~330 | 2 MB | Ship |
 | The Unified SDK's models, recompiled with sequences merged from the three games | 128 | 43 MB | Ship in the zip, as the Unified SDK does; see [Steam](#steam) |
 | Byte-for-byte copies of Half-Life's files (sounds, models, sprites, gfx, events) | ~1,760 | 46 MB | Drop: the engine finds them in `valve` |
-| Byte-for-byte copies of Opposing Force's and Blue Shift's (sounds, models, sprites, gfx, WADs, classes) | ~1,320 | 92 MB | Copy from the player's `gearbox` and `bshift` at first start |
+| Byte-for-byte copies of Opposing Force's and Blue Shift's (sounds, models, sprites, gfx, WADs, classes) | ~1,320 | 92 MB | Copy from the player's `gearbox` and `bshift` at first start (`jhl_setup_files.txt`) |
+| ... of which the models and sprites the game code names (every map precaches every weapon, Opposing Force's too, and johnhalflife's effects use some of its sprites) | 80 | 7.6 MB | Also ship: a missing model is a fatal error, so without them Half-Life wouldn't start a map for a player without Opposing Force |
 | Half-Life's, Opposing Force's and Blue Shift's maps, converted (the Unified SDK's map upgrades) | 220 | 379 MB | Convert at first start |
 | Node graphs for them | 338 | 18 MB | Made by the engine as each map first loads |
 | Opposing Force's and Blue Shift's soundtracks (`media/`) | 38 | 66 MB | Copy at first start |

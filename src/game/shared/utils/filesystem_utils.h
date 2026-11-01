@@ -50,6 +50,12 @@ void FileSystem_FreeFileSystem();
 const std::string& FileSystem_GetModDirectoryName();
 
 /**
+ *	@brief Returns the game directory (the one with the game's executable and every mod folder).
+ *	Only valid to call after calling FileSystem_LoadFileSystem.
+ */
+const std::string& FileSystem_GetGameDirectory();
+
+/**
  *	@brief Replaces occurrences of ::AlternatePathSeparatorChar with ::DefaultPathSeparatorChar.
  */
 void FileSystem_FixSlashes(std::string& fileName);
