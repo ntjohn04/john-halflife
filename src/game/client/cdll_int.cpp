@@ -48,6 +48,7 @@
 #include "jhl_grapple.h"
 #include "jhl_blastring.h"
 #include "jhl_gargantua.h"
+#include "jhl_flushfaces.h"
 #include "weapon_effects.h"
 
 extern bool g_ResetMousePosition;
@@ -195,6 +196,9 @@ void DLLEXPORT HUD_Init()
  */
 int DLLEXPORT HUD_Redraw(float time, int intermission)
 {
+	// johnhalflife: the view is drawn; brush entities moved out of walls go back.
+	JhlFlushFaces_Restore();
+
 	gHUD.Redraw(time, 0 != intermission);
 
 	return 1;

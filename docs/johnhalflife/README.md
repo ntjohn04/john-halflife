@@ -5,6 +5,7 @@ These pages record what johnhalflife changes compared with the stock SDK, and wh
 
 * [Camera and movement](camera_movement.md)
 * [Weapons](weapons.md)
+* [Visuals](visuals.md): signs and panels flush with walls drawn steady
 * [Sound](sound.md): Half-Life's own mixing and room effects on the SDK's OpenAL sound system
 * [Effects plan](effects_plan.md): the map of visual effects to work through next
 * [Effects test command](effects_test.md): `jhl_fx_test`, for designing particle effects
@@ -35,6 +36,7 @@ All are client settings; set them in the console.
 | `jhl_camera_jumplandjolt` | 1 | Jump and landing view jolts | [Camera](camera_movement.md#jump-and-landing-jolts) |
 | `jhl_visuals_weaponlag` | 1 | Weapon lags behind when turning | [Camera](camera_movement.md#weapon-lag-and-wall-push) |
 | `jhl_visuals_weaponwallpush` | 1 | Weapon pulls back near walls | [Camera](camera_movement.md#weapon-lag-and-wall-push) |
+| `jhl_visuals_flushfaces` | 1 | Signs, posters and panels built flush with walls drawn steady (they flickered in OpenGL and vanished in software) | [Visuals](visuals.md) |
 | `jhl_weapons_smoothrecoil` | 1 | Spring-damped recoil (0 = original punches) | [Weapons](weapons.md#recoil) |
 | `jhl_fx_bulletimpacts` | 1 | Bullet impact sparks/dust and water splashes | [Weapons](weapons.md#bullet-impacts) |
 | `jhl_fx_muzzleflash` | 1 | Muzzle light and smoke, RPG backblast | [Weapons](weapons.md#muzzle-light-and-smoke) |
@@ -226,6 +228,7 @@ fix is tagged the same way.
 | `v0.8.0-prealpha` | Monsters and the world: the gargantua's flickering flame lights, embers and heat smoke, its stomp as a wave down a lane, eye light, stomp dust and lingering death plates; tentacle strikes throwing up what they hit by material, slams cratering; the pit worm's lit eye, beam core and scorches; the gene worm's eye lights, lit heart, smacks and acid clouds; the Gonarch's spit dripping white droplets; the ichthyosaur's bite bubbles bursting from its mouth; mounted guns' (`func_tank`) muzzle lights, flashes, smoke and brass, and NPC turrets' flashes and brass; laser turrets' fuller beams and recoil for whoever mans a turret; mortar fields' falling streaks, the Opposing Force mortar's launch and trail; chargers' soft light and sparks running dry; env_shooter pieces lingering 45 s; Opposing Force and Blue Shift view models getting the weapon effects; reload blending (Glock, revolver, Desert Eagle, shotgun); bounce sounds thinned; fixes: the Opposing Force mortar's oversized fireball, floating pieces over breakable floors (c4a2b's Gonarch), gibs stuck in each other, satchel switch sounds, MMod's satchel flap sound |
 | `v0.9.0-prealpha` | Sound: Half-Life's own mixing and room effects on the SDK's OpenAL sound system (`jhl_snd_vanilla`), checked against recordings of vanilla: sounds at the engine's 22 kHz, pitched the engine's way (the faint grain of vanilla's sound), its ear volumes (sounds ahead and the player's own full in both ears), clipping rather than a limiter, and its room types in place of the SDK's EAX presets (reverb and echo per room set to vanilla's, water rooms muffling the whole mix); `cl_snd_channels`; fixes: sounds (gunfire, explosions) going silent when OpenAL ran out of sources |
 | `v0.9.1-prealpha` | Sound fix: 22 kHz sounds (the guns, many effects) no longer muffled with `jhl_snd_vanilla`: converted to the device's rate flat to 10.5 kHz, as the system converts the engine's output (OpenAL's resamplers rolled off from 6 kHz) |
+| `v0.10.0-prealpha` | Visuals: brush entities built flush with walls (signs, posters, panels, gears, rails: about 2,700 faces in Half-Life's maps) found from each map's BSP and drawn just out of the wall, so they no longer flicker in OpenGL or vanish in software (`jhl_visuals_flushfaces`) |
 
 ## Saves
 

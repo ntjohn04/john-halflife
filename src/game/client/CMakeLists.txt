@@ -121,6 +121,8 @@ target_sources(client PRIVATE
 	jhl_egon.cpp
 	jhl_egon.h
 	jhl_explosions.h
+	jhl_flushfaces.cpp
+	jhl_flushfaces.h
 	jhl_gauss.cpp
 	jhl_gauss.h
 	jhl_hornets.cpp

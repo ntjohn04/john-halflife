@@ -31,6 +31,7 @@
 #include "jhl_grapple.h"
 #include "jhl_blastring.h"
 #include "jhl_gargantua.h"
+#include "jhl_flushfaces.h"
 #include "client_gibs.h"
 #include "weapon_effects.h"
 #include "sound/ClientSoundReplacementSystem.h"
@@ -67,6 +68,7 @@ int DLLEXPORT HUD_AddEntity(int type, cl_entity_t* ent, const char* modelname)
 		GrenadePivot(ent, modelname);
 		JhlGargantua_Track(ent, modelname);
 		JhlGonarchSpit_Track(ent, modelname);
+		JhlFlushFaces_Add(ent);
 		break;
 	case ET_BEAM:
 		// johnhalflife: an armed tripmine's light.
