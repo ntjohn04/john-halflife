@@ -3,3 +3,4 @@
 
 # Release zips (scripts/package_release.py)
 /dist/
+__pycache__/
