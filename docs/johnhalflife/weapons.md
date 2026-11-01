@@ -2,7 +2,7 @@
 
 Reserved takes on MMod's weapon changes, keeping Valve's weapon models. Background on what MMod does is in
 `re/specs/weapons_overview.md`, `weapons_recoil_accuracy.md`, `weapon_sounds.md` and `bullet_impacts.md`
-(workspace). Settings are listed in the [index](README.md#settings).
+(workspace). Settings are listed on the [front page](../../README.md#settings).
 
 ## Feel
 

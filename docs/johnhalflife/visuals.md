@@ -90,15 +90,6 @@ mipmaps, so with filtering off the world was pixelated and the sky smooth. Now t
 engine's sky textures (the GL textures of the sky images' size whose picture is the image's, `gfx/env/<sky>*.tga`)
 and gives them the world's filtering (`jhl_skyboxes.cpp`).
 
-### Display (launch options and resolution)
-
-* OpenGL draws the view at the chosen resolution and stretches it to the desktop smoothly (hard-coded in the engine's
-  present); software set the monitor to its resolution. Most of OpenGL's blur at a resolution below the desktop's is
-  this stretch: a resolution the screen shows 1:1 (the desktop's, or 4:3 at its height, such as 1920 × 1440 on a
-  1440p screen) has none.
-* OpenGL multisamples (anti-aliases) the view by default, with no setting; the `-nomsaa` launch option turns it off,
-  as software had none. With `developer 1`, the console says how many samples the view is drawn with.
-
 ### Rippling water (`jhl_visuals_softwarewater`)
 
 Software's water isn't Quake's sine wobble: it's a ripple simulation. A 128 × 128 field of heights shared by all water
@@ -115,3 +106,4 @@ so gamma and filtering match). Water is what the engine treats as water: names s
   (render modes normal, texture and additive). Opaque entities partly water have their water drawn over the engine's;
   see-through ones partly water are left to the engine.
 
+For the display (the stretch to the desktop, anti-aliasing), see the [front page](../../README.md#recommended-launch-options-and-display).

@@ -2,7 +2,7 @@
 
 Reimplemented from MMod's behaviour as specified in `re/specs/camera_movement.md`. The code lives in
 `src/game/client/view.cpp` (camera), `src/game/server/entities/player.cpp` (jolts) and
-`src/game/shared/player_movement/pm_shared.cpp` (sounds). Settings are listed in the [index](README.md#settings).
+`src/game/shared/player_movement/pm_shared.cpp` (sounds). Settings are listed on the [front page](../../README.md#settings).
 
 ## Camera
 
@@ -45,7 +45,7 @@ Reimplemented from MMod's behaviour as specified in `re/specs/camera_movement.md
 
 ## Movement sounds
 
-Uses MMod sounds tracked by `mmod_port` (see the [index](README.md#mmod-assets)).
+Uses MMod sounds tracked by `mmod_port` (see the [index](README.md#mmod-assets-the-checklist)).
 
 * **Jump:** an effort sound (`pl_jump1-3`), followed by a quieter push-off footstep.
 * **Landing:** `pl_jumpland1-3` on landing from a jump or fall.
