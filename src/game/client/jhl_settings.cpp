@@ -50,6 +50,8 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_visuals_weaponlag", "1"},
 	{"jhl_visuals_weaponwallpush", "1"},
 	{"jhl_visuals_flushfaces", "1"},
+	{"jhl_visuals_16bitcolor", "0"},
+	{"jhl_visuals_softwarewater", "0"},
 	{"jhl_weapons_smoothrecoil", "1"},
 	{"jhl_physics_fpsfix", "1"},
 	{"jhl_fx_bulletimpacts", "1"},

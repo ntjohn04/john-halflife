@@ -32,6 +32,7 @@
 #include "jhl_blastring.h"
 #include "jhl_gargantua.h"
 #include "jhl_flushfaces.h"
+#include "jhl_softwarewater.h"
 #include "jhl_framerate.h"
 #include "jhl_settings.h"
 #include "client_gibs.h"
@@ -82,6 +83,13 @@ int DLLEXPORT HUD_AddEntity(int type, cl_entity_t* ent, const char* modelname)
 	default:
 		break;
 	}
+
+	// johnhalflife: water entities drawn as the software renderer drew them, in place of the engine.
+	if (type == ET_NORMAL && JhlSoftwareWater_Add(ent))
+	{
+		return 0;
+	}
+
 	// each frame every entity passes this function, so the overview hooks it to filter the overview entities
 	// in spectator mode:
 	// each frame every entity passes this function, so the overview hooks

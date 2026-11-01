@@ -112,6 +112,8 @@ target_sources(client PRIVATE
 	fx_test.cpp
 	fx_test.h
 	jhl_blastring.cpp
+	jhl_bsp.cpp
+	jhl_bsp.h
 	jhl_blastring.h
 	jhl_gargantua.cpp
 	jhl_gargantua.h
@@ -123,6 +125,12 @@ target_sources(client PRIVATE
 	jhl_explosions.h
 	jhl_flushfaces.cpp
 	jhl_flushfaces.h
+	jhl_gl.cpp
+	jhl_gl.h
+	jhl_softwarelook.cpp
+	jhl_softwarelook.h
+	jhl_softwarewater.cpp
+	jhl_softwarewater.h
 	jhl_gauss.cpp
 	jhl_gauss.h
 	jhl_hornets.cpp

@@ -15,7 +15,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -25,7 +24,7 @@
 #include "hud.h"
 #include "com_model.h"
 #include "view.h"
-#include "utils/filesystem_utils.h"
+#include "jhl_bsp.h"
 #include "jhl_flushfaces.h"
 
 namespace
@@ -46,53 +45,6 @@ constexpr float MinOverlap = 1;
 
 // The entity is where the map placed it within this (its origin is sent to 1/8 unit).
 constexpr float RestEpsilon = 0.2f;
-
-// BSP version 30, as the engine reads it (Blue Shift's maps swap the first two lumps).
-constexpr int BspVersion = 30;
-
-enum BspLump
-{
-	LumpEntities = 0,
-	LumpPlanes = 1,
-	LumpTextures = 2,
-	LumpVertexes = 3,
-	LumpTexinfo = 6,
-	LumpFaces = 7,
-	LumpEdges = 12,
-	LumpSurfedges = 13,
-	LumpModels = 14,
-	LumpCount = 15
-};
-
-struct BspPlane
-{
-	float Normal[3];
-	float Dist;
-	int Type;
-};
-
-struct BspTexinfo
-{
-	float Vecs[2][4];
-	int Miptex;
-	int Flags;
-};
-
-struct BspFace
-{
-	std::uint16_t Plane;
-	std::uint16_t Side;
-	int FirstEdge;
-	std::uint16_t NumEdges;
-	std::uint16_t Texinfo;
-	std::uint8_t Styles[4];
-	int LightOffset;
-};
-
-struct BspEdge
-{
-	std::uint16_t V[2];
-};
 
 // A face, in the world's coordinates.
 struct Face
@@ -128,70 +80,6 @@ std::string g_MapName;
 std::vector<FlushModel> g_Models; // By submodel (*1 ...).
 std::vector<Moved> g_Moved;
 float g_MovedTime = -1;
-
-template <typename T>
-bool ReadLump(const std::vector<std::byte>& data, const int (&lumps)[LumpCount][2], int lump, std::vector<T>& out)
-{
-	const int offset = lumps[lump][0];
-	const int length = lumps[lump][1];
-
-	if (offset < 0 || length < 0 || static_cast<std::size_t>(offset) + length > data.size() || length % sizeof(T) != 0)
-	{
-		return false;
-	}
-
-	out.resize(length / sizeof(T));
-	std::memcpy(out.data(), data.data() + offset, length);
-	return true;
-}
-
-// The keys of each entity in the entity lump.
-std::vector<std::unordered_map<std::string, std::string>> ParseEntities(const char* text, std::size_t length)
-{
-	std::vector<std::unordered_map<std::string, std::string>> entities;
-	std::string key;
-	bool haveKey = false;
-
-	for (std::size_t i = 0; i < length && text[i] != '\0'; ++i)
-	{
-		if (text[i] == '{')
-		{
-			entities.emplace_back();
-			haveKey = false;
-		}
-		else if (text[i] == '"' && !entities.empty())
-		{
-			const std::size_t start = ++i;
-
-			while (i < length && text[i] != '"' && text[i] != '\0')
-			{
-				++i;
-			}
-
-			std::string token(text + start, i - start);
-
-			if (haveKey)
-			{
-				entities.back()[key] = std::move(token);
-			}
-			else
-			{
-				key = std::move(token);
-			}
-
-			haveKey = !haveKey;
-		}
-	}
-
-	return entities;
-}
-
-Vector ParseVector(const std::string& text)
-{
-	Vector result;
-	std::sscanf(text.c_str(), "%f %f %f", &result.x, &result.y, &result.z);
-	return result;
-}
 
 // The two axes a face is seen along best, to compare faces on a plane in 2D.
 void PlaneAxes(const Vector& normal, int& u, int& v)
@@ -299,118 +187,30 @@ void LoadMap(const char* mapName)
 {
 	g_Models.clear();
 
-	const auto data = FileSystem_LoadFileIntoBuffer(mapName, FileContentFormat::Binary);
+	const JhlBsp* bsp = JhlBsp_Get(mapName);
 
-	if (data.size() < sizeof(int) * (1 + LumpCount * 2))
+	if (!bsp || bsp->Models.empty())
 	{
 		return;
 	}
-
-	int version;
-	int lumps[LumpCount][2];
-	std::memcpy(&version, data.data(), sizeof(version));
-	std::memcpy(lumps, data.data() + sizeof(version), sizeof(lumps));
-
-	if (version != BspVersion)
-	{
-		return;
-	}
-
-	const auto lumpStartsEntities = [&](int lump)
-	{
-		const int offset = lumps[lump][0];
-		return offset >= 0 && lumps[lump][1] > 0 && static_cast<std::size_t>(offset) < data.size() &&
-			   static_cast<char>(data[offset]) == '{';
-	};
-
-	if (!lumpStartsEntities(LumpEntities) && lumpStartsEntities(LumpPlanes))
-	{
-		std::swap(lumps[LumpEntities], lumps[LumpPlanes]);
-	}
-
-	std::vector<BspPlane> planes;
-	std::vector<Vector> vertexes;
-	std::vector<BspTexinfo> texinfo;
-	std::vector<BspFace> faces;
-	std::vector<BspEdge> edges;
-	std::vector<int> surfedges;
-	std::vector<dmodel_t> models;
-
-	if (!ReadLump(data, lumps, LumpPlanes, planes) || !ReadLump(data, lumps, LumpVertexes, vertexes) ||
-		!ReadLump(data, lumps, LumpTexinfo, texinfo) || !ReadLump(data, lumps, LumpFaces, faces) ||
-		!ReadLump(data, lumps, LumpEdges, edges) || !ReadLump(data, lumps, LumpSurfedges, surfedges) ||
-		!ReadLump(data, lumps, LumpModels, models) || !lumpStartsEntities(LumpEntities))
-	{
-		return;
-	}
-
-	// Sky faces aren't drawn as the world is.
-	const auto isSky = [&](const BspFace& face)
-	{
-		const int texturesOffset = lumps[LumpTextures][0];
-		int count = 0;
-
-		if (face.Texinfo >= texinfo.size() || static_cast<std::size_t>(texturesOffset) + sizeof(int) > data.size())
-		{
-			return false;
-		}
-
-		std::memcpy(&count, data.data() + texturesOffset, sizeof(count));
-		const int miptex = texinfo[face.Texinfo].Miptex;
-
-		if (miptex < 0 || miptex >= count || static_cast<std::size_t>(texturesOffset) + sizeof(int) * (1 + count) > data.size())
-		{
-			return false;
-		}
-
-		int offset;
-		std::memcpy(&offset, data.data() + texturesOffset + sizeof(int) * (1 + miptex), sizeof(offset));
-
-		if (offset < 0 || static_cast<std::size_t>(texturesOffset) + offset + 16 > data.size())
-		{
-			return false;
-		}
-
-		char name[17]{};
-		std::memcpy(name, data.data() + texturesOffset + offset, 16);
-		return 0 == strnicmp(name, "sky", 4);
-	};
 
 	// A face of a model placed at origin, in the world's coordinates.
-	const auto makeFace = [&](const BspFace& source, const Vector& origin, Face& face)
+	const auto makeFace = [&](const JhlBspFace& source, const Vector& origin, Face& face)
 	{
-		if (source.Plane >= planes.size() || source.NumEdges < 3 || source.FirstEdge < 0 ||
-			static_cast<std::size_t>(source.FirstEdge) + source.NumEdges > surfedges.size())
+		if (source.Points.empty())
 		{
 			return false;
 		}
 
-		const auto& plane = planes[source.Plane];
-		const float sign = 0 != source.Side ? -1.0f : 1.0f;
-		face.Normal = Vector(plane.Normal[0], plane.Normal[1], plane.Normal[2]) * sign;
-		face.Dist = plane.Dist * sign + DotProduct(face.Normal, origin);
+		face.Normal = source.Normal;
+		face.Dist = source.Dist + DotProduct(face.Normal, origin);
 		face.Points.clear();
 		face.Mins = Vector(99999, 99999, 99999);
 		face.Maxs = Vector(-99999, -99999, -99999);
 
-		for (int i = 0; i < source.NumEdges; ++i)
+		for (const auto& sourcePoint : source.Points)
 		{
-			const int surfedge = surfedges[source.FirstEdge + i];
-			const auto edge = static_cast<std::size_t>(std::abs(surfedge));
-
-			if (edge >= edges.size())
-			{
-				return false;
-			}
-
-			const auto vertex = edges[edge].V[surfedge >= 0 ? 0 : 1];
-
-			if (vertex >= vertexes.size())
-			{
-				return false;
-			}
-
-			const Vector point = vertexes[vertex] + origin;
+			const Vector point = sourcePoint + origin;
 			face.Points.push_back(point);
 
 			for (int k = 0; k < 3; ++k)
@@ -423,21 +223,17 @@ void LoadMap(const char* mapName)
 		return true;
 	};
 
-	// The world's faces, by distance from the world's origin (to the unit) for finding those on a plane.
-	if (models.empty())
-	{
-		return;
-	}
-
+	// The world's faces, by distance from the world's origin (to the unit) for finding those on a plane. Sky faces
+	// aren't drawn as the world is.
 	std::vector<Face> world;
 	std::unordered_map<int, std::vector<std::size_t>> worldByDist;
 
-	for (int i = 0; i < models[0].numfaces; ++i)
+	for (int i = 0; i < bsp->Models[0].NumFaces; ++i)
 	{
-		const int index = models[0].firstface + i;
+		const auto& source = bsp->Faces[bsp->Models[0].FirstFace + i];
 		Face face;
 
-		if (index < 0 || static_cast<std::size_t>(index) >= faces.size() || isSky(faces[index]) || !makeFace(faces[index], g_vecZero, face))
+		if (0 == strnicmp(bsp->TextureName(source).c_str(), "sky", 4) || !makeFace(source, g_vecZero, face))
 		{
 			continue;
 		}
@@ -446,11 +242,9 @@ void LoadMap(const char* mapName)
 		world.push_back(std::move(face));
 	}
 
-	g_Models.resize(models.size());
+	g_Models.resize(bsp->Models.size());
 
-	const auto& entitiesLump = lumps[LumpEntities];
-
-	for (const auto& keys : ParseEntities(reinterpret_cast<const char*>(data.data()) + entitiesLump[0], entitiesLump[1]))
+	for (const auto& keys : bsp->Entities)
 	{
 		const auto model = keys.find("model");
 
@@ -461,13 +255,13 @@ void LoadMap(const char* mapName)
 
 		const int submodel = std::atoi(model->second.c_str() + 1);
 
-		if (submodel <= 0 || static_cast<std::size_t>(submodel) >= models.size())
+		if (submodel <= 0 || static_cast<std::size_t>(submodel) >= bsp->Models.size())
 		{
 			continue;
 		}
 
 		// Placed turned: left alone (rare, and where it's drawn turned isn't worth working out here).
-		if (const auto angles = keys.find("angles"); angles != keys.end() && ParseVector(angles->second) != g_vecZero)
+		if (const auto angles = keys.find("angles"); angles != keys.end() && JhlBsp_ParseVector(angles->second) != g_vecZero)
 		{
 			continue;
 		}
@@ -476,16 +270,14 @@ void LoadMap(const char* mapName)
 
 		if (const auto origin = keys.find("origin"); origin != keys.end())
 		{
-			flush.Origin = ParseVector(origin->second);
+			flush.Origin = JhlBsp_ParseVector(origin->second);
 		}
 
 		Face face;
 
-		for (int i = 0; i < models[submodel].numfaces; ++i)
+		for (int i = 0; i < bsp->Models[submodel].NumFaces; ++i)
 		{
-			const int index = models[submodel].firstface + i;
-
-			if (index < 0 || static_cast<std::size_t>(index) >= faces.size() || !makeFace(faces[index], flush.Origin, face))
+			if (!makeFace(bsp->Faces[bsp->Models[submodel].FirstFace + i], flush.Origin, face))
 			{
 				continue;
 			}

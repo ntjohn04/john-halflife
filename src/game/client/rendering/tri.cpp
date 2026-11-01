@@ -21,6 +21,7 @@
 #include "tri.h"
 #include "view.h"
 #include "jhl_blastring.h"
+#include "jhl_softwarewater.h"
 
 void RenderFog()
 {
@@ -36,6 +37,9 @@ void RenderFog()
  */
 void DLLEXPORT HUD_DrawNormalTriangles()
 {
+	// johnhalflife: water as the software renderer drew it.
+	JhlSoftwareWater_DrawOpaque();
+
 	gHUD.m_Spectator.DrawOverview();
 }
 
@@ -49,6 +53,9 @@ void DLLEXPORT HUD_DrawTransparentTriangles()
 
 	// johnhalflife: blast rings.
 	JhlBlastRing_Draw();
+
+	// johnhalflife: see-through water as the software renderer drew it.
+	JhlSoftwareWater_DrawTransparent();
 
 	// Handled in V_CalcRefdef.
 	// RenderFog();

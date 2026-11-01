@@ -49,6 +49,7 @@
 #include "jhl_blastring.h"
 #include "jhl_gargantua.h"
 #include "jhl_flushfaces.h"
+#include "jhl_softwarelook.h"
 #include "weapon_effects.h"
 
 extern bool g_ResetMousePosition;
@@ -200,6 +201,9 @@ int DLLEXPORT HUD_Redraw(float time, int intermission)
 	JhlFlushFaces_Restore();
 
 	gHUD.Redraw(time, 0 != intermission);
+
+	// johnhalflife: the frame is drawn, HUD and all.
+	JhlSoftwareLook_FrameDrawn();
 
 	return 1;
 }
