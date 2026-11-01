@@ -9,7 +9,8 @@
  *	* the files in jhl_setup_files.txt (made by scripts/make_setup_files.py): Opposing Force's and Blue Shift's
  *	  files, their soundtracks, each folder's own versions of files the games share names for;
  *	* the menu: Half-Life's main menu without its hint text, its background, logo and icon, then each folder's own
- *	  Valve game's over them, so they match the player's version of the game.
+ *	  Valve game's over them, so they match the player's version of the game;
+ *	* the maps in jhl_setup_maps.txt, converted for the Unified SDK's game code (jhl_mapconvert.cpp).
  *
  *	It first works out every file it would write, then writes only those that differ from what's there, so running
  *	it again (jhl_setup) changes nothing on a folder set up before, and running it on a development install checks
@@ -31,6 +32,7 @@
 
 #include "hud.h"
 #include "cl_util.h"
+#include "jhl_mapconvert.h"
 #include "jhl_setup.h"
 #include "utils/filesystem_utils.h"
 
@@ -39,11 +41,12 @@ namespace fs = std::filesystem;
 namespace
 {
 // Raise when what the setup makes changes, so installed folders are set up again.
-constexpr int SetupVersion = 1;
+constexpr int SetupVersion = 2;
 
 constexpr const char* BaseFolder = "johnhalflife";
 constexpr const char* StampFile = "jhl_setup.txt";
 constexpr const char* FilesList = "jhl_setup_files.txt";
+constexpr const char* MapsList = "jhl_setup_maps.txt";
 
 // Each game folder's menu: its own Valve game's art over Half-Life's, and whether it has Half-Life's widescreen
 // background (hd_background in its liblist.gam).
@@ -305,24 +308,8 @@ void PlanMenu(const fs::path& root, Plan& plan)
 }
 
 // Writes a file unless it's already there, as is.
-void Write(const fs::path& destination, const Source& source, SetupStats& stats)
+void WriteContents(const fs::path& destination, const std::string& contents, SetupStats& stats)
 {
-	std::string contents;
-
-	if (const auto path = std::get_if<fs::path>(&source))
-	{
-		if (!ReadFile(*path, contents))
-		{
-			gEngfuncs.Con_Printf("jhl_setup: couldn't read %s\n", path->generic_string().c_str());
-			++stats.Failed;
-			return;
-		}
-	}
-	else
-	{
-		contents = std::get<std::string>(source);
-	}
-
 	if (std::string current; ReadFile(destination, current) && current == contents)
 	{
 		++stats.Unchanged;
@@ -343,6 +330,72 @@ void Write(const fs::path& destination, const Source& source, SetupStats& stats)
 	}
 
 	++stats.Written;
+}
+
+void Write(const fs::path& destination, const Source& source, SetupStats& stats)
+{
+	if (const auto path = std::get_if<fs::path>(&source))
+	{
+		std::string contents;
+
+		if (!ReadFile(*path, contents))
+		{
+			gEngfuncs.Con_Printf("jhl_setup: couldn't read %s\n", path->generic_string().c_str());
+			++stats.Failed;
+			return;
+		}
+
+		WriteContents(destination, contents, stats);
+	}
+	else
+	{
+		WriteContents(destination, std::get<std::string>(source), stats);
+	}
+}
+
+// The maps, converted one at a time (together they're hundreds of megabytes): each line the game folder and the map.
+void ConvertMaps(const fs::path& root, SetupStats& stats)
+{
+	std::ifstream list(root / BaseFolder / MapsList);
+
+	if (!list)
+	{
+		gEngfuncs.Con_Printf("jhl_setup: %s/%s not found\n", BaseFolder, MapsList);
+		++stats.Failed;
+		return;
+	}
+
+	std::string line, original, converted, error;
+
+	while (std::getline(list, line))
+	{
+		const auto tab = line.find('\t');
+
+		if (line.starts_with("//") || tab == std::string::npos)
+		{
+			continue;
+		}
+
+		const std::string game = line.substr(0, tab);
+		const std::string map = line.substr(tab + 1);
+		const JhlMapGame kind = game == "gearbox" ? JhlMapGame::OpposingForce : game == "bshift" ? JhlMapGame::BlueShift : JhlMapGame::HalfLife;
+
+		// An expansion's maps only if it's installed.
+		if (!ReadFile(root / game / "maps" / (map + ".bsp"), original))
+		{
+			++stats.Missing;
+			continue;
+		}
+
+		if (!JhlMapConvert(original, kind, map, converted, error))
+		{
+			gEngfuncs.Con_Printf("jhl_setup: %s/maps/%s.bsp: %s\n", game.c_str(), map.c_str(), error.c_str());
+			++stats.Failed;
+			continue;
+		}
+
+		WriteContents(root / BaseFolder / "maps" / (map + ".bsp"), converted, stats);
+	}
 }
 
 int ReadStamp(const fs::path& path)
@@ -374,6 +427,8 @@ void Setup(bool force)
 	{
 		Write(file.first, file.second, stats);
 	}
+
+	ConvertMaps(root, stats);
 
 	const auto seconds = std::chrono::duration<float>(std::chrono::steady_clock::now() - start).count();
 

@@ -43,8 +43,11 @@ the folder up and writes a version stamp, so later starts skip it:
 
 1. Finds the player's games through the engine (`valve`, and `gearbox` and `bshift` if installed) rather than
    assuming they're next to the mod.
-2. Converts each game's maps into the mod folder: the map's entities rewritten by the upgrades the Unified SDK's
-   ContentInstaller applies (ported to C++, on `jhl_bsp`), everything else in the BSP left as it is.
+2. Converts each game's maps into the mod folder (`client/jhl_mapconvert.cpp`, the maps in `jhl_setup_maps.txt`):
+   the ContentInstaller's map upgrades (version 1.0.0) ported to C++, the entities rewritten and everything else in
+   the BSP left as Valve's, Blue Shift's first two lumps put in Half-Life's order. `mapconvert_check` (a build target,
+   `scripts/mapconvert_check.cpp`) checks it against the ContentInstaller's maps: 215 of 220 the same, byte for
+   byte; the 5 others keep a few bytes the ContentInstaller's BSP reader lost (see the source).
 3. Copies Opposing Force's and Blue Shift's files and soundtracks.
 4. Copies Half-Life's menu art (its main menu without the hint text, background, logo, icon) into each folder,
    then the folder's own Valve game's over it.
