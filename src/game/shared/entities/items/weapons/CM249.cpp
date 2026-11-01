@@ -217,7 +217,7 @@ void CM249::PrimaryAttack()
 		}
 	}
 
-	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.067;
+	m_flNextPrimaryAttack = GetNextAttackDelay(0.067);
 
 	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.2;
 

@@ -140,7 +140,7 @@ void CSniperRifle::PrimaryAttack()
 		GetMagazine1(), m_pPlayer->GetAmmoCountByIndex(m_iPrimaryAmmoType),
 		0, 0);
 
-	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 2.0f;
+	m_flNextPrimaryAttack = GetNextAttackDelay(2.0f);
 	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 2.0f;
 }
 

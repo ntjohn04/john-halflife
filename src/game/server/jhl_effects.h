@@ -16,6 +16,17 @@
 #pragma once
 
 #include "UserMessages.h"
+#include "jhl_framerate.h"
+
+/**
+ *	@brief Whether jhl_physics_fpsfix is on (see JhlReferenceFrameRate): the client's setting, read as
+ *	jhl_fx_particlesystem is.
+ */
+inline bool UTIL_JhlFpsFix()
+{
+	const cvar_t* cvar = g_engfuncs.pfnCVarGetPointer("jhl_physics_fpsfix");
+	return !cvar || cvar->value != 0;
+}
 
 /**
  *	@brief Whether johnhalflife's particle system changes are on for effects the server sends (hit blood).

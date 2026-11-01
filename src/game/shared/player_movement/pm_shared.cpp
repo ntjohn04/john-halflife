@@ -22,6 +22,7 @@
 #include "pm_movevars.h"
 #include "pm_debug.h"
 #include "sound/MaterialSystem.h"
+#include "jhl_framerate.h"
 
 #ifndef CLIENT_DLL
 #include "sound/ServerSoundSystem.h"
@@ -3038,7 +3039,10 @@ void PM_PlayerMove(qboolean server)
 	// Slow down, I'm pulling it! (a box maybe) but only when I'm standing on ground
 	if ((pmove->onground != -1) && (pmove->cmd.buttons & IN_USE) != 0)
 	{
-		pmove->velocity = pmove->velocity * 0.3;
+		// johnhalflife (jhl_physics_fpsfix, sent by the server as "jfps"): every input frame, against walking's pull
+		// over time, so walking with +use settles at the speed it did at 72 fps.
+		const bool fpsFix = atoi(pmove->PM_Info_ValueForKey(pmove->physinfo, "jfps")) == 1;
+		pmove->velocity = pmove->velocity * (fpsFix ? JhlReferenceSettlingDecay(0.3f, pmove->frametime) : 0.3f);
 	}
 
 	// Handle movement

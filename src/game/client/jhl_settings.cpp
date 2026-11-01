@@ -51,6 +51,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_visuals_weaponwallpush", "1"},
 	{"jhl_visuals_flushfaces", "1"},
 	{"jhl_weapons_smoothrecoil", "1"},
+	{"jhl_physics_fpsfix", "1"},
 	{"jhl_fx_bulletimpacts", "1"},
 	{"jhl_fx_muzzleflash", "1"},
 	{"jhl_fx_particlesystem", "1"},
@@ -79,6 +80,7 @@ constexpr const char* GoreSettings[] = {"violence_hblood", "violence_hgibs", "vi
 
 cvar_t* g_RecommendedVersion = nullptr;
 cvar_t* g_ParticleSystem = nullptr;
+cvar_t* g_FpsFix = nullptr;
 cvar_t* g_Gore = nullptr;
 float g_AppliedGore = -1;
 cvar_t* g_ResetRecommended = nullptr;
@@ -133,10 +135,18 @@ bool JhlParticleSystemEnabled()
 	return 0 != g_ParticleSystem->value;
 }
 
+bool JhlFpsFixEnabled()
+{
+	return 0 != g_FpsFix->value;
+}
+
 void JhlSettings_Initialize()
 {
 	// One switch for all of johnhalflife's particle system changes (see docs/johnhalflife/effects_plan.md).
 	g_ParticleSystem = gEngfuncs.pfnRegisterVariable("jhl_fx_particlesystem", "1", FCVAR_ARCHIVE);
+
+	// Half-Life's game code acting at any frame rate as it did at 72 fps (see jhl_framerate.h); the server reads it too.
+	g_FpsFix = gEngfuncs.pfnRegisterVariable("jhl_physics_fpsfix", "1", FCVAR_ARCHIVE);
 
 	// johnhalflife's tracers on their own (jhl_tracers.cpp); they also need the particle system.
 	gEngfuncs.pfnRegisterVariable("jhl_fx_tracers", "1", FCVAR_ARCHIVE);

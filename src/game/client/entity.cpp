@@ -32,6 +32,8 @@
 #include "jhl_blastring.h"
 #include "jhl_gargantua.h"
 #include "jhl_flushfaces.h"
+#include "jhl_framerate.h"
+#include "jhl_settings.h"
 #include "client_gibs.h"
 #include "weapon_effects.h"
 #include "sound/ClientSoundReplacementSystem.h"
@@ -404,7 +406,7 @@ void DLLEXPORT HUD_TempEntUpdate(
 	static int gTempEntFrame = 0;
 	int i;
 	TEMPENTITY *pTemp, *pnext, *pprev;
-	float freq, gravity, gravitySlow, life, fastFreq;
+	float freq, gravity, gravitySlow, life, fastFreq, restSpeed;
 
 	Vector vAngles;
 
@@ -453,6 +455,16 @@ void DLLEXPORT HUD_TempEntUpdate(
 	fastFreq = client_time * 5.5;
 	gravity = -frametime * cl_gravity;
 	gravitySlow = gravity * 0.5;
+
+	// johnhalflife (jhl_physics_fpsfix): what's below lands to rest when it hits the floor slower than three frames of
+	// gravity, so the higher the frame rate, the more tiny bounces before it does (and bounce sounds, and speed lost
+	// along the floor): no slower than three 72 fps frames of it.
+	restSpeed = gravity * 3;
+
+	if (JhlFpsFixEnabled())
+	{
+		restSpeed = std::min(restSpeed, static_cast<float>(-cl_gravity * 3 / JhlReferenceFrameRate));
+	}
 
 	while (pTemp)
 	{
@@ -665,7 +677,7 @@ void DLLEXPORT HUD_TempEntUpdate(
 						damp *= 0.5;
 						if (traceNormal[2] > 0.9) // Hit floor?
 						{
-							if (pTemp->entity.baseline.origin[2] <= 0 && pTemp->entity.baseline.origin[2] >= gravity * 3)
+							if (pTemp->entity.baseline.origin[2] <= 0 && pTemp->entity.baseline.origin[2] >= restSpeed)
 							{
 								damp = 0; // Stop
 								pTemp->flags &= ~(FTENT_ROTATE | FTENT_GRAVITY | FTENT_SLOWGRAVITY | FTENT_COLLIDEWORLD | FTENT_SMOKETRAIL);

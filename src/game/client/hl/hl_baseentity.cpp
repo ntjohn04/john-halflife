@@ -23,6 +23,7 @@ This file contains "stubs" of class member implementations so that we can predic
 */
 #include "cbase.h"
 #include "nodes.h"
+#include "jhl_settings.h"
 
 DEFINE_DUMMY_DATAMAP(CBaseDelay);
 DEFINE_DUMMY_DATAMAP(CBaseAnimating);
@@ -310,7 +311,17 @@ void DecalGunshot(TraceResult* pTrace, int iBulletType) {}
 void MeleeImpactSpark(TraceResult* pTrace, float puffChance, bool knife) {}
 void EjectBrass(const Vector& vecOrigin, const Vector& vecVelocity, float rotation, int model, int soundtype) {}
 bool CBasePlayerWeapon::KeyValue(KeyValueData* pkvd) { return false; }
-float CBasePlayerWeapon::GetNextAttackDelay(float flTime) { return flTime; }
+float CBasePlayerWeapon::GetNextAttackDelay(float flTime)
+{
+	// johnhalflife (jhl_physics_fpsfix): as the server's (weapons.cpp), so prediction agrees.
+	if (JhlFpsFixEnabled())
+	{
+		const float waited = -m_flNextPrimaryAttack;
+		return flTime - (waited > 0 && waited < 1.5f * gpGlobals->frametime ? waited : 0);
+	}
+
+	return flTime;
+}
 void CBasePlayerWeapon::SetObjectCollisionBox() {}
 void CBasePlayerWeapon::DestroyItem() {}
 void CBasePlayerWeapon::Kill() {}

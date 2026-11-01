@@ -787,7 +787,8 @@ void CGib::BounceGibTouch(CBaseEntity* pOther)
 
 	if ((pev->flags & FL_ONGROUND) != 0)
 	{
-		pev->velocity = pev->velocity * 0.9;
+		// johnhalflife (jhl_physics_fpsfix): touched every frame it slides, so taken off as at 72 fps.
+		pev->velocity = pev->velocity * (UTIL_JhlFpsFix() ? JhlReferenceDecay(0.9f, gpGlobals->frametime) : 0.9f);
 		pev->angles.x = 0;
 		pev->angles.z = 0;
 		pev->avelocity.x = 0;

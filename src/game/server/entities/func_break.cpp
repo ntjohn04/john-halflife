@@ -1005,9 +1005,9 @@ void CPushable::Move(CBaseEntity* pOther, bool push)
 	// Is entity standing on this pushable ?
 	if (FBitSet(pOther->pev->flags, FL_ONGROUND) && pOther->GetGroundEntity() == this)
 	{
-		// Only push if floating
+		// Only push if floating (johnhalflife, jhl_physics_fpsfix: every frame, so as much a second as at 72 fps)
 		if (pev->waterlevel > WaterLevel::Dry)
-			pev->velocity.z += pOther->pev->velocity.z * 0.1;
+			pev->velocity.z += pOther->pev->velocity.z * 0.1 * (UTIL_JhlFpsFix() ? std::min(1.0f, JhlReferenceFrames(gpGlobals->frametime)) : 1.0f);
 
 		return;
 	}
@@ -1037,11 +1037,19 @@ void CPushable::Move(CBaseEntity* pOther, bool push)
 	else
 		factor = 0.25;
 
+	// johnhalflife (jhl_physics_fpsfix): this runs every frame something pushes it or the player pulls it (+use), so
+	// it adds as much a second as at 72 fps; and it's pulled no faster than it's pushed (pulling had no limit, and the
+	// player is given its speed back each frame, so it ran away).
+	const bool fpsFix = UTIL_JhlFpsFix();
+
+	if (fpsFix)
+		factor *= std::min(1.0f, JhlReferenceFrames(gpGlobals->frametime));
+
 	pev->velocity.x += pOther->pev->velocity.x * factor;
 	pev->velocity.y += pOther->pev->velocity.y * factor;
 
 	float length = sqrt(pev->velocity.x * pev->velocity.x + pev->velocity.y * pev->velocity.y);
-	if (push && (length > MaxSpeed()))
+	if ((push || fpsFix) && (length > MaxSpeed()))
 	{
 		pev->velocity.x = (pev->velocity.x * MaxSpeed() / length);
 		pev->velocity.y = (pev->velocity.y * MaxSpeed() / length);

@@ -224,11 +224,11 @@ void CShockRifle::PrimaryAttack()
 
 	if (g_Skill.GetValue("shockrifle_fast") != 0)
 	{
-		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.1;
+		m_flNextPrimaryAttack = GetNextAttackDelay(0.1);
 	}
 	else
 	{
-		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.2;
+		m_flNextPrimaryAttack = GetNextAttackDelay(0.2);
 	}
 
 	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.33;

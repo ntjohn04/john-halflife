@@ -118,6 +118,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"jhl_physics_fpsfix"
+	{
+		"JHL | Physics: the same at any frame rate (as at 72 fps)"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"jhl_fx_bulletimpacts"
 	{
 		"JHL | Effects: bullet impacts and water splashes"

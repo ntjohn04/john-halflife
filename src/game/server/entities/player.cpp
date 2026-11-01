@@ -43,6 +43,7 @@
 
 #include "ctf/ctf_goals.h"
 #include "rope/CRope.h"
+#include "jhl_effects.h"
 
 // #define DUCKFIX
 
@@ -1813,6 +1814,12 @@ void CBasePlayer::UpdateEntityInfo()
 
 void CBasePlayer::PreThink()
 {
+	// johnhalflife: player movement reads jhl_physics_fpsfix from here, as the client's prediction of it does.
+	if (const char* fpsFix = UTIL_JhlFpsFix() ? "1" : "0"; 0 != strcmp(g_engfuncs.pfnGetPhysicsKeyValue(edict(), "jfps"), fpsFix))
+	{
+		g_engfuncs.pfnSetPhysicsKeyValue(edict(), "jfps", fpsFix);
+	}
+
 	int buttonsChanged = (m_afButtonLast ^ pev->button); // These buttons have changed this frame
 
 	// Debounced button codes for pressed/released

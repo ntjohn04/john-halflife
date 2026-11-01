@@ -89,8 +89,9 @@ void CShower::Think()
 
 void CShower::Touch(CBaseEntity* pOther)
 {
+	// johnhalflife (jhl_physics_fpsfix): on the ground it's touched every frame, so taken off as at 72 fps.
 	if ((pev->flags & FL_ONGROUND) != 0)
-		pev->velocity = pev->velocity * 0.1;
+		pev->velocity = pev->velocity * (UTIL_JhlFpsFix() ? JhlReferenceDecay(0.1f, gpGlobals->frametime) : 0.1f);
 	else
 		pev->velocity = pev->velocity * 0.6;
 

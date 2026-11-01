@@ -193,7 +193,8 @@ void CSporeLauncher::PrimaryAttack()
 		AdjustMagazine1(-1);
 	}
 
-	m_flNextPrimaryAttack = m_flNextSecondaryAttack = m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.5;
+	m_flNextPrimaryAttack = m_flNextSecondaryAttack = GetNextAttackDelay(0.5);
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.5;
 
 	m_ReloadState = ReloadState::NOT_RELOADING;
 }
@@ -243,7 +244,8 @@ void CSporeLauncher::SecondaryAttack()
 		AdjustMagazine1(-1);
 	}
 
-	m_flNextPrimaryAttack = m_flNextSecondaryAttack = m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.5;
+	m_flNextPrimaryAttack = m_flNextSecondaryAttack = GetNextAttackDelay(0.5);
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.5;
 
 	m_ReloadState = ReloadState::NOT_RELOADING;
 }

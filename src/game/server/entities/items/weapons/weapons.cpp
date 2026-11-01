@@ -814,6 +814,16 @@ void CBasePlayerWeapon::DoRetireWeapon()
 
 float CBasePlayerWeapon::GetNextAttackDelay(float delay)
 {
+	// johnhalflife (jhl_physics_fpsfix): fired as soon as it could, a shot came due partway through the last frame but
+	// went with this one; the time it waited comes off the next, so it fires at its rate at any frame rate (it lost up
+	// to a frame each shot). Due longer ago than about a frame, it wasn't being held. The same on the client.
+	if (UTIL_JhlFpsFix())
+	{
+		m_flLastFireTime = 0; // Vanilla's book keeping starts afresh if it's turned off.
+		const float waited = UTIL_WeaponTimeBase() - m_flNextPrimaryAttack;
+		return UTIL_WeaponTimeBase() + delay - (waited > 0 && waited < 1.5f * gpGlobals->frametime ? waited : 0);
+	}
+
 	if (m_flLastFireTime == 0 || m_flNextPrimaryAttack <= -1.1)
 	{
 		// At this point, we are assuming that the client has stopped firing

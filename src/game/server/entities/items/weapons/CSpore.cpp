@@ -281,7 +281,8 @@ void CSpore::MyBounceTouch(CBaseEntity* pOther)
 
 			if ((pev->flags & FL_ONGROUND) != 0)
 			{
-				pev->velocity = pev->velocity * 0.5;
+				// johnhalflife (jhl_physics_fpsfix): touched every frame it slides, so taken off as at 72 fps.
+				pev->velocity = pev->velocity * (UTIL_JhlFpsFix() ? JhlReferenceDecay(0.5f, gpGlobals->frametime) : 0.5f);
 			}
 			else
 			{

@@ -30,3 +30,8 @@ void JhlSettings_RunFrame();
  *	@brief Whether johnhalflife's particle system changes are on (jhl_fx_particlesystem): gibs, and future effects.
  */
 bool JhlParticleSystemEnabled();
+
+/**
+ *	@brief Whether frame rate independent physics is on (jhl_physics_fpsfix; see JhlReferenceFrameRate).
+ */
+bool JhlFpsFixEnabled();

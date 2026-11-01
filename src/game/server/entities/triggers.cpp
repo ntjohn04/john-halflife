@@ -24,6 +24,7 @@
 #include "CHalfLifeCTFplay.h"
 #include "ctf/ctf_goals.h"
 #include "UserMessages.h"
+#include "jhl_effects.h"
 
 #define SF_TRIGGER_PUSH_START_OFF 2		   // spawnflag that makes trigger_push spawn turned OFF
 #define SF_TRIGGER_HURT_TARGETONCE 1	   // Only fire hurt target once
@@ -1406,7 +1407,8 @@ void CTriggerCamera::FollowTarget()
 
 	if (!(FBitSet(pev->spawnflags, SF_CAMERA_PLAYER_TAKECONTROL)))
 	{
-		pev->velocity = pev->velocity * 0.8;
+		// johnhalflife (jhl_physics_fpsfix): it thinks every frame, so slowed as at 72 fps.
+		pev->velocity = pev->velocity * (UTIL_JhlFpsFix() ? JhlReferenceDecay(0.8f, gpGlobals->frametime) : 0.8f);
 		if (pev->velocity.Length() < 10.0)
 			pev->velocity = g_vecZero;
 	}

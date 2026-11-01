@@ -5,6 +5,7 @@ These pages record what johnhalflife changes compared with the stock SDK, and wh
 
 * [Camera and movement](camera_movement.md)
 * [Weapons](weapons.md)
+* [Physics](physics.md): Half-Life's game code acting at any frame rate as it did at 72 fps
 * [Visuals](visuals.md): signs and panels flush with walls drawn steady
 * [Sound](sound.md): Half-Life's own mixing and room effects on the SDK's OpenAL sound system
 * [Effects plan](effects_plan.md): the map of visual effects to work through next
@@ -37,6 +38,7 @@ All are client settings; set them in the console.
 | `jhl_visuals_weaponlag` | 1 | Weapon lags behind when turning | [Camera](camera_movement.md#weapon-lag-and-wall-push) |
 | `jhl_visuals_weaponwallpush` | 1 | Weapon pulls back near walls | [Camera](camera_movement.md#weapon-lag-and-wall-push) |
 | `jhl_visuals_flushfaces` | 1 | Signs, posters and panels built flush with walls drawn steady (they flickered in OpenGL and vanished in software) | [Visuals](visuals.md) |
+| `jhl_physics_fpsfix` | 1 | Pushables, +use walking, grenades and gibs sliding, debris settling and fire rates acting at any frame rate as at 72 fps | [Physics](physics.md) |
 | `jhl_weapons_smoothrecoil` | 1 | Spring-damped recoil (0 = original punches) | [Weapons](weapons.md#recoil) |
 | `jhl_fx_bulletimpacts` | 1 | Bullet impact sparks/dust and water splashes | [Weapons](weapons.md#bullet-impacts) |
 | `jhl_fx_muzzleflash` | 1 | Muzzle light and smoke, RPG backblast | [Weapons](weapons.md#muzzle-light-and-smoke) |

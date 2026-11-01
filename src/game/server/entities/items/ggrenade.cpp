@@ -307,7 +307,8 @@ void CGrenade::BounceTouch(CBaseEntity* pOther)
 	if ((pev->flags & FL_ONGROUND) != 0)
 	{
 		// add a bit of static friction
-		pev->velocity = pev->velocity * 0.8;
+		// johnhalflife (jhl_physics_fpsfix): touched every frame it slides, so taken off as at 72 fps.
+		pev->velocity = pev->velocity * (UTIL_JhlFpsFix() ? JhlReferenceDecay(0.8f, gpGlobals->frametime) : 0.8f);
 
 		if (jhl)
 		{
@@ -364,7 +365,8 @@ void CGrenade::SlideTouch(CBaseEntity* pOther)
 	if ((pev->flags & FL_ONGROUND) != 0)
 	{
 		// add a bit of static friction
-		pev->velocity = pev->velocity * 0.95;
+		// johnhalflife (jhl_physics_fpsfix): touched every frame it slides, so taken off as at 72 fps.
+		pev->velocity = pev->velocity * (UTIL_JhlFpsFix() ? JhlReferenceDecay(0.95f, gpGlobals->frametime) : 0.95f);
 
 		if (pev->velocity.x != 0 || pev->velocity.y != 0)
 		{
