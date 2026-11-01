@@ -554,6 +554,11 @@ CBaseEntity* CFuncTank::FindTarget(CBaseEntity* pvsPlayer)
 	if (!pPlayerTarget)
 		return pPlayerTarget;
 
+	// johnhalflife: Half-Life's and Blue Shift's tanks target only the player, as in vanilla; Opposing Force's
+	// also target the player's allies (set in cfg/skill_opposingforce.json).
+	if (0 == g_Skill.GetValue("func_tank_target_allies"))
+		return pPlayerTarget;
+
 	m_pLink = nullptr;
 	auto flIdealDist = m_maxRange;
 	CBaseEntity* pIdealTarget = nullptr;

@@ -1,0 +1,27 @@
+// The Unified SDK's file (halflife-unified-sdk-assets, cfgsrc/cfg) with johnhalflife's skill values for this game added.
+{
+	"Includes": [
+		"cfg/BaseGameConfig.json"
+	],
+    "SectionGroups": [
+		{
+            "Sections": {
+                "Skill": {
+                    "FileNames": ["cfg/skill_blueshift.json"]
+                },
+				"Sentences": {
+					"FileNames": ["sound/bs_sentences.json"]
+				},
+                "GlobalModelReplacement": {
+                    "FileNames": ["cfg/BlueShiftModelReplacement.json"]
+                },
+                "GlobalSentenceReplacement": {
+                    "FileNames": ["cfg/BlueShiftSentenceReplacement.json"]
+                },
+                "HudColor": "95 95 255",
+				"CrosshairColor": "255 160 0",
+                "SuitLightType": "flashlight"
+            }
+        }
+    ]
+}

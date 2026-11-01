@@ -92,6 +92,12 @@ a copy of the game code.
   don't, like `gearbox` and `bshift`. Without them, or without the layout in the mod's own folder, the 25th
   anniversary main menu was black.
 * Blue Shift keeps multiplayer, unlike vanilla, so John Settings stays in the same place.
+* Each game's own skill values load after `skill.json` (Half-Life's): `cfg/skill_blueshift.json` (batteries
+  give 20 armor, as in `bshift/skill.cfg`) and `cfg/skill_opposingforce.json` (`func_tank_target_allies 1`:
+  only Opposing Force's mounted guns also fire at the player's allies, the Unified SDK had it for every game).
+  They're listed in `config/mod/cfg/BlueShiftConfig.json` and `OpposingForceConfig.json`, copies of the Unified
+  SDK's files (assets repository, `cfgsrc/cfg`) with a `Skill` section added; if those change upstream, copy
+  them again.
 * Settings and saves are per folder, as with the real games.
 * The engine adds the `fallback_dir` folder under the search path ID `GAME_FALLBACK`. The Unified SDK reads its
   config files (model/sound replacement, skill, server config, map cycle) from `GAMECONFIG`, the mod's own folder

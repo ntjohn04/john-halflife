@@ -1,0 +1,7 @@
+// johnhalflife: Blue Shift's own values where they differ from Half-Life's, loaded after skill.json.
+{
+	// Blue Shift's batteries give 20 armor on every difficulty (bshift/skill.cfg).
+	"battery1": 20,
+	"battery2": 20,
+	"battery3": 20
+}

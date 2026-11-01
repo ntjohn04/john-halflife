@@ -1,0 +1,5 @@
+// johnhalflife: Opposing Force's own values where they differ from Half-Life's, loaded after skill.json.
+{
+	// Opposing Force's mounted guns also fire at the player's allies; Half-Life's and Blue Shift's only at the player.
+	"func_tank_target_allies": 1
+}
