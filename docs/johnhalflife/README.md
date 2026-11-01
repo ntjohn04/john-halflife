@@ -113,9 +113,10 @@ Force's ally grunts and black ops can take headshots, which Gearbox's models did
 * **Walking and running speed:** recompiled from decompiled sources, the models' linear movement came out
   (frames - 1) / frames of vanilla's, so NPCs moved 2 to 6% slower. `scripts/restore_npc_speeds.py` puts the
   vanilla values back into the installed models at install time (88 sequences), from the player's own games.
-* **Open:** Blue Shift's scientists use Half-Life's `scientist.mdl` and its frame rates; vanilla Blue Shift's
-  walked and ran slower (a run at 207 units/s, Half-Life's 293). The Unified SDK's `models/bshift/scientist.mdl`
-  is unused and mixes the two games' rates.
+* **Left as is:** Blue Shift's scientists use Half-Life's `scientist.mdl` and its frame rates; vanilla Blue
+  Shift's walked and ran slower (a run at 207 units/s, Half-Life's 293). The Unified SDK's
+  `models/bshift/scientist.mdl` is unused and mixes the two games' rates, so restoring them would take another
+  copied config (a model replacement) and an untried model in every Blue Shift scene, for a difference hard to see.
 * Settings and saves are per folder, as with the real games.
 * The engine adds the `fallback_dir` folder under the search path ID `GAME_FALLBACK`. The Unified SDK reads its
   config files (model/sound replacement, skill, server config, map cycle) from `GAMECONFIG`, the mod's own folder
