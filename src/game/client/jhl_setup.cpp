@@ -458,6 +458,19 @@ void Setup(bool force)
 
 	ConvertMaps(root, stats);
 
+	// The Unified SDK's key bindings for a game folder with no config of its own yet (the ContentInstaller did this);
+	// never over the player's own.
+	if (std::string defaults; ReadFile(root / BaseFolder / "default_config.cfg", defaults))
+	{
+		for (const auto& menu : MenuFolders)
+		{
+			const fs::path config = root / menu.Folder / "config.cfg";
+
+			if (IsFolder(root / menu.Folder) && !IsFile(config))
+				WriteContents(config, defaults, stats);
+		}
+	}
+
 	const auto seconds = std::chrono::duration<float>(std::chrono::steady_clock::now() - start).count();
 
 	Log("jhl_setup: %d files written, %d already in place, %d not in the installed games, %d failed (%.1f s)\n",
