@@ -74,6 +74,11 @@ bool LoadAll()
 	ok = Load(gl.BlendFunc, "glBlendFunc") && ok;
 	ok = Load(gl.PolygonOffset, "glPolygonOffset") && ok;
 	ok = Load(gl.TexEnvi, "glTexEnvi") && ok;
+	ok = Load(gl.TexEnvf, "glTexEnvf") && ok;
+	ok = Load(gl.TexEnvfv, "glTexEnvfv") && ok;
+	ok = Load(gl.GetTexEnviv, "glGetTexEnviv") && ok;
+	ok = Load(gl.GetTexEnvfv, "glGetTexEnvfv") && ok;
+	ok = Load(gl.IsEnabled, "glIsEnabled") && ok;
 	ok = Load(gl.Color4f, "glColor4f") && ok;
 	ok = Load(gl.Begin, "glBegin") && ok;
 	ok = Load(gl.End, "glEnd") && ok;

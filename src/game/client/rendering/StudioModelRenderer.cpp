@@ -22,6 +22,7 @@
 #include "jhl_settings.h"
 #include "view.h"
 #include "weapon_effects.h"
+#include "jhl_softwarelook.h"
 #include "StudioModelRenderer.h"
 
 // johnhalflife: a shell that's a view model's casing (JhlViewModelCasings): its iuser4, and its bone its iuser3.
@@ -2125,7 +2126,16 @@ void CStudioModelRenderer::StudioRenderFinal_Hardware()
 			}
 
 			IEngineStudio.GL_SetRenderMode(rendermode);
+
+			// johnhalflife: lit as the software renderer lit models (jhl_visuals_modeloverbright).
+			const bool overbright = JhlSoftwareLook_BeginModel(rendermode, m_pCurrentEntity->curstate.renderfx);
 			IEngineStudio.StudioDrawPoints();
+
+			if (overbright)
+			{
+				JhlSoftwareLook_EndModel();
+			}
+
 			IEngineStudio.GL_StudioDrawShadow();
 		}
 	}

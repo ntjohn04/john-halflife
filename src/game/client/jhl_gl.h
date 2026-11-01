@@ -50,6 +50,11 @@ struct JhlGL
 	decltype(&::glBlendFunc) BlendFunc = nullptr;
 	decltype(&::glPolygonOffset) PolygonOffset = nullptr;
 	decltype(&::glTexEnvi) TexEnvi = nullptr;
+	decltype(&::glTexEnvf) TexEnvf = nullptr;
+	decltype(&::glTexEnvfv) TexEnvfv = nullptr;
+	decltype(&::glGetTexEnviv) GetTexEnviv = nullptr;
+	decltype(&::glGetTexEnvfv) GetTexEnvfv = nullptr;
+	decltype(&::glIsEnabled) IsEnabled = nullptr;
 	decltype(&::glColor4f) Color4f = nullptr;
 	decltype(&::glBegin) Begin = nullptr;
 	decltype(&::glEnd) End = nullptr;

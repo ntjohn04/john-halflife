@@ -13,6 +13,8 @@
  *
  ****/
 
+#include <cstdint>
+
 #include "hud.h"
 #include "jhl_gl.h"
 #include "jhl_softwarelook.h"
@@ -20,6 +22,7 @@
 namespace
 {
 cvar_t* g_16BitColor = nullptr;
+cvar_t* g_ModelOverbright = nullptr;
 
 JhlGL& gl = g_JhlGL;
 
@@ -177,9 +180,113 @@ bool SizeCopy(GLint width, GLint height)
 }
 }
 
+// Models' light: the second texture unit, set to multiply what the first gives by a constant 2/3 and scale it by 2 (a
+// combiner can only scale by 1, 2 or 4), sampling a white texel. What it was is put back after.
+constexpr float ModelLightScale = 4.0f / 3.0f;
+
+GLuint g_White = 0;
+
+struct UnitState
+{
+	GLint ActiveTexture = GL_TEXTURE0;
+	GLboolean Enabled = GL_FALSE;
+	GLint Texture = 0;
+	GLint Mode = GL_MODULATE;
+	GLint CombineRgb = GL_MODULATE;
+	GLint Source0 = GL_TEXTURE;
+	GLint Source1 = GL_PREVIOUS;
+	GLint CombineAlpha = GL_MODULATE;
+	GLint SourceAlpha = GL_TEXTURE;
+	GLfloat Scale = 1;
+	GLfloat Color[4]{};
+};
+
+UnitState g_SavedUnit;
+
 void JhlSoftwareLook_Initialize()
 {
 	g_16BitColor = gEngfuncs.pfnRegisterVariable("jhl_visuals_16bitcolor", "0", FCVAR_ARCHIVE);
+	g_ModelOverbright = gEngfuncs.pfnRegisterVariable("jhl_visuals_modeloverbright", "1", FCVAR_ARCHIVE);
+}
+
+bool JhlSoftwareLook_BeginModel(int renderMode, int renderFx)
+{
+	// Lit models only: additive ones and glow shells aren't lit.
+	if (0 == g_ModelOverbright->value || renderMode == kRenderTransAdd || renderMode == kRenderGlow ||
+		renderFx == kRenderFxGlowShell || !JhlGL_Available())
+	{
+		return false;
+	}
+
+	if (0 == g_White)
+	{
+		constexpr std::uint32_t white = 0xFFFFFFFF;
+		GLint previous = 0;
+		gl.GetIntegerv(GL_TEXTURE_BINDING_2D, &previous);
+		gl.GenTextures(1, &g_White);
+		gl.BindTexture(GL_TEXTURE_2D, g_White);
+		gl.TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &white);
+		gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		gl.BindTexture(GL_TEXTURE_2D, previous);
+	}
+
+	auto& saved = g_SavedUnit;
+	gl.GetIntegerv(GL_ACTIVE_TEXTURE, &saved.ActiveTexture);
+	gl.ActiveTexture(GL_TEXTURE1);
+	saved.Enabled = gl.IsEnabled(GL_TEXTURE_2D);
+	gl.GetIntegerv(GL_TEXTURE_BINDING_2D, &saved.Texture);
+	gl.GetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &saved.Mode);
+	gl.GetTexEnviv(GL_TEXTURE_ENV, GL_COMBINE_RGB, &saved.CombineRgb);
+	gl.GetTexEnviv(GL_TEXTURE_ENV, GL_SOURCE0_RGB, &saved.Source0);
+	gl.GetTexEnviv(GL_TEXTURE_ENV, GL_SOURCE1_RGB, &saved.Source1);
+	gl.GetTexEnviv(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, &saved.CombineAlpha);
+	gl.GetTexEnviv(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, &saved.SourceAlpha);
+	gl.GetTexEnvfv(GL_TEXTURE_ENV, GL_RGB_SCALE, &saved.Scale);
+	gl.GetTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, saved.Color);
+
+	const GLfloat half[4] = {ModelLightScale / 2, ModelLightScale / 2, ModelLightScale / 2, 1};
+	gl.Enable(GL_TEXTURE_2D);
+	gl.BindTexture(GL_TEXTURE_2D, g_White);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+	gl.TexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, half);
+	gl.TexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 2);
+
+	// The engine draws on the first unit, as it was.
+	gl.ActiveTexture(saved.ActiveTexture);
+	return true;
+}
+
+void JhlSoftwareLook_EndModel()
+{
+	const auto& saved = g_SavedUnit;
+	GLint active = GL_TEXTURE0;
+	gl.GetIntegerv(GL_ACTIVE_TEXTURE, &active);
+	gl.ActiveTexture(GL_TEXTURE1);
+	gl.TexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, saved.Scale);
+	gl.TexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, saved.Color);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, saved.CombineRgb);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, saved.Source0);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, saved.Source1);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, saved.CombineAlpha);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, saved.SourceAlpha);
+	gl.TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, saved.Mode);
+	gl.BindTexture(GL_TEXTURE_2D, saved.Texture);
+
+	if (GL_TRUE != saved.Enabled)
+	{
+		gl.Disable(GL_TEXTURE_2D);
+	}
+
+	gl.ActiveTexture(active);
 }
 
 void JhlSoftwareLook_FrameDrawn()

@@ -32,9 +32,18 @@ many entities were found.
 
 Half-Life's software renderer (sw.dll) and its OpenGL renderer (hw.dll) were compared in their code and on
 screenshots of the same view. They light the world identically: the same light gamma table, light × texture ÷ 192 so
-the brightest light is 1.33× (OpenGL's `gl_overbright`, on by default, matches), the same tone curve. Two touches
-differ, each its own setting, off by default. The OpenGL drawing they need is in `jhl_gl.cpp` (looked up through SDL;
+the brightest light is 1.33× (OpenGL's `gl_overbright`, on by default, matches), the same tone curve. Three touches
+differ, each its own setting. The OpenGL drawing they need is in `jhl_gl.cpp` (looked up through SDL;
 the client doesn't link OpenGL), the map reading in `jhl_bsp.cpp` (shared with the flush faces above).
+
+### Model lighting (`jhl_visuals_modeloverbright`, default 1)
+
+Both renderers light the world texture × light ÷ 192, so the brightest light makes a surface 4/3 as bright as its
+texture. Software lit models the same way; OpenGL never let a model's light go past its texture, so its models look
+duller than the room they stand in (measured: software's models 1.33 times as bright at every brightness, its world
+the same). While the engine draws a model's polygons (`StudioDrawPoints`), the second texture unit multiplies their
+lit colour by 4/3 (a constant 2/3, scaled by 2), clamped as software clamps; additive models and glow shells, which
+aren't lit, are left alone. The engine's model drawing never touches that unit, and it's put back as it was after.
 
 ### 16-bit color (`jhl_visuals_16bitcolor`)
 
