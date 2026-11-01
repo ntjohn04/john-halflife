@@ -37,7 +37,9 @@ differ, in two settings, and 16-bit color on its own:
 * `jhl_visuals_renderfixes` (default 1): models lit as the world is, and with texture filtering off textures
   point sampled with mipmaps and the sky pixelated like the world: OpenGL made consistent with itself.
 * `jhl_visuals_softwarewater` (default 1): the water's ripples, and under water the 320 × 200 view and fog.
-* `jhl_visuals_16bitcolor` (default 0): the 16-bit frame. The OpenGL drawing they need is in `jhl_gl.cpp` (looked up through SDL;
+* `jhl_visuals_16bitcolor` (default 1): the 16-bit frame.
+
+The OpenGL drawing they need is in `jhl_gl.cpp` (looked up through SDL;
 the client doesn't link OpenGL), the map reading in `jhl_bsp.cpp` (shared with the flush faces above).
 
 ### Model lighting (`jhl_visuals_renderfixes`)

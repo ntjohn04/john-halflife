@@ -17,7 +17,7 @@
 
 // johnhalflife: touches of Half-Life's software renderer on the OpenGL one, each its own setting.
 //
-// jhl_visuals_16bitcolor (default 0): the software renderer drew into a 16 bit frame, 5 bits of red, 6 of green, 5 of
+// jhl_visuals_16bitcolor (default 1): the software renderer drew into a 16 bit frame, 5 bits of red, 6 of green, 5 of
 // blue, each colour cut down (not rounded, not dithered): smooth gradients step, darks lose their last shades. Measured
 // on screenshots of the same view: software's red and blue are multiples of 8, green of 4, from 0. Each frame, once the
 // HUD is drawn, the client copies it and draws it back cut down the same way.

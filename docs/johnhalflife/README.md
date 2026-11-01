@@ -38,7 +38,7 @@ All are client settings; set them in the console.
 | `jhl_visuals_weaponlag` | 1 | Weapon lags behind when turning | [Camera](camera_movement.md#weapon-lag-and-wall-push) |
 | `jhl_visuals_weaponwallpush` | 1 | Weapon pulls back near walls | [Camera](camera_movement.md#weapon-lag-and-wall-push) |
 | `jhl_visuals_flushfaces` | 1 | Signs, posters and panels built flush with walls drawn steady (they flickered in OpenGL and vanished in software) | [Visuals](visuals.md) |
-| `jhl_visuals_16bitcolor` | 0 | The software renderer's 16-bit color: every frame cut to 565, as it drew | [Visuals](visuals.md#16-bit-color-jhl_visuals_16bitcolor) |
+| `jhl_visuals_16bitcolor` | 1 | The software renderer's 16-bit color: every frame cut to 565, as it drew | [Visuals](visuals.md#16-bit-color-jhl_visuals_16bitcolor) |
 | `jhl_visuals_softwarewater` | 1 | The software renderer's water: its ripple simulation in place of OpenGL's sine wobble, and under water its 320 x 200 view and fog by depth | [Visuals](visuals.md#software-renderer-touches) |
 | `jhl_visuals_renderfixes` | 1 | Models lit up to 4/3 as the world is; with texture filtering off, textures point sampled with mipmaps and the sky pixelated as the world is | [Visuals](visuals.md#software-renderer-touches) |
 | `jhl_physics_fpsfix` | 1 | Pushables, +use walking, grenades and gibs sliding, debris settling and fire rates acting at any frame rate as at 72 fps | [Physics](physics.md) |

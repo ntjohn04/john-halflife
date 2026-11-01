@@ -308,7 +308,7 @@ bool g_EngineFogOff = false;
 
 void JhlSoftwareLook_Initialize()
 {
-	g_16BitColor = gEngfuncs.pfnRegisterVariable("jhl_visuals_16bitcolor", "0", FCVAR_ARCHIVE);
+	g_16BitColor = gEngfuncs.pfnRegisterVariable("jhl_visuals_16bitcolor", "1", FCVAR_ARCHIVE);
 	g_RenderFixes = gEngfuncs.pfnRegisterVariable("jhl_visuals_renderfixes", "1", FCVAR_ARCHIVE);
 }
 

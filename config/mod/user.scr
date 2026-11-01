@@ -115,7 +115,7 @@ DESCRIPTION INFO_OPTIONS
 	{
 		"JHL | Visuals: software renderer's 16-bit color"
 		{ BOOL }
-		{ "0" }
+		{ "1" }
 	}
 
 	"jhl_visuals_softwarewater"
