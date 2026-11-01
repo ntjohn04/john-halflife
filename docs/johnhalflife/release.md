@@ -56,6 +56,11 @@ What's made from files we ship is made by the build and shipped as made: the hor
 SDK's `decals.wad` (`scripts/make_hornet_decals.py`) and the vanilla speeds in its models
 (`scripts/restore_npc_speeds.py`).
 
+It runs before the game's window has anything on it: a black screen for a few seconds (7 on an SSD), once; its
+messages go to the console when it's up. A window saying what it's doing was tried and left out: it could only be a
+plain Windows one, on one platform, nothing like the game's look. The install notes say the first start takes a
+moment.
+
 A game the player doesn't own is skipped, and its campaign isn't offered. The C++ conversion is checked against
 the ContentInstaller's: the same maps, byte for byte. Each upgrade is reviewed against 1998 as it's ported (keep
 the bug fixes, revert the drift).
