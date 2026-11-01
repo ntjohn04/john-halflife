@@ -282,12 +282,12 @@ With `jhl_fx_particlesystem`:
   both spat out the side, lower (50-60% of a gun's usual upward throw, 93-131% of its throw to the side). The Desert Eagle's is a .50 AE's, a
   little short of true to life (33 mm long and 14 across, the 9 mm's 19 and 10), 4.5 units by 1.75 (the Glock's 3 by
   1.45), just short of the sniper rifle's 1.8 across: Opposing Force's burnt-looking shell, as its other guns', which
-  the install copies from the player's `gearbox` folder as `shell_op4.mdl` (precached only if there; else Half-Life's
+  the first start copies from the player's `gearbox` folder as `shell_op4.mdl` (precached only if there; else Half-Life's
   is used).
 * **Half-Life's shell:** the Unified SDK's release puts Opposing Force's `shell.mdl` in the mod folder (yellower,
   burnt-edged, 3 units long and 1 across), over Half-Life's, so the Glock, MP5, Desert Eagle and NPCs' brass all
-  looked like Opposing Force's. The install copies Half-Life's from the player's own `valve` folder over it
-  (`CMakeLists.txt`): brighter bronze, 3 by 1.45, a 9 mm's shape (19 mm by 10, 1.9 to 1; Opposing Force's 3 to 1).
+  looked like Opposing Force's. The first start copies Half-Life's from the player's own `valve` folder over it
+  (`client/jhl_setup.cpp`): brighter bronze, 3 by 1.45, a 9 mm's shape (19 mm by 10, 1.9 to 1; Opposing Force's 3 to 1).
   The M249's (`saw_shell.mdl`, burnt-looking) and the sniper rifle's (its own) stay Opposing Force's (Half-Life's,
   tried on them, was too shiny for the M249 and changed look too visibly at the sniper rifle's handoff); the
   shotgun's (`shotgunshell.mdl`) is the games' own. Stretched shells are drawn posed as usual, only their casing's
