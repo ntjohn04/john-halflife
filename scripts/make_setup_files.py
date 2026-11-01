@@ -2,9 +2,11 @@
 own games (client jhl_setup.cpp): Opposing Force's and Blue Shift's files the Unified SDK's release puts in the mod
 folder, their soundtracks, and each game folder's own versions of files the games share names for.
 
-Made from a development install: each file in the mod folder that the Unified SDK's release zip has and that is a
-byte-for-byte copy of one in gearbox or bshift (and not in valve, which the engine finds by itself). Only names are
-listed; nothing of Valve's is in the list.
+Made from the Unified SDK's release zip and the games: each of its files (but those never shipped, package_release.py)
+that's a byte-for-byte copy of one of the games' and isn't in valve at the same path (the engine finds those by itself),
+from wherever a copy is: the same path in an expansion first, else any copy, Valve's under another name too (valve is
+always installed: Opposing Force's displacer.sc is word for word one of Half-Life's). Only names are listed; nothing
+of Valve's is in the list.
 
 Usage: python make_setup_files.py <Half-Life folder> <Unified SDK release zip> <output>
 """
@@ -12,6 +14,7 @@ Usage: python make_setup_files.py <Half-Life folder> <Unified SDK release zip> <
 import collections
 import hashlib
 import os
+import re
 import sys
 import zipfile
 
@@ -60,10 +63,11 @@ for game in ("valve",) + EXPANSIONS:
 hashes = {}
 
 
-def sources(path):
-    h = md5(path)
+def sources(data):
+    """Every file in the games with these contents."""
+    h = hashlib.md5(data).hexdigest()
     found = []
-    for game, r, p in by_size.get(os.path.getsize(path), []):
+    for game, r, p in by_size.get(len(data), []):
         if p not in hashes:
             hashes[p] = md5(p)
         if hashes[p] == h:
@@ -71,21 +75,35 @@ def sources(path):
     return found
 
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import package_release  # noqa: E402  (its list of the release's files never shipped)
+
 entries = []
 per_game = {(d, f.lower()) for d, f, _ in EXTRA}
-for dp, _, files in os.walk(MOD):
-    for f in files:
-        p = os.path.join(dp, f)
-        r = rel(p, MOD)
-        if r.lower() not in in_zip and not r.lower().startswith("media/"):
+release = package_release.release_files(ZIP)
+
+with zipfile.ZipFile(ZIP) as z:
+    for r, info in sorted(release.items()):
+        if any(re.search(p, r, re.I) for p in package_release.DROP) or ("johnhalflife", r.lower()) in per_game:
             continue
-        if ("johnhalflife", r.lower()) in per_game:
+        data = z.read(info)
+        # The engine finds a file in valve by itself, at the same path only.
+        same = os.path.join(H, "valve", *r.split("/"))
+        if os.path.isfile(same) and os.path.getsize(same) == len(data) and open(same, "rb").read() == data:
             continue
-        found = sources(p)
-        if found and not any(s.startswith("valve/") for s in found):
-            # The same path first, then any other copy (a soundtrack is renamed).
-            found.sort(key=lambda s: (s.split("/", 1)[1].lower() != r.lower(), EXPANSIONS.index(s.split("/")[0])))
+        found = sources(data)
+        if found:
+            # The same path first, then an expansion's other copy, then Valve's (always installed) under another name.
+            found.sort(key=lambda s: (s.split("/", 1)[1].lower() != r.lower(), s.startswith("valve/"), s))
             entries.append(("johnhalflife", r, found))
+
+# The expansions' soundtracks (the ContentInstaller's names, as in the mod folder).
+for f in sorted(os.listdir(os.path.join(MOD, "media"))):
+    data = open(os.path.join(MOD, "media", f), "rb").read()
+    found = sources(data)
+    if found and not any(s.startswith("valve/") for s in found):
+        found.sort(key=lambda s: (s.split("/", 1)[1].lower() != f"media/{f}".lower(), s))
+        entries.append(("johnhalflife", f"media/{f}", found))
 entries += EXTRA
 
 with open(OUT, "w", encoding="utf-8", newline="\n") as o:

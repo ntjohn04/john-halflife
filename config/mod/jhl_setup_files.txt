@@ -17,28 +17,69 @@ johnhalflife	classes/short_recruit.txt	gearbox/classes/short_recruit.txt
 johnhalflife	classes/short_scientist.txt	gearbox/classes/short_scientist.txt
 johnhalflife	classes/short_squadleader.txt	gearbox/classes/short_squadleader.txt
 johnhalflife	classes/short_tower.txt	gearbox/classes/short_tower.txt
+johnhalflife	events/crossbow1.sc	valve/violence.cfg
+johnhalflife	events/crossbow2.sc	valve/violence.cfg
+johnhalflife	events/crowbar.sc	valve/violence.cfg
+johnhalflife	events/displacer.sc	valve/violence.cfg
+johnhalflife	events/eagle.sc	valve/violence.cfg
+johnhalflife	events/egon_fire.sc	valve/violence.cfg
+johnhalflife	events/egon_stop.sc	valve/violence.cfg
+johnhalflife	events/firehornet.sc	valve/violence.cfg
+johnhalflife	events/gauss.sc	valve/violence.cfg
+johnhalflife	events/gaussspin.sc	valve/violence.cfg
+johnhalflife	events/glock1.sc	valve/violence.cfg
+johnhalflife	events/glock2.sc	valve/violence.cfg
+johnhalflife	events/knife.sc	valve/violence.cfg
+johnhalflife	events/m249.sc	valve/violence.cfg
+johnhalflife	events/mp5.sc	valve/violence.cfg
+johnhalflife	events/mp52.sc	valve/violence.cfg
+johnhalflife	events/penguinfire.sc	valve/violence.cfg
+johnhalflife	events/pipewrench.sc	valve/violence.cfg
+johnhalflife	events/python.sc	valve/violence.cfg
+johnhalflife	events/rpg.sc	valve/violence.cfg
+johnhalflife	events/shock.sc	valve/violence.cfg
+johnhalflife	events/shotgun1.sc	valve/violence.cfg
+johnhalflife	events/shotgun2.sc	valve/violence.cfg
+johnhalflife	events/snarkfire.sc	valve/violence.cfg
+johnhalflife	events/sniper.sc	valve/violence.cfg
+johnhalflife	events/spore.sc	valve/violence.cfg
+johnhalflife	events/tripfire.sc	valve/violence.cfg
+johnhalflife	gfx/env/cliff2bk.bmp	gearbox/gfx/env/cliff2bk.bmp	gearbox/gfx/env/hackbk.bmp	valve/gfx/env/cliffft.bmp
+johnhalflife	gfx/env/cliff2bk.tga	gearbox/gfx/env/cliff2bk.tga	gearbox/gfx/env/hackbk.tga	valve/gfx/env/cliffft.tga
 johnhalflife	gfx/env/cliff2dn.bmp	gearbox/gfx/env/cliff2dn.bmp	gearbox/gfx/env/hackdn.bmp
 johnhalflife	gfx/env/cliff2dn.tga	gearbox/gfx/env/cliff2dn.tga	gearbox/gfx/env/hackdn.tga
+johnhalflife	gfx/env/cliff2ft.bmp	gearbox/gfx/env/cliff2ft.bmp	valve/gfx/env/cliffbk.bmp
+johnhalflife	gfx/env/cliff2ft.tga	gearbox/gfx/env/cliff2ft.tga	valve/gfx/env/cliffbk.tga
+johnhalflife	gfx/env/cliff2lf.bmp	gearbox/gfx/env/cliff2lf.bmp	gearbox/gfx/env/hacklf.bmp	valve/gfx/env/cliffrt.bmp
+johnhalflife	gfx/env/cliff2lf.tga	gearbox/gfx/env/cliff2lf.tga	gearbox/gfx/env/hacklf.tga	valve/gfx/env/cliffrt.tga
+johnhalflife	gfx/env/cliff2rt.bmp	gearbox/gfx/env/cliff2rt.bmp	valve/gfx/env/clifflf.bmp
+johnhalflife	gfx/env/cliff2rt.tga	gearbox/gfx/env/cliff2rt.tga	valve/gfx/env/clifflf.tga
 johnhalflife	gfx/env/cliff2up.bmp	gearbox/gfx/env/cliff2up.bmp
 johnhalflife	gfx/env/cliff2up.tga	gearbox/gfx/env/cliff2up.tga
+johnhalflife	gfx/env/hackbk.bmp	gearbox/gfx/env/hackbk.bmp	gearbox/gfx/env/cliff2bk.bmp	valve/gfx/env/cliffft.bmp
+johnhalflife	gfx/env/hackbk.tga	gearbox/gfx/env/hackbk.tga	gearbox/gfx/env/cliff2bk.tga	valve/gfx/env/cliffft.tga
 johnhalflife	gfx/env/hackdn.bmp	gearbox/gfx/env/hackdn.bmp	gearbox/gfx/env/cliff2dn.bmp
 johnhalflife	gfx/env/hackdn.tga	gearbox/gfx/env/hackdn.tga	gearbox/gfx/env/cliff2dn.tga
 johnhalflife	gfx/env/hackft.bmp	gearbox/gfx/env/hackft.bmp
+johnhalflife	gfx/env/hackft.tga	gearbox/gfx/env/hackft.tga	valve/gfx/env/neb7bk.tga
+johnhalflife	gfx/env/hacklf.bmp	gearbox/gfx/env/hacklf.bmp	gearbox/gfx/env/cliff2lf.bmp	valve/gfx/env/cliffrt.bmp
+johnhalflife	gfx/env/hacklf.tga	gearbox/gfx/env/hacklf.tga	gearbox/gfx/env/cliff2lf.tga	valve/gfx/env/cliffrt.tga
 johnhalflife	gfx/env/hackrt.bmp	gearbox/gfx/env/hackrt.bmp
+johnhalflife	gfx/env/hackrt.tga	gearbox/gfx/env/hackrt.tga	valve/gfx/env/neb7lf.tga
 johnhalflife	gfx/env/hackup.bmp	gearbox/gfx/env/hackup.bmp
 johnhalflife	gfx/env/hackup.tga	gearbox/gfx/env/hackup.tga
-johnhalflife	gfx/env/sky_blu_bk.bmp	gearbox/gfx/env/sky_blu_bk.bmp	bshift/gfx/env/sky_blu_bk.bmp
-johnhalflife	gfx/env/sky_blu_bk.tga	gearbox/gfx/env/sky_blu_bk.tga	bshift/gfx/env/sky_blu_bk.tga
-johnhalflife	gfx/env/sky_blu_dn.bmp	gearbox/gfx/env/sky_blu_dn.bmp	bshift/gfx/env/sky_blu_dn.bmp
-johnhalflife	gfx/env/sky_blu_dn.tga	gearbox/gfx/env/sky_blu_dn.tga	bshift/gfx/env/sky_blu_dn.tga
-johnhalflife	gfx/env/sky_blu_ft.bmp	gearbox/gfx/env/sky_blu_ft.bmp	bshift/gfx/env/sky_blu_ft.bmp
-johnhalflife	gfx/env/sky_blu_ft.tga	gearbox/gfx/env/sky_blu_ft.tga	bshift/gfx/env/sky_blu_ft.tga
-johnhalflife	gfx/env/sky_blu_lf.bmp	gearbox/gfx/env/sky_blu_lf.bmp	bshift/gfx/env/sky_blu_lf.bmp
-johnhalflife	gfx/env/sky_blu_lf.tga	gearbox/gfx/env/sky_blu_lf.tga	bshift/gfx/env/sky_blu_lf.tga
-johnhalflife	gfx/env/sky_blu_rt.bmp	gearbox/gfx/env/sky_blu_rt.bmp	bshift/gfx/env/sky_blu_rt.bmp
-johnhalflife	gfx/env/sky_blu_rt.tga	gearbox/gfx/env/sky_blu_rt.tga	bshift/gfx/env/sky_blu_rt.tga
-johnhalflife	gfx/env/sky_blu_up.bmp	gearbox/gfx/env/sky_blu_up.bmp	bshift/gfx/env/sky_blu_up.bmp
-johnhalflife	gfx/env/sky_blu_up.tga	gearbox/gfx/env/sky_blu_up.tga	bshift/gfx/env/sky_blu_up.tga
+johnhalflife	gfx/env/sky_blu_bk.bmp	bshift/gfx/env/sky_blu_bk.bmp	gearbox/gfx/env/sky_blu_bk.bmp
+johnhalflife	gfx/env/sky_blu_bk.tga	bshift/gfx/env/sky_blu_bk.tga	gearbox/gfx/env/sky_blu_bk.tga
+johnhalflife	gfx/env/sky_blu_dn.bmp	bshift/gfx/env/sky_blu_dn.bmp	gearbox/gfx/env/sky_blu_dn.bmp
+johnhalflife	gfx/env/sky_blu_dn.tga	bshift/gfx/env/sky_blu_dn.tga	gearbox/gfx/env/sky_blu_dn.tga
+johnhalflife	gfx/env/sky_blu_ft.bmp	bshift/gfx/env/sky_blu_ft.bmp	gearbox/gfx/env/sky_blu_ft.bmp
+johnhalflife	gfx/env/sky_blu_ft.tga	bshift/gfx/env/sky_blu_ft.tga	gearbox/gfx/env/sky_blu_ft.tga
+johnhalflife	gfx/env/sky_blu_lf.bmp	bshift/gfx/env/sky_blu_lf.bmp	gearbox/gfx/env/sky_blu_lf.bmp
+johnhalflife	gfx/env/sky_blu_lf.tga	bshift/gfx/env/sky_blu_lf.tga	gearbox/gfx/env/sky_blu_lf.tga
+johnhalflife	gfx/env/sky_blu_rt.bmp	bshift/gfx/env/sky_blu_rt.bmp	gearbox/gfx/env/sky_blu_rt.bmp
+johnhalflife	gfx/env/sky_blu_rt.tga	bshift/gfx/env/sky_blu_rt.tga	gearbox/gfx/env/sky_blu_rt.tga
+johnhalflife	gfx/env/sky_blu_up.bmp	bshift/gfx/env/sky_blu_up.bmp	gearbox/gfx/env/sky_blu_up.bmp
+johnhalflife	gfx/env/sky_blu_up.tga	bshift/gfx/env/sky_blu_up.tga	gearbox/gfx/env/sky_blu_up.tga
 johnhalflife	gfx/shell/kb_def.lst	gearbox/gfx/shell/kb_def.lst
 johnhalflife	gfx/vgui/640_adrian.tga	gearbox/gfx/vgui/640_adrian.tga
 johnhalflife	gfx/vgui/640_arrow.tga	gearbox/gfx/vgui/640_arrow.tga
@@ -61,44 +102,44 @@ johnhalflife	gfx/vgui/640_recruit.tga	gearbox/gfx/vgui/640_recruit.tga
 johnhalflife	gfx/vgui/640_scientist.tga	gearbox/gfx/vgui/640_scientist.tga
 johnhalflife	gfx/vgui/640_squadleader.tga	gearbox/gfx/vgui/640_squadleader.tga
 johnhalflife	gfx/vgui/640_tower.tga	gearbox/gfx/vgui/640_tower.tga
-johnhalflife	media/Blue-Shift01.mp3	gearbox/media/Half-Life02.mp3	bshift/media/Half-Life01.mp3
-johnhalflife	media/Blue-Shift02.mp3	gearbox/media/Half-Life08.mp3	bshift/media/Half-Life02.mp3
-johnhalflife	media/Blue-Shift03.mp3	gearbox/media/Half-Life10.mp3	bshift/media/Half-Life03.mp3
-johnhalflife	media/Blue-Shift04.mp3	gearbox/media/Half-Life01.mp3	bshift/media/Half-Life04.mp3
-johnhalflife	media/Blue-Shift05.mp3	gearbox/media/Half-Life09.mp3	bshift/media/Half-Life05.mp3
-johnhalflife	media/Blue-Shift07.mp3	gearbox/media/Half-Life15.mp3	bshift/media/Half-Life07.mp3
-johnhalflife	media/Blue-Shift08.mp3	gearbox/media/Suspense01.mp3	bshift/media/Half-Life08.mp3
-johnhalflife	media/Blue-Shift09.mp3	gearbox/media/Half-Life03.mp3	bshift/media/Half-Life09.mp3
-johnhalflife	media/Blue-Shift10.mp3	gearbox/media/Half-Life14.mp3	bshift/media/Half-Life10.mp3
-johnhalflife	media/Blue-Shift12.mp3	gearbox/media/Half-Life04.mp3	bshift/media/Half-Life12.mp3
-johnhalflife	media/Blue-Shift13.mp3	gearbox/media/Prospero02.mp3	bshift/media/Half-Life13.mp3
-johnhalflife	media/Blue-Shift14.mp3	gearbox/media/Prospero01.mp3	bshift/media/Half-Life14.mp3
-johnhalflife	media/Blue-Shift15.mp3	gearbox/media/Half-Life05.mp3	bshift/media/Half-Life15.mp3
-johnhalflife	media/Blue-Shift16.mp3	gearbox/media/Half-Life12.mp3	bshift/media/Half-Life16.mp3
-johnhalflife	media/Blue-ShiftProspero01.mp3	gearbox/media/Half-Life13.mp3	bshift/media/Prospero01.mp3
-johnhalflife	media/Blue-ShiftProspero02.mp3	gearbox/media/Suspense03.mp3	bshift/media/Prospero02.mp3
-johnhalflife	media/Blue-ShiftSuspense01.mp3	gearbox/media/Half-Life16.mp3	bshift/media/Suspense01.mp3
-johnhalflife	media/Blue-ShiftSuspense02.mp3	gearbox/media/Half-Life07.mp3	bshift/media/Suspense02.mp3
-johnhalflife	media/Blue-ShiftSuspense03.mp3	gearbox/media/Suspense02.mp3	bshift/media/Suspense03.mp3
-johnhalflife	media/Opposing-Force01.mp3	gearbox/media/Half-Life01.mp3	bshift/media/Half-Life04.mp3
-johnhalflife	media/Opposing-Force02.mp3	gearbox/media/Half-Life02.mp3	bshift/media/Half-Life01.mp3
-johnhalflife	media/Opposing-Force03.mp3	gearbox/media/Half-Life03.mp3	bshift/media/Half-Life09.mp3
-johnhalflife	media/Opposing-Force04.mp3	gearbox/media/Half-Life04.mp3	bshift/media/Half-Life12.mp3
-johnhalflife	media/Opposing-Force05.mp3	gearbox/media/Half-Life05.mp3	bshift/media/Half-Life15.mp3
-johnhalflife	media/Opposing-Force07.mp3	gearbox/media/Half-Life07.mp3	bshift/media/Suspense02.mp3
-johnhalflife	media/Opposing-Force08.mp3	gearbox/media/Half-Life08.mp3	bshift/media/Half-Life02.mp3
-johnhalflife	media/Opposing-Force09.mp3	gearbox/media/Half-Life09.mp3	bshift/media/Half-Life05.mp3
-johnhalflife	media/Opposing-Force10.mp3	gearbox/media/Half-Life10.mp3	bshift/media/Half-Life03.mp3
-johnhalflife	media/Opposing-Force12.mp3	gearbox/media/Half-Life12.mp3	bshift/media/Half-Life16.mp3
-johnhalflife	media/Opposing-Force13.mp3	gearbox/media/Half-Life13.mp3	bshift/media/Prospero01.mp3
-johnhalflife	media/Opposing-Force14.mp3	gearbox/media/Half-Life14.mp3	bshift/media/Half-Life10.mp3
-johnhalflife	media/Opposing-Force15.mp3	gearbox/media/Half-Life15.mp3	bshift/media/Half-Life07.mp3
-johnhalflife	media/Opposing-Force16.mp3	gearbox/media/Half-Life16.mp3	bshift/media/Suspense01.mp3
-johnhalflife	media/Opposing-ForceProspero01.mp3	gearbox/media/Prospero01.mp3	bshift/media/Half-Life14.mp3
-johnhalflife	media/Opposing-ForceProspero02.mp3	gearbox/media/Prospero02.mp3	bshift/media/Half-Life13.mp3
-johnhalflife	media/Opposing-ForceSuspense01.mp3	gearbox/media/Suspense01.mp3	bshift/media/Half-Life08.mp3
-johnhalflife	media/Opposing-ForceSuspense02.mp3	gearbox/media/Suspense02.mp3	bshift/media/Suspense03.mp3
-johnhalflife	media/Opposing-ForceSuspense03.mp3	gearbox/media/Suspense03.mp3	bshift/media/Prospero02.mp3
+johnhalflife	media/Blue-Shift01.mp3	bshift/media/Half-Life01.mp3	gearbox/media/Half-Life02.mp3
+johnhalflife	media/Blue-Shift02.mp3	bshift/media/Half-Life02.mp3	gearbox/media/Half-Life08.mp3
+johnhalflife	media/Blue-Shift03.mp3	bshift/media/Half-Life03.mp3	gearbox/media/Half-Life10.mp3
+johnhalflife	media/Blue-Shift04.mp3	bshift/media/Half-Life04.mp3	gearbox/media/Half-Life01.mp3
+johnhalflife	media/Blue-Shift05.mp3	bshift/media/Half-Life05.mp3	gearbox/media/Half-Life09.mp3
+johnhalflife	media/Blue-Shift07.mp3	bshift/media/Half-Life07.mp3	gearbox/media/Half-Life15.mp3
+johnhalflife	media/Blue-Shift08.mp3	bshift/media/Half-Life08.mp3	gearbox/media/Suspense01.mp3
+johnhalflife	media/Blue-Shift09.mp3	bshift/media/Half-Life09.mp3	gearbox/media/Half-Life03.mp3
+johnhalflife	media/Blue-Shift10.mp3	bshift/media/Half-Life10.mp3	gearbox/media/Half-Life14.mp3
+johnhalflife	media/Blue-Shift12.mp3	bshift/media/Half-Life12.mp3	gearbox/media/Half-Life04.mp3
+johnhalflife	media/Blue-Shift13.mp3	bshift/media/Half-Life13.mp3	gearbox/media/Prospero02.mp3
+johnhalflife	media/Blue-Shift14.mp3	bshift/media/Half-Life14.mp3	gearbox/media/Prospero01.mp3
+johnhalflife	media/Blue-Shift15.mp3	bshift/media/Half-Life15.mp3	gearbox/media/Half-Life05.mp3
+johnhalflife	media/Blue-Shift16.mp3	bshift/media/Half-Life16.mp3	gearbox/media/Half-Life12.mp3
+johnhalflife	media/Blue-ShiftProspero01.mp3	bshift/media/Prospero01.mp3	gearbox/media/Half-Life13.mp3
+johnhalflife	media/Blue-ShiftProspero02.mp3	bshift/media/Prospero02.mp3	gearbox/media/Suspense03.mp3
+johnhalflife	media/Blue-ShiftSuspense01.mp3	bshift/media/Suspense01.mp3	gearbox/media/Half-Life16.mp3
+johnhalflife	media/Blue-ShiftSuspense02.mp3	bshift/media/Suspense02.mp3	gearbox/media/Half-Life07.mp3
+johnhalflife	media/Blue-ShiftSuspense03.mp3	bshift/media/Suspense03.mp3	gearbox/media/Suspense02.mp3
+johnhalflife	media/Opposing-Force01.mp3	bshift/media/Half-Life04.mp3	gearbox/media/Half-Life01.mp3
+johnhalflife	media/Opposing-Force02.mp3	bshift/media/Half-Life01.mp3	gearbox/media/Half-Life02.mp3
+johnhalflife	media/Opposing-Force03.mp3	bshift/media/Half-Life09.mp3	gearbox/media/Half-Life03.mp3
+johnhalflife	media/Opposing-Force04.mp3	bshift/media/Half-Life12.mp3	gearbox/media/Half-Life04.mp3
+johnhalflife	media/Opposing-Force05.mp3	bshift/media/Half-Life15.mp3	gearbox/media/Half-Life05.mp3
+johnhalflife	media/Opposing-Force07.mp3	bshift/media/Suspense02.mp3	gearbox/media/Half-Life07.mp3
+johnhalflife	media/Opposing-Force08.mp3	bshift/media/Half-Life02.mp3	gearbox/media/Half-Life08.mp3
+johnhalflife	media/Opposing-Force09.mp3	bshift/media/Half-Life05.mp3	gearbox/media/Half-Life09.mp3
+johnhalflife	media/Opposing-Force10.mp3	bshift/media/Half-Life03.mp3	gearbox/media/Half-Life10.mp3
+johnhalflife	media/Opposing-Force12.mp3	bshift/media/Half-Life16.mp3	gearbox/media/Half-Life12.mp3
+johnhalflife	media/Opposing-Force13.mp3	bshift/media/Prospero01.mp3	gearbox/media/Half-Life13.mp3
+johnhalflife	media/Opposing-Force14.mp3	bshift/media/Half-Life10.mp3	gearbox/media/Half-Life14.mp3
+johnhalflife	media/Opposing-Force15.mp3	bshift/media/Half-Life07.mp3	gearbox/media/Half-Life15.mp3
+johnhalflife	media/Opposing-Force16.mp3	bshift/media/Suspense01.mp3	gearbox/media/Half-Life16.mp3
+johnhalflife	media/Opposing-ForceProspero01.mp3	bshift/media/Half-Life14.mp3	gearbox/media/Prospero01.mp3
+johnhalflife	media/Opposing-ForceProspero02.mp3	bshift/media/Half-Life13.mp3	gearbox/media/Prospero02.mp3
+johnhalflife	media/Opposing-ForceSuspense01.mp3	bshift/media/Half-Life08.mp3	gearbox/media/Suspense01.mp3
+johnhalflife	media/Opposing-ForceSuspense02.mp3	bshift/media/Suspense03.mp3	gearbox/media/Suspense02.mp3
+johnhalflife	media/Opposing-ForceSuspense03.mp3	bshift/media/Prospero02.mp3	gearbox/media/Suspense03.mp3
 johnhalflife	models/ba_holo.mdl	bshift/models/ba_holo.mdl
 johnhalflife	models/baby_strooper.mdl	gearbox/models/baby_strooper.mdl
 johnhalflife	models/baby_voltigore.mdl	gearbox/models/baby_voltigore.mdl
@@ -114,6 +155,8 @@ johnhalflife	models/blkop_enginegibs.mdl	gearbox/models/blkop_enginegibs.mdl
 johnhalflife	models/blkop_osprey.mdl	gearbox/models/blkop_osprey.mdl
 johnhalflife	models/blkop_ospreyt.mdl	gearbox/models/blkop_ospreyt.mdl
 johnhalflife	models/blkop_tailgibs.mdl	gearbox/models/blkop_tailgibs.mdl
+johnhalflife	models/bshift/v_chub.mdl	bshift/models/v_chub.mdl	valve/models/v_chub.mdl
+johnhalflife	models/bshift/v_hgun.mdl	bshift/models/v_hgun.mdl	valve/models/v_hgun.mdl
 johnhalflife	models/chair.mdl	bshift/models/chair.mdl
 johnhalflife	models/chumtoad.mdl	bshift/models/chumtoad.mdl
 johnhalflife	models/civ_stand.mdl	gearbox/models/civ_stand.mdl
@@ -128,7 +171,7 @@ johnhalflife	models/gun_mag.mdl	bshift/models/gun_mag.mdl
 johnhalflife	models/hassassin.mdl	gearbox/models/hassassin.mdl
 johnhalflife	models/kosobar.mdl	gearbox/models/kosobar.mdl
 johnhalflife	models/mil_stand.mdl	gearbox/models/mil_stand.mdl
-johnhalflife	models/mini_apache.mdl	gearbox/models/mini_apache.mdl	bshift/models/mini_apache.mdl
+johnhalflife	models/mini_apache.mdl	bshift/models/mini_apache.mdl	gearbox/models/mini_apache.mdl
 johnhalflife	models/mini_osprey.mdl	gearbox/models/mini_osprey.mdl
 johnhalflife	models/mini_osprey_bodygibs.mdl	gearbox/models/mini_osprey_bodygibs.mdl
 johnhalflife	models/mini_osprey_enginegibs.mdl	gearbox/models/mini_osprey_enginegibs.mdl
@@ -244,23 +287,23 @@ johnhalflife	models/xen_rockgib_small.mdl	bshift/models/xen_rockgib_small.mdl
 johnhalflife	models/xen_rockgibs.mdl	bshift/models/xen_rockgibs.mdl
 johnhalflife	op4ctf.wad	gearbox/op4ctf.wad
 johnhalflife	opfor.wad	gearbox/OPFOR.WAD
-johnhalflife	sound/ambience/alienflyby2.wav	gearbox/sound/ambience/alienflyby2.wav	bshift/sound/ambience/alienflyby2.wav
+johnhalflife	sound/ambience/alienflyby2.wav	bshift/sound/ambience/alienflyby2.wav	gearbox/sound/ambience/alienflyby2.wav
 johnhalflife	sound/ambience/bigrumble.wav	bshift/sound/ambience/bigrumble.wav
-johnhalflife	sound/ambience/electrical_hum1.wav	gearbox/sound/ambience/electrical_hum1.wav	bshift/sound/ambience/electrical_hum1.wav
-johnhalflife	sound/ambience/electrical_hum2.wav	gearbox/sound/ambience/electrical_hum2.wav	bshift/sound/ambience/electrical_hum2.wav
-johnhalflife	sound/ambience/fluorescent.wav	gearbox/sound/ambience/fluorescent.wav	bshift/sound/ambience/fluorescent.wav
+johnhalflife	sound/ambience/electrical_hum1.wav	bshift/sound/ambience/electrical_hum1.wav	gearbox/sound/ambience/electrical_hum1.wav
+johnhalflife	sound/ambience/electrical_hum2.wav	bshift/sound/ambience/electrical_hum2.wav	gearbox/sound/ambience/electrical_hum2.wav
+johnhalflife	sound/ambience/fluorescent.wav	bshift/sound/ambience/fluorescent.wav	gearbox/sound/ambience/fluorescent.wav
 johnhalflife	sound/ambience/freezer_fan.wav	bshift/sound/ambience/freezer_fan.wav
-johnhalflife	sound/ambience/industrial5.wav	gearbox/sound/ambience/industrial5.wav	bshift/sound/ambience/industrial5.wav
+johnhalflife	sound/ambience/industrial5.wav	bshift/sound/ambience/industrial5.wav	gearbox/sound/ambience/industrial5.wav
 johnhalflife	sound/ambience/littlemachine2.wav	bshift/sound/ambience/littlemachine2.wav
 johnhalflife	sound/ambience/mgun1.wav	gearbox/sound/ambience/mgun1.wav
 johnhalflife	sound/ambience/mgun_background_01.wav	bshift/sound/ambience/mgun_background_01.wav
 johnhalflife	sound/ambience/mgun_background_02.wav	bshift/sound/ambience/mgun_background_02.wav
 johnhalflife	sound/ambience/mortar_background_01.wav	bshift/sound/ambience/mortar_background_01.wav
 johnhalflife	sound/ambience/osprey_rotors.wav	gearbox/sound/ambience/osprey_rotors.wav
-johnhalflife	sound/ambience/water_flowing1.wav	gearbox/sound/ambience/water_flowing1.wav	bshift/sound/ambience/water_flowing1.wav
-johnhalflife	sound/ambience/water_flowing2.wav	gearbox/sound/ambience/water_flowing2.wav	bshift/sound/ambience/water_flowing2.wav
-johnhalflife	sound/ambience/water_flowing3.wav	gearbox/sound/ambience/water_flowing3.wav	bshift/sound/ambience/water_flowing3.wav
-johnhalflife	sound/ambience/waterrun.wav	gearbox/sound/ambience/waterrun.wav	bshift/sound/ambience/waterrun.wav
+johnhalflife	sound/ambience/water_flowing1.wav	bshift/sound/ambience/water_flowing1.wav	gearbox/sound/ambience/water_flowing1.wav
+johnhalflife	sound/ambience/water_flowing2.wav	bshift/sound/ambience/water_flowing2.wav	gearbox/sound/ambience/water_flowing2.wav
+johnhalflife	sound/ambience/water_flowing3.wav	bshift/sound/ambience/water_flowing3.wav	gearbox/sound/ambience/water_flowing3.wav
+johnhalflife	sound/ambience/waterrun.wav	bshift/sound/ambience/waterrun.wav	gearbox/sound/ambience/waterrun.wav
 johnhalflife	sound/ba_holo/tr_holo_4jumps.wav	bshift/sound/ba_holo/tr_holo_4jumps.wav
 johnhalflife	sound/ba_holo/tr_holo_armor.wav	bshift/sound/ba_holo/tr_holo_armor.wav
 johnhalflife	sound/ba_holo/tr_holo_breakbox.wav	bshift/sound/ba_holo/tr_holo_breakbox.wav
@@ -322,6 +365,7 @@ johnhalflife	sound/barney/ba_pok2.wav	bshift/sound/barney/ba_pok2.wav
 johnhalflife	sound/barney/ba_pok3.wav	bshift/sound/barney/ba_pok3.wav
 johnhalflife	sound/barney/ba_power1.wav	bshift/sound/barney/ba_power1.wav
 johnhalflife	sound/barney/ba_power2.wav	bshift/sound/barney/ba_power2.wav
+johnhalflife	sound/barney/ba_power3.wav	bshift/sound/barney/ba_power3.wav	valve/sound/barney/c1a2_ba_2zomb.wav
 johnhalflife	sound/barney/ba_power4.wav	bshift/sound/barney/ba_power4.wav
 johnhalflife	sound/barney/ba_power_wound1.wav	bshift/sound/barney/ba_power_wound1.wav
 johnhalflife	sound/barney/ba_power_wound2.wav	bshift/sound/barney/ba_power_wound2.wav
@@ -360,9 +404,11 @@ johnhalflife	sound/common/null.wav	valve/sound/common/null.wav
 johnhalflife	sound/common/splash_large.wav	gearbox/sound/common/splash_large.wav
 johnhalflife	sound/ctf/bm_flagtaken.wav	gearbox/sound/ctf/bm_flagtaken.wav
 johnhalflife	sound/ctf/civ_flag_capture.wav	gearbox/sound/ctf/civ_flag_capture.wav
+johnhalflife	sound/ctf/itemthrow.wav	gearbox/sound/ctf/itemthrow.wav	bshift/sound/common/bodydrop4.wav	gearbox/sound/scientist/bodydrop4.wav	valve/sound/common/bodydrop4.wav
 johnhalflife	sound/ctf/marine_flag_capture.wav	gearbox/sound/ctf/marine_flag_capture.wav
 johnhalflife	sound/ctf/pow_armor_charge.wav	gearbox/sound/ctf/pow_armor_charge.wav	gearbox/CTF Manual/resources/pow_armor_charge.wav
-johnhalflife	sound/ctf/pow_big_jump.wav	gearbox/sound/ctf/pow_big_jump.wav	gearbox/CTF Manual/resources/pow_big_jump.wav	bshift/sound/player/pl_long_jump.wav
+johnhalflife	sound/ctf/pow_backpack.wav	gearbox/sound/ctf/pow_backpack.wav	bshift/sound/buttons/blip1.wav	gearbox/CTF Manual/resources/pow_backpack.wav	valve/sound/buttons/blip1.wav
+johnhalflife	sound/ctf/pow_big_jump.wav	gearbox/sound/ctf/pow_big_jump.wav	bshift/sound/player/pl_long_jump.wav	gearbox/CTF Manual/resources/pow_big_jump.wav
 johnhalflife	sound/ctf/pow_health_charge.wav	gearbox/sound/ctf/pow_health_charge.wav	gearbox/CTF Manual/resources/pow_health_charge.wav
 johnhalflife	sound/ctf/soldier_flagtaken.wav	gearbox/sound/ctf/soldier_flagtaken.wav
 johnhalflife	sound/debris/alien_teleport.wav	bshift/sound/debris/alien_teleport.wav
@@ -748,9 +794,16 @@ johnhalflife	sound/misc/main_elevator.wav	bshift/sound/misc/main_elevator.wav
 johnhalflife	sound/misc/main_elevator_catch.wav	bshift/sound/misc/main_elevator_catch.wav
 johnhalflife	sound/misc/main_elevator_fall.wav	bshift/sound/misc/main_elevator_fall.wav
 johnhalflife	sound/misc/main_elevator_stop.wav	bshift/sound/misc/main_elevator_stop.wav
+johnhalflife	sound/misc/metal5.wav	gearbox/sound/misc/metal5.wav	bshift/sound/debris/metal5.wav	valve/sound/debris/metal5.wav
 johnhalflife	sound/misc/osprey_takeoff.wav	gearbox/sound/misc/osprey_takeoff.wav
 johnhalflife	sound/misc/outro_truck.wav	bshift/sound/misc/outro_truck.wav
 johnhalflife	sound/misc/reveille1.wav	gearbox/sound/misc/reveille1.wav
+johnhalflife	sound/misc/spark1.wav	gearbox/sound/misc/spark1.wav	bshift/sound/buttons/spark1.wav	valve/sound/buttons/spark1.wav
+johnhalflife	sound/misc/spark2.wav	gearbox/sound/misc/spark2.wav	bshift/sound/buttons/spark2.wav	valve/sound/buttons/spark2.wav
+johnhalflife	sound/misc/spark3.wav	gearbox/sound/misc/spark3.wav	bshift/sound/buttons/spark3.wav	valve/sound/buttons/spark3.wav
+johnhalflife	sound/misc/spark4.wav	gearbox/sound/misc/spark4.wav	bshift/sound/buttons/spark4.wav	valve/sound/buttons/spark4.wav
+johnhalflife	sound/misc/spark5.wav	gearbox/sound/misc/spark5.wav	bshift/sound/buttons/spark5.wav	valve/sound/buttons/spark5.wav
+johnhalflife	sound/misc/spark6.wav	gearbox/sound/misc/spark6.wav	bshift/sound/buttons/spark6.wav	valve/sound/buttons/spark6.wav
 johnhalflife	sound/misc/splash_large.wav	bshift/sound/misc/splash_large.wav
 johnhalflife	sound/misc/splash_metal.wav	bshift/sound/misc/splash_metal.wav
 johnhalflife	sound/misc/talk.wav	valve/sound/misc/talk.wav
@@ -800,7 +853,7 @@ johnhalflife	sound/otis/gladof.wav	gearbox/sound/otis/gladof.wav
 johnhalflife	sound/otis/go_on.wav	gearbox/sound/otis/go_on.wav
 johnhalflife	sound/otis/gotone.wav	gearbox/sound/otis/gotone.wav
 johnhalflife	sound/otis/hearsomething.wav	gearbox/sound/otis/hearsomething.wav
-johnhalflife	sound/otis/hell.wav	gearbox/sound/otis/hell.wav	bshift/sound/otis/hell.wav
+johnhalflife	sound/otis/hell.wav	bshift/sound/otis/hell.wav	gearbox/sound/otis/hell.wav
 johnhalflife	sound/otis/hello.wav	gearbox/sound/otis/hello.wav
 johnhalflife	sound/otis/help.wav	gearbox/sound/otis/help.wav
 johnhalflife	sound/otis/hey.wav	gearbox/sound/otis/hey.wav
@@ -814,7 +867,7 @@ johnhalflife	sound/otis/janitor.wav	gearbox/sound/otis/janitor.wav
 johnhalflife	sound/otis/job.wav	gearbox/sound/otis/job.wav
 johnhalflife	sound/otis/joinyou.wav	gearbox/sound/otis/joinyou.wav
 johnhalflife	sound/otis/leavealone.wav	gearbox/sound/otis/leavealone.wav
-johnhalflife	sound/otis/leftovers.wav	gearbox/sound/otis/leftovers.wav	bshift/sound/otis/leftovers.wav
+johnhalflife	sound/otis/leftovers.wav	bshift/sound/otis/leftovers.wav	gearbox/sound/otis/leftovers.wav
 johnhalflife	sound/otis/letsgo.wav	gearbox/sound/otis/letsgo.wav
 johnhalflife	sound/otis/live.wav	gearbox/sound/otis/live.wav
 johnhalflife	sound/otis/mall.wav	gearbox/sound/otis/mall.wav
@@ -1085,8 +1138,11 @@ johnhalflife	sound/rosenberg/ro_yard_rose3.wav	bshift/sound/rosenberg/ro_yard_ro
 johnhalflife	sound/rosenberg/ro_yard_rose4.wav	bshift/sound/rosenberg/ro_yard_rose4.wav
 johnhalflife	sound/rosenberg/ro_yard_scanner.wav	bshift/sound/rosenberg/ro_yard_scanner.wav
 johnhalflife	sound/scientist/advance.wav	gearbox/sound/scientist/advance.wav
+johnhalflife	sound/scientist/bodydrop1.wav	gearbox/sound/scientist/bodydrop1.wav	bshift/sound/common/bodydrop1.wav	valve/sound/common/bodydrop1.wav
+johnhalflife	sound/scientist/bodydrop4.wav	gearbox/sound/scientist/bodydrop4.wav	bshift/sound/common/bodydrop4.wav	gearbox/sound/ctf/itemthrow.wav	valve/sound/common/bodydrop4.wav
 johnhalflife	sound/scientist/corporal.wav	gearbox/sound/scientist/corporal.wav
 johnhalflife	sound/scientist/fix.wav	gearbox/sound/scientist/fix.wav
+johnhalflife	sound/scientist/g_bounce1.wav	gearbox/sound/scientist/g_bounce1.wav	bshift/sound/weapons/g_bounce1.wav	valve/sound/weapons/g_bounce1.wav
 johnhalflife	sound/scientist/getalong.wav	gearbox/sound/scientist/getalong.wav
 johnhalflife	sound/scientist/needsleep.wav	valve/sound/scientist/needsleep.wav
 johnhalflife	sound/scientist/of1a1_sc01.wav	gearbox/sound/scientist/of1a1_sc01.wav
@@ -1324,7 +1380,12 @@ johnhalflife	sprites/glow_red.spr	gearbox/sprites/glow_red.spr
 johnhalflife	sprites/glow_ylo.spr	gearbox/sprites/glow_ylo.spr
 johnhalflife	sprites/gworm_beam.spr	gearbox/sprites/gworm_beam.spr
 johnhalflife	sprites/gworm_beam_02.spr	gearbox/sprites/gworm_beam_02.spr
+johnhalflife	sprites/hud1.spr	bshift/sprites/640hud1.spr	valve/sprites/640hud1.spr
+johnhalflife	sprites/hud4.spr	valve/sprites/640hud4.spr
+johnhalflife	sprites/hud5.spr	valve/sprites/640hud5.spr
 johnhalflife	sprites/hud_mode.spr	bshift/sprites/hud_mode.spr
+johnhalflife	sprites/hud_pain.spr	bshift/sprites/640_pain.spr	valve/sprites/1280_pain.spr	valve/sprites/2560_pain.spr	valve/sprites/640_pain.spr
+johnhalflife	sprites/hud_train.spr	bshift/sprites/640_train.spr	valve/sprites/1280_train.spr	valve/sprites/2560_train.spr	valve/sprites/640_train.spr
 johnhalflife	sprites/interlace.spr	bshift/sprites/interlace.spr
 johnhalflife	sprites/invisible.spr	gearbox/sprites/invisible.spr
 johnhalflife	sprites/laserdot.spr	valve/sprites/laserdot.spr
