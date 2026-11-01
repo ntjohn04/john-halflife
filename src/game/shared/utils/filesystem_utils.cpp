@@ -17,6 +17,7 @@
 #include <cassert>
 #include <limits>
 #include <string>
+#include <unordered_map>
 
 #include "Platform.h"
 #include "PlatformHeaders.h"
@@ -233,6 +234,20 @@ time_t FileSystem_GetFileTime(const char* fileName)
 
 	return value;
 #endif
+}
+
+bool FileSystem_SoundExists(const char* name)
+{
+	static std::unordered_map<std::string, bool> known;
+
+	if (const auto it = known.find(name); it != known.end())
+	{
+		return it->second;
+	}
+
+	const bool exists = g_pFileSystem && g_pFileSystem->FileExists(("sound/" + std::string(name)).c_str());
+	known.emplace(name, exists);
+	return exists;
 }
 
 bool FileSystem_CompareFileTime(const char* filename1, const char* filename2, int* iCompare)

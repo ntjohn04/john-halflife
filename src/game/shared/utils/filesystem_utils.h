@@ -79,6 +79,12 @@ time_t FileSystem_GetFileTime(const char* fileName);
  */
 bool FileSystem_CompareFileTime(const char* filename1, const char* filename2, int* iCompare);
 
+/**
+ *	@brief johnhalflife: whether a sound (sound/name) is in the game's folders, asked once per name. MMod's sounds
+ *	(mmod_port) are only there if installed; without them the game plays vanilla's (docs: MMod assets).
+ */
+bool FileSystem_SoundExists(const char* name);
+
 enum class FileContentFormat
 {
 	Binary = 0,

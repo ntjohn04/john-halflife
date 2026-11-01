@@ -23,6 +23,7 @@
 #include "pm_debug.h"
 #include "sound/MaterialSystem.h"
 #include "jhl_framerate.h"
+#include "utils/filesystem_utils.h"
 
 #ifndef CLIENT_DLL
 #include "sound/ServerSoundSystem.h"
@@ -85,6 +86,22 @@ static void PM_TraceModel(physent_t* pEnt, const Vector& start, const Vector& en
 {
 	PM_InitTrace(trace, end);
 	pmove->PM_TraceModel(pEnt, start, end, trace);
+}
+
+// johnhalflife: one of these sounds at random, of those installed (MMod adds to vanilla's, mmod_port); none if none is.
+template <std::size_t Count>
+const char* PM_PickInstalledSound(const char* const (&sounds)[Count])
+{
+	const char* installed[Count];
+	std::size_t count = 0;
+
+	for (const char* sound : sounds)
+	{
+		if (FileSystem_SoundExists(sound))
+			installed[count++] = sound;
+	}
+
+	return count > 0 ? installed[pmove->RandomLong(0, static_cast<int>(count) - 1)] : nullptr;
 }
 
 void PM_PlaySound(int channel, const char* sample, float volume, float attenuation, int fFlags, int pitch)
@@ -413,7 +430,8 @@ int PM_MapTextureTypeStepType(char chTextureType)
 	case CHAR_TEX_WOOD:
 	case CHAR_TEX_XEN_SHELL:
 	case CHAR_TEX_SWAMP_BOARDS:
-		return STEP_WOOD;
+		// MMod's wood steps (mmod_port); without them, the usual step, as in vanilla.
+		return FileSystem_SoundExists("player/pl_wood1.wav") ? STEP_WOOD : STEP_CONCRETE;
 	case CHAR_TEX_FLESH:
 	case CHAR_TEX_ORGANIC:
 		return STEP_FLESH;
@@ -2563,8 +2581,10 @@ void PM_Jump()
 			// Jump effort sound, then a quieter push-off step.
 			static const char* const JumpSounds[] = {"player/pl_jump1.wav", "player/pl_jump2.wav", "player/pl_jump3.wav"};
 
-			PM_PlaySound(CHAN_AUTO, JumpSounds[pmove->RandomLong(0, std::size(JumpSounds) - 1)],
-				pmove->RandomFloat(0.55, 0.65), ATTN_NORM, 0, pmove->RandomLong(90, 100));
+			if (const char* sound = PM_PickInstalledSound(JumpSounds))
+			{
+				PM_PlaySound(CHAN_AUTO, sound, pmove->RandomFloat(0.55, 0.65), ATTN_NORM, 0, pmove->RandomLong(90, 100));
+			}
 
 			PM_PlayStepSound(PM_MapTextureTypeStepType(pmove->chtexturetype), 0.75);
 		}
@@ -2600,7 +2620,9 @@ void PM_Jump()
 			}
 			else
 			{
-				PM_PlaySound(CHAN_VOICE, "items/power_jump.wav", VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
+				// MMod's (mmod_port); without it, none, as in vanilla.
+				if (FileSystem_SoundExists("items/power_jump.wav"))
+					PM_PlaySound(CHAN_VOICE, "items/power_jump.wav", VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 			}
 		}
 		else
@@ -2744,8 +2766,10 @@ void PM_CheckFalling()
 			{
 				static const char* const LandSounds[] = {"player/pl_jumpland1.wav", "player/pl_jumpland2.wav", "player/pl_jumpland3.wav"};
 
-				PM_PlaySound(CHAN_VOICE, LandSounds[pmove->RandomLong(0, std::size(LandSounds) - 1)],
-					VOL_NORM, ATTN_NORM, 0, pmove->RandomLong(90, 100));
+				if (const char* sound = PM_PickInstalledSound(LandSounds))
+				{
+					PM_PlaySound(CHAN_VOICE, sound, VOL_NORM, ATTN_NORM, 0, pmove->RandomLong(90, 100));
+				}
 
 				// play step sound for current texture
 				PM_PlayStepSound(PM_MapTextureTypeStepType(pmove->chtexturetype), fvol);
