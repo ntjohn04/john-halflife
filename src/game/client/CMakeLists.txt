@@ -145,6 +145,8 @@ target_sources(client PRIVATE
 	jhl_rings.h
 	jhl_settings.cpp
 	jhl_settings.h
+	jhl_mapconvert.cpp
+	jhl_mapconvert.h
 	jhl_setup.cpp
 	jhl_setup.h
 	jhl_tracers.cpp

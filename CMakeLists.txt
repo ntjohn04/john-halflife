@@ -155,6 +155,12 @@ endfunction()
 add_subdirectory(src/game/client)
 add_subdirectory(src/game/server)
 
+# Checks the first start's map conversion against the Unified SDK's ContentInstaller (see the source); not part of
+# the build: cmake --build . --config Release --target mapconvert_check
+add_executable(mapconvert_check EXCLUDE_FROM_ALL scripts/mapconvert_check.cpp src/game/client/jhl_mapconvert.cpp)
+target_include_directories(mapconvert_check PRIVATE src/game/client)
+target_compile_features(mapconvert_check PRIVATE cxx_std_20)
+
 add_custom_target(ProjectInfo
 	COMMAND ${CMAKE_COMMAND}
 		-D HalfLifeMod_VERSION_MAJOR=${HalfLifeMod_VERSION_MAJOR}
