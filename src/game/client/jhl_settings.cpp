@@ -31,7 +31,8 @@ struct RecommendedSetting
 // The dialog's settings are applied on first launch too (the defaults are the recommended values). Raise the version
 // when changing the list so existing players get the new values once. 2: all of them, not only crosshair_scale,
 // m_rawinput and jhl_gore (a clean install's config had someone's own settings: 60 fps, a strafe roll three times ours).
-constexpr int RecommendedSettingsVersion = 2;
+// 3: crosshair, the engine's default being off.
+constexpr int RecommendedSettingsVersion = 3;
 
 // Applied on first launch and by a reset: every setting listed in the John Settings dialog (config/mod/user.scr), and
 // only those. Keep in sync with that file, whose defaults should match. jhl_gore: the content lock isn't used, so
@@ -57,6 +58,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_fx_tracers", "1"},
 	{"jhl_hud_scale", "1"},
 	{"jhl_snd_vanilla", "1"},
+	{"crosshair", "1"},
 	{"crosshair_scale", "2"},
 	{"default_fov", "105"},
 	{"fps_override", "1"},

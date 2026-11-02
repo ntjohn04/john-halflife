@@ -69,8 +69,8 @@ the bug fixes, revert the drift).
 
 One zip for Windows and Linux, made by hand when there's one to make (no automated builds):
 
-1. Windows: build, then install to a staging folder (not the game):
-   `cmake --install <build folder> --config Release --prefix <staging>/windows/johnhalflife`
+1. Windows: build the `INSTALL` target, whose install folder (`CMAKE_INSTALL_PREFIX`) is a staging folder,
+   `<staging>/windows/johnhalflife`, never the game's.
 2. Linux (Ubuntu 22.04, e.g. WSL): `scripts/linux/build.sh` (installs to `~/jhl-build-linux/install`).
 3. `python scripts/package_release.py --windows <staging>/windows --linux <Linux staging> --unified
    HalfLifeUnified-V1.0.0.zip` (from Windows, WSL's Linux staging is
@@ -78,6 +78,10 @@ One zip for Windows and Linux, made by hand when there's one to make (no automat
    `dist/johnhalflife-v<version>-<release type>.zip`.
 4. Version, changelog row and tag as for any version ([Versioning](README.md#versioning)); upload the zip to the
    GitHub release.
+
+Testing goes the same way, so what's played is what players get: build, then `package_release.py` with
+`--install <Half-Life folder>`, which extracts the zip into the game (without `--linux` it makes a Windows-only zip,
+`...-windows-test.zip`, for that). Extracting over an install doesn't remove files a newer build no longer has.
 
 The packager needs no Half-Life install: the Unified SDK's files it ships are listed in
 `scripts/release_unified_files.txt` and the vanilla NPC speeds in `scripts/npc_speeds.txt` (names and numbers only,

@@ -188,6 +188,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"crosshair"
+	{
+		"Vanilla | Crosshair"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"crosshair_scale"
 	{
 		"Vanilla | Crosshair scale"
