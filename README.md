@@ -5,8 +5,20 @@ An MMod-inspired mod for Half-Life, Opposing Force and Blue Shift, built on the
 models and adds reserved takes on MMod's camera, movement and weapon feel; every feature can be switched
 off in the console to compare with vanilla.
 
-Status: pre-alpha ([versions](#versions)). MMod's files are not included in this repository; a few features use
-them when installed (see [MMod assets](#mmod-assets)), and work without them.
+Status: pre-alpha ([versions](#versions)), no download yet. MMod's files are not included; a few features use them
+when installed (see [MMod assets](#mmod-assets)), and work without them.
+
+## Install
+
+Needs Half-Life on Steam, on Windows or Linux. Opposing Force and Blue Shift are optional: their campaigns appear if
+you have them. macOS isn't supported (Half-Life itself doesn't run on current macOS).
+
+1. Extract the zip into your Half-Life folder (in Steam: right-click Half-Life → Manage → Browse local files), so
+   the `johnhalflife` folders sit next to `valve`.
+2. Restart Steam: John Half-Life (and its Opposing Force, Blue Shift and Uplink games) appear in your library.
+3. Play. The first start shows a black screen for a few seconds while it sets itself up from your games.
+
+To update, extract the new zip over the old one.
 
 ## Principles
 
@@ -95,8 +107,8 @@ ships Opposing Force and Blue Shift on top of Half-Life.
 
 ## MMod assets
 
-A few features use MMod's files when they're installed (they're never in this repository); without them,
-those features work with vanilla's. They are:
+A few features use MMod's files when they're installed (they're never in this repository or the release); without
+them, those features work with vanilla's. They are:
 
 * **Movement:** jump, landing, long jump and wood footstep sounds, and MMod's texture material table.
 * **Weapon switch:** 15 draw sounds.
@@ -124,6 +136,12 @@ those features work with vanilla's. They are:
 ## Open items
 
 * Opposing Force weapons without an MMod counterpart still use the crowbar's switch sound as a placeholder.
+
+## Building from source
+
+Windows (Visual Studio) and Linux (Ubuntu 22.04, or WSL) builds, then one script that makes the zip from both:
+[Making a release](docs/johnhalflife/release.md#making-a-release). Testing goes the same way, the zip extracted into
+the game, so what's played is what players get.
 
 ## Documentation
 
