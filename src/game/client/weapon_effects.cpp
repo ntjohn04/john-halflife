@@ -1582,7 +1582,7 @@ void BulletWaterSplash(const Vector& surfacePosition)
 	// Stock droplet spray (grey-white).
 	SplashSprite("sprites/wsplash3.spr", surfacePosition + up * 4, gEngfuncs.pfnRandomFloat(0.25f, 0.35f), 0.5f, kRenderTransAdd, 20);
 
-	// Ripple ring lying flat on the surface (MMod's sprite, see mmod_port; skipped if it isn't installed).
+	// Ripple ring lying flat on the surface (skipped until its sprite is made).
 	if (TEMPENTITY* ring = SplashSprite("sprites/water_splash_ring.spr", surfacePosition + up, gEngfuncs.pfnRandomFloat(0.35f, 0.5f), 0.3f, kRenderTransAdd, 18); ring)
 	{
 		ring->entity.angles = {90, 0, 0};

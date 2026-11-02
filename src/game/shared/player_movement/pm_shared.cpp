@@ -23,7 +23,6 @@
 #include "pm_debug.h"
 #include "sound/MaterialSystem.h"
 #include "jhl_framerate.h"
-#include "utils/filesystem_utils.h"
 
 #ifndef CLIENT_DLL
 #include "sound/ServerSoundSystem.h"
@@ -62,8 +61,7 @@ playermove_t* pmove = nullptr;
 #define STEP_WADE 7		// wading in liquid
 #define STEP_LADDER 8	// climbing ladder
 #define STEP_SNOW 9		// snow
-#define STEP_WOOD 10	// wood
-#define STEP_FLESH 11	// flesh and other organic surfaces
+#define STEP_FLESH 10	// flesh
 
 const float MaxJetpackSpeed = 400.f;
 const float JetpackVerticalAccelerationPerSecond = MaxJetpackSpeed * 8;
@@ -86,22 +84,6 @@ static void PM_TraceModel(physent_t* pEnt, const Vector& start, const Vector& en
 {
 	PM_InitTrace(trace, end);
 	pmove->PM_TraceModel(pEnt, start, end, trace);
-}
-
-// johnhalflife: one of these sounds at random, of those installed (MMod adds to vanilla's, mmod_port); none if none is.
-template <std::size_t Count>
-const char* PM_PickInstalledSound(const char* const (&sounds)[Count])
-{
-	const char* installed[Count];
-	std::size_t count = 0;
-
-	for (const char* sound : sounds)
-	{
-		if (FileSystem_SoundExists(sound))
-			installed[count++] = sound;
-	}
-
-	return count > 0 ? installed[pmove->RandomLong(0, static_cast<int>(count) - 1)] : nullptr;
 }
 
 void PM_PlaySound(int channel, const char* sample, float volume, float attenuation, int fFlags, int pitch)
@@ -358,25 +340,6 @@ void PM_PlayStepSound(int step, float fvol)
 			break;
 		}
 		break;
-	case STEP_WOOD:
-		switch (irand)
-		{
-		// right foot
-		case 0:
-			PM_PlaySound(CHAN_BODY, "player/pl_wood1.wav", fvol, ATTN_NORM, 0, PITCH_NORM);
-			break;
-		case 1:
-			PM_PlaySound(CHAN_BODY, "player/pl_wood3.wav", fvol, ATTN_NORM, 0, PITCH_NORM);
-			break;
-		// left foot
-		case 2:
-			PM_PlaySound(CHAN_BODY, "player/pl_wood2.wav", fvol, ATTN_NORM, 0, PITCH_NORM);
-			break;
-		case 3:
-			PM_PlaySound(CHAN_BODY, "player/pl_wood4.wav", fvol, ATTN_NORM, 0, PITCH_NORM);
-			break;
-		}
-		break;
 	case STEP_FLESH:
 	{
 		// Squelchy: the puddle sounds pitched down.
@@ -415,7 +378,6 @@ int PM_MapTextureTypeStepType(char chTextureType)
 	case CHAR_TEX_COMPUTER:
 		return STEP_METAL;
 	case CHAR_TEX_DIRT:
-	case CHAR_TEX_XEN_GROUND:
 		return STEP_DIRT;
 	case CHAR_TEX_VENT:
 		return STEP_VENT;
@@ -427,13 +389,7 @@ int PM_MapTextureTypeStepType(char chTextureType)
 		return STEP_SLOSH;
 	case CHAR_TEX_SNOW:
 		return STEP_SNOW;
-	case CHAR_TEX_WOOD:
-	case CHAR_TEX_XEN_SHELL:
-	case CHAR_TEX_SWAMP_BOARDS:
-		// MMod's wood steps (mmod_port); without them, the usual step, as in vanilla.
-		return FileSystem_SoundExists("player/pl_wood1.wav") ? STEP_WOOD : STEP_CONCRETE;
 	case CHAR_TEX_FLESH:
-	case CHAR_TEX_ORGANIC:
 		return STEP_FLESH;
 	}
 }
@@ -571,7 +527,6 @@ void PM_UpdateStepSound()
 				break;
 
 			case CHAR_TEX_DIRT:
-			case CHAR_TEX_XEN_GROUND:
 				fvol = fWalking ? 0.25 : 0.55;
 				pmove->flTimeStepSound = fWalking ? 400 : 300;
 				break;
@@ -2578,15 +2533,7 @@ void PM_Jump()
 		}
 		else
 		{
-			// Jump effort sound, then a quieter push-off step.
-			static const char* const JumpSounds[] = {"player/pl_jump1.wav", "player/pl_jump2.wav", "player/pl_jump3.wav"};
-
-			if (const char* sound = PM_PickInstalledSound(JumpSounds))
-			{
-				PM_PlaySound(CHAN_AUTO, sound, pmove->RandomFloat(0.55, 0.65), ATTN_NORM, 0, pmove->RandomLong(90, 100));
-			}
-
-			PM_PlayStepSound(PM_MapTextureTypeStepType(pmove->chtexturetype), 0.75);
+			PM_PlayStepSound(PM_MapTextureTypeStepType(pmove->chtexturetype), 1.0);
 		}
 	}
 
@@ -2617,12 +2564,6 @@ void PM_Jump()
 			if (canjumppackjump)
 			{
 				PM_PlaySound(CHAN_STATIC, "ctf/pow_big_jump.wav", VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
-			}
-			else
-			{
-				// MMod's (mmod_port); without it, none, as in vanilla.
-				if (FileSystem_SoundExists("items/power_jump.wav"))
-					PM_PlaySound(CHAN_VOICE, "items/power_jump.wav", VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 			}
 		}
 		else
@@ -2761,19 +2702,8 @@ void PM_CheckFalling()
 
 			PM_UpdateStepSound();
 
-			// Hard landings only get the fall pain sound.
-			if (pmove->flFallVelocity < PLAYER_MAX_SAFE_FALL_SPEED)
-			{
-				static const char* const LandSounds[] = {"player/pl_jumpland1.wav", "player/pl_jumpland2.wav", "player/pl_jumpland3.wav"};
-
-				if (const char* sound = PM_PickInstalledSound(LandSounds))
-				{
-					PM_PlaySound(CHAN_VOICE, sound, VOL_NORM, ATTN_NORM, 0, pmove->RandomLong(90, 100));
-				}
-
-				// play step sound for current texture
-				PM_PlayStepSound(PM_MapTextureTypeStepType(pmove->chtexturetype), fvol);
-			}
+			// play step sound for current texture
+			PM_PlayStepSound(PM_MapTextureTypeStepType(pmove->chtexturetype), fvol);
 
 			// No screen punch here: the server sends a smooth punch landing jolt instead.
 		}

@@ -5,8 +5,7 @@ An MMod-inspired mod for Half-Life, Opposing Force and Blue Shift, built on the
 models and adds reserved takes on MMod's camera, movement and weapon feel; every feature can be switched
 off in the console to compare with vanilla.
 
-Status: pre-alpha ([versions](#versions)), no download yet. MMod's files are not included; a few features use them
-when installed (see [MMod assets](#mmod-assets)), and work without them.
+Status: pre-alpha ([versions](#versions)), no download yet.
 
 ## Install
 
@@ -27,8 +26,8 @@ To update, extract the new zip over the old one.
 * **Reserved.** Each feature is a toned-down take on MMod's version. Vanilla visuals and Valve's models stay.
 * **Never worse than vanilla.** Sustained play (accuracy, recoil, readability) is never worse than the
   original game.
-* **Vanilla assets first.** MMod files are used only where nothing stock fits. They are never committed;
-  see [MMod assets](#mmod-assets).
+* **Vanilla assets first.** New files only where nothing stock fits, and then johnhalflife's own; none of
+  MMod's ([Own assets](#own-assets)).
 * **Every feature can be switched off.** Each has a `jhl_*` client setting (default 1, saved in
   `config.cfg`), so it can be compared with vanilla in game.
 
@@ -105,15 +104,16 @@ ships Opposing Force and Blue Shift on top of Half-Life.
 | `johnhalflife_bs` | John Half-Life: Blue Shift | `ba_tram1` / `ba_hazard1` |
 | `johnhalflife_uplink` | John Half-Life: Uplink | `hldemo1` / `t0a0` |
 
-## MMod assets
+## Own assets
 
-A few features use MMod's files when they're installed (they're never in this repository or the release); without
-them, those features work with vanilla's. They are:
+The few files nothing stock fits are johnhalflife's own, in `config/mod/` and shipped with the release:
 
-* **Movement:** jump, landing, long jump and wood footstep sounds, and MMod's texture material table.
-* **Weapon switch:** 15 draw sounds.
+* **Weapon switch:** a draw sound for each weapon that had none (the shotgun shares the MP5's).
 * **Grenade pin:** the pin pull sound.
-* **Water splash:** the ripple ring sprite (optional; the splash works without it).
+* **RPG reload:** the reload sound (vanilla's reload was silent).
+
+The movement sounds MMod's files gave (jump, landing, long jump, wood footsteps) and its texture material table are
+gone; those are vanilla's again.
 
 ## Versions
 
@@ -137,7 +137,8 @@ them, those features work with vanilla's. They are:
 
 ## Open items
 
-* Opposing Force weapons without an MMod counterpart still use the crowbar's switch sound as a placeholder.
+* The water splash's ripple ring needs its sprite (`sprites/water_splash_ring.spr`); until then the splash is the
+  stock droplets only.
 
 ## Building from source
 

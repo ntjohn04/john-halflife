@@ -127,12 +127,10 @@ Force's ally grunts and black ops can take headshots, which Gearbox's models did
   only, to keep downloaded content out, so `FileSystem_LoadFileIntoBuffer` also tries `GAME_FALLBACK` when a
   `GAMECONFIG` read finds nothing. Without it, the expansions' view models stayed Half-Life's.
 
-## MMod assets (the checklist)
+## Own assets
 
-`mmod_port/` tracks every MMod file the mod uses (29 files): `assets.json` lists them with SHA-256 hashes,
-`ASSETS.md` is the generated report, and `port_assets.py install` copies them from a local MMod
-installation into the mod directory. Each must be replaced, removed or cleared with its author before
-anything is published.
+johnhalflife's own files (sounds, sprites) are in `config/mod/`, installed into every game folder; the list is in
+the [README](../../README.md#own-assets). None of MMod's are used.
 
 ## Networking
 

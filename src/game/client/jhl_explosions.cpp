@@ -645,19 +645,15 @@ std::span<const DebrisModel> SurfaceDebrisModels(char material, int& breakType)
 		breakType = BREAK_METAL;
 		return ComputerDebris;
 	case CHAR_TEX_WOOD:
-	case CHAR_TEX_SWAMP_BOARDS:
 		breakType = BREAK_WOOD;
 		return WoodDebris;
 	case CHAR_TEX_GLASS:
 		breakType = BREAK_GLASS;
 		return GlassDebris;
 	case CHAR_TEX_FLESH:
-	case CHAR_TEX_ORGANIC:
 		breakType = BREAK_FLESH;
 		return FleshDebris;
 	case CHAR_TEX_DIRT:
-	case CHAR_TEX_XEN_GROUND:
-	case CHAR_TEX_XEN_SHELL:
 		breakType = BREAK_CONCRETE;
 		return DirtDebris;
 	case CHAR_TEX_TILE:

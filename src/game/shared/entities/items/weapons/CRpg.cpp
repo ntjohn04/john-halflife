@@ -89,7 +89,13 @@ void CRpg::Reload()
 		const bool iResult = DefaultReload(RPG_MAX_CLIP, RPG_RELOAD, 2);
 
 		if (iResult)
+		{
 			m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat(m_pPlayer->random_seed, 10, 15);
+#ifndef CLIENT_DLL
+			// johnhalflife: the reload had no sound. From the server, as the switch sounds.
+			m_pPlayer->EmitSound(CHAN_ITEM, "weapons/weapon_reload_rpg.wav", VOL_NORM, ATTN_NORM);
+#endif
+		}
 	}
 }
 
@@ -111,6 +117,7 @@ void CRpg::Precache()
 	UTIL_PrecacheOther("rpg_rocket");
 
 	PrecacheSound("weapons/rocketfire1.wav");
+	PrecacheSound("weapons/weapon_reload_rpg.wav");
 	PrecacheSound("weapons/glauncher.wav"); // alternative fire sound
 
 	m_usRpg = PRECACHE_EVENT(1, "events/rpg.sc");

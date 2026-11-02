@@ -15,7 +15,6 @@
 
 #include "cbase.h"
 #include "CHandGrenade.h"
-#include "utils/filesystem_utils.h"
 
 #define HANDGRENADE_PRIMARY_VOLUME 450
 
@@ -32,8 +31,7 @@ void CHandGrenade::OnCreate()
 	m_WorldModel = pev->model = MAKE_STRING("models/w_grenade.mdl");
 }
 
-// MMod's sound (mmod_port), played when the pin comes out: frame 13 of the 45 fps pinpull animation, as MMod's
-// model event does.
+// Played when the pin comes out: frame 13 of the 45 fps pinpull animation.
 constexpr const char* GrenadePinPullSound = "weapons/grenade_pinpull.wav";
 constexpr float GrenadePinPullSoundDelay = 13 / 45.f;
 
@@ -43,9 +41,7 @@ void CHandGrenade::Precache()
 	PrecacheModel(STRING(m_WorldModel));
 	PrecacheModel("models/v_grenade.mdl");
 	PrecacheModel("models/p_grenade.mdl");
-	// Without MMod, no sound, as in vanilla.
-	if (FileSystem_SoundExists(GrenadePinPullSound))
-		PrecacheSound(GrenadePinPullSound);
+	PrecacheSound(GrenadePinPullSound);
 }
 
 bool CHandGrenade::GetWeaponInfo(WeaponInfo& info)
@@ -135,8 +131,7 @@ void CHandGrenade::ItemPostFrame()
 	if (0 != m_flPinPullSoundTime && gpGlobals->time >= m_flPinPullSoundTime)
 	{
 		m_flPinPullSoundTime = 0;
-		if (FileSystem_SoundExists(GrenadePinPullSound))
-			m_pPlayer->EmitSound(CHAN_ITEM, GrenadePinPullSound, VOL_NORM, ATTN_NORM);
+		m_pPlayer->EmitSound(CHAN_ITEM, GrenadePinPullSound, VOL_NORM, ATTN_NORM);
 	}
 #endif
 

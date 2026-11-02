@@ -45,14 +45,9 @@ Reimplemented from MMod's behaviour as specified in `re/specs/camera_movement.md
 
 ## Movement sounds
 
-Uses MMod sounds tracked by `mmod_port` (see the [index](README.md#mmod-assets-the-checklist)).
+Jumps, landings and the long jump sound as in vanilla (MMod's jump, landing, long jump and wood step sounds, and
+its texture material table, were dropped with MMod's files).
 
-* **Jump:** an effort sound (`pl_jump1-3`), followed by a quieter push-off footstep.
-* **Landing:** `pl_jumpland1-3` on landing from a jump or fall.
-* **Long jump:** `items/power_jump.wav`.
-* **Wood footsteps:** new `STEP_WOOD` type with `pl_wood1-4`.
 * **Flesh footsteps:** new `STEP_FLESH` type, using the stock `pl_slosh1-4` pitched down for a squelchy
-  sound, on flesh and organic surfaces.
-* **More surface types:** MMod's texture material table is converted to JSON
-  (`sound/mmod_materials.json`) and loaded after the SDK's own, so its assignments take precedence. Its
-  extra material letters are mapped to step types and volumes.
+  sound, on flesh surfaces.
+* **Computer floors** step like metal.
