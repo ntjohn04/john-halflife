@@ -15,6 +15,9 @@ Nothing else of Valve's: the first start copies and converts that from the playe
 Usage:
   python package_release.py --windows <staging folder> --linux <staging folder> --unified <release zip> [--out dist]
       (each staging folder is the one that holds johnhalflife, johnhalflife_op4, ...)
+  python package_release.py --windows <staging folder> --unified <release zip> --install <Half-Life folder>
+      (testing: a Windows-only zip, extracted into the game as a player would; the development build's install goes
+      to the staging folder, so this is how a build gets into the game)
   python package_release.py --make-list <Half-Life folder> <release zip>
       (writes release_unified_files.txt: run on a machine with Half-Life, Opposing Force and Blue Shift, when the
       Unified SDK's release changes)
@@ -123,7 +126,7 @@ def version():
     return f"v{number}-" + (release_type.group(1).lower().replace("-", "") if release_type else "prealpha")
 
 
-def package(windows, linux, release_zip, out):
+def package(windows, linux, release_zip, out, install=None):
     stage = tempfile.mkdtemp(prefix="jhl_release_")
     try:
         # 1. The Unified SDK's files, into johnhalflife.
@@ -161,6 +164,8 @@ def package(windows, linux, release_zip, out):
                     os.makedirs(os.path.dirname(target), exist_ok=True)
                     shutil.copyfile(os.path.join(dp, f), target)
 
+            if not linux:
+                continue
             source = os.path.join(linux, folder)
             if not os.path.isdir(source):
                 sys.exit(f"package_release: {source} not found")
@@ -181,7 +186,7 @@ def package(windows, linux, release_zip, out):
 
         # 3. The zip.
         os.makedirs(out, exist_ok=True)
-        zip_path = os.path.join(out, f"johnhalflife-{version()}.zip")
+        zip_path = os.path.join(out, f"johnhalflife-{version()}" + ("" if linux else "-windows-test") + ".zip")
         count = size = 0
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
             for dp, _, fs in sorted(os.walk(stage)):
@@ -191,7 +196,13 @@ def package(windows, linux, release_zip, out):
                     count += 1
                     size += os.path.getsize(p)
         print(f"package_release: {zip_path}: {count} files, {size / 1e6:.1f} MB extracted, "
-              f"{os.path.getsize(zip_path) / 1e6:.1f} MB zipped")
+              f"{os.path.getsize(zip_path) / 1e6:.1f} MB zipped" + ("" if linux else " (no Linux build: for testing, not a release)"))
+
+        # 4. Extracted into the game, as a player would.
+        if install:
+            with zipfile.ZipFile(zip_path) as z:
+                z.extractall(install)
+            print(f"package_release: extracted into {install}")
     finally:
         shutil.rmtree(stage, ignore_errors=True)
 
@@ -202,11 +213,12 @@ def main():
         return
     parser = argparse.ArgumentParser(description="Makes John Half-Life's release zip.")
     parser.add_argument("--windows", required=True, help="Windows staging install (holds johnhalflife, ...)")
-    parser.add_argument("--linux", required=True, help="Linux staging install (holds johnhalflife, ...)")
+    parser.add_argument("--linux", help="Linux staging install (holds johnhalflife, ...); without it, a Windows-only zip to test")
     parser.add_argument("--unified", required=True, help="the Unified SDK's release zip (HalfLifeUnified-V1.0.0.zip)")
     parser.add_argument("--out", default=os.path.join(REPO, "dist"), help="where to write the zip (dist)")
+    parser.add_argument("--install", help="the Half-Life folder to extract it into, as a player would (to test)")
     args = parser.parse_args()
-    package(args.windows, args.linux, args.unified, args.out)
+    package(args.windows, args.linux, args.unified, args.out, args.install)
 
 
 if __name__ == "__main__":
