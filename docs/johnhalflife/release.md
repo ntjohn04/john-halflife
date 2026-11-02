@@ -31,7 +31,6 @@ release zip `HalfLifeUnified-V1.0.0.zip`, its ContentInstaller, our build):
 | Uplink's maps (`hldemo1` to `3`), converted | 3 | | Ship: Uplink was a free demo and isn't in a player's install (other mods include it too) |
 | The Unified SDK's test maps (`test_*`, `zoo_*`, `hlu_technology_demonstration`) and the TFC WADs only `zoo_npcs` uses | 45 | 32 MB | Drop |
 | The Unified SDK's tools, installer files, FGD, `VC_redist.x86.exe` | ~100 | 20 MB | Drop (link the C++ runtime statically, as Valve's DLLs need nothing installed) |
-| MMod's files | 29 | 0.4 MB | Never shipped; each must be replaced or cleared first ([MMod assets](../../README.md#mmod-assets)) |
 | The player's (saves, config, logs, spray) | | | Never shipped |
 
 So the zip is about 55 MB: our files, the Unified SDK's own and its models.
@@ -59,8 +58,6 @@ the folder up and writes a version stamp, so later starts skip it:
    Not the Unified SDK's `default_config.cfg`, its ContentInstaller's choice, which is its author's own config (his
    name, 60 fps, a strafe roll three times ours); the first launch applies the recommended settings
    ([README](README.md#recommended-settings)).
-
-MMod's sounds are loaded and played only if they're installed (`FileSystem_SoundExists`); without them, vanilla's.
 
 What's made from files we ship is made by the build and shipped as made: the hornet splats added to the Unified
 SDK's `decals.wad` (`scripts/make_hornet_decals.py`) and the vanilla speeds in its models

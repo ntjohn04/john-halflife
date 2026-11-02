@@ -83,9 +83,8 @@ bolt starts 2 below the eye and is left as it is, as are the spore launcher's lo
 ### Weapon switch
 Switching to a weapon plays a draw sound from a table keyed by view model (`weapons_shared.cpp`).
 
-* Half-Life weapons use MMod's draw sounds (15 files, tracked by `mmod_port`).
-* Opposing Force weapons without an MMod counterpart use the crowbar's sound as a placeholder.
-* The snark and shock rifle are left out; their own deploy animations already make a sound.
+* johnhalflife's own draw sounds (`config/mod/sound/weapons/`), one per weapon; the shotgun shares the MP5's.
+* The snark, penguin, shock rifle and barnacle grapple are left out; they already make a sound when drawn.
 * Played from the server: weapon switches go through the `selectweapon` command and are never predicted,
   so a predicted sound would skip the local player.
 * The satchel's two swaps without a switch sound as switching does: throwing a charge and taking out the radio plays
@@ -97,11 +96,14 @@ Picking up a weapon or a weapon box plays one of the stock `items/gunpickup1-4.w
 only plays `gunpickup2`, which batteries still use. Ammo pickups are unchanged (`9mmclip1`).
 
 ### Grenade pin
-Pulling the hand grenade's pin plays MMod's `weapons/grenade_pinpull.wav` (`mmod_port`, feature
-`grenade-pin`) when the pin comes out: 0.29 seconds in, frame 13 of the 45 fps pinpull animation, as MMod's
-model event does (its animation has the same timing as Valve's). Played by the server after that delay, timed
+Pulling the hand grenade's pin plays `weapons/grenade_pinpull.wav` when the pin comes out: 0.29 seconds in,
+frame 13 of the 45 fps pinpull animation. Played by the server after that delay, timed
 in `CHandGrenade::ItemPostFrame` rather than a think function, which would need a data map (see
 [saves](README.md#saves)).
+
+### RPG reload
+Vanilla's RPG reload is silent (its model has no sound events). Starting a reload plays
+`weapons/weapon_reload_rpg.wav`, from the server as the switch sounds are (`CRpg::Reload`).
 
 ### RPG laser toggle
 Turning the RPG's laser guidance on plays the Desert Eagle's `weapons/desert_eagle_sight.wav`, and turning
@@ -156,7 +158,7 @@ wrench's big swing, which has no decal. Other surfaces keep the sound and decal 
 When a bullet enters water or slime, the surface point is found along its path and the client draws:
 
 * the stock `wsplash3.spr` droplet sprite (grey-white), and
-* MMod's ripple ring lying flat on the surface (optional, skipped if not installed).
+* a ripple ring lying flat on the surface (`sprites/water_splash_ring.spr`, skipped until that sprite is made).
 
 NPC bullets send a `WaterSplash` message. A blue droplet spray, engine streaks and a splash sound were
 tried and removed.

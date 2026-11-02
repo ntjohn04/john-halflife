@@ -564,12 +564,6 @@ void ServerLibrary::LoadServerConfigFiles()
 	context.SentencesFiles.push_back("sound/sentences.json");
 	context.MaterialsFiles.push_back("sound/materials.json");
 
-	// Expanded texture material assignments converted from MMod's table (see mmod_port/README.md).
-	// Loaded after the default file so its assignments take precedence.
-	if (g_pFileSystem->FileExists("sound/mmod_materials.json"))
-	{
-		context.MaterialsFiles.push_back("sound/mmod_materials.json");
-	}
 	context.SkillFiles.push_back("cfg/skill.json");
 
 	if (g_pGameRules->IsMultiplayer())

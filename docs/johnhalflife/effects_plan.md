@@ -21,8 +21,8 @@ Effects of the local player's own weapons are already client-side events (muzzle
 **Default choice:** client enrichment for the shared paths below, all behind **one** global toggle,
 `jhl_fx_particlesystem` (the user's choice over one per theme; created with the first effect that uses it), with
 richer combinations; tune or add on the server for one-off set pieces. Vanilla sprites and models only, as with
-the impacts: more, longer or layered particles, short lights, reused stock sprites. MMod assets only where
-nothing stock fits, through `mmod_port`.
+the impacts: more, longer or layered particles, short lights, reused stock sprites. johnhalflife's own assets
+only where nothing stock fits.
 
 ## Shared paths (change once, applies everywhere)
 
