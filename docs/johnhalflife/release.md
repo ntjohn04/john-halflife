@@ -28,7 +28,7 @@ release zip `HalfLifeUnified-V1.0.0.zip`, its ContentInstaller, our build):
 | Node graphs for them (the Unified SDK's) | 328 | 17 MB | Ship: without them each map builds its graph the first time it loads (a hitch vanilla, which ships its own, doesn't have); the first start keeps them newer than the maps it writes |
 | Opposing Force's and Blue Shift's soundtracks (`media/`) | 38 | 66 MB | Copy at first start |
 | Made by our build from the player's games: Half-Life's shell, hornet splats in `decals.wad`, each game's own shared-name files, vanilla NPC speeds, the menu art | ~130 | | Make at first start |
-| Uplink's maps (`hldemo1` to `3`), converted | 3 | | Open: Valve's maps, not in a player's install; see below |
+| Uplink's maps (`hldemo1` to `3`), converted | 3 | | Ship: Uplink was a free demo and isn't in a player's install (other mods include it too) |
 | The Unified SDK's test maps (`test_*`, `zoo_*`, `hlu_technology_demonstration`) and the TFC WADs only `zoo_npcs` uses | 45 | 32 MB | Drop |
 | The Unified SDK's tools, installer files, FGD, `VC_redist.x86.exe` | ~100 | 20 MB | Drop (link the C++ runtime statically, as Valve's DLLs need nothing installed) |
 | MMod's files | 29 | 0.4 MB | Never shipped; each must be replaced or cleared first ([MMod assets](../../README.md#mmod-assets)) |
@@ -48,9 +48,19 @@ the folder up and writes a version stamp, so later starts skip it:
    the BSP left as Valve's, Blue Shift's first two lumps put in Half-Life's order. `mapconvert_check` (a build target,
    `scripts/mapconvert_check.cpp`) checks it against the ContentInstaller's maps: 215 of 220 the same, byte for
    byte; the 5 others keep a few bytes the ContentInstaller's BSP reader lost (see the source).
-3. Copies Opposing Force's and Blue Shift's files and soundtracks.
+   After each map it keeps the map's node graph (the release ships the Unified SDK's) newer than the map, or the
+   game would take it for out of date and build it again on the map's first load, a hitch vanilla doesn't have.
+3. Copies Opposing Force's and Blue Shift's files and soundtracks, and files Valve has under another name only
+   (`jhl_setup_files.txt`: the engine finds a file in `valve` at the same path only; Opposing Force's
+   `events/displacer.sc` is word for word `valve/violence.cfg`).
 4. Copies Half-Life's menu art (its main menu without the hint text, background, logo, icon) into each folder,
    then the folder's own Valve game's over it.
+5. Writes key bindings for a folder with no `config.cfg` yet, the keyboard tab's "Use Defaults" ones (`kb_def.lst`).
+   Not the Unified SDK's `default_config.cfg`, its ContentInstaller's choice, which is its author's own config (his
+   name, 60 fps, a strafe roll three times ours); the first launch applies the recommended settings
+   ([README](README.md#recommended-settings)).
+
+MMod's sounds are loaded and played only if they're installed (`FileSystem_SoundExists`); without them, vanilla's.
 
 What's made from files we ship is made by the build and shipped as made: the hornet splats added to the Unified
 SDK's `decals.wad` (`scripts/make_hornet_decals.py`) and the vanilla speeds in its models
@@ -62,7 +72,7 @@ plain Windows one, on one platform, nothing like the game's look. The install no
 moment.
 
 A game the player doesn't own is skipped, and its campaign isn't offered. The C++ conversion is checked against
-the ContentInstaller's: the same maps, byte for byte. Each upgrade is reviewed against 1998 as it's ported (keep
+the ContentInstaller's (`mapconvert_check`). Each upgrade is reviewed against 1998 as it's ported (keep
 the bug fixes, revert the drift).
 
 ## Making a release
