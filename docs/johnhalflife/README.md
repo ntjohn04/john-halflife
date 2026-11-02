@@ -60,11 +60,12 @@ are on), and changing it sets all four. It isn't saved itself; the four are.
 
 The recommended values are the defaults: every setting listed in the dialog, and only those (`DialogSettings`), with
 the same values as `user.scr`'s defaults and the game code's own (`crosshair_scale`, `default_fov`). Notable ones:
-`crosshair 1`, `crosshair_scale 2`, `default_fov 105`, `fps_override 1` with `fps_max 240`, `gl_vsync 0`,
+`crosshair 1`, `crosshair_scale 2`, `default_fov 100`, `sv_aim 0` (auto-aim), `fps_override 1` with `fps_max 240`,
+`gl_vsync 0`,
 `m_rawinput 1`, blood and gibs on (the content lock isn't used).
 
 * **First launch:** all of them, once, a few frames after start so the saved config has loaded, then remembered in
-  `jhl_recommended_version`; the engine's own settings (frame rate, vsync, the crosshair) have its defaults
+  `jhl_recommended_version`; the engine's own settings (frame rate, vsync, the crosshair, auto-aim) have its defaults
   otherwise. Raising `RecommendedSettingsVersion` applies the list once more.
 * **Reset:** the `jhl_recommended` command, or the "Reset all to recommended settings" box in the dialog.
 
