@@ -33,11 +33,12 @@ struct RecommendedSetting
 // m_rawinput and jhl_gore (a clean install's config had someone's own settings: 60 fps, a strafe roll three times ours).
 // 3: crosshair, the engine's default being off. 4: auto-aim off (sv_aim, on by the engine's default), field of
 // view 100. 5: gamma 1.92 and brightness 0 (else a new game folder took its first config's, Half-Life's, often an
-// old default: gamma 2.5, brightness 1; the engine's are 2.2 and 0, and gamma can't go below 1.8).
-constexpr int RecommendedSettingsVersion = 5;
+// old default: gamma 2.5, brightness 1; the engine's are 2.2 and 0, and gamma can't go below 1.8). 6: the hidden
+// settings below, texture filtering off among them, and the original (not HD) models.
+constexpr int RecommendedSettingsVersion = 6;
 
 // Applied on first launch and by a reset: every setting listed in the John Settings dialog (config/mod/user.scr), and
-// only those. Keep in sync with that file, whose defaults should match. jhl_gore: the content lock isn't used, so
+// the hidden ones below. Keep in sync with that file, whose defaults should match. jhl_gore: the content lock isn't used, so
 // blood and gibs are on.
 constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_camera_bob", "1"},
@@ -77,6 +78,26 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"cl_bobtilt", "0"},
 	{"cl_snd_hrtf_enabled", "0"},
 	{"cl_snd_hrtf_implementation", ""},
+};
+
+// Applied with them but not in the dialog: settings the engine's own Video options already show (texture filtering,
+// widescreen field of view), and technical ones a player would only change by mistake, kept at what johnhalflife is
+// made and checked with. Mostly the engine's defaults; texture filtering is off (point sampled, as software drew; with
+// jhl_visuals_renderfixes, mipmapped as software was). Only those the renderer has: the software one has no gl_*.
+constexpr RecommendedSetting HiddenSettings[] = {
+	{"r_prefertexturefiltering", "0"}, // Video options' texture filtering (gl_texturemode follows it).
+	{"gl_ansio", "16"},				   // Anisotropic filtering: only seen with texture filtering on.
+	{"gl_widescreen_yfov", "1"},	   // Video options: a widescreen shows more at the sides, the height as 4:3's.
+	{"gl_overbright", "1"},			   // The world lit up to 4/3, as software did (and models with renderfixes).
+	{"gl_use_shaders", "1"},
+	{"gl_dither", "1"},
+	{"gl_spriteblend", "1"},
+	{"gl_fog", "1"},
+	{"r_detailtextures", "0"}, // Detail textures (a fine pattern over walls up close, where a map has them): not 1998's.
+	{"texgamma", "2.0"},	   // The textures' and the lighting's gamma, under gamma itself.
+	{"lightgamma", "2.5"},
+	{"cl_lw", "1"}, // Weapon and movement prediction, which the weapon effects are made for.
+	{"cl_lc", "1"},
 };
 
 // The engine runs config.cfg from the command buffer before the client's first frames; wait a few to be safe.
@@ -130,9 +151,26 @@ void ApplyGoreIfChanged()
 	}
 }
 
-void ApplyAllRecommended()
+void ApplyRecommended()
 {
 	Apply(DialogSettings);
+
+	for (const auto& setting : HiddenSettings)
+	{
+		if (gEngfuncs.pfnGetCvarPointer(setting.Name))
+		{
+			gEngfuncs.Cvar_Set(setting.Name, setting.Value);
+		}
+	}
+
+	// The original models, not the HD pack (the 25th anniversary update's default too). A command, not a setting: it
+	// saves the choice and, only if that changes it, reloads the game's files.
+	gEngfuncs.pfnClientCmd("_sethdmodels 0\n");
+}
+
+void ApplyAllRecommended()
+{
+	ApplyRecommended();
 	gEngfuncs.Con_Printf("johnhalflife: recommended settings applied\n");
 }
 }
@@ -183,7 +221,7 @@ void JhlSettings_RunFrame()
 
 		if (g_RecommendedVersion->value < RecommendedSettingsVersion)
 		{
-			Apply(DialogSettings);
+			ApplyRecommended();
 			gEngfuncs.Cvar_Set(g_RecommendedVersion->name, std::to_string(RecommendedSettingsVersion).c_str());
 			gEngfuncs.Con_Printf("johnhalflife: first launch, recommended settings applied\n");
 		}

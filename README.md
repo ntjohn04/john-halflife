@@ -64,6 +64,14 @@ scale, field of view, frame rate limit, vertical sync, raw mouse input), with **
 settings** (also the `jhl_recommended` command). Every johnhalflife setting is on by default, as recommended;
 "Vanilla | Blood and gibs" (`jhl_gore`) stands in for the content lock's four violence settings.
 
+The first launch and the reset also set a few vanilla settings not in the dialog: ones Options → Video already has,
+and technical ones only changed by mistake. **Texture filtering off** (`r_prefertexturefiltering 0`: point sampled, as
+software drew; with `jhl_visuals_renderfixes`, mipmapped as software was), the original models rather than the HD
+ones (`_sethdmodels 0`, Valve's default since the 25th anniversary update; Half-Life's own setting, shared with the
+other games), and at the engine's defaults: widescreen field of view (`gl_widescreen_yfov 1`), anisotropic filtering
+(`gl_ansio 16`), `gl_overbright`, `gl_use_shaders`, `gl_dither`, `gl_spriteblend`, `gl_fog` (all 1), detail textures
+off (`r_detailtextures 0`), `texgamma` 2.0, `lightgamma` 2.5, and prediction (`cl_lw`, `cl_lc` 1).
+
 ## Recommended launch options and display
 
 Set in Steam: right-click Half-Life (or the mod), Properties, Launch Options. These are the engine's own, read
