@@ -216,6 +216,20 @@ DESCRIPTION INFO_OPTIONS
 		{ "100.000000" }
 	}
 
+	"gamma"
+	{
+		"Vanilla | Gamma (lower is darker, more contrast)"
+		{ NUMBER 1.800000 3.000000 }
+		{ "1.920000" }
+	}
+
+	"brightness"
+	{
+		"Vanilla | Brightness (lifts the darkest lighting)"
+		{ NUMBER 0.000000 2.000000 }
+		{ "0.000000" }
+	}
+
 	"sv_aim"
 	{
 		"Vanilla | Auto-aim"

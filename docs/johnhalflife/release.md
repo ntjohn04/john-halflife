@@ -25,7 +25,7 @@ release zip `HalfLifeUnified-V1.0.0.zip`, its ContentInstaller, our build):
 | Byte-for-byte copies of Opposing Force's and Blue Shift's (sounds, models, sprites, gfx, WADs, classes) | ~1,320 | 92 MB | Copy from the player's `gearbox` and `bshift` at first start (`jhl_setup_files.txt`) |
 | ... of which the models and sprites the game code names (every map precaches every weapon, Opposing Force's too, and johnhalflife's effects use some of its sprites) | 80 | 7.6 MB | Also ship: a missing model is a fatal error, so without them Half-Life wouldn't start a map for a player without Opposing Force |
 | Half-Life's, Opposing Force's and Blue Shift's maps, converted (the Unified SDK's map upgrades) | 220 | 379 MB | Convert at first start |
-| Node graphs for them (the Unified SDK's) | 328 | 17 MB | Ship: without them each map builds its graph the first time it loads (a hitch vanilla, which ships its own, doesn't have); the first start keeps them newer than the maps it writes |
+| Node graphs for them (the Unified SDK's) | 328 | 17 MB | Ship: without them each map builds its graph the first time it loads (a hitch vanilla, which ships its own, doesn't have); every start keeps them newer than the maps the first start writes |
 | Opposing Force's and Blue Shift's soundtracks (`media/`) | 38 | 66 MB | Copy at first start |
 | Made by our build from the player's games: Half-Life's shell, hornet splats in `decals.wad`, each game's own shared-name files, vanilla NPC speeds, the menu art | ~130 | | Make at first start |
 | Uplink's maps (`hldemo1` to `3`), converted | 3 | | Ship: Uplink was a free demo and isn't in a player's install (other mods include it too) |
@@ -47,8 +47,10 @@ the folder up and writes a version stamp, so later starts skip it:
    the BSP left as Valve's, Blue Shift's first two lumps put in Half-Life's order. `mapconvert_check` (a build target,
    `scripts/mapconvert_check.cpp`) checks it against the ContentInstaller's maps: 215 of 220 the same, byte for
    byte; the 5 others keep a few bytes the ContentInstaller's BSP reader lost (see the source).
-   After each map it keeps the map's node graph (the release ships the Unified SDK's) newer than the map, or the
-   game would take it for out of date and build it again on the map's first load, a hitch vanilla doesn't have.
+   It keeps the maps' node graphs (the release ships the Unified SDK's) newer than the maps, or the game would take
+   them for out of date and build each again on the map's first load, a hitch vanilla doesn't have. On every start,
+   not only when setting up (`RefreshGraphs`): a newer release extracted over an install puts its graphs back with
+   the time they had when it was made, older than the maps written here.
 3. Copies Opposing Force's and Blue Shift's files and soundtracks, and files Valve has under another name only
    (`jhl_setup_files.txt`: the engine finds a file in `valve` at the same path only; Opposing Force's
    `events/displacer.sc` is word for word `valve/violence.cfg`).
