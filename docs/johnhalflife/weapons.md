@@ -148,6 +148,15 @@ On top of the stock decal, specks and ricochet:
   once.
 * **Glass, liquids, snow, flesh, Xen:** stock effects only.
 
+The material comes from Valve's table (`sound/materials.json`, all three games' `materials.txt`), which lists only
+364 of the 2,818 textures the maps use; the rest count as concrete, so in vanilla most metal walls ricochet like
+concrete. For impacts only, `config/mod/sound/jhl_impact_materials.json` gives the textures it doesn't list a material
+of their own, 1,212 of them: Half-Life: Source's surface type for each (Valve's own later judgement of the same
+textures), else, for Opposing Force's and Blue Shift's own textures, a guess from the name
+(`scripts/make_impact_materials.py`, which needs Half-Life: Source installed). Its entries carry `Impact`, not
+`Type`, in the same table (`MaterialSystem::FindImpactType`): bullet impacts, melee sparks and explosion debris read
+it; footsteps and ricochet and texture sounds keep Valve's types, so they sound as they did.
+
 The player's bullets are handled in the client weapon events. Bullets fired by the server (NPCs, mounted
 guns) send a `BulletHit` message from `DecalGunshot`.
 

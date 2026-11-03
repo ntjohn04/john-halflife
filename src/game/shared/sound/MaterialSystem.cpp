@@ -39,9 +39,12 @@ static std::string GetMaterialsConfigSchema()
 			"properties": {{
 				"Type": {{
 					"type": "string"
+				}},
+				"Impact": {{
+					"type": "string"
 				}}
 			}},
-			"required": ["Type"]
+			"anyOf": [{{"required": ["Type"]}}, {{"required": ["Impact"]}}]
 		}}
 	}},
 	"additionalProperties": false
@@ -77,7 +80,11 @@ void MaterialSystem::HandleNetworkDataBlock(NetworkDataBlock& block)
 		{
 			json mat = json::object();
 
-			mat.emplace("Type", std::string{material.second.Type});
+			if (material.second.Type != 0)
+				mat.emplace("Type", std::string{material.second.Type});
+
+			if (material.second.Impact != 0)
+				mat.emplace("Impact", std::string{material.second.Impact});
 
 			block.Data.emplace(material.first.c_str(), std::move(mat));
 		}
@@ -143,9 +150,28 @@ char MaterialSystem::FindTextureType(const char* name) const
 	std::transform(upperName.begin(), upperName.end(), upperName.begin(), [](char c)
 		{ return std::toupper(c); });
 
-	if (auto it = m_Materials.find(upperName); it != m_Materials.end())
+	if (auto it = m_Materials.find(upperName); it != m_Materials.end() && it->second.Type != 0)
 	{
 		return it->second.Type;
+	}
+
+	return CHAR_TEX_CONCRETE;
+}
+
+char MaterialSystem::FindImpactType(const char* name) const
+{
+	TextureName upperName{name};
+
+	std::transform(upperName.begin(), upperName.end(), upperName.begin(), [](char c)
+		{ return std::toupper(c); });
+
+	if (auto it = m_Materials.find(upperName); it != m_Materials.end())
+	{
+		if (it->second.Impact != 0)
+			return it->second.Impact;
+
+		if (it->second.Type != 0)
+			return it->second.Type;
 	}
 
 	return CHAR_TEX_CONCRETE;
@@ -166,8 +192,9 @@ bool MaterialSystem::ParseConfiguration(const json& input)
 		}
 
 		const auto type = mat.value<std::string>("Type", {});
+		const auto impact = mat.value<std::string>("Impact", {});
 
-		if (texture.empty() || type.empty())
+		if (texture.empty() || (type.empty() && impact.empty()))
 		{
 			return false;
 		}
@@ -177,7 +204,14 @@ bool MaterialSystem::ParseConfiguration(const json& input)
 		std::transform(name.begin(), name.end(), name.begin(), [](char c)
 			{ return std::toupper(c); });
 
-		m_Materials.insert_or_assign(std::move(name), Material{type.front()});
+		// Merged into what an earlier file gave: johnhalflife's impact file only adds Impact.
+		Material& material = m_Materials[std::move(name)];
+
+		if (!type.empty())
+			material.Type = type.front();
+
+		if (!impact.empty())
+			material.Impact = impact.front();
 	}
 
 	return true;

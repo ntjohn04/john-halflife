@@ -308,7 +308,7 @@ void EV_HLDM_GunshotDecalTrace(pmtrace_t* pTrace, char* decalName, JhlImpact kin
 
 		if (const char* textureName = gEngfuncs.pEventAPI->EV_TraceTexture(pTrace->ent, start, end); textureName)
 		{
-			textureType = g_MaterialSystem.FindTextureType(g_MaterialSystem.StripTexturePrefix(textureName));
+			textureType = g_MaterialSystem.FindImpactType(g_MaterialSystem.StripTexturePrefix(textureName));
 		}
 	}
 

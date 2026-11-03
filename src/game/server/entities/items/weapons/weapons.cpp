@@ -71,7 +71,7 @@ int DamageDecal(CBaseEntity* pEntity, int bitsDamageType)
 
 // Lets nearby clients add their bullet impact effects (weapon_effects.cpp) for bullets fired on the server.
 // The player's own bullets get theirs from the client-side weapon events instead.
-// The material of the surface a trace hit (concrete if it can't be found).
+// The material of the surface a trace hit, as impacts show it (concrete if it can't be found).
 static char TraceTextureType(TraceResult* pTrace, CBaseEntity* pEntity)
 {
 	char textureType = CHAR_TEX_CONCRETE;
@@ -83,7 +83,7 @@ static char TraceTextureType(TraceResult* pTrace, CBaseEntity* pEntity)
 
 	if (const char* textureName = TRACE_TEXTURE(hit, start, end); textureName)
 	{
-		textureType = g_MaterialSystem.FindTextureType(g_MaterialSystem.StripTexturePrefix(textureName));
+		textureType = g_MaterialSystem.FindImpactType(g_MaterialSystem.StripTexturePrefix(textureName));
 	}
 
 	return textureType;

@@ -563,6 +563,8 @@ void ServerLibrary::LoadServerConfigFiles()
 	// Initialize file lists to their defaults.
 	context.SentencesFiles.push_back("sound/sentences.json");
 	context.MaterialsFiles.push_back("sound/materials.json");
+	// johnhalflife: impact materials for textures the above doesn't list (footsteps and ricochet sounds keep its).
+	context.MaterialsFiles.push_back("sound/jhl_impact_materials.json");
 
 	context.SkillFiles.push_back("cfg/skill.json");
 

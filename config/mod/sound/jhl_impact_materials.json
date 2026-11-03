@@ -1,0 +1,3643 @@
+// johnhalflife: how bullet impacts, melee and explosion debris treat textures Valve's materials table
+// (materials.json) doesn't list; footsteps and ricochet sounds still use Valve's. "Impact" is a material
+// letter as in materials.json. Half-Life: Source's surface type for each texture where it has one (Valve's own
+// later judgement), else, for Opposing Force's and Blue Shift's own textures, a guess from the name.
+// Made by scripts/make_impact_materials.py.
+{
+	"0GENPIPE1": {
+		"Impact": "M"
+	},
+	"AELEV_UP": {
+		"Impact": "M"
+	},
+	"AIR_C1": {
+		"Impact": "M"
+	},
+	"AMMO01": {
+		"Impact": "M"
+	},
+	"AMMO02": {
+		"Impact": "M"
+	},
+	"AMMO03": {
+		"Impact": "M"
+	},
+	"AMMO04": {
+		"Impact": "M"
+	},
+	"ARMSIDES": {
+		"Impact": "M"
+	},
+	"BABTECH6E": {
+		"Impact": "M"
+	},
+	"BABTECH7": {
+		"Impact": "M"
+	},
+	"BABTECH7B": {
+		"Impact": "M"
+	},
+	"BABTECH8": {
+		"Impact": "M"
+	},
+	"BABTECH_BORDL7": {
+		"Impact": "M"
+	},
+	"BABTECH_BORDL7B": {
+		"Impact": "M"
+	},
+	"BABTECH_BORDL8": {
+		"Impact": "M"
+	},
+	"BABTECH_BORDL9": {
+		"Impact": "M"
+	},
+	"BABTECH_DR1B": {
+		"Impact": "M"
+	},
+	"BABTECH_DR1C": {
+		"Impact": "M"
+	},
+	"BABTECH_DR1D": {
+		"Impact": "M"
+	},
+	"BABTECH_DR1E": {
+		"Impact": "M"
+	},
+	"BABTECH_DR2E": {
+		"Impact": "M"
+	},
+	"BABTECH_DR4": {
+		"Impact": "M"
+	},
+	"BABTECH_DR4B": {
+		"Impact": "M"
+	},
+	"BABTECH_DR4C": {
+		"Impact": "M"
+	},
+	"BABTECH_SILDR2": {
+		"Impact": "M"
+	},
+	"BABTECH_WALL03": {
+		"Impact": "M"
+	},
+	"BARREL2A": {
+		"Impact": "M"
+	},
+	"BARREL2B": {
+		"Impact": "M"
+	},
+	"BARREL3": {
+		"Impact": "M"
+	},
+	"BARREL4": {
+		"Impact": "M"
+	},
+	"BARRELTOP": {
+		"Impact": "M"
+	},
+	"BARREL_BTTM_01": {
+		"Impact": "M"
+	},
+	"BARREL_GRN_01": {
+		"Impact": "M"
+	},
+	"BARREL_ORG_02": {
+		"Impact": "M"
+	},
+	"BARREL_RED_02": {
+		"Impact": "M"
+	},
+	"BARREL_TOP_01": {
+		"Impact": "M"
+	},
+	"BARS": {
+		"Impact": "G"
+	},
+	"BASEBLUE": {
+		"Impact": "M"
+	},
+	"BASETRIM01": {
+		"Impact": "M"
+	},
+	"BASETRIM02": {
+		"Impact": "M"
+	},
+	"BASEWALL01B": {
+		"Impact": "M"
+	},
+	"BASEWALL01D": {
+		"Impact": "M"
+	},
+	"BASEWALL01E": {
+		"Impact": "M"
+	},
+	"BA_BARRELTOP_02": {
+		"Impact": "M"
+	},
+	"BA_BARREL_01": {
+		"Impact": "M"
+	},
+	"BA_BARREL_02": {
+		"Impact": "M"
+	},
+	"BA_ELEV2": {
+		"Impact": "M"
+	},
+	"BA_ELEV_PAN": {
+		"Impact": "M"
+	},
+	"BA_GASTANK_01": {
+		"Impact": "M"
+	},
+	"BA_GEN_METAL_02": {
+		"Impact": "M"
+	},
+	"BA_GEN_METAL_03": {
+		"Impact": "M"
+	},
+	"BA_STEEL_01": {
+		"Impact": "M"
+	},
+	"BA_TANKREAR": {
+		"Impact": "M"
+	},
+	"BA_TRACKS_02": {
+		"Impact": "M"
+	},
+	"BA_TRAIN_PARTS": {
+		"Impact": "M"
+	},
+	"BCRATE09A": {
+		"Impact": "W"
+	},
+	"BCRATE09B": {
+		"Impact": "W"
+	},
+	"BCRATE09C": {
+		"Impact": "W"
+	},
+	"BM_PIPE_02": {
+		"Impact": "M"
+	},
+	"BRDLY2_BACK1": {
+		"Impact": "M"
+	},
+	"BRDLY2_BTILE1": {
+		"Impact": "M"
+	},
+	"BRDLY2_FRNT1": {
+		"Impact": "M"
+	},
+	"BRDLY2_SIDE1": {
+		"Impact": "M"
+	},
+	"BRDLY2_TOP1": {
+		"Impact": "M"
+	},
+	"BUTTON1": {
+		"Impact": "Y"
+	},
+	"BUTTON2": {
+		"Impact": "Y"
+	},
+	"BUTTON3": {
+		"Impact": "Y"
+	},
+	"BUTTON4": {
+		"Impact": "Y"
+	},
+	"BUTTONLITE": {
+		"Impact": "Y"
+	},
+	"BUTTONSUIT": {
+		"Impact": "P"
+	},
+	"C1A0B_DR1": {
+		"Impact": "M"
+	},
+	"C1A0B_DR1A": {
+		"Impact": "M"
+	},
+	"C1A0B_DR2": {
+		"Impact": "M"
+	},
+	"C1A0B_DR3": {
+		"Impact": "M"
+	},
+	"C1A0B_DR3A": {
+		"Impact": "M"
+	},
+	"C1A0B_DR3B": {
+		"Impact": "M"
+	},
+	"C1A0B_DR4": {
+		"Impact": "M"
+	},
+	"C1A0B_DR4A": {
+		"Impact": "M"
+	},
+	"C1A0B_DR4B": {
+		"Impact": "M"
+	},
+	"C1A0B_PAN1": {
+		"Impact": "M"
+	},
+	"C1A0B_PAN3": {
+		"Impact": "M"
+	},
+	"C1A0DR1": {
+		"Impact": "M"
+	},
+	"C1A0DR2": {
+		"Impact": "M"
+	},
+	"C1A0_C1": {
+		"Impact": "M"
+	},
+	"C1A0_FLIPSIGN1": {
+		"Impact": "P"
+	},
+	"C1A0_FLIPSIGN2": {
+		"Impact": "P"
+	},
+	"C1A0_FLIPSIGN3": {
+		"Impact": "P"
+	},
+	"C1A0_FLIPSIGN4": {
+		"Impact": "P"
+	},
+	"C1A0_FLIPSIGN5": {
+		"Impact": "P"
+	},
+	"C1A0_FLIPSIGN6": {
+		"Impact": "P"
+	},
+	"C1A0_FLIPSIGN7": {
+		"Impact": "P"
+	},
+	"C1A0_FLIPSIGN8": {
+		"Impact": "P"
+	},
+	"C1A0_LABGLU": {
+		"Impact": "M"
+	},
+	"C1A0_LABW1": {
+		"Impact": "M"
+	},
+	"C1A0_LABW2": {
+		"Impact": "M"
+	},
+	"C1A0_LABW3": {
+		"Impact": "M"
+	},
+	"C1A0_LABW4": {
+		"Impact": "M"
+	},
+	"C1A0_LABW5": {
+		"Impact": "M"
+	},
+	"C1A0_LABW6": {
+		"Impact": "M"
+	},
+	"C1A0_LABW7": {
+		"Impact": "M"
+	},
+	"C1A0_LABW7B": {
+		"Impact": "M"
+	},
+	"C1A0_LABW7C": {
+		"Impact": "M"
+	},
+	"C1A0_LABW8": {
+		"Impact": "M"
+	},
+	"C1A1A_SIGN1": {
+		"Impact": "M"
+	},
+	"C1A1A_W3": {
+		"Impact": "M"
+	},
+	"C1A1A_W3A": {
+		"Impact": "M"
+	},
+	"C1A1A_W3B": {
+		"Impact": "M"
+	},
+	"C1A1A_W3C": {
+		"Impact": "M"
+	},
+	"C1A1A_W4": {
+		"Impact": "M"
+	},
+	"C1A1A_W4A": {
+		"Impact": "M"
+	},
+	"C1A1DOOR2": {
+		"Impact": "M"
+	},
+	"C1A1DOOREDGE": {
+		"Impact": "M"
+	},
+	"C1A1DR4": {
+		"Impact": "M"
+	},
+	"C1A1SIGN2A": {
+		"Impact": "Y"
+	},
+	"C1A1SIGN2B": {
+		"Impact": "Y"
+	},
+	"C1A1SIGN3": {
+		"Impact": "M"
+	},
+	"C1A1W1C": {
+		"Impact": "M"
+	},
+	"C1A1W1J": {
+		"Impact": "M"
+	},
+	"C1A1W1K": {
+		"Impact": "M"
+	},
+	"C1A1W1L": {
+		"Impact": "M"
+	},
+	"C1A1_BKTB": {
+		"Impact": "M"
+	},
+	"C1A1_C1B": {
+		"Impact": "M"
+	},
+	"C1A1_CRATE1": {
+		"Impact": "M"
+	},
+	"C1A1_CRATE2": {
+		"Impact": "M"
+	},
+	"C1A1_DR1": {
+		"Impact": "M"
+	},
+	"C1A1_DR1B": {
+		"Impact": "M"
+	},
+	"C1A1_DR2": {
+		"Impact": "M"
+	},
+	"C1A1_DR3": {
+		"Impact": "M"
+	},
+	"C1A1_DR3B": {
+		"Impact": "M"
+	},
+	"C1A1_LASER": {
+		"Impact": "M"
+	},
+	"C1A1_LOCKER": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES1": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES10": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES11": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES12": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES14": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES15": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES16": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES17": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES18": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES19": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES2": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES3": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES4": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES5": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES6": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES7": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES8": {
+		"Impact": "M"
+	},
+	"C1A1_NAMES9": {
+		"Impact": "M"
+	},
+	"C1A1_SIGN1": {
+		"Impact": "M"
+	},
+	"C1A1_SWTCH1": {
+		"Impact": "M"
+	},
+	"C1A1_TNK1": {
+		"Impact": "M"
+	},
+	"C1A1_TRIM1": {
+		"Impact": "M"
+	},
+	"C1A1_TRIM2": {
+		"Impact": "M"
+	},
+	"C1A1_W1": {
+		"Impact": "M"
+	},
+	"C1A1_W1B": {
+		"Impact": "M"
+	},
+	"C1A1_W1B4": {
+		"Impact": "M"
+	},
+	"C1A1_W1B5": {
+		"Impact": "M"
+	},
+	"C1A1_W1H": {
+		"Impact": "M"
+	},
+	"C1A1_W1I": {
+		"Impact": "M"
+	},
+	"C1A1_WINDOW": {
+		"Impact": "M"
+	},
+	"C1A2_C1": {
+		"Impact": "M"
+	},
+	"C1A2_W1": {
+		"Impact": "M"
+	},
+	"C1A3FIREDR01": {
+		"Impact": "M"
+	},
+	"C1A3SECDR02": {
+		"Impact": "M"
+	},
+	"C1A3VENTDR01": {
+		"Impact": "M"
+	},
+	"C1A3VENTDR02": {
+		"Impact": "M"
+	},
+	"C1A3_DR1": {
+		"Impact": "M"
+	},
+	"C1A3_DR1A": {
+		"Impact": "M"
+	},
+	"C1A3_SIGN1": {
+		"Impact": "M"
+	},
+	"C1A3_SIGN2": {
+		"Impact": "M"
+	},
+	"C1A3_SIGN5": {
+		"Impact": "M"
+	},
+	"C1A3_SIGN6": {
+		"Impact": "M"
+	},
+	"C1A3_SIGN7": {
+		"Impact": "M"
+	},
+	"C1A3_SIGN8": {
+		"Impact": "M"
+	},
+	"C1A4I_C1A": {
+		"Impact": "M"
+	},
+	"C1A4_C1D": {
+		"Impact": "M"
+	},
+	"C1A4_CANIS": {
+		"Impact": "M"
+	},
+	"C1A4_DOME": {
+		"Impact": "M"
+	},
+	"C1A4_DOME2": {
+		"Impact": "M"
+	},
+	"C1A4_DR4A": {
+		"Impact": "M"
+	},
+	"C1A4_DR4B": {
+		"Impact": "M"
+	},
+	"C1A4_DR4C": {
+		"Impact": "M"
+	},
+	"C1A4_FAN": {
+		"Impact": "M"
+	},
+	"C1A4_FUEL": {
+		"Impact": "M"
+	},
+	"C1A4_FUEL2": {
+		"Impact": "M"
+	},
+	"C1A4_FUEL3": {
+		"Impact": "M"
+	},
+	"C1A4_OXY": {
+		"Impact": "M"
+	},
+	"C1A4_OXY2": {
+		"Impact": "M"
+	},
+	"C1A4_OXY3": {
+		"Impact": "M"
+	},
+	"C1A4_PAN3A": {
+		"Impact": "M"
+	},
+	"C1A4_POW": {
+		"Impact": "M"
+	},
+	"C1A4_SIGN1A": {
+		"Impact": "M"
+	},
+	"C1A4_SIGN1B": {
+		"Impact": "M"
+	},
+	"C1A4_SIGN1C": {
+		"Impact": "M"
+	},
+	"C1A4_SIGN1D": {
+		"Impact": "M"
+	},
+	"C1A4_SIGN2": {
+		"Impact": "M"
+	},
+	"C1A4_SIGN3": {
+		"Impact": "M"
+	},
+	"C1A4_SILO5": {
+		"Impact": "M"
+	},
+	"C1A4_SWTCH2": {
+		"Impact": "M"
+	},
+	"C1A4_SWTCH3": {
+		"Impact": "M"
+	},
+	"C1A4_SWTCH4": {
+		"Impact": "M"
+	},
+	"C1A4_SWTCH5": {
+		"Impact": "M"
+	},
+	"C1A4_W4": {
+		"Impact": "M"
+	},
+	"C1A4_W6": {
+		"Impact": "M"
+	},
+	"C2A1_W2": {
+		"Impact": "M"
+	},
+	"C2A1_W3": {
+		"Impact": "M"
+	},
+	"C2A2A_SIGN1": {
+		"Impact": "M"
+	},
+	"C2A2A_SIGN2B": {
+		"Impact": "M"
+	},
+	"C2A2A_SIGN4": {
+		"Impact": "M"
+	},
+	"C2A2A_SIGN5A": {
+		"Impact": "M"
+	},
+	"C2A2A_SIGN5B": {
+		"Impact": "M"
+	},
+	"C2A2A_SIGN5C": {
+		"Impact": "M"
+	},
+	"C2A2_DR": {
+		"Impact": "M"
+	},
+	"C2A2_LAUNCH": {
+		"Impact": "M"
+	},
+	"C2A2_LAUNCH1": {
+		"Impact": "P"
+	},
+	"C2A2_LAUNCH2": {
+		"Impact": "P"
+	},
+	"C2A2_SIG1A": {
+		"Impact": "M"
+	},
+	"C2A2_SIG1B": {
+		"Impact": "M"
+	},
+	"C2A2_VOLT": {
+		"Impact": "M"
+	},
+	"C2A3COMPACTOR1": {
+		"Impact": "M"
+	},
+	"C2A3RUSTDOOR1": {
+		"Impact": "M"
+	},
+	"C2A3_CRANE1": {
+		"Impact": "M"
+	},
+	"C2A3_CRANE2": {
+		"Impact": "M"
+	},
+	"C2A3_CRANE3": {
+		"Impact": "M"
+	},
+	"C2A3_DOOR": {
+		"Impact": "M"
+	},
+	"C2A4B_SIGN1": {
+		"Impact": "M"
+	},
+	"C2A4C2": {
+		"Impact": "M"
+	},
+	"C2A4D_PANEL": {
+		"Impact": "M"
+	},
+	"C2A4XC2": {
+		"Impact": "M"
+	},
+	"C2A4XC3": {
+		"Impact": "M"
+	},
+	"C2A4X_BRD2A": {
+		"Impact": "M"
+	},
+	"C2A4X_BRD2B": {
+		"Impact": "M"
+	},
+	"C2A4X_C2": {
+		"Impact": "M"
+	},
+	"C2A4X_DR4": {
+		"Impact": "M"
+	},
+	"C2A4X_DR5": {
+		"Impact": "M"
+	},
+	"C2A4X_GLU": {
+		"Impact": "M"
+	},
+	"C2A4X_H2E": {
+		"Impact": "M"
+	},
+	"C2A4X_H2E2": {
+		"Impact": "M"
+	},
+	"C2A4X_H2E4": {
+		"Impact": "M"
+	},
+	"C2A4X_PAN3": {
+		"Impact": "M"
+	},
+	"C2A4_BRD2A": {
+		"Impact": "M"
+	},
+	"C2A4_BRD2B": {
+		"Impact": "M"
+	},
+	"C2A4_CMP2": {
+		"Impact": "P"
+	},
+	"C2A4_CONV1": {
+		"Impact": "M"
+	},
+	"C2A4_CONV2": {
+		"Impact": "M"
+	},
+	"C2A4_COR2": {
+		"Impact": "M"
+	},
+	"C2A4_DR3A": {
+		"Impact": "M"
+	},
+	"C2A4_H2C": {
+		"Impact": "M"
+	},
+	"C2A4_H2E": {
+		"Impact": "M"
+	},
+	"C2A4_H2E2": {
+		"Impact": "M"
+	},
+	"C2A4_H2E3": {
+		"Impact": "M"
+	},
+	"C2A4_H2G": {
+		"Impact": "M"
+	},
+	"C2A4_LASGUN": {
+		"Impact": "M"
+	},
+	"C2A4_PAN1": {
+		"Impact": "M"
+	},
+	"C2A4_PAN2": {
+		"Impact": "M"
+	},
+	"C2A4_PAN4": {
+		"Impact": "M"
+	},
+	"C2A4_SIGN1": {
+		"Impact": "M"
+	},
+	"C2A4_SIGN2": {
+		"Impact": "M"
+	},
+	"C2A4_SIGN3": {
+		"Impact": "M"
+	},
+	"C2A4_SIGN4": {
+		"Impact": "M"
+	},
+	"C2A4_SIGN5": {
+		"Impact": "M"
+	},
+	"C2A4_SIGN6": {
+		"Impact": "M"
+	},
+	"C2A4_STASIS": {
+		"Impact": "M"
+	},
+	"C2A4_SWTCH1": {
+		"Impact": "M"
+	},
+	"C2A4_TRIM1": {
+		"Impact": "M"
+	},
+	"C2A4_TRIM2": {
+		"Impact": "M"
+	},
+	"C2A4_TRIM3": {
+		"Impact": "M"
+	},
+	"C2A4_VAT1": {
+		"Impact": "M"
+	},
+	"C2A4_VAT1BRD": {
+		"Impact": "M"
+	},
+	"C2A4_VAT2": {
+		"Impact": "M"
+	},
+	"C2A4_VAT3": {
+		"Impact": "M"
+	},
+	"C2A4_VAT4": {
+		"Impact": "M"
+	},
+	"C2A4_VAT5": {
+		"Impact": "M"
+	},
+	"C2A4_VAT6": {
+		"Impact": "M"
+	},
+	"C2A4_VAT7": {
+		"Impact": "M"
+	},
+	"C2A4_W1A": {
+		"Impact": "M"
+	},
+	"C2A4_W1H": {
+		"Impact": "M"
+	},
+	"C2A4_W2": {
+		"Impact": "M"
+	},
+	"C2A4_WAV": {
+		"Impact": "P"
+	},
+	"C2A5BUTTON1": {
+		"Impact": "M"
+	},
+	"C2A5BUTTON2": {
+		"Impact": "M"
+	},
+	"C2A5C_PIPE1": {
+		"Impact": "M"
+	},
+	"C2A5G_MAP": {
+		"Impact": "P"
+	},
+	"C2A5G_SIGN1": {
+		"Impact": "M"
+	},
+	"C2A5W_SIGN": {
+		"Impact": "M"
+	},
+	"C2A5_DR": {
+		"Impact": "M"
+	},
+	"C2A5_GUN1": {
+		"Impact": "M"
+	},
+	"C2A5_INTK": {
+		"Impact": "M"
+	},
+	"C2A5_INTK2": {
+		"Impact": "M"
+	},
+	"C2A5_INTK3": {
+		"Impact": "M"
+	},
+	"C2A5_SIGN1": {
+		"Impact": "M"
+	},
+	"C2A5_SIGN2": {
+		"Impact": "M"
+	},
+	"C3A1_CRATE1": {
+		"Impact": "M"
+	},
+	"C3A1_CRATE2": {
+		"Impact": "M"
+	},
+	"C3A1_CRATE3": {
+		"Impact": "M"
+	},
+	"C3A1_DGRE1B": {
+		"Impact": "P"
+	},
+	"C3A1_DGRE1D": {
+		"Impact": "P"
+	},
+	"C3A1_DGRE1E": {
+		"Impact": "P"
+	},
+	"C3A1_DGRE1F": {
+		"Impact": "P"
+	},
+	"C3A1_DGRE1G": {
+		"Impact": "M"
+	},
+	"C3A1_DGRE1I": {
+		"Impact": "P"
+	},
+	"C3A1_GEAR1": {
+		"Impact": "M"
+	},
+	"C3A1_GEAR1B": {
+		"Impact": "M"
+	},
+	"C3A1_GEAR2": {
+		"Impact": "M"
+	},
+	"C3A1_GEAR3": {
+		"Impact": "M"
+	},
+	"C3A1_NRC1": {
+		"Impact": "P"
+	},
+	"C3A1_NRC2B": {
+		"Impact": "M"
+	},
+	"C3A1_SIGN1": {
+		"Impact": "M"
+	},
+	"C3A2A_BRD1": {
+		"Impact": "M"
+	},
+	"C3A2A_PIPE1": {
+		"Impact": "M"
+	},
+	"C3A2A_PIPE2": {
+		"Impact": "M"
+	},
+	"C3A2A_TELBLU1": {
+		"Impact": "M"
+	},
+	"C3A2A_TELBLU2": {
+		"Impact": "M"
+	},
+	"C3A2A_TELBLU3": {
+		"Impact": "M"
+	},
+	"C3A2A_TELRED1A": {
+		"Impact": "M"
+	},
+	"C3A2A_TELRED1B": {
+		"Impact": "M"
+	},
+	"C3A2A_TELRED1C": {
+		"Impact": "M"
+	},
+	"C3A2A_TELRED1D": {
+		"Impact": "M"
+	},
+	"C3A2A_TNK1B": {
+		"Impact": "M"
+	},
+	"C3A2A_TNK2": {
+		"Impact": "M"
+	},
+	"C3A2A_TNK2B": {
+		"Impact": "M"
+	},
+	"C3A2A_TNK3": {
+		"Impact": "M"
+	},
+	"C3A2A_TNK3B": {
+		"Impact": "M"
+	},
+	"C3A2A_TRANS1": {
+		"Impact": "M"
+	},
+	"C3A2A_W1": {
+		"Impact": "M"
+	},
+	"C3A2A_W1A": {
+		"Impact": "M"
+	},
+	"C3A2A_W1B": {
+		"Impact": "M"
+	},
+	"C3A2A_W1G": {
+		"Impact": "M"
+	},
+	"C3A2A_W1H": {
+		"Impact": "M"
+	},
+	"C3A2A_W1I": {
+		"Impact": "M"
+	},
+	"C3A2A_W1J": {
+		"Impact": "M"
+	},
+	"C3A2A_W1K": {
+		"Impact": "M"
+	},
+	"C3A2A_W1L": {
+		"Impact": "M"
+	},
+	"C3A2A_W1M": {
+		"Impact": "M"
+	},
+	"C3A2A_W2A": {
+		"Impact": "M"
+	},
+	"C3A2A_W2B": {
+		"Impact": "M"
+	},
+	"C3A2A_W2C": {
+		"Impact": "M"
+	},
+	"C3A2A_W3": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC1": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC1B": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC1C": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC1D": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC2": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC2B": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC2C": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC2D": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC2E1": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC2E2": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC2E4": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC3": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC3B": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC4": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC5": {
+		"Impact": "M"
+	},
+	"C3A2B_REAC5B": {
+		"Impact": "M"
+	},
+	"C3A2SIGN00": {
+		"Impact": "M"
+	},
+	"C3A2SIGN01": {
+		"Impact": "M"
+	},
+	"C3A2SIGN02": {
+		"Impact": "M"
+	},
+	"C3A2SIGN03": {
+		"Impact": "M"
+	},
+	"C3A2SIGN04": {
+		"Impact": "M"
+	},
+	"C3A2SIGN05": {
+		"Impact": "M"
+	},
+	"C3A2SIGN06": {
+		"Impact": "M"
+	},
+	"C3A2SIGN07": {
+		"Impact": "M"
+	},
+	"C3A2SIGN08": {
+		"Impact": "M"
+	},
+	"C3A2SIGN10": {
+		"Impact": "M"
+	},
+	"C3A2SIGN11": {
+		"Impact": "M"
+	},
+	"C3A2SIGN12": {
+		"Impact": "M"
+	},
+	"C3A2SIGN13": {
+		"Impact": "M"
+	},
+	"C3A2SIGN14": {
+		"Impact": "M"
+	},
+	"C3A2SIGN15": {
+		"Impact": "M"
+	},
+	"C3A2SIGN16": {
+		"Impact": "M"
+	},
+	"C3A2SIGN17": {
+		"Impact": "M"
+	},
+	"C3A2SIGN18": {
+		"Impact": "M"
+	},
+	"C3A2SIGN19": {
+		"Impact": "M"
+	},
+	"C3A2SIGN20": {
+		"Impact": "M"
+	},
+	"C3A2SIGN21": {
+		"Impact": "M"
+	},
+	"C3A2SIGN22": {
+		"Impact": "M"
+	},
+	"C3A2SIGN23": {
+		"Impact": "M"
+	},
+	"C3A2SIGN24": {
+		"Impact": "M"
+	},
+	"C3A2SIGN25": {
+		"Impact": "M"
+	},
+	"C3A2SIGN26": {
+		"Impact": "M"
+	},
+	"C3A2SIGN28": {
+		"Impact": "M"
+	},
+	"C3A2SIGN29": {
+		"Impact": "M"
+	},
+	"C3A2SIGN30": {
+		"Impact": "M"
+	},
+	"C3A2SIGN31": {
+		"Impact": "M"
+	},
+	"C3A2SIGN32": {
+		"Impact": "M"
+	},
+	"C3A2SIGN33": {
+		"Impact": "M"
+	},
+	"C3A2SIGN34": {
+		"Impact": "M"
+	},
+	"C3A2SIGN35": {
+		"Impact": "M"
+	},
+	"C3A2SIGN37": {
+		"Impact": "M"
+	},
+	"C3A2SIGN38": {
+		"Impact": "M"
+	},
+	"C3A2SIGN39": {
+		"Impact": "M"
+	},
+	"C3A2SIGN40": {
+		"Impact": "M"
+	},
+	"C3A2SIGN42": {
+		"Impact": "M"
+	},
+	"C3A2SIGN44": {
+		"Impact": "M"
+	},
+	"C3A2SIGN45": {
+		"Impact": "M"
+	},
+	"C3A2SIGN46": {
+		"Impact": "M"
+	},
+	"C3A2SIGN47": {
+		"Impact": "M"
+	},
+	"C3A2SIGN48": {
+		"Impact": "M"
+	},
+	"C3A2SIGN49": {
+		"Impact": "M"
+	},
+	"C3A2SIGN50": {
+		"Impact": "M"
+	},
+	"C3A2SIGN51": {
+		"Impact": "M"
+	},
+	"C3A2SIGN52": {
+		"Impact": "M"
+	},
+	"C3A2SIGN53": {
+		"Impact": "M"
+	},
+	"C3A2SIGN55": {
+		"Impact": "M"
+	},
+	"C3A2STATUS": {
+		"Impact": "P"
+	},
+	"C3A2_CEIL": {
+		"Impact": "M"
+	},
+	"C3A2_DR1": {
+		"Impact": "M"
+	},
+	"C3A2_LIGHT": {
+		"Impact": "Y"
+	},
+	"C3A2_LIGHT2": {
+		"Impact": "Y"
+	},
+	"C3A2_TELEPAD": {
+		"Impact": "M"
+	},
+	"C3A2_TNK4A": {
+		"Impact": "M"
+	},
+	"C3A2_TNK4B": {
+		"Impact": "M"
+	},
+	"C3A2_TNK4C": {
+		"Impact": "M"
+	},
+	"C3A2_TNK5A": {
+		"Impact": "M"
+	},
+	"C3A2_TNK5B": {
+		"Impact": "M"
+	},
+	"C3A2_TNK5C": {
+		"Impact": "M"
+	},
+	"CA1X2B": {
+		"Impact": "M"
+	},
+	"CA1X_C1A": {
+		"Impact": "M"
+	},
+	"CA1X_C1B": {
+		"Impact": "M"
+	},
+	"CA1X_C1C": {
+		"Impact": "M"
+	},
+	"CA1X_C1D": {
+		"Impact": "M"
+	},
+	"CA1X_C2A": {
+		"Impact": "M"
+	},
+	"CA1X_C2B": {
+		"Impact": "M"
+	},
+	"CA1X_C2C": {
+		"Impact": "M"
+	},
+	"CA1X_C2D": {
+		"Impact": "M"
+	},
+	"CA1X_CON": {
+		"Impact": "M"
+	},
+	"CA1X_CON1A": {
+		"Impact": "M"
+	},
+	"CA1X_CON1B": {
+		"Impact": "M"
+	},
+	"CA1X_MONSIDE": {
+		"Impact": "P"
+	},
+	"CA1X_PCFRONT": {
+		"Impact": "M"
+	},
+	"CA1X_PIPE": {
+		"Impact": "M"
+	},
+	"CA1X_SUP5": {
+		"Impact": "M"
+	},
+	"CA1X_SUP5C": {
+		"Impact": "M"
+	},
+	"CA1X_W1": {
+		"Impact": "M"
+	},
+	"CA1X_W1B": {
+		"Impact": "M"
+	},
+	"CA1X_W1C": {
+		"Impact": "M"
+	},
+	"CA1X_W1D": {
+		"Impact": "M"
+	},
+	"CA1X_W1E": {
+		"Impact": "M"
+	},
+	"CA1X_W1F": {
+		"Impact": "M"
+	},
+	"CA1X_W2": {
+		"Impact": "M"
+	},
+	"CHAINLINK": {
+		"Impact": "M"
+	},
+	"CHROMEBAR": {
+		"Impact": "M"
+	},
+	"CLOCK2A": {
+		"Impact": "Y"
+	},
+	"CON1_WALL01P": {
+		"Impact": "M"
+	},
+	"CONDUIT1": {
+		"Impact": "M"
+	},
+	"CRETE_SWTCH1A": {
+		"Impact": "P"
+	},
+	"CRYS_3TOP": {
+		"Impact": "Y"
+	},
+	"DOOR": {
+		"Impact": "G"
+	},
+	"DRKMTLS1": {
+		"Impact": "Y"
+	},
+	"DRKMTLS2": {
+		"Impact": "Y"
+	},
+	"DRKMTLS2C": {
+		"Impact": "P"
+	},
+	"DRKMTLS3": {
+		"Impact": "P"
+	},
+	"DRKMTLT_BORD07": {
+		"Impact": "M"
+	},
+	"DRKMTLT_BORD09": {
+		"Impact": "M"
+	},
+	"DRKMTLT_BORD10": {
+		"Impact": "M"
+	},
+	"DRKMTLT_BORD11": {
+		"Impact": "M"
+	},
+	"DRKMTLT_BORD12": {
+		"Impact": "M"
+	},
+	"DRKMTLT_BORD13": {
+		"Impact": "M"
+	},
+	"DRKMTLT_BORD14": {
+		"Impact": "M"
+	},
+	"DRKMTLT_BORD15": {
+		"Impact": "M"
+	},
+	"DRKMTLT_BORD16": {
+		"Impact": "M"
+	},
+	"DRKMTLT_CEIL01": {
+		"Impact": "M"
+	},
+	"DRKMTLT_CEIL01B": {
+		"Impact": "M"
+	},
+	"DRKMTLT_GDGT01": {
+		"Impact": "P"
+	},
+	"DRKMTLT_WALL010": {
+		"Impact": "M"
+	},
+	"DRKMTLT_WALL07A": {
+		"Impact": "M"
+	},
+	"DRKMTLT_WALL08B": {
+		"Impact": "M"
+	},
+	"DRKMTL_SCRN": {
+		"Impact": "P"
+	},
+	"DUCT_BREAK1": {
+		"Impact": "G"
+	},
+	"DUCT_FLR02": {
+		"Impact": "V"
+	},
+	"ELEV1": {
+		"Impact": "M"
+	},
+	"ELEV1_CIEL": {
+		"Impact": "V"
+	},
+	"ELEV1_DR": {
+		"Impact": "M"
+	},
+	"ELEV1_TRIM": {
+		"Impact": "M"
+	},
+	"ELEV2": {
+		"Impact": "M"
+	},
+	"ELEV2_CIEL": {
+		"Impact": "G"
+	},
+	"ELEV2_CIEL2": {
+		"Impact": "G"
+	},
+	"ELEV2_DR": {
+		"Impact": "M"
+	},
+	"ELEV_DOOR_01": {
+		"Impact": "M"
+	},
+	"ELEV_DOWN": {
+		"Impact": "P"
+	},
+	"ELEV_DOWN2": {
+		"Impact": "P"
+	},
+	"ELEV_UP": {
+		"Impact": "P"
+	},
+	"ELEV_UP2": {
+		"Impact": "P"
+	},
+	"EMERGLIGHT": {
+		"Impact": "Y"
+	},
+	"EXIT": {
+		"Impact": "P"
+	},
+	"EXITLFT": {
+		"Impact": "P"
+	},
+	"EXITRT": {
+		"Impact": "P"
+	},
+	"FENCE": {
+		"Impact": "M"
+	},
+	"FENCE2": {
+		"Impact": "G"
+	},
+	"FENCE3": {
+		"Impact": "M"
+	},
+	"FIFTIESTCH3": {
+		"Impact": "P"
+	},
+	"FIFTIES_BORD06": {
+		"Impact": "M"
+	},
+	"FIFTIES_BRD10": {
+		"Impact": "M"
+	},
+	"FIFTIES_BRD10B": {
+		"Impact": "M"
+	},
+	"FIFTIES_CASE": {
+		"Impact": "M"
+	},
+	"FIFTIES_CASE2": {
+		"Impact": "M"
+	},
+	"FIFTIES_CAU": {
+		"Impact": "M"
+	},
+	"FIFTIES_CEIL03": {
+		"Impact": "V"
+	},
+	"FIFTIES_CMP1A": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP1B": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP1C": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP2A2": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP2B": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP2B2": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP2C": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP3A": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP3A2": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP3B": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP3B2": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP3C": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP4A": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP4B": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP4C": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP4E": {
+		"Impact": "M"
+	},
+	"FIFTIES_CMP5": {
+		"Impact": "M"
+	},
+	"FIFTIES_DOOR01": {
+		"Impact": "M"
+	},
+	"FIFTIES_DR1": {
+		"Impact": "W"
+	},
+	"FIFTIES_DR1B": {
+		"Impact": "W"
+	},
+	"FIFTIES_DR1C": {
+		"Impact": "W"
+	},
+	"FIFTIES_DR3": {
+		"Impact": "M"
+	},
+	"FIFTIES_DR3B": {
+		"Impact": "M"
+	},
+	"FIFTIES_DR4A": {
+		"Impact": "M"
+	},
+	"FIFTIES_DR4B": {
+		"Impact": "M"
+	},
+	"FIFTIES_DR4D": {
+		"Impact": "M"
+	},
+	"FIFTIES_DR5A": {
+		"Impact": "M"
+	},
+	"FIFTIES_DR5B": {
+		"Impact": "M"
+	},
+	"FIFTIES_DR5D": {
+		"Impact": "M"
+	},
+	"FIFTIES_DR6A2": {
+		"Impact": "W"
+	},
+	"FIFTIES_DR7B": {
+		"Impact": "W"
+	},
+	"FIFTIES_DR8B": {
+		"Impact": "W"
+	},
+	"FIFTIES_DR9B": {
+		"Impact": "W"
+	},
+	"FIFTIES_DSK2": {
+		"Impact": "W"
+	},
+	"FIFTIES_DSK5A": {
+		"Impact": "M"
+	},
+	"FIFTIES_DSK5B": {
+		"Impact": "M"
+	},
+	"FIFTIES_DSK5C": {
+		"Impact": "M"
+	},
+	"FIFTIES_DSK5D": {
+		"Impact": "M"
+	},
+	"FIFTIES_DSK5DX": {
+		"Impact": "M"
+	},
+	"FIFTIES_DSK5E": {
+		"Impact": "M"
+	},
+	"FIFTIES_DSK5F": {
+		"Impact": "M"
+	},
+	"FIFTIES_GGT7A": {
+		"Impact": "P"
+	},
+	"FIFTIES_HNDLE": {
+		"Impact": "M"
+	},
+	"FIFTIES_KEYB": {
+		"Impact": "P"
+	},
+	"FIFTIES_PAN1": {
+		"Impact": "P"
+	},
+	"FIFTIES_PAN3": {
+		"Impact": "P"
+	},
+	"FIFTIES_WALL03": {
+		"Impact": "M"
+	},
+	"FIFTSFILE1": {
+		"Impact": "M"
+	},
+	"FIFTSFILE1B": {
+		"Impact": "M"
+	},
+	"FIFTSFILE2": {
+		"Impact": "M"
+	},
+	"FIFTSFILE2B": {
+		"Impact": "M"
+	},
+	"FIFTS_LGHT06": {
+		"Impact": "Y"
+	},
+	"FIFT_DRTEMP": {
+		"Impact": "W"
+	},
+	"FIF_MON1": {
+		"Impact": "P"
+	},
+	"FLATBED_BUMPER": {
+		"Impact": "M"
+	},
+	"FLATBED_ENGINE": {
+		"Impact": "M"
+	},
+	"FLATBED_HLITE2": {
+		"Impact": "P"
+	},
+	"FLATBED_LITE1": {
+		"Impact": "P"
+	},
+	"FLATBED_LITE2": {
+		"Impact": "P"
+	},
+	"FLATBED_POD": {
+		"Impact": "M"
+	},
+	"FLATBED_TLITE2": {
+		"Impact": "P"
+	},
+	"FREEZERC2": {
+		"Impact": "M"
+	},
+	"FREEZERC3": {
+		"Impact": "M"
+	},
+	"FREEZERC4": {
+		"Impact": "M"
+	},
+	"FREEZERD1": {
+		"Impact": "M"
+	},
+	"FREEZERD2": {
+		"Impact": "M"
+	},
+	"FREEZERPAN3": {
+		"Impact": "M"
+	},
+	"FREEZER_BX2": {
+		"Impact": "M"
+	},
+	"FREEZER_BX7": {
+		"Impact": "M"
+	},
+	"FREEZER_BX9": {
+		"Impact": "M"
+	},
+	"FREEZER_PAN1": {
+		"Impact": "M"
+	},
+	"FREEZER_PAN2": {
+		"Impact": "M"
+	},
+	"FROSTCEILING": {
+		"Impact": "M"
+	},
+	"FROSTDOOR": {
+		"Impact": "M"
+	},
+	"FROSTGRATE": {
+		"Impact": "M"
+	},
+	"FROSTPANEL": {
+		"Impact": "M"
+	},
+	"FROSTSEWCEIL": {
+		"Impact": "M"
+	},
+	"FROSTVAT2": {
+		"Impact": "M"
+	},
+	"FUSE": {
+		"Impact": "M"
+	},
+	"FUSEBOX": {
+		"Impact": "P"
+	},
+	"GATE": {
+		"Impact": "M"
+	},
+	"GENERIC009": {
+		"Impact": "M"
+	},
+	"GENERIC011": {
+		"Impact": "M"
+	},
+	"GENERIC012": {
+		"Impact": "M"
+	},
+	"GENERIC015J": {
+		"Impact": "M"
+	},
+	"GENERIC015K": {
+		"Impact": "M"
+	},
+	"GENERIC015L": {
+		"Impact": "M"
+	},
+	"GENERIC015M": {
+		"Impact": "M"
+	},
+	"GENERIC015O": {
+		"Impact": "M"
+	},
+	"GENERIC015Q": {
+		"Impact": "M"
+	},
+	"GENERIC015V3": {
+		"Impact": "M"
+	},
+	"GENERIC015V4": {
+		"Impact": "M"
+	},
+	"GENERIC015V6": {
+		"Impact": "M"
+	},
+	"GENERIC025": {
+		"Impact": "M"
+	},
+	"GENERIC027": {
+		"Impact": "M"
+	},
+	"GENERIC028": {
+		"Impact": "M"
+	},
+	"GENERIC028C": {
+		"Impact": "M"
+	},
+	"GENERIC029": {
+		"Impact": "M"
+	},
+	"GENERIC030": {
+		"Impact": "M"
+	},
+	"GENERIC031": {
+		"Impact": "M"
+	},
+	"GENERIC031B": {
+		"Impact": "M"
+	},
+	"GENERIC034": {
+		"Impact": "M"
+	},
+	"GENERIC034A": {
+		"Impact": "M"
+	},
+	"GENERIC035": {
+		"Impact": "M"
+	},
+	"GENERIC036": {
+		"Impact": "M"
+	},
+	"GENERIC037": {
+		"Impact": "M"
+	},
+	"GENERIC038": {
+		"Impact": "M"
+	},
+	"GENERIC039": {
+		"Impact": "M"
+	},
+	"GENERIC040": {
+		"Impact": "M"
+	},
+	"GENERIC100A": {
+		"Impact": "M"
+	},
+	"GENERIC101": {
+		"Impact": "M"
+	},
+	"GENERIC101A": {
+		"Impact": "M"
+	},
+	"GENERIC101A2": {
+		"Impact": "M"
+	},
+	"GENERIC101B": {
+		"Impact": "M"
+	},
+	"GENERIC101B2": {
+		"Impact": "M"
+	},
+	"GENERIC101C2": {
+		"Impact": "M"
+	},
+	"GENERIC101D": {
+		"Impact": "M"
+	},
+	"GENERIC101E": {
+		"Impact": "M"
+	},
+	"GENERIC101F": {
+		"Impact": "M"
+	},
+	"GENERIC102": {
+		"Impact": "P"
+	},
+	"GENERIC102B": {
+		"Impact": "M"
+	},
+	"GENERIC103": {
+		"Impact": "Y"
+	},
+	"GENERIC103B": {
+		"Impact": "M"
+	},
+	"GENERIC103C": {
+		"Impact": "M"
+	},
+	"GENERIC104": {
+		"Impact": "M"
+	},
+	"GENERIC104A": {
+		"Impact": "M"
+	},
+	"GENERIC104B": {
+		"Impact": "M"
+	},
+	"GENERIC105A": {
+		"Impact": "P"
+	},
+	"GENERIC105B": {
+		"Impact": "M"
+	},
+	"GENERIC105C": {
+		"Impact": "M"
+	},
+	"GENERIC106A": {
+		"Impact": "P"
+	},
+	"GENERIC106B": {
+		"Impact": "M"
+	},
+	"GENERIC107A": {
+		"Impact": "M"
+	},
+	"GENERIC107B": {
+		"Impact": "M"
+	},
+	"GENERIC108": {
+		"Impact": "P"
+	},
+	"GENERIC108A": {
+		"Impact": "M"
+	},
+	"GENERIC111B": {
+		"Impact": "M"
+	},
+	"GENERIC115": {
+		"Impact": "M"
+	},
+	"GENERIC115B": {
+		"Impact": "M"
+	},
+	"GENERIC116": {
+		"Impact": "M"
+	},
+	"GENERIC117": {
+		"Impact": "M"
+	},
+	"GENERIC118": {
+		"Impact": "M"
+	},
+	"GENERIC119": {
+		"Impact": "M"
+	},
+	"GENERIC121": {
+		"Impact": "M"
+	},
+	"GENERIC121B": {
+		"Impact": "M"
+	},
+	"GENERIC122": {
+		"Impact": "M"
+	},
+	"GENERIC44": {
+		"Impact": "P"
+	},
+	"GENERIC45": {
+		"Impact": "Y"
+	},
+	"GENERIC46": {
+		"Impact": "M"
+	},
+	"GENERIC64": {
+		"Impact": "M"
+	},
+	"GENERIC64B": {
+		"Impact": "M"
+	},
+	"GENERIC67": {
+		"Impact": "M"
+	},
+	"GENERIC68": {
+		"Impact": "M"
+	},
+	"GENERIC69": {
+		"Impact": "M"
+	},
+	"GENERIC70": {
+		"Impact": "M"
+	},
+	"GENERIC71": {
+		"Impact": "M"
+	},
+	"GENERIC72": {
+		"Impact": "M"
+	},
+	"GENERIC73A": {
+		"Impact": "M"
+	},
+	"GENERIC76": {
+		"Impact": "M"
+	},
+	"GENERIC77": {
+		"Impact": "M"
+	},
+	"GENERIC80": {
+		"Impact": "M"
+	},
+	"GENERIC80B": {
+		"Impact": "M"
+	},
+	"GENERIC85": {
+		"Impact": "Y"
+	},
+	"GENERIC86": {
+		"Impact": "M"
+	},
+	"GENERIC86B": {
+		"Impact": "Y"
+	},
+	"GENERIC86D": {
+		"Impact": "M"
+	},
+	"GENERIC86R": {
+		"Impact": "Y"
+	},
+	"GENERIC87": {
+		"Impact": "Y"
+	},
+	"GENERIC87B": {
+		"Impact": "M"
+	},
+	"GENERIC87C": {
+		"Impact": "M"
+	},
+	"GENERIC88": {
+		"Impact": "Y"
+	},
+	"GENERIC88B": {
+		"Impact": "M"
+	},
+	"GENERIC89B": {
+		"Impact": "M"
+	},
+	"GENERIC91A": {
+		"Impact": "M"
+	},
+	"GENERIC91B": {
+		"Impact": "M"
+	},
+	"GENERIC92": {
+		"Impact": "M"
+	},
+	"GENERIC94": {
+		"Impact": "M"
+	},
+	"GENERIC95": {
+		"Impact": "M"
+	},
+	"GENERIC95C": {
+		"Impact": "M"
+	},
+	"GENERIC96": {
+		"Impact": "M"
+	},
+	"GENERIC98C": {
+		"Impact": "M"
+	},
+	"GENERIC98D": {
+		"Impact": "M"
+	},
+	"GENERIC99": {
+		"Impact": "M"
+	},
+	"GENERIC99B": {
+		"Impact": "M"
+	},
+	"GENERIC99C": {
+		"Impact": "M"
+	},
+	"GENERIC99D": {
+		"Impact": "M"
+	},
+	"GENERIC_109": {
+		"Impact": "G"
+	},
+	"GENERIC_111A": {
+		"Impact": "M"
+	},
+	"GENERIC_111B": {
+		"Impact": "M"
+	},
+	"GENERIC_111C": {
+		"Impact": "M"
+	},
+	"GENERIC_111D": {
+		"Impact": "M"
+	},
+	"GENERIC_113": {
+		"Impact": "M"
+	},
+	"GENERIC_113A": {
+		"Impact": "M"
+	},
+	"GENERIC_113C": {
+		"Impact": "M"
+	},
+	"GENLOCKER": {
+		"Impact": "M"
+	},
+	"GENPIPE1": {
+		"Impact": "M"
+	},
+	"GEN_VEND1": {
+		"Impact": "P"
+	},
+	"GEN_VEND1A": {
+		"Impact": "P"
+	},
+	"GEN_VEND1B": {
+		"Impact": "M"
+	},
+	"GLASSBRICK": {
+		"Impact": "Y"
+	},
+	"GLASSGREEN": {
+		"Impact": "Y"
+	},
+	"GRASS1": {
+		"Impact": "D"
+	},
+	"GRASS2": {
+		"Impact": "D"
+	},
+	"GRATE_RUST": {
+		"Impact": "G"
+	},
+	"HANDLESIDE": {
+		"Impact": "M"
+	},
+	"H_FRONT": {
+		"Impact": "M"
+	},
+	"H_SIDE2": {
+		"Impact": "M"
+	},
+	"H_SIDE3": {
+		"Impact": "M"
+	},
+	"INTRODR1A": {
+		"Impact": "M"
+	},
+	"INTRODR1B": {
+		"Impact": "M"
+	},
+	"INTRODR1C": {
+		"Impact": "M"
+	},
+	"INTRODR1D": {
+		"Impact": "M"
+	},
+	"INTRODR1E": {
+		"Impact": "M"
+	},
+	"INVISIBLE": {
+		"Impact": "Y"
+	},
+	"LAB10_DR1A": {
+		"Impact": "M"
+	},
+	"LAB10_DR1B": {
+		"Impact": "M"
+	},
+	"LAB10_DR1C": {
+		"Impact": "M"
+	},
+	"LAB10_DR1D": {
+		"Impact": "M"
+	},
+	"LAB10_TNK2": {
+		"Impact": "M"
+	},
+	"LAB1_ACS2": {
+		"Impact": "P"
+	},
+	"LAB1_B4": {
+		"Impact": "M"
+	},
+	"LAB1_BRD10": {
+		"Impact": "M"
+	},
+	"LAB1_BRD3": {
+		"Impact": "M"
+	},
+	"LAB1_BRD3B": {
+		"Impact": "M"
+	},
+	"LAB1_BRD3C": {
+		"Impact": "M"
+	},
+	"LAB1_BRD3D": {
+		"Impact": "M"
+	},
+	"LAB1_BRD3E": {
+		"Impact": "M"
+	},
+	"LAB1_BRD3FY": {
+		"Impact": "M"
+	},
+	"LAB1_BRD3G": {
+		"Impact": "M"
+	},
+	"LAB1_BRD4B": {
+		"Impact": "M"
+	},
+	"LAB1_BRD5": {
+		"Impact": "M"
+	},
+	"LAB1_COMP10F": {
+		"Impact": "M"
+	},
+	"LAB1_COMP3E": {
+		"Impact": "P"
+	},
+	"LAB1_COMP3F": {
+		"Impact": "M"
+	},
+	"LAB1_COMP7B": {
+		"Impact": "M"
+	},
+	"LAB1_COMP8B": {
+		"Impact": "M"
+	},
+	"LAB1_COMP9B2": {
+		"Impact": "P"
+	},
+	"LAB1_COMP9E": {
+		"Impact": "M"
+	},
+	"LAB1_COMP9E2": {
+		"Impact": "M"
+	},
+	"LAB1_COMPX": {
+		"Impact": "P"
+	},
+	"LAB1_DOOR01": {
+		"Impact": "M"
+	},
+	"LAB1_DOOR2": {
+		"Impact": "M"
+	},
+	"LAB1_DOOR2A": {
+		"Impact": "M"
+	},
+	"LAB1_DOOR2B": {
+		"Impact": "M"
+	},
+	"LAB1_DOOR7": {
+		"Impact": "M"
+	},
+	"LAB1_DR4A": {
+		"Impact": "M"
+	},
+	"LAB1_DR4D": {
+		"Impact": "M"
+	},
+	"LAB1_DR5A": {
+		"Impact": "M"
+	},
+	"LAB1_DR5B": {
+		"Impact": "M"
+	},
+	"LAB1_FLR10": {
+		"Impact": "M"
+	},
+	"LAB1_GAD1": {
+		"Impact": "P"
+	},
+	"LAB1_GAD1D": {
+		"Impact": "P"
+	},
+	"LAB1_GAD2B": {
+		"Impact": "P"
+	},
+	"LAB1_GDPNL5": {
+		"Impact": "M"
+	},
+	"LAB1_GDPNL5A": {
+		"Impact": "M"
+	},
+	"LAB1_GDPNL5B": {
+		"Impact": "M"
+	},
+	"LAB1_GEAR1": {
+		"Impact": "M"
+	},
+	"LAB1_GEAR2": {
+		"Impact": "M"
+	},
+	"LAB1_GEAR3": {
+		"Impact": "M"
+	},
+	"LAB1_GEAR4": {
+		"Impact": "M"
+	},
+	"LAB1_MAP1": {
+		"Impact": "P"
+	},
+	"LAB1_MAP2": {
+		"Impact": "P"
+	},
+	"LAB1_PANEL1": {
+		"Impact": "M"
+	},
+	"LAB1_PANEL1C": {
+		"Impact": "M"
+	},
+	"LAB1_PANEL1D": {
+		"Impact": "M"
+	},
+	"LAB1_PANEL1E": {
+		"Impact": "M"
+	},
+	"LAB1_PANEL1F": {
+		"Impact": "M"
+	},
+	"LAB1_PANEL2": {
+		"Impact": "M"
+	},
+	"LAB1_PANELA": {
+		"Impact": "M"
+	},
+	"LAB1_PANELB": {
+		"Impact": "M"
+	},
+	"LAB1_PANELC": {
+		"Impact": "M"
+	},
+	"LAB1_PANELD": {
+		"Impact": "M"
+	},
+	"LAB1_PANELE": {
+		"Impact": "M"
+	},
+	"LAB1_PANELF": {
+		"Impact": "M"
+	},
+	"LAB1_PANELG": {
+		"Impact": "M"
+	},
+	"LAB1_PANELH": {
+		"Impact": "M"
+	},
+	"LAB1_PANELI": {
+		"Impact": "M"
+	},
+	"LAB1_PNL1": {
+		"Impact": "V"
+	},
+	"LAB1_SKR1": {
+		"Impact": "W"
+	},
+	"LAB1_SKR3": {
+		"Impact": "W"
+	},
+	"LAB1_SLOT1": {
+		"Impact": "G"
+	},
+	"LAB1_SLOT1B": {
+		"Impact": "M"
+	},
+	"LAB1_SLOT4": {
+		"Impact": "G"
+	},
+	"LAB1_SLOT4B": {
+		"Impact": "G"
+	},
+	"LAB1_SLOT4C": {
+		"Impact": "G"
+	},
+	"LAB1_SLOT4D": {
+		"Impact": "G"
+	},
+	"LAB1_SLOT4E": {
+		"Impact": "G"
+	},
+	"LAB1_SLOT6": {
+		"Impact": "G"
+	},
+	"LAB1_SLOT6B": {
+		"Impact": "G"
+	},
+	"LAB1_SLOT6C": {
+		"Impact": "G"
+	},
+	"LAB1_SLOT6D": {
+		"Impact": "G"
+	},
+	"LAB1_STAIR1B": {
+		"Impact": "M"
+	},
+	"LAB1_SWCH1": {
+		"Impact": "M"
+	},
+	"LAB1_SWCH2": {
+		"Impact": "M"
+	},
+	"LAB1_TRIM1": {
+		"Impact": "M"
+	},
+	"LAB1_TRIM3": {
+		"Impact": "M"
+	},
+	"LAB1_TRIM4": {
+		"Impact": "M"
+	},
+	"LAB1_W1": {
+		"Impact": "M"
+	},
+	"LAB1_W1A": {
+		"Impact": "M"
+	},
+	"LAB1_W1C": {
+		"Impact": "M"
+	},
+	"LAB1_W1D": {
+		"Impact": "M"
+	},
+	"LAB1_W1G": {
+		"Impact": "M"
+	},
+	"LAB1_W2A": {
+		"Impact": "M"
+	},
+	"LAB1_W3": {
+		"Impact": "M"
+	},
+	"LAB1_W4": {
+		"Impact": "M"
+	},
+	"LAB1_W4A": {
+		"Impact": "M"
+	},
+	"LAB1_W4B": {
+		"Impact": "M"
+	},
+	"LAB1_W4GAD": {
+		"Impact": "M"
+	},
+	"LAB1_W6B": {
+		"Impact": "Y"
+	},
+	"LAB1_W7": {
+		"Impact": "Y"
+	},
+	"LAB1_W8CEIL1": {
+		"Impact": "M"
+	},
+	"LAB1_W8CEIL1A": {
+		"Impact": "M"
+	},
+	"LAB2_W3A2": {
+		"Impact": "M"
+	},
+	"LAB2_W4C": {
+		"Impact": "M"
+	},
+	"LAB2_W6B": {
+		"Impact": "M"
+	},
+	"LAB3_BRD1": {
+		"Impact": "M"
+	},
+	"LAB3_BRD2": {
+		"Impact": "M"
+	},
+	"LAB3_BRD3C": {
+		"Impact": "M"
+	},
+	"LAB3_BRD4A": {
+		"Impact": "M"
+	},
+	"LAB3_BRD4B": {
+		"Impact": "M"
+	},
+	"LAB3_BRD5": {
+		"Impact": "M"
+	},
+	"LAB3_C2": {
+		"Impact": "M"
+	},
+	"LAB3_C3": {
+		"Impact": "M"
+	},
+	"LAB3_FLR1": {
+		"Impact": "M"
+	},
+	"LAB3_FLR1B": {
+		"Impact": "M"
+	},
+	"LAB3_FLR4": {
+		"Impact": "M"
+	},
+	"LAB3_W1A": {
+		"Impact": "M"
+	},
+	"LAB3_W1C": {
+		"Impact": "M"
+	},
+	"LAB3_W1E": {
+		"Impact": "M"
+	},
+	"LAB3_W5": {
+		"Impact": "M"
+	},
+	"LAB3_W6": {
+		"Impact": "M"
+	},
+	"LAB3_W6A": {
+		"Impact": "M"
+	},
+	"LAB3_W6BRD": {
+		"Impact": "M"
+	},
+	"LAB3_W7": {
+		"Impact": "M"
+	},
+	"LAB3_W8A": {
+		"Impact": "M"
+	},
+	"LAB3_W9": {
+		"Impact": "M"
+	},
+	"LAB4_GAD2": {
+		"Impact": "M"
+	},
+	"LAB4_GAD2A": {
+		"Impact": "M"
+	},
+	"LAB5_C2": {
+		"Impact": "G"
+	},
+	"LAB5_C2B": {
+		"Impact": "G"
+	},
+	"LAB5_C2C": {
+		"Impact": "G"
+	},
+	"LAB5_C2D": {
+		"Impact": "G"
+	},
+	"LAB5_W3": {
+		"Impact": "M"
+	},
+	"LAB_CRT9A": {
+		"Impact": "P"
+	},
+	"LAB_CRT9B": {
+		"Impact": "P"
+	},
+	"LADDER1": {
+		"Impact": "M"
+	},
+	"LADDER1B": {
+		"Impact": "M"
+	},
+	"LADDER2": {
+		"Impact": "M"
+	},
+	"LADDER2B": {
+		"Impact": "M"
+	},
+	"LADDER3A": {
+		"Impact": "M"
+	},
+	"LADDER3B": {
+		"Impact": "M"
+	},
+	"LITEPANEL1": {
+		"Impact": "Y"
+	},
+	"LOCKER_PIC1": {
+		"Impact": "M"
+	},
+	"LOCKER_PIC2": {
+		"Impact": "M"
+	},
+	"MEDKITEDGE1": {
+		"Impact": "M"
+	},
+	"METAL_BORD01": {
+		"Impact": "M"
+	},
+	"METAL_BORD021": {
+		"Impact": "M"
+	},
+	"METAL_BORD03": {
+		"Impact": "M"
+	},
+	"METAL_BORD05": {
+		"Impact": "M"
+	},
+	"METAL_BORD06": {
+		"Impact": "M"
+	},
+	"METAL_BORD07": {
+		"Impact": "M"
+	},
+	"METAL_BORD07C": {
+		"Impact": "M"
+	},
+	"METAL_BORD08": {
+		"Impact": "M"
+	},
+	"METAL_CCU": {
+		"Impact": "M"
+	},
+	"METAL_PATCH": {
+		"Impact": "M"
+	},
+	"METAL_WALL01B": {
+		"Impact": "M"
+	},
+	"METAL_WALL04": {
+		"Impact": "M"
+	},
+	"METAL_WALL05B": {
+		"Impact": "M"
+	},
+	"METAL_WALL05C": {
+		"Impact": "M"
+	},
+	"METAL_WALL05D": {
+		"Impact": "M"
+	},
+	"METSWITCH1": {
+		"Impact": "P"
+	},
+	"NAMEPLATE_JONES": {
+		"Impact": "M"
+	},
+	"NAMEPLATE_REAR": {
+		"Impact": "M"
+	},
+	"NGIN_CABFR": {
+		"Impact": "M"
+	},
+	"NGIN_CABREAR": {
+		"Impact": "M"
+	},
+	"NGIN_DOOR": {
+		"Impact": "M"
+	},
+	"NGIN_FRONT": {
+		"Impact": "M"
+	},
+	"NGIN_GLUE": {
+		"Impact": "M"
+	},
+	"NGIN_SIDE": {
+		"Impact": "M"
+	},
+	"NGIN_TOP": {
+		"Impact": "M"
+	},
+	"NGIN_WINCH": {
+		"Impact": "M"
+	},
+	"NWBARREL": {
+		"Impact": "M"
+	},
+	"OP4_PIPE_01": {
+		"Impact": "M"
+	},
+	"OUT_BOX2": {
+		"Impact": "M"
+	},
+	"OUT_BOX2B": {
+		"Impact": "M"
+	},
+	"OUT_BOX2D": {
+		"Impact": "M"
+	},
+	"OUT_BOXA": {
+		"Impact": "M"
+	},
+	"OUT_BOXB": {
+		"Impact": "M"
+	},
+	"OUT_BOXC": {
+		"Impact": "M"
+	},
+	"OUT_BOXD": {
+		"Impact": "M"
+	},
+	"OUT_C1": {
+		"Impact": "M"
+	},
+	"OUT_C3": {
+		"Impact": "M"
+	},
+	"OUT_C3B": {
+		"Impact": "M"
+	},
+	"OUT_CUBY": {
+		"Impact": "M"
+	},
+	"OUT_DMP1A": {
+		"Impact": "M"
+	},
+	"OUT_DMP1B": {
+		"Impact": "M"
+	},
+	"OUT_DMP1C": {
+		"Impact": "M"
+	},
+	"OUT_DMP2B": {
+		"Impact": "M"
+	},
+	"OUT_DMP2C": {
+		"Impact": "M"
+	},
+	"OUT_DMP3A": {
+		"Impact": "M"
+	},
+	"OUT_DMP4A": {
+		"Impact": "M"
+	},
+	"OUT_DMP4B": {
+		"Impact": "M"
+	},
+	"OUT_DMP4C": {
+		"Impact": "M"
+	},
+	"OUT_FUEL2": {
+		"Impact": "M"
+	},
+	"OUT_GALV1": {
+		"Impact": "M"
+	},
+	"OUT_GRAVEL": {
+		"Impact": "D"
+	},
+	"OUT_GRND3": {
+		"Impact": "D"
+	},
+	"OUT_RKPATH": {
+		"Impact": "D"
+	},
+	"OUT_ROOF1": {
+		"Impact": "M"
+	},
+	"OUT_ROOF2": {
+		"Impact": "M"
+	},
+	"OUT_ROOF2A": {
+		"Impact": "M"
+	},
+	"OUT_ROOF2B": {
+		"Impact": "M"
+	},
+	"OUT_ROOF3": {
+		"Impact": "M"
+	},
+	"OUT_ROOF3B": {
+		"Impact": "M"
+	},
+	"OUT_ROOF4": {
+		"Impact": "M"
+	},
+	"OUT_TARGT": {
+		"Impact": "W"
+	},
+	"OUT_TARGT2": {
+		"Impact": "W"
+	},
+	"OUT_VNT": {
+		"Impact": "G"
+	},
+	"OUT_W1A": {
+		"Impact": "M"
+	},
+	"OUT_W1B": {
+		"Impact": "M"
+	},
+	"OUT_W1C": {
+		"Impact": "M"
+	},
+	"OUT_W1DR1": {
+		"Impact": "M"
+	},
+	"OUT_W2": {
+		"Impact": "M"
+	},
+	"OUT_W3": {
+		"Impact": "M"
+	},
+	"OUT_W4": {
+		"Impact": "M"
+	},
+	"OUT_W4B": {
+		"Impact": "M"
+	},
+	"OUT_W6": {
+		"Impact": "M"
+	},
+	"OUT_W6A": {
+		"Impact": "M"
+	},
+	"OUT_W6B": {
+		"Impact": "M"
+	},
+	"OUT_W6D": {
+		"Impact": "M"
+	},
+	"OUT_W6E": {
+		"Impact": "M"
+	},
+	"OUT_W8DR1": {
+		"Impact": "M"
+	},
+	"OUT_WALL10": {
+		"Impact": "M"
+	},
+	"OUT_WALL2B": {
+		"Impact": "M"
+	},
+	"OUT_WALL2C": {
+		"Impact": "M"
+	},
+	"OUT_WALL3A": {
+		"Impact": "M"
+	},
+	"OUT_WALL3B": {
+		"Impact": "M"
+	},
+	"OUT_WALL3C": {
+		"Impact": "M"
+	},
+	"OUT_WALL3D": {
+		"Impact": "M"
+	},
+	"OUT_WALL5": {
+		"Impact": "M"
+	},
+	"OUT_WTER": {
+		"Impact": "M"
+	},
+	"PANELLITE1": {
+		"Impact": "Y"
+	},
+	"PFAB_VENT1": {
+		"Impact": "M"
+	},
+	"PICTURE4": {
+		"Impact": "Y"
+	},
+	"PICTURE5": {
+		"Impact": "Y"
+	},
+	"PILLARHEADSIDE": {
+		"Impact": "M"
+	},
+	"PILLARSIDE": {
+		"Impact": "M"
+	},
+	"PILLARTOP": {
+		"Impact": "M"
+	},
+	"PILLAR_LADDER": {
+		"Impact": "M"
+	},
+	"PIPE_BLOW": {
+		"Impact": "M"
+	},
+	"PIPE_GRAY_01": {
+		"Impact": "M"
+	},
+	"PIPE_GRN_01": {
+		"Impact": "M"
+	},
+	"PIPE_ORG_01": {
+		"Impact": "M"
+	},
+	"PIPE_RUSTY_01": {
+		"Impact": "M"
+	},
+	"POSTER13": {
+		"Impact": "W"
+	},
+	"POSTER14": {
+		"Impact": "W"
+	},
+	"POSTER15": {
+		"Impact": "W"
+	},
+	"RAIL1": {
+		"Impact": "M"
+	},
+	"RAIL1B": {
+		"Impact": "M"
+	},
+	"RAIL1C": {
+		"Impact": "M"
+	},
+	"RAIL2": {
+		"Impact": "M"
+	},
+	"RAIL3": {
+		"Impact": "M"
+	},
+	"RAILING_01": {
+		"Impact": "M"
+	},
+	"RAILING_03": {
+		"Impact": "M"
+	},
+	"RAILING_04": {
+		"Impact": "M"
+	},
+	"RAZOR1": {
+		"Impact": "M"
+	},
+	"RAZOR2": {
+		"Impact": "M"
+	},
+	"RECHARGE": {
+		"Impact": "M"
+	},
+	"RECHARGEB": {
+		"Impact": "M"
+	},
+	"RECHARGEC": {
+		"Impact": "M"
+	},
+	"RECHARGED": {
+		"Impact": "M"
+	},
+	"RECHARGEEDGE1": {
+		"Impact": "M"
+	},
+	"ROCKETBOTTOM": {
+		"Impact": "M"
+	},
+	"ROCKETCHROME": {
+		"Impact": "M"
+	},
+	"ROCKETENDET": {
+		"Impact": "M"
+	},
+	"ROCKETENNOZ": {
+		"Impact": "M"
+	},
+	"ROCKETMAIN": {
+		"Impact": "M"
+	},
+	"ROCKETNOSE": {
+		"Impact": "M"
+	},
+	"ROCKETPAYLOAD": {
+		"Impact": "M"
+	},
+	"ROCKETSEP": {
+		"Impact": "M"
+	},
+	"ROCKETSTAGE1": {
+		"Impact": "M"
+	},
+	"RUSTYRAIL": {
+		"Impact": "M"
+	},
+	"RUSTYRUNGS": {
+		"Impact": "M"
+	},
+	"SHRUB1A": {
+		"Impact": "D"
+	},
+	"SHRUB1B": {
+		"Impact": "D"
+	},
+	"SIGN1": {
+		"Impact": "M"
+	},
+	"SIGN11": {
+		"Impact": "M"
+	},
+	"SIGN16": {
+		"Impact": "M"
+	},
+	"SIGN1B": {
+		"Impact": "M"
+	},
+	"SIGN2": {
+		"Impact": "M"
+	},
+	"SIGN21": {
+		"Impact": "M"
+	},
+	"SIGN23A": {
+		"Impact": "M"
+	},
+	"SIGN23B": {
+		"Impact": "M"
+	},
+	"SIGN24": {
+		"Impact": "M"
+	},
+	"SIGN25": {
+		"Impact": "M"
+	},
+	"SIGN26A": {
+		"Impact": "M"
+	},
+	"SIGN26B": {
+		"Impact": "M"
+	},
+	"SIGN28": {
+		"Impact": "M"
+	},
+	"SIGN3": {
+		"Impact": "M"
+	},
+	"SIGN34": {
+		"Impact": "M"
+	},
+	"SIGN37": {
+		"Impact": "M"
+	},
+	"SIGN4": {
+		"Impact": "M"
+	},
+	"SIGN41": {
+		"Impact": "M"
+	},
+	"SIGN42": {
+		"Impact": "M"
+	},
+	"SIGN42A": {
+		"Impact": "P"
+	},
+	"SIGN43": {
+		"Impact": "M"
+	},
+	"SIGN44A": {
+		"Impact": "M"
+	},
+	"SIGN44B": {
+		"Impact": "M"
+	},
+	"SIGN44C": {
+		"Impact": "M"
+	},
+	"SIGN45": {
+		"Impact": "M"
+	},
+	"SIGN46": {
+		"Impact": "M"
+	},
+	"SIGN47": {
+		"Impact": "M"
+	},
+	"SIGN49_03": {
+		"Impact": "M"
+	},
+	"SIGN49_04": {
+		"Impact": "M"
+	},
+	"SIGN49_07": {
+		"Impact": "M"
+	},
+	"SIGN5": {
+		"Impact": "M"
+	},
+	"SIGN50": {
+		"Impact": "M"
+	},
+	"SIGN50A": {
+		"Impact": "M"
+	},
+	"SIGN51": {
+		"Impact": "M"
+	},
+	"SIGN52": {
+		"Impact": "M"
+	},
+	"SIGN53A": {
+		"Impact": "M"
+	},
+	"SIGN54B": {
+		"Impact": "M"
+	},
+	"SIGN55D": {
+		"Impact": "M"
+	},
+	"SIGN55F": {
+		"Impact": "M"
+	},
+	"SIGN56A": {
+		"Impact": "M"
+	},
+	"SIGN56B": {
+		"Impact": "M"
+	},
+	"SIGN56C": {
+		"Impact": "M"
+	},
+	"SIGN58": {
+		"Impact": "M"
+	},
+	"SIGN59": {
+		"Impact": "M"
+	},
+	"SIGN6": {
+		"Impact": "M"
+	},
+	"SIGN60": {
+		"Impact": "M"
+	},
+	"SIGN62": {
+		"Impact": "M"
+	},
+	"SIGN63": {
+		"Impact": "M"
+	},
+	"SIGN64": {
+		"Impact": "M"
+	},
+	"SIGN65": {
+		"Impact": "M"
+	},
+	"SIGN67": {
+		"Impact": "M"
+	},
+	"SIGN68": {
+		"Impact": "M"
+	},
+	"SIGN69": {
+		"Impact": "M"
+	},
+	"SIGN7": {
+		"Impact": "M"
+	},
+	"SIGN72": {
+		"Impact": "M"
+	},
+	"SIGN73": {
+		"Impact": "M"
+	},
+	"SIGN73B": {
+		"Impact": "M"
+	},
+	"SIGN74": {
+		"Impact": "M"
+	},
+	"SIGN75": {
+		"Impact": "M"
+	},
+	"SIGN76": {
+		"Impact": "M"
+	},
+	"SIGN77": {
+		"Impact": "M"
+	},
+	"SIGN78": {
+		"Impact": "M"
+	},
+	"SIGN79": {
+		"Impact": "M"
+	},
+	"SIGN80": {
+		"Impact": "M"
+	},
+	"SIGN81": {
+		"Impact": "M"
+	},
+	"SIGN82": {
+		"Impact": "M"
+	},
+	"SIGN83A": {
+		"Impact": "M"
+	},
+	"SIGN84": {
+		"Impact": "M"
+	},
+	"SIGN85": {
+		"Impact": "M"
+	},
+	"SIGN86": {
+		"Impact": "M"
+	},
+	"SIGN87": {
+		"Impact": "M"
+	},
+	"SIGN88": {
+		"Impact": "M"
+	},
+	"SIGN89": {
+		"Impact": "M"
+	},
+	"SIGN9": {
+		"Impact": "M"
+	},
+	"SIGNC1A1_1": {
+		"Impact": "P"
+	},
+	"SIGNC1A1_4": {
+		"Impact": "M"
+	},
+	"SIGNC1A2_1A": {
+		"Impact": "M"
+	},
+	"SIGNC1A2_1B": {
+		"Impact": "M"
+	},
+	"SIGNC1A2_2": {
+		"Impact": "M"
+	},
+	"SIGNC1A2_5": {
+		"Impact": "M"
+	},
+	"SIGNC1A2_6": {
+		"Impact": "M"
+	},
+	"SIGNC1A2_6A": {
+		"Impact": "M"
+	},
+	"SIGNC1A2_6B": {
+		"Impact": "M"
+	},
+	"SIGNC1A2_6C": {
+		"Impact": "M"
+	},
+	"SIGNC1A3_3": {
+		"Impact": "M"
+	},
+	"SIGNC2A2_3A": {
+		"Impact": "M"
+	},
+	"SIGNC2A2_3B": {
+		"Impact": "M"
+	},
+	"SIGNC2A2_3C": {
+		"Impact": "M"
+	},
+	"SIGNC2A2_3D": {
+		"Impact": "M"
+	},
+	"SIGNC2A4_1": {
+		"Impact": "M"
+	},
+	"SIGNC3A1_1": {
+		"Impact": "M"
+	},
+	"SIGNC3A1_3A": {
+		"Impact": "M"
+	},
+	"SIGNC3A1_3C": {
+		"Impact": "M"
+	},
+	"SIGNC3A1_4A": {
+		"Impact": "M"
+	},
+	"SIGNC3A1_4B": {
+		"Impact": "M"
+	},
+	"SIGNC3A1_4F": {
+		"Impact": "M"
+	},
+	"SIGNC3A1_4G": {
+		"Impact": "M"
+	},
+	"SILO2_BRD1A": {
+		"Impact": "M"
+	},
+	"SILO2_BRD1B": {
+		"Impact": "M"
+	},
+	"SILO2_C1": {
+		"Impact": "M"
+	},
+	"SILO2_C1B": {
+		"Impact": "M"
+	},
+	"SILO2_C1C": {
+		"Impact": "M"
+	},
+	"SILO2_CHN": {
+		"Impact": "M"
+	},
+	"SILO2_COR2": {
+		"Impact": "M"
+	},
+	"SILO2_GAD1": {
+		"Impact": "M"
+	},
+	"SILO2_GAD2": {
+		"Impact": "M"
+	},
+	"SILO2_GAD3": {
+		"Impact": "M"
+	},
+	"SILO2_GAD4": {
+		"Impact": "M"
+	},
+	"SILO2_GAD5": {
+		"Impact": "M"
+	},
+	"SILO2_P1": {
+		"Impact": "M"
+	},
+	"SILO2_PAN1": {
+		"Impact": "M"
+	},
+	"SILO2_PAN3": {
+		"Impact": "M"
+	},
+	"SILO2_PAN6": {
+		"Impact": "M"
+	},
+	"SILO2_W2B": {
+		"Impact": "M"
+	},
+	"SILO2_W2C": {
+		"Impact": "M"
+	},
+	"SILO2_W2D": {
+		"Impact": "M"
+	},
+	"SILO2_W3": {
+		"Impact": "M"
+	},
+	"SILO2_W3BRD": {
+		"Impact": "M"
+	},
+	"SILO2_WALL2": {
+		"Impact": "M"
+	},
+	"SILO2_WALL2A": {
+		"Impact": "M"
+	},
+	"SILO2_WETDR": {
+		"Impact": "M"
+	},
+	"SKKYLIGHTDIM": {
+		"Impact": "Y"
+	},
+	"SKKYLITE": {
+		"Impact": "Y"
+	},
+	"SKKYLITE2": {
+		"Impact": "Y"
+	},
+	"STAIN_FLR03B": {
+		"Impact": "M"
+	},
+	"STAIN_WALL01": {
+		"Impact": "M"
+	},
+	"STAIN_WALL05": {
+		"Impact": "M"
+	},
+	"STAIN_WALL06": {
+		"Impact": "M"
+	},
+	"STAIRRAIL1": {
+		"Impact": "M"
+	},
+	"STAIRRAIL2": {
+		"Impact": "M"
+	},
+	"STAIRSLFT": {
+		"Impact": "P"
+	},
+	"STAIRSRT": {
+		"Impact": "P"
+	},
+	"STEEL": {
+		"Impact": "M"
+	},
+	"SUBWAYFLOOR2": {
+		"Impact": "M"
+	},
+	"SUBWAY_DOOR": {
+		"Impact": "M"
+	},
+	"SUBWAY_FLOOR1": {
+		"Impact": "M"
+	},
+	"SUBWAY_INEND": {
+		"Impact": "M"
+	},
+	"SUBWAY_INPANEL": {
+		"Impact": "M"
+	},
+	"SUBWAY_LIGHTS": {
+		"Impact": "Y"
+	},
+	"SUBWAY_OUTEND": {
+		"Impact": "M"
+	},
+	"SUBWAY_OUTSIDE": {
+		"Impact": "M"
+	},
+	"S_LOCKER": {
+		"Impact": "M"
+	},
+	"TABLE": {
+		"Impact": "M"
+	},
+	"TABLE2": {
+		"Impact": "M"
+	},
+	"TENSION": {
+		"Impact": "M"
+	},
+	"TENSION2": {
+		"Impact": "M"
+	},
+	"TENSION3": {
+		"Impact": "M"
+	},
+	"TENSION4": {
+		"Impact": "M"
+	},
+	"TENSION5": {
+		"Impact": "M"
+	},
+	"TENSION6": {
+		"Impact": "M"
+	},
+	"TNNL_FLR1": {
+		"Impact": "M"
+	},
+	"TNNL_FLR1B": {
+		"Impact": "M"
+	},
+	"TNNL_GAD3": {
+		"Impact": "M"
+	},
+	"TNNL_LGTBRD": {
+		"Impact": "M"
+	},
+	"TNNL_LGTBRD2": {
+		"Impact": "M"
+	},
+	"TNNL_MAP": {
+		"Impact": "P"
+	},
+	"TNNL_PLT1A": {
+		"Impact": "M"
+	},
+	"TNNL_PLT1B": {
+		"Impact": "M"
+	},
+	"TNNL_PLT1C": {
+		"Impact": "M"
+	},
+	"TRACKLITE": {
+		"Impact": "Y"
+	},
+	"TRAIN1": {
+		"Impact": "M"
+	},
+	"TRAIN2": {
+		"Impact": "M"
+	},
+	"TRAIN4": {
+		"Impact": "M"
+	},
+	"TRAIN_UND2": {
+		"Impact": "M"
+	},
+	"TRK2_BACK": {
+		"Impact": "M"
+	},
+	"TRK2_FRONT": {
+		"Impact": "M"
+	},
+	"TRK2_HOOD": {
+		"Impact": "M"
+	},
+	"TRK2_ROOF": {
+		"Impact": "M"
+	},
+	"TRK2_SIDE": {
+		"Impact": "M"
+	},
+	"TRK_AXLE": {
+		"Impact": "M"
+	},
+	"TRK_BED": {
+		"Impact": "M"
+	},
+	"TRK_BUMPER": {
+		"Impact": "M"
+	},
+	"TRK_CABACK": {
+		"Impact": "M"
+	},
+	"TRK_DASH": {
+		"Impact": "M"
+	},
+	"TRK_DOOR": {
+		"Impact": "M"
+	},
+	"TRK_FENDER": {
+		"Impact": "M"
+	},
+	"TRK_GRILLE": {
+		"Impact": "G"
+	},
+	"TRK_HOOD": {
+		"Impact": "M"
+	},
+	"TRK_INDOOR": {
+		"Impact": "M"
+	},
+	"TRK_PIPE": {
+		"Impact": "M"
+	},
+	"TRK_RIM": {
+		"Impact": "M"
+	},
+	"TRK_SHOCKS": {
+		"Impact": "M"
+	},
+	"TRK_SIDE": {
+		"Impact": "M"
+	},
+	"TRN_LT1": {
+		"Impact": "Y"
+	},
+	"TRN_LT1B": {
+		"Impact": "Y"
+	},
+	"TROOMRAIL": {
+		"Impact": "M"
+	},
+	"TRRM_PAN1": {
+		"Impact": "M"
+	},
+	"TRRM_PAN2": {
+		"Impact": "M"
+	},
+	"TRRM_PAN3": {
+		"Impact": "M"
+	},
+	"TRRM_PAN4": {
+		"Impact": "M"
+	},
+	"TRRM_PAN5": {
+		"Impact": "M"
+	},
+	"TRRM_PAN6": {
+		"Impact": "M"
+	},
+	"TRRM_PAN7": {
+		"Impact": "M"
+	},
+	"TRRM_PAN8": {
+		"Impact": "M"
+	},
+	"TRRM_SIGN1": {
+		"Impact": "M"
+	},
+	"TRRM_SIGN2": {
+		"Impact": "M"
+	},
+	"TRRM_SIGN5": {
+		"Impact": "M"
+	},
+	"TRRM_WOOD": {
+		"Impact": "W"
+	},
+	"TRRM_WOOD2": {
+		"Impact": "W"
+	},
+	"UC_SIDE": {
+		"Impact": "M"
+	},
+	"UC_TOP": {
+		"Impact": "M"
+	},
+	"VINE1": {
+		"Impact": "D"
+	},
+	"XCRATE10A": {
+		"Impact": "M"
+	},
+	"XCRATE10B": {
+		"Impact": "M"
+	},
+	"XCRATE10C": {
+		"Impact": "M"
+	},
+	"XCRATE10D": {
+		"Impact": "M"
+	},
+	"XCRATE11A": {
+		"Impact": "M"
+	},
+	"XCRATE11B": {
+		"Impact": "M"
+	},
+	"XCRATE11C": {
+		"Impact": "M"
+	},
+	"XCRATE11D": {
+		"Impact": "M"
+	},
+	"XCRATE11E": {
+		"Impact": "M"
+	},
+	"XCRATE12A": {
+		"Impact": "M"
+	},
+	"XCRATE12B": {
+		"Impact": "M"
+	},
+	"XCRATE1A": {
+		"Impact": "M"
+	},
+	"XCRATE1B": {
+		"Impact": "M"
+	},
+	"XCRATE1D": {
+		"Impact": "M"
+	},
+	"XCRATE6": {
+		"Impact": "M"
+	},
+	"XCRATE6B": {
+		"Impact": "M"
+	},
+	"XCRATE6C": {
+		"Impact": "M"
+	},
+	"XCRATE7A": {
+		"Impact": "M"
+	},
+	"XCRATE7B": {
+		"Impact": "M"
+	},
+	"XCRATE7C": {
+		"Impact": "M"
+	},
+	"XCRATE9A": {
+		"Impact": "M"
+	},
+	"XCRATE9B": {
+		"Impact": "M"
+	},
+	"XCRATE9C": {
+		"Impact": "M"
+	},
+	"XCRATE9D": {
+		"Impact": "M"
+	},
+	"YELLOW": {
+		"Impact": "Y"
+	}
+}
