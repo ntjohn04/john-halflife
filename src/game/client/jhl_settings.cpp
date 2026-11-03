@@ -17,6 +17,10 @@
 // Vanilla settings are saved in config.cfg, so their defaults can't simply be changed without overriding what the
 // player chose. Instead the recommended values are applied once, the first time a version of them is seen.
 
+#include <chrono>
+#include <span>
+#include <vector>
+
 #include "hud.h"
 #include "jhl_settings.h"
 
@@ -168,10 +172,102 @@ void ApplyRecommended()
 	gEngfuncs.pfnClientCmd("_sethdmodels 0\n");
 }
 
+// A reset from John Settings is applied as that dialog closes, but the Options window behind it still shows the old
+// values (Video's gamma, brightness, texture filtering; Mouse's raw input), and its OK writes them all back. The menu
+// is the engine's, so it can't be updated or asked whether it's open; instead, for a while after a reset, a setting
+// going back to exactly its value before the reset is taken for that write, and the reset applied again. A setting
+// changed to anything else is the player's own and left alone.
+struct ResetWatch
+{
+	const char* Name;
+	float Before;
+	float After;
+};
+
+std::vector<ResetWatch> g_ResetChanged; // Every setting the reset changed.
+std::vector<ResetWatch> g_ResetWatches; // Those still watched.
+std::chrono::steady_clock::time_point g_ResetWatchEnd;
+constexpr std::chrono::minutes ResetWatchTime{10};
+
+// Once the Options window has written, a little longer, in case its writes come over more than one frame.
+constexpr std::chrono::seconds ResetRewriteTime{2};
+
+void WatchReset(const std::vector<ResetWatch>& before)
+{
+	g_ResetChanged.clear();
+
+	for (const auto& watch : before)
+	{
+		const float after = gEngfuncs.pfnGetCvarFloat(watch.Name);
+
+		if (after != watch.Before)
+		{
+			g_ResetChanged.push_back({watch.Name, watch.Before, after});
+		}
+	}
+
+	g_ResetWatches = g_ResetChanged;
+	g_ResetWatchEnd = std::chrono::steady_clock::now() + ResetWatchTime;
+}
+
 void ApplyAllRecommended()
 {
+	std::vector<ResetWatch> before;
+
+	for (const auto& settings : {std::span<const RecommendedSetting>{DialogSettings}, std::span<const RecommendedSetting>{HiddenSettings}})
+	{
+		for (const auto& setting : settings)
+		{
+			if (gEngfuncs.pfnGetCvarPointer(setting.Name))
+			{
+				before.push_back({setting.Name, gEngfuncs.pfnGetCvarFloat(setting.Name), 0});
+			}
+		}
+	}
+
 	ApplyRecommended();
+	WatchReset(before);
 	gEngfuncs.Con_Printf("johnhalflife: recommended settings applied\n");
+}
+
+void CheckResetWatch()
+{
+	if (g_ResetWatches.empty())
+	{
+		return;
+	}
+
+	if (std::chrono::steady_clock::now() > g_ResetWatchEnd)
+	{
+		g_ResetWatches.clear();
+		return;
+	}
+
+	bool written = false;
+
+	for (auto watch = g_ResetWatches.begin(); watch != g_ResetWatches.end();)
+	{
+		const float value = gEngfuncs.pfnGetCvarFloat(watch->Name);
+
+		if (value == watch->After)
+		{
+			++watch;
+			continue;
+		}
+
+		// Back to its old value: the Options window's write. Anything else: the player's change, kept.
+		written = written || value == watch->Before;
+		watch = g_ResetWatches.erase(watch);
+	}
+
+	if (written)
+	{
+		ApplyRecommended();
+		gEngfuncs.Con_Printf("johnhalflife: recommended settings applied again (the Options window wrote back its old values)\n");
+
+		g_ResetWatches = g_ResetChanged;
+		g_ResetWatchEnd = std::chrono::steady_clock::now() + ResetRewriteTime;
+	}
 }
 }
 
@@ -233,5 +329,6 @@ void JhlSettings_RunFrame()
 		ApplyAllRecommended();
 	}
 
+	CheckResetWatch();
 	ApplyGoreIfChanged();
 }
