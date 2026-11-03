@@ -19,6 +19,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <fstream>
+#include <string>
 #include <vector>
 
 #include "hud.h"
@@ -34,6 +36,7 @@
 #include "r_efx.h"
 #include "beamdef.h"
 #include "dlight.h"
+#include "pm_defs.h"
 #include "pm_materials.h"
 #include "parsemsg.h"
 #include "customentity.h"
@@ -41,6 +44,8 @@
 #include "jhl_settings.h"
 #include "view.h"
 #include "networking/ClientUserMessages.h"
+#include "sound/MaterialSystem.h"
+#include "utils/filesystem_utils.h"
 
 
 // Dynamic light keys for tripmine lights (TripmineLight), clear of the engine's entity-index keys.
@@ -1617,10 +1622,77 @@ static void MsgFunc_BulletImpact(const char* pszName, BufferReader& reader)
 	BulletImpactEffects(position, normal, textureType, kind);
 }
 
+static const char* MaterialName(char material)
+{
+	switch (material)
+	{
+	case CHAR_TEX_METAL: return "metal";
+	case CHAR_TEX_VENT: return "vent (metal)";
+	case CHAR_TEX_GRATE: return "grate (metal)";
+	case CHAR_TEX_COMPUTER: return "computer (metal)";
+	case CHAR_TEX_DIRT: return "dirt";
+	case CHAR_TEX_WOOD: return "wood";
+	case CHAR_TEX_GLASS: return "glass";
+	case CHAR_TEX_TILE: return "tile";
+	case CHAR_TEX_SLOSH: return "slosh";
+	case CHAR_TEX_FLESH: return "flesh";
+	case CHAR_TEX_SNOW: return "snow";
+	default: return "concrete";
+	}
+}
+
+// jhl_texture [material]: the texture under the crosshair, for sound/jhl_impact_materials.json: its name, the material
+// Valve's table gives it (footsteps, ricochet sounds) and the one impacts show. Each is also added to jhl_textures.txt in
+// the game folder, with the map and the material asked for if one was given, to collect over a playthrough.
+static void JhlTexture_Command()
+{
+	Vector forward;
+	AngleVectors(v_angles, &forward, nullptr, nullptr);
+	const Vector start = v_origin;
+	const Vector end = start + forward * 8192;
+
+	pmtrace_t tr;
+	gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(false, true);
+	gEngfuncs.pEventAPI->EV_PushPMStates();
+	gEngfuncs.pEventAPI->EV_SetSolidPlayers(-1);
+	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
+	gEngfuncs.pEventAPI->EV_PlayerTrace(start, end, PM_STUDIO_IGNORE, -1, &tr);
+	gEngfuncs.pEventAPI->EV_PopPMStates();
+
+	const char* textureName = nullptr;
+
+	if (tr.fraction < 1)
+	{
+		textureName = gEngfuncs.pEventAPI->EV_TraceTexture(tr.ent, tr.endpos + tr.plane.normal * 4, tr.endpos - tr.plane.normal * 4);
+	}
+
+	if (!textureName)
+	{
+		gEngfuncs.Con_Printf("jhl_texture: no textured surface under the crosshair\n");
+		return;
+	}
+
+	const char* name = g_MaterialSystem.StripTexturePrefix(textureName);
+	const char* sound = MaterialName(g_MaterialSystem.FindTextureType(name));
+	const char* impact = MaterialName(g_MaterialSystem.FindImpactType(name));
+	const char* wanted = gEngfuncs.Cmd_Argc() > 1 ? gEngfuncs.Cmd_Argv(1) : "";
+
+	gEngfuncs.Con_Printf("jhl_texture: %s  impacts: %s  sounds: %s%s%s\n", name, impact, sound, *wanted ? "  wanted: " : "", wanted);
+
+	const std::string mapName = gEngfuncs.pfnGetLevelName() ? gEngfuncs.pfnGetLevelName() : "";
+
+	if (std::ofstream log{FileSystem_GetGameDirectory() + "/" + gEngfuncs.pfnGetGameDirectory() + "/jhl_textures.txt", std::ios::app}; log)
+	{
+		log << mapName << '\t' << name << "\timpacts " << impact << "\tsounds " << sound << (*wanted ? "\twanted " : "") << wanted << '\n';
+	}
+}
+
 void WeaponEffects_Initialize()
 {
 	g_cl_bulletimpacts = gEngfuncs.pfnRegisterVariable("jhl_fx_bulletimpacts", "1", FCVAR_ARCHIVE);
 	g_cl_muzzleflash = gEngfuncs.pfnRegisterVariable("jhl_fx_muzzleflash", "1", FCVAR_ARCHIVE);
+
+	gEngfuncs.pfnAddCommand("jhl_texture", &JhlTexture_Command);
 
 	g_ClientUserMessages.RegisterHandler("BulletHit", &MsgFunc_BulletImpact);
 	g_ClientUserMessages.RegisterHandler("WaterSplash", &MsgFunc_WaterSplash);
