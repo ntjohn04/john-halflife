@@ -24,6 +24,7 @@
 */
 
 #include <algorithm>
+#include <fstream>
 #include <optional>
 
 #include "cbase.h"
@@ -39,6 +40,9 @@
 #include "UserMessages.h"
 #include "ClientCommandRegistry.h"
 #include "ServerLibrary.h"
+#include "pm_materials.h"
+#include "sound/MaterialSystem.h"
+#include "utils/filesystem_utils.h"
 
 #include "ctf/ctf_goals.h"
 
@@ -568,8 +572,64 @@ static CBaseEntity* TryCreateEntity(CBasePlayer* player, const char* className, 
 	return entity;
 }
 
+static const char* JhlMaterialName(char material)
+{
+	switch (material)
+	{
+	case CHAR_TEX_METAL: return "metal";
+	case CHAR_TEX_VENT: return "vent (metal)";
+	case CHAR_TEX_GRATE: return "grate (metal)";
+	case CHAR_TEX_COMPUTER: return "computer (metal)";
+	case CHAR_TEX_DIRT: return "dirt";
+	case CHAR_TEX_WOOD: return "wood";
+	case CHAR_TEX_GLASS: return "glass";
+	case CHAR_TEX_TILE: return "tile";
+	case CHAR_TEX_SLOSH: return "slosh";
+	case CHAR_TEX_FLESH: return "flesh";
+	case CHAR_TEX_SNOW: return "snow";
+	default: return "concrete";
+	}
+}
+
+// johnhalflife: jhl_texture [material]: the texture under the crosshair, for sound/jhl_impact_materials.json: its name,
+// the material impacts show on it and the one Valve's table gives it (footsteps, ricochet sounds). Traced as vanilla's
+// impulse 107 does, but without cheats. Each is also added to jhl_textures.txt in the game's folder, with the map and
+// the material asked for if one was given, to collect over a playthrough.
+static void JhlTexture_Command(CBasePlayer* player, const CommandArgs& args)
+{
+	UTIL_MakeVectors(player->pev->v_angle + player->pev->punchangle);
+	const Vector start = player->pev->origin + player->pev->view_ofs;
+	const Vector end = start + gpGlobals->v_forward * 8192;
+
+	TraceResult tr;
+	UTIL_TraceLine(start, end, ignore_monsters, player->edict(), &tr);
+
+	edict_t* hit = tr.pHit ? tr.pHit : CBaseEntity::World->edict();
+	const char* textureName = tr.flFraction < 1 ? TRACE_TEXTURE(hit, start, end) : nullptr;
+
+	if (!textureName)
+	{
+		UTIL_ConsolePrint(player, "jhl_texture: no textured surface under the crosshair\n");
+		return;
+	}
+
+	const char* name = g_MaterialSystem.StripTexturePrefix(textureName);
+	const char* impact = JhlMaterialName(g_MaterialSystem.FindImpactType(name));
+	const char* sound = JhlMaterialName(g_MaterialSystem.FindTextureType(name));
+	const char* wanted = args.Count() > 1 ? args.Argument(1) : "";
+
+	UTIL_ConsolePrint(player, "jhl_texture: {}  impacts: {}  sounds: {}{}{}\n", name, impact, sound, *wanted ? "  wanted: " : "", wanted);
+
+	if (std::ofstream log{FileSystem_GetGameDirectory() + "/" + FileSystem_GetModDirectoryName() + "/jhl_textures.txt", std::ios::app}; log)
+	{
+		log << STRING(gpGlobals->mapname) << '\t' << name << "\timpacts " << impact << "\tsounds " << sound << (*wanted ? "\twanted " : "") << wanted << '\n';
+	}
+}
+
 void SV_CreateClientCommands()
 {
+	g_ClientCommands.Create("jhl_texture", &JhlTexture_Command);
+
 	g_ClientCommands.Create("say", [](CBasePlayer* player, const auto& args)
 		{ Host_Say(player, false); });
 
