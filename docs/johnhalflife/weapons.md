@@ -150,10 +150,12 @@ On top of the stock decal, specks and ricochet:
 
 The material comes from Valve's table (`sound/materials.json`, all three games' `materials.txt`), which lists only
 364 of the 2,818 textures the maps use; the rest count as concrete, so in vanilla most metal walls ricochet like
-concrete. For impacts only, `config/mod/sound/jhl_impact_materials.json` gives the textures it doesn't list a material
-of their own, 1,212 of them: Half-Life: Source's surface type for each (Valve's own later judgement of the same
-textures), else, for Opposing Force's and Blue Shift's own textures, a guess from the name
-(`scripts/make_impact_materials.py`, which needs Half-Life: Source installed). Its entries carry `Impact`, not
+concrete. For impacts only, `config/mod/sound/jhl_impact_materials.json` gives 1,595 textures their own material: a
+reviewed classification of every texture the three games' maps use (2,773). Texture sets were grouped by name and look so
+a wall's variants behave alike; each set was decided from Valve's table, Half-Life: Source's surface types (Valve's own
+later judgement), MMod's table and the names, and every set where those disagree (about 830 textures) was looked at.
+The result agrees with Half-Life: Source on 92% of its textures and with MMod on 86% of Half-Life's; metal is 45% of
+surfaces. The table is the source: corrections go straight into it. Its entries carry `Impact`, not
 `Type`, in the same table (`MaterialSystem::FindImpactType`): bullet impacts, melee sparks and explosion debris read
 it; footsteps and ricochet and texture sounds keep Valve's types, so they sound as they did.
 
