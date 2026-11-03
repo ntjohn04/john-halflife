@@ -17,6 +17,7 @@
 
 #include "cbase.h"
 #include "jhl_effects.h"
+#include "jhl_music.h"
 #include "ServerLibrary.h"
 #include "pm_shared.h"
 #include "world.h"
@@ -229,6 +230,12 @@ void DispatchSave(edict_t* pent, SAVERESTOREDATA* pSaveData)
 
 		pTable->location = pSaveData->size;			 // Remember entity position for file I/O
 		pTable->classname = pEntity->pev->classname; // Remember entity class for respawn
+
+		// johnhalflife: the music playing now, saved with the player.
+		if (pEntity->IsPlayer())
+		{
+			JhlMusic_BeforeSave(static_cast<CBasePlayer*>(pEntity));
+		}
 
 		CSave saveHelper(*pSaveData);
 		pEntity->Save(saveHelper);

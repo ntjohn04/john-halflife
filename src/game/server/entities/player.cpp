@@ -44,6 +44,7 @@
 #include "ctf/ctf_goals.h"
 #include "rope/CRope.h"
 #include "jhl_effects.h"
+#include "jhl_music.h"
 
 // #define DUCKFIX
 
@@ -106,6 +107,13 @@ DEFINE_FIELD(m_SuitLightType, FIELD_INTEGER),
 	DEFINE_FIELD(m_JetpackEnabled, FIELD_BOOLEAN),
 	DEFINE_FIELD(m_fInitHUD, FIELD_BOOLEAN),
 	DEFINE_FIELD(m_tbdPrev, FIELD_TIME),
+
+	DEFINE_FIELD(m_JhlMusicFile, FIELD_STRING),
+	DEFINE_FIELD(m_JhlMusicLooping, FIELD_BOOLEAN),
+	DEFINE_FIELD(m_JhlMusicPaused, FIELD_BOOLEAN),
+	DEFINE_FIELD(m_JhlMusicPosition, FIELD_FLOAT),
+	DEFINE_FIELD(m_JhlMusicFadeRemaining, FIELD_FLOAT),
+	DEFINE_FIELD(m_JhlMusicFadeDuration, FIELD_FLOAT),
 
 	DEFINE_FIELD(m_pTank, FIELD_EHANDLE),
 	DEFINE_FIELD(m_hViewEntity, FIELD_EHANDLE),
@@ -3886,6 +3894,9 @@ void CBasePlayer::UpdateClientData()
 		MESSAGE_BEGIN(MSG_ONE, gmsgResetHUD, nullptr, this);
 		WRITE_BYTE(0);
 		MESSAGE_END();
+
+		// johnhalflife: the music as saved, played again if a save was loaded.
+		JhlMusic_SendToClient(this);
 
 		if (!m_fGameHUDInitialized)
 		{

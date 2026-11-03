@@ -46,6 +46,8 @@ struct DummyMusicSystem final : public IMusicSystem
 	void Stop() override {}
 	void Pause() override {}
 	void Resume() override {}
+	MusicState GetState() override { return {}; }
+	void PlayFrom(const MusicState& state) override {}
 };
 
 struct DummySoundSystem final : public ISoundSystem

@@ -221,6 +221,15 @@ public:
 						 // the hude via the DAMAGE message
 	bool m_fInitHUD;	 // True when deferred HUD restart msg needs to be sent
 	bool m_fGameHUDInitialized;
+
+	// johnhalflife: the music playing when the game was saved (jhl_music.cpp; single player). Empty: none.
+	string_t m_JhlMusicFile = string_t::Null;
+	bool m_JhlMusicLooping = false;
+	bool m_JhlMusicPaused = false;
+	float m_JhlMusicPosition = 0;
+	float m_JhlMusicFadeRemaining = 0;
+	float m_JhlMusicFadeDuration = 0;
+
 	int m_iTrain;	// Train control position
 	bool m_fWeapon; // Set this to false to force a reset of the current weapon HUD info
 

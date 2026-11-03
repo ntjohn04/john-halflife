@@ -129,7 +129,7 @@ Force's ally grunts and black ops can take headshots, which Gearbox's models did
 
 ## Networking
 
-Four user messages were added; everything else is client side or reuses existing sounds.
+Five user messages were added; everything else is client side or reuses existing sounds.
 
 | Message | Size | Sent by | Purpose |
 |---|---|---|---|
@@ -137,6 +137,7 @@ Four user messages were added; everything else is client side or reuses existing
 | `BulletHit` | 10 bytes | Server, `DecalGunshot` (NPCs, mounted guns) | Bullet impact effects |
 | `WaterSplash` | 6 bytes | Server, NPC bullets entering water | Water splash |
 | `BloodPool` | 3 bytes | Server, a bleeding NPC dying without gibbing (PVS) | Blood pool under the body |
+| `JhlMusic` | Varies | Server, the player's HUD starting (single player) | The music as saved ([Sound](sound.md#music-in-saves)) |
 
 User message names must be 11 characters or fewer; a longer name fails to register and sending it is
 fatal ("bogus message type (0)").

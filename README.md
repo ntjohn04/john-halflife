@@ -52,6 +52,7 @@ All are client settings: in John Settings (below) or the console.
 | `jhl_fx_tracers` | 1 | johnhalflife's tracers (with the particle system on): the M249's tracer rounds, every gun's faint streaks, NPCs' | [Weapons](docs/johnhalflife/weapons.md#tracers) |
 | `jhl_hud_scale` | 1 | Sprite HUD scale (0 = automatic by screen height) | [HUD](#hud-scale) |
 | `jhl_snd_vanilla` | 1 | Half-Life's own mixing (22 kHz, its pitch grain, ear volumes, clipping) and room effects, in place of the SDK's OpenAL sound | [Sound](docs/johnhalflife/sound.md) |
+| `jhl_snd_musicsaves` | 1 | Loading a save plays the music that was playing when it was saved, from that point (0: loading stops the music, as vanilla) | [Sound](docs/johnhalflife/sound.md#music-in-saves) |
 
 Changed defaults of existing settings: `cl_rollangle` 0.65 and `cl_rollspeed` 300 (see
 [strafe roll](docs/johnhalflife/camera_movement.md#strafe-roll)).

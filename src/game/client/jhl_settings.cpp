@@ -59,6 +59,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_fx_tracers", "1"},
 	{"jhl_hud_scale", "1"},
 	{"jhl_snd_vanilla", "1"},
+	{"jhl_snd_musicsaves", "1"},
 	{"crosshair", "1"},
 	{"crosshair_scale", "2"},
 	{"default_fov", "100"},

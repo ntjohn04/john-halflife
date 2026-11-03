@@ -148,6 +148,8 @@ target_sources(client PRIVATE
 	jhl_shockbeams.cpp
 	jhl_skyboxes.cpp
 	jhl_skyboxes.h
+	jhl_music.cpp
+	jhl_music.h
 	jhl_shockbeams.h
 	jhl_rings.cpp
 	jhl_rings.h

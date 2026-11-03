@@ -103,4 +103,7 @@ void LinkUserMessages()
 
 	// Entity index of a monster that died without gibbing, blood color.
 	gmsgBloodPool = REG_USER_MSG("BloodPool", 3);
+
+	// The music as saved (jhl_music.cpp): file, flags (looping, paused), position, fade remaining and length.
+	gmsgJhlMusic = REG_USER_MSG("JhlMusic", -1);
 }
