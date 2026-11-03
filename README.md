@@ -75,12 +75,32 @@ once as it starts, before any of the mod's code runs, so the mod can't set them 
 * **`-condebug`** (optional, for troubleshooting): writes the console to `qconsole.log` in the game folder as you
   play, so its last lines survive a crash. With the crash's details from Windows' event log, that usually shows
   what happened.
-* OpenGL draws the view at the chosen resolution and stretches it to the desktop smoothly (hard-coded in the engine's
-  present); software set the monitor to its resolution. Most of OpenGL's blur at a resolution below the desktop's is
-  this stretch: a resolution the screen shows 1:1 (the desktop's, or 4:3 at its height, such as 1920 × 1440 on a
-  1440p screen) has none.
-* OpenGL multisamples (anti-aliases) the view by default, with no setting; the `-nomsaa` launch option turns it off,
-  as software had none. With `developer 1`, the console says how many samples the view is drawn with.
+
+### For the 1998 look: rough, pixelated rendering
+
+The 25th anniversary engine smooths what 1998 drew sharp. For pixels as they were, at a low resolution such as
+640 × 480:
+
+* **`-nofbo`**: the monitor itself switches to the chosen resolution, as the software renderer did. Without it,
+  OpenGL draws into an off-screen image at that resolution and stretches it to the desktop with smoothing, which is
+  most of the blur at low resolutions. The smoothing is hard-coded in the engine's present (it's set again every
+  frame), so this launch option is the only way around it. The catch is the mode switch: alt-tab is slow, and in a
+  window the game is drawn at its resolution, unscaled. The console shows the mode it picked ("Setting closest
+  display mode"); it keeps the desktop's refresh rate where the monitor offers it, and `-freq 144` (for example)
+  asks for another.
+* **`-nomsaa`**: no anti-aliasing. OpenGL multisamples the view by default, with no setting; software had none.
+  With `-nofbo` there's no anti-aliasing either way. With `developer 1`, the console says how many samples the view
+  is drawn with.
+* **Texture filtering off** (Options → Video): textures point sampled, blocky up close. With
+  `jhl_visuals_renderfixes`, mipmapped as software was, so distant textures don't sparkle
+  ([Visuals](docs/johnhalflife/visuals.md#software-renderer-touches)). On by default, as Half-Life's OpenGL renderer
+  always drew.
+
+If the picture's still soft with `-nofbo`, the monitor or graphics card is smoothing the stretch to the screen:
+turn on integer scaling in the graphics driver's settings (NVIDIA, AMD and Intel all have it), which shows each
+pixel as a sharp block at a whole multiple (640 × 480 is exactly 3× on a 1440p screen, with bars at the sides).
+Without `-nofbo`, a resolution the screen shows 1:1 (the desktop's, or 4:3 at its height, such as 1920 × 1440 on a
+1440p screen) isn't stretched either.
 
 ## HUD scale
 `jhl_hud_scale` (0 = automatic by screen height)

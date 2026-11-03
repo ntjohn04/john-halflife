@@ -42,6 +42,15 @@ differ, in two settings, and 16-bit color on its own:
 The OpenGL drawing they need is in `jhl_gl.cpp` (looked up through SDL;
 the client doesn't link OpenGL), the map reading in `jhl_bsp.cpp` (shared with the flush faces above).
 
+All three only act on the OpenGL renderer: everything they do goes through `JhlGL_Available`, which is false unless
+`IEngineStudio.IsHardware()` says OpenGL (and the functions were found), and `gl_texturemode`, which the software
+renderer doesn't have. On the software renderer (`-soft`) they do nothing, whatever they're set to, and it draws as
+it always did. The flush faces above act on both, as both had the problem.
+
+They work with the `-nofbo` launch option too (README, "For the 1998 look"): with it the engine draws straight to the
+window, framebuffer 0, and the passes that copy the view or its depth read that framebuffer as they find it
+(`CopyDepth` asks for the default framebuffer's `GL_DEPTH` there).
+
 ### Model lighting (`jhl_visuals_renderfixes`)
 
 Both renderers light the world texture × light ÷ 192, so the brightest light makes a surface 4/3 as bright as its
