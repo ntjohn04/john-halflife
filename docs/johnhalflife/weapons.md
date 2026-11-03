@@ -157,6 +157,10 @@ textures), else, for Opposing Force's and Blue Shift's own textures, a guess fro
 `Type`, in the same table (`MaterialSystem::FindImpactType`): bullet impacts, melee sparks and explosion debris read
 it; footsteps and ricochet and texture sounds keep Valve's types, so they sound as they did.
 
+`jhl_texture [material]` (console) prints the texture under the crosshair, the material impacts show on it and the one
+its sounds use, and adds a line to `jhl_textures.txt` in the game's folder (map, texture, both materials, and the
+material given, if any): for collecting corrections to the table over a playthrough.
+
 The player's bullets are handled in the client weapon events. Bullets fired by the server (NPCs, mounted
 guns) send a `BulletHit` message from `DecalGunshot`.
 
