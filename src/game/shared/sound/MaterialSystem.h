@@ -45,7 +45,10 @@ struct TextureNameHash : public TransparentStringHash
 
 struct Material
 {
-	char Type{};
+	char Type{}; //!< 0: not given (concrete).
+
+	// johnhalflife: how impacts look on it (sound/jhl_impact_materials.json), where Valve's table doesn't say; 0: as Type.
+	char Impact{};
 };
 
 /**
@@ -77,6 +80,12 @@ public:
 	 *	If not found, return type 'concrete'.
 	 */
 	char FindTextureType(const char* name) const;
+
+	/**
+	 *	@brief johnhalflife: the material bullet impacts, melee and explosion debris show on a texture: its Impact if
+	 *	it has one, else its type. Sounds (footsteps, ricochets) keep FindTextureType.
+	 */
+	char FindImpactType(const char* name) const;
 
 private:
 	bool ParseConfiguration(const json& input);

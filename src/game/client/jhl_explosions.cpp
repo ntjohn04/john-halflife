@@ -481,7 +481,7 @@ char SurfaceMaterial(const pmtrace_t& hit)
 	Vector end = hit.endpos - hit.plane.normal * 4;
 
 	if (const char* textureName = gEngfuncs.pEventAPI->EV_TraceTexture(hit.ent, start, end); textureName)
-		return g_MaterialSystem.FindTextureType(g_MaterialSystem.StripTexturePrefix(textureName));
+		return g_MaterialSystem.FindImpactType(g_MaterialSystem.StripTexturePrefix(textureName));
 
 	return 0;
 }
