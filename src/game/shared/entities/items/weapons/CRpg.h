@@ -52,7 +52,7 @@ public:
 	void PrimaryAttack() override;
 	void SecondaryAttack() override;
 	void WeaponIdle() override;
-	void ItemPostFrame() override;
+	void ItemAlwaysFrame() override;
 
 	void UpdateSpot();
 	bool ShouldWeaponIdle() override { return true; }

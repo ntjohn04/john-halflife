@@ -22,6 +22,10 @@
 #include <vector>
 
 #include "hud.h"
+#include "cbase.h"
+#include "CRpg.h"
+#include "com_weapons.h"
+#include "prediction/ClientPredictionSystem.h"
 #include "weapon_effects.h"
 #include "Exports.h"
 #include "com_model.h"
@@ -838,18 +842,18 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance, float wisp
 	}
 }
 
-// The RPG's laser dot: where it is now (RpgLaserDot), and its line when it comes on (RpgLaserLine_Update); when the
-// local player's last started reloading (its dot is hidden a moment then, and coming back isn't coming on).
+// The RPG's laser dot: where it is now (RpgLaserDot), and its line when it comes on (RpgLaserLine_Update); whether the
+// local player's laser is on, and when it last came on.
 static Vector g_RpgDot;
 static float g_RpgDotSeen = -1;
 static BEAM* g_RpgLine = nullptr;
 static float g_RpgLineStart = -1;
-static float g_RpgReloaded = -100;
+static bool g_RpgLaserOn = false;
+static float g_RpgLaserCameOn = -100;
 
-// A dot not seen for this long that's seen again has come on (turned on, or the RPG taken out with it on), unless a
-// reload started within ReloadHide (its dot hidden 2.1 s then, CRpg::Reload).
-constexpr float DotAbsent = 0.15f;
-constexpr float ReloadHide = 3;
+// The line starts with the first dot seen within this of the laser coming on (the server places the dot a moment
+// after; none if the laser points at the sky meanwhile).
+constexpr float DotWait = 1;
 
 // Its line: thin, red, as bright as this, holding LineHold then fading out by LineTime.
 constexpr float LineWidth = 0.5f;
@@ -874,8 +878,11 @@ void RpgLaserDot(cl_entity_t* dot, const char* modelname)
 	const float now = gEngfuncs.GetClientTime();
 
 	// Come on: its line, from now.
-	if ((now - g_RpgDotSeen > DotAbsent || now < g_RpgDotSeen) && now - g_RpgReloaded > ReloadHide)
+	if (now >= g_RpgLaserCameOn && now - g_RpgLaserCameOn <= DotWait)
+	{
 		g_RpgLineStart = now;
+		g_RpgLaserCameOn = -100;
+	}
 
 	g_RpgDot = dot->origin;
 	g_RpgDotSeen = now;
@@ -891,14 +898,20 @@ void RpgLaserDot(cl_entity_t* dot, const char* modelname)
 	}
 }
 
-void RpgLaser_Reloading()
-{
-	g_RpgReloaded = gEngfuncs.GetClientTime();
-}
-
 void RpgLaserLine_Update(double time)
 {
 	const float now = static_cast<float>(time);
+
+	// Come on: the RPG taken out with its laser on, or its laser turned on. From the predicted weapon's state, not
+	// from the dot, which also goes out of sight on the sky and some entities, and while reloading.
+	const auto rpg = static_cast<CRpg*>(g_ClientPrediction.GetLocalWeapon(WEAPON_RPG));
+	const bool laserOn = g_CurrentWeaponId == WEAPON_RPG && rpg && rpg->m_fSpotActive;
+
+	if (laserOn && !g_RpgLaserOn)
+		g_RpgLaserCameOn = now;
+
+	g_RpgLaserOn = laserOn;
+
 	const float age = now - g_RpgLineStart;
 
 	// Done, or a new map (the clock restarted).
@@ -975,7 +988,8 @@ void RpgLaser_Reset()
 {
 	g_RpgLine = nullptr;
 	g_RpgLineStart = -1;
-	g_RpgReloaded = -100;
+	g_RpgLaserOn = false;
+	g_RpgLaserCameOn = -100;
 	g_RpgDotSeen = -1;
 }
 

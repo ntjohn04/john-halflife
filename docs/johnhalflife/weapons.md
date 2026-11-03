@@ -104,7 +104,9 @@ in `CHandGrenade::ItemPostFrame` rather than a think function, which would need 
 Vanilla's RPG reload is silent (its model has no sound events). A reload plays
 `weapons/weapon_reload_rpg.wav` 1.2 seconds in, so its hit lands as the rocket is pushed home (frame 41 of the 30 fps
 reload animation; the hit peaks 0.14 seconds into the sound). Played by the server, as the switch sounds are, timed
-in `CRpg::ItemPostFrame` as the grenade pin is.
+in `CRpg::ItemAlwaysFrame`: the player's busy for the whole reload, so `ItemPostFrame` isn't called until it's done.
+`ItemAlwaysFrame` is a johnhalflife addition to `CBasePlayerWeapon`, called each frame by `CBasePlayer::ItemPostFrame`
+before anything that can stop it.
 
 ### RPG laser toggle
 Turning the RPG's laser guidance on plays the Desert Eagle's `weapons/desert_eagle_sight.wav`, and turning
@@ -118,10 +120,10 @@ With `jhl_fx_particlesystem`:
   `weapon_effects.cpp`). It goes out with the dot while it's hidden after a shot.
 * **Line when it comes on:** its player sees a thin red line (0.5 wide, 0.4) from the laser's housing to the dot,
   holding 0.15 s and fading out by 1 s, following the dot: the targeting locking on, not a beam always on screen.
-  Whenever the dot comes on: the client starts it when the dot's seen after 0.15 s unseen (turned on, or the RPG
-  taken out with it on), not within 3 s of a reload starting (the dot's hidden 2.1 s then, and coming back isn't
-  coming on; `CRpg::Reload` tells the client, predicted);
-  first person. (A server message when the dot was made was tried: quick toggles sometimes went without a line.)
+  Whenever the laser comes on (turned on, or the RPG taken out with it on): the client watches the predicted RPG
+  (its current weapon, and `CRpg::m_fSpotActive` from the weapon data) and starts the line at the first dot seen
+  within 1 s of that. Not from the dot itself: it also goes out of sight on the sky, some entities and while
+  reloading, and coming back into sight once restarted the line. First person. (A server message when the dot was made was tried: quick toggles sometimes went without a line.)
   Turned off before it's faded, it goes with the dot. The housing is the small cylinder alongside the front of the
   tube; the view model has no attachments, so its front, found in the model's vertices (the middle of its front ring,
   (3.37, -9.88, -3.39) in the launcher's bone, `Dummy22`), is placed from that bone as the view model was last drawn (`JhlViewModelPoint`,
