@@ -52,6 +52,7 @@ public:
 	void PrimaryAttack() override;
 	void SecondaryAttack() override;
 	void WeaponIdle() override;
+	void ItemPostFrame() override;
 
 	void UpdateSpot();
 	bool ShouldWeaponIdle() override { return true; }
@@ -59,6 +60,8 @@ public:
 	CLaserSpot* m_pSpot;
 	bool m_fSpotActive;
 	int m_cActiveRockets; // how many missiles in flight from this launcher right now?
+
+	float m_flReloadSoundTime = 0;
 
 	bool UseDecrement() override
 	{

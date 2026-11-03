@@ -1,8 +1,7 @@
 # Weapons
 
-Reserved takes on MMod's weapon changes, keeping Valve's weapon models. Background on what MMod does is in
-`re/specs/weapons_overview.md`, `weapons_recoil_accuracy.md`, `weapon_sounds.md` and `bullet_impacts.md`
-(workspace). Settings are listed on the [front page](../../README.md#settings).
+Reserved changes to the weapons, keeping Valve's weapon models. Settings are listed on the
+[front page](../../README.md#settings).
 
 ## Feel
 
@@ -11,7 +10,7 @@ Reserved takes on MMod's weapon changes, keeping Valve's weapon models. Backgrou
 
 Every weapon's view punch goes through the spring-damped smooth punch also used by the
 [jump and landing jolts](camera_movement.md#jump-and-landing-jolts). Kicks are tuned so the visible peak
-lands between MMod's and the original. The profiles are in `src/game/client/ev_hldm.cpp`
+stays close to the original's. The profiles are in `src/game/client/ev_hldm.cpp`
 (`WeaponRecoil`: pitch min/max, jitter, spring, damping). Highlights:
 
 | Weapon | Pitch kick | Spring / damping |
@@ -68,7 +67,7 @@ than vanilla; only the first shots are tighter. The current spread is predicted 
 | Python | 0.75 → 1 (vanilla 1) |
 | Shotgun | 8.5 → 10 (vanilla 10) |
 
-The crosshair is vanilla. MMod's dynamic crosshair was tried and removed.
+The crosshair is vanilla. A dynamic crosshair was tried and removed.
 
 ### Projectile aim
 Projectiles fired from the gun, off to the side of the eye, are aimed from there at what the crosshair is on (at
@@ -83,7 +82,7 @@ bolt starts 2 below the eye and is left as it is, as are the spore launcher's lo
 ### Weapon switch
 Switching to a weapon plays a draw sound from a table keyed by view model (`weapons_shared.cpp`).
 
-* johnhalflife's own draw sounds (`config/mod/sound/weapons/`), one per weapon; the shotgun shares the MP5's.
+* A draw sound per weapon (`config/mod/sound/weapons/`); the shotgun shares the MP5's.
 * The snark, penguin, shock rifle and barnacle grapple are left out; they already make a sound when drawn.
 * Played from the server: weapon switches go through the `selectweapon` command and are never predicted,
   so a predicted sound would skip the local player.
@@ -102,8 +101,10 @@ in `CHandGrenade::ItemPostFrame` rather than a think function, which would need 
 [saves](README.md#saves)).
 
 ### RPG reload
-Vanilla's RPG reload is silent (its model has no sound events). Starting a reload plays
-`weapons/weapon_reload_rpg.wav`, from the server as the switch sounds are (`CRpg::Reload`).
+Vanilla's RPG reload is silent (its model has no sound events). A reload plays
+`weapons/weapon_reload_rpg.wav` 1.2 seconds in, so its hit lands as the rocket is pushed home (frame 41 of the 30 fps
+reload animation; the hit peaks 0.14 seconds into the sound). Played by the server, as the switch sounds are, timed
+in `CRpg::ItemPostFrame` as the grenade pin is.
 
 ### RPG laser toggle
 Turning the RPG's laser guidance on plays the Desert Eagle's `weapons/desert_eagle_sight.wav`, and turning
@@ -157,8 +158,7 @@ wrench's big swing, which has no decal. Other surfaces keep the sound and decal 
 
 When a bullet enters water or slime, the surface point is found along its path and the client draws:
 
-* the stock `wsplash3.spr` droplet sprite (grey-white), and
-* a ripple ring lying flat on the surface (`sprites/water_splash_ring.spr`, skipped until that sprite is made).
+* the stock `wsplash3.spr` droplet sprite (grey-white).
 
 NPC bullets send a `WaterSplash` message. A blue droplet spray, engine streaks and a splash sound were
 tried and removed.

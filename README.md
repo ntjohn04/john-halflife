@@ -1,9 +1,9 @@
 # johnhalflife
 
-An MMod-inspired mod for Half-Life, Opposing Force and Blue Shift, built on the
+A mod for Half-Life, Opposing Force and Blue Shift, built on the
 [Half-Life Unified SDK](https://github.com/twhl-community/halflife-unified-sdk). It keeps Valve's look and
-models and adds reserved takes on MMod's camera, movement and weapon feel; every feature can be switched
-off in the console to compare with vanilla.
+models and adds reserved changes to the camera, movement, weapon feel and effects; every feature can be
+switched off in the console to compare with vanilla.
 
 Status: pre-alpha ([versions](#versions)), no download yet.
 
@@ -21,13 +21,10 @@ To update, extract the new zip over the old one.
 
 ## Principles
 
-* **Written from specs, not from MMod's code.** MMod's binaries were reverse engineered into behaviour
-  specs (`re/specs/` in the workspace), and the code here was written from those specs.
-* **Reserved.** Each feature is a toned-down take on MMod's version. Vanilla visuals and Valve's models stay.
+* **Reserved.** Each feature is a toned-down change. Vanilla visuals and Valve's models stay.
 * **Never worse than vanilla.** Sustained play (accuracy, recoil, readability) is never worse than the
   original game.
-* **Vanilla assets first.** New files only where nothing stock fits, and then johnhalflife's own; none of
-  MMod's ([Own assets](#own-assets)).
+* **Vanilla assets first.** New files only where nothing stock fits.
 * **Every feature can be switched off.** Each has a `jhl_*` client setting (default 1, saved in
   `config.cfg`), so it can be compared with vanilla in game.
 
@@ -104,17 +101,6 @@ ships Opposing Force and Blue Shift on top of Half-Life.
 | `johnhalflife_bs` | John Half-Life: Blue Shift | `ba_tram1` / `ba_hazard1` |
 | `johnhalflife_uplink` | John Half-Life: Uplink | `hldemo1` / `t0a0` |
 
-## Own assets
-
-The few files nothing stock fits are johnhalflife's own, in `config/mod/` and shipped with the release:
-
-* **Weapon switch:** a draw sound for each weapon that had none (the shotgun shares the MP5's).
-* **Grenade pin:** the pin pull sound.
-* **RPG reload:** the reload sound (vanilla's reload was silent).
-
-The movement sounds MMod's files gave (jump, landing, long jump, wood footsteps) and its texture material table are
-gone; those are vanilla's again.
-
 ## Versions
 
 | Tag | What it covers |
@@ -126,19 +112,14 @@ gone; those are vanilla's again.
 | `v0.5.0-prealpha` | Weapons: tracers (the M249's red tracer rounds with a white-hot core and burning specks off walls; faint streaks on every gun, NPCs' too, from the muzzle; `jhl_fx_tracers`), the M249's muzzle smoke building with sustained fire, per-pellet shotgun smoke, the gluon gun's dragged, bending beam (vanilla colors restored) with scorches, leaking sparks, a fizzle on release and lights, the Gauss gun's visible charge (glow, arcs, unstable sparks), brighter layered beams, release bursts, afterimages of charged shots and impact and reflection lights, a crossbow bolt wake, melee sparks on metal, the tripmine light; corpse gibbing by bullet damage (headcrabs, shock roaches, houndeyes, pit drones, bullsquids, controllers), displacer specks; fixes: controller spark burst on corpse gib |
 | `v0.6.0-prealpha` | Weapons, continued: hornets' twirling trails in five colours (calm and flourishing moods, straight on the strike), their spit, dart splats, blood on stings and a death light; the shock rifle's bolt as a glow and spark circling its path, tightening with range, half spinning each way, with a double-helix wake, purple fizzles or cyan arcs on impact and a muzzle light; projectiles aimed at the crosshair (shock rifle, RPG, hornet gun, spore rocket); the barnacle grapple's springy tongue (slack flying out, bowing as you move, twanging taut on latching, swallowing as it pulls), reeling back in on letting go, a bite of blood, a wet mark where it latches, blended view model transitions; fixes: shock rifle crash on firing, shock bolt helix on the grapple's tongue tip, grapple animation flicker from prediction |
 | `v0.7.0-prealpha` | Weapons, finished: the spore launcher's lights, burst off the surface and a blast ring showing its reach; weapon particles carrying the player's movement; the RPG's fuller launch (backblast, billows, flame flashes), laser dot light and a laser line from its housing, the rocket's flickering motor glow and smoke-puff trail; the sniper rifle's trace with a hot start, bolt smoke, barrel flash and heavy impacts; small touches on the standard weapons (Glock smoke heat, revolver impacts, Desert Eagle barrel wisps, MP5 grenade launch, double-shot blast, melee dust); the hand grenade tumbling and rolling; the snark's death burst; explosion fill light; spent casings (the revolver's and sniper rifle's handed off from their animations, .50 AE and 5.56 shapes, the M249's casing every shot with links, lying along the gun then tumbling, Half-Life's brass on Half-Life's guns, shotgun shells on the pump from the receiver, brass lingering 6-10 s, silent under water); the gluon bend fixed at 0.25; fixes: Desert Eagle and M249 shells thrown from behind the player's head, sniper smoke stopping after a map change |
-| `v0.8.0-prealpha` | Monsters and the world: the gargantua's flickering flame lights, embers and heat smoke, its stomp as a wave down a lane, eye light, stomp dust and lingering death plates; tentacle strikes throwing up what they hit by material, slams cratering; the pit worm's lit eye, beam core and scorches; the gene worm's eye lights, lit heart, smacks and acid clouds; the Gonarch's spit dripping white droplets; the ichthyosaur's bite bubbles bursting from its mouth; mounted guns' (`func_tank`) muzzle lights, flashes, smoke and brass, and NPC turrets' flashes and brass; laser turrets' fuller beams and recoil for whoever mans a turret; mortar fields' falling streaks, the Opposing Force mortar's launch and trail; chargers' soft light and sparks running dry; env_shooter pieces lingering 45 s; Opposing Force and Blue Shift view models getting the weapon effects; reload blending (Glock, revolver, Desert Eagle, shotgun); bounce sounds thinned; fixes: the Opposing Force mortar's oversized fireball, floating pieces over breakable floors (c4a2b's Gonarch), gibs stuck in each other, satchel switch sounds, MMod's satchel flap sound |
+| `v0.8.0-prealpha` | Monsters and the world: the gargantua's flickering flame lights, embers and heat smoke, its stomp as a wave down a lane, eye light, stomp dust and lingering death plates; tentacle strikes throwing up what they hit by material, slams cratering; the pit worm's lit eye, beam core and scorches; the gene worm's eye lights, lit heart, smacks and acid clouds; the Gonarch's spit dripping white droplets; the ichthyosaur's bite bubbles bursting from its mouth; mounted guns' (`func_tank`) muzzle lights, flashes, smoke and brass, and NPC turrets' flashes and brass; laser turrets' fuller beams and recoil for whoever mans a turret; mortar fields' falling streaks, the Opposing Force mortar's launch and trail; chargers' soft light and sparks running dry; env_shooter pieces lingering 45 s; Opposing Force and Blue Shift view models getting the weapon effects; reload blending (Glock, revolver, Desert Eagle, shotgun); bounce sounds thinned; fixes: the Opposing Force mortar's oversized fireball, floating pieces over breakable floors (c4a2b's Gonarch), gibs stuck in each other, satchel switch sounds, the satchel flap sound |
 | `v0.9.0-prealpha` | Sound: Half-Life's own mixing and room effects on the SDK's OpenAL sound system (`jhl_snd_vanilla`), checked against recordings of vanilla: sounds at the engine's 22 kHz, pitched the engine's way (the faint grain of vanilla's sound), its ear volumes (sounds ahead and the player's own full in both ears), clipping rather than a limiter, and its room types in place of the SDK's EAX presets (reverb and echo per room set to vanilla's, water rooms muffling the whole mix); `cl_snd_channels`; fixes: sounds (gunfire, explosions) going silent when OpenAL ran out of sources |
 | `v0.9.1-prealpha` | Sound fix: 22 kHz sounds (the guns, many effects) no longer muffled with `jhl_snd_vanilla`: converted to the device's rate flat to 10.5 kHz, as the system converts the engine's output (OpenAL's resamplers rolled off from 6 kHz) |
 | `v0.10.0-prealpha` | Visuals: brush entities built flush with walls (signs, posters, panels, gears, rails: about 2,700 faces in Half-Life's maps) found from each map's BSP and drawn just out of the wall, so they no longer flicker in OpenGL or vanish in software (`jhl_visuals_flushfaces`) |
 | `v0.11.0-prealpha` | Physics: Half-Life's game code acting at any frame rate as it did at 72 fps, its 1998 `fps_max` (`jhl_physics_fpsfix`): boxes and barrels pushed and pulled at the 72 fps rate, pulling no faster than pushing (it ran away, worse the higher the fps), walking with +use, grenades, satchels, gibs and spores sliding as far as they did, client gibs, debris and shells settling without extra bounces, trigger_camera drift, and guns keeping the time a shot waited (up to a frame was lost each shot) |
 | `v0.12.0-prealpha` | Visuals: the software renderer's touches on OpenGL, found in its code and measured on screenshots of the same view: its rippling water (the ripple simulation in place of OpenGL's sine wobble) and under water its 320 x 200 view and fog by depth (`jhl_visuals_softwarewater`); models lit up to 4/3 as the world is, and with texture filtering off textures point sampled with mipmaps and the sky pixelated like the world (`jhl_visuals_renderfixes`); its 16-bit color (`jhl_visuals_16bitcolor`); every johnhalflife setting on by default, as recommended; the map's BSP read in one place (`jhl_bsp`) |
-| `v0.13.0-prealpha` | Release: one zip for Windows and Linux, extracted into the Half-Life folder, nothing else to install; the first start sets the mod up from the player's own games (Valve's maps converted for the Unified SDK by its map upgrades ported to C++, Opposing Force's and Blue Shift's files, the menu art, default key bindings) and the first launch applies the recommended settings (now also the crosshair on, auto-aim off, field of view 100); the Linux build (Ubuntu 22.04 and newer); an audit of the Unified SDK against vanilla: Blue Shift's batteries back to 20, mounted guns aiming only at the player in Half-Life and Blue Shift, NPCs walking and running at vanilla speed (2-6% slower in the SDK's recompiled models), each game's own versions of shared sounds and sprites; MMod's sounds used only if installed |
+| `v0.13.0-prealpha` | Release: one zip for Windows and Linux, extracted into the Half-Life folder, nothing else to install; the first start sets the mod up from the player's own games (Valve's maps converted for the Unified SDK by its map upgrades ported to C++, Opposing Force's and Blue Shift's files, the menu art, default key bindings) and the first launch applies the recommended settings (now also the crosshair on, auto-aim off, field of view 100); the Linux build (Ubuntu 22.04 and newer); an audit of the Unified SDK against vanilla: Blue Shift's batteries back to 20, mounted guns aiming only at the player in Half-Life and Blue Shift, NPCs walking and running at vanilla speed (2-6% slower in the SDK's recompiled models), each game's own versions of shared sounds and sprites |
 | `v0.13.1-prealpha` | Fix from a pass over Half-Life Updated's and the Unified SDK's changelogs: Opposing Force's cleansuit scientists give no health, as in vanilla (Opposing Force Updated gave them 25) |
-
-## Open items
-
-* The water splash's ripple ring needs its sprite (`sprites/water_splash_ring.spr`); until then the splash is the
-  stock droplets only.
 
 ## Building from source
 

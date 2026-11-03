@@ -80,8 +80,7 @@ void V_SetEgonFiring(bool firing);
 
 /**
  *	@brief Smooth recoil settings for a weapon (see V_WeaponRecoil).
- *	Positive pitch kicks the view up. Spring and damping follow MMod; kicks are tuned so the visible peak
- *	lands between MMod's and the classic snap punch (re/specs/weapons_recoil_accuracy.md).
+ *	Positive pitch kicks the view up. Kicks are tuned so the visible peak stays close to the classic snap punch.
  */
 struct WeaponRecoil
 {
@@ -105,7 +104,7 @@ constexpr WeaponRecoil RecoilCrossbow{2.0f, 2.45f, 0.25f, 65, 12};
 constexpr WeaponRecoil RecoilRpg{4.65f, 5.7f, 0.25f, 85, 12};
 constexpr WeaponRecoil RecoilHornetGun{-2.7f, 0, 0.25f, 125, 7.5f}; // Kicks down, as in the original.
 
-// Opposing Force weapons have no MMod counterpart; these match the original punch with the closest MMod feel.
+// Opposing Force weapons: these match the original punch with the feel of the closest Half-Life weapon.
 constexpr WeaponRecoil RecoilEagle{4.3f, 5.25f, 0.5f, 85, 12};
 constexpr WeaponRecoil RecoilM249{-2.7f, 2.7f, 1.0f, 125, 7.5f};
 constexpr WeaponRecoil RecoilDisplacer{2.45f, 2.95f, 0.25f, 65, 12};

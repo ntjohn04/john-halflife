@@ -13,8 +13,8 @@
  *
  ****/
 
-// Reserved takes on MMod's weapon effects, using engine particles, short lights and stock sprites:
-// bullet impacts and water splashes (see re/specs/bullet_impacts.md) and muzzle light and smoke.
+// Reserved weapon effects, using engine particles, short lights and stock sprites: bullet impacts and water
+// splashes, and muzzle light and smoke.
 
 #include <algorithm>
 #include <cmath>
@@ -1335,7 +1335,7 @@ static void MetalImpact(const Vector& position, const Vector& normal)
 
 	efx->R_SparkStreaks(origin, gEngfuncs.pfnRandomLong(3, 5), -120, 120);
 
-	// A very short warm flash; MMod's lasts a quarter second with up to twice the radius.
+	// A very short warm flash.
 	if (dlight_t* light = efx->CL_AllocDlight(0); light)
 	{
 		light->origin = origin;
@@ -1581,13 +1581,6 @@ void BulletWaterSplash(const Vector& surfacePosition)
 
 	// Stock droplet spray (grey-white).
 	SplashSprite("sprites/wsplash3.spr", surfacePosition + up * 4, gEngfuncs.pfnRandomFloat(0.25f, 0.35f), 0.5f, kRenderTransAdd, 20);
-
-	// Ripple ring lying flat on the surface (skipped until its sprite is made).
-	if (TEMPENTITY* ring = SplashSprite("sprites/water_splash_ring.spr", surfacePosition + up, gEngfuncs.pfnRandomFloat(0.35f, 0.5f), 0.3f, kRenderTransAdd, 18); ring)
-	{
-		ring->entity.angles = {90, 0, 0};
-		ring->entity.curstate.rendercolor = {200, 210, 220};
-	}
 }
 
 static void MsgFunc_WaterSplash(const char* pszName, BufferReader& reader)

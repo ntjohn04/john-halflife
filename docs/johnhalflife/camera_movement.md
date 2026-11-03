@@ -1,6 +1,6 @@
 # Camera and movement
 
-Reimplemented from MMod's behaviour as specified in `re/specs/camera_movement.md`. The code lives in
+The code lives in
 `src/game/client/view.cpp` (camera), `src/game/server/entities/player.cpp` (jolts) and
 `src/game/shared/player_movement/pm_shared.cpp` (sounds). Settings are listed on the [front page](../../README.md#settings).
 
@@ -45,8 +45,7 @@ Reimplemented from MMod's behaviour as specified in `re/specs/camera_movement.md
 
 ## Movement sounds
 
-Jumps, landings and the long jump sound as in vanilla (MMod's jump, landing, long jump and wood step sounds, and
-its texture material table, were dropped with MMod's files).
+Jumps, landings and the long jump sound as in vanilla.
 
 * **Flesh footsteps:** new `STEP_FLESH` type, using the stock `pl_slosh1-4` pitched down for a squelchy
   sound, on flesh surfaces.

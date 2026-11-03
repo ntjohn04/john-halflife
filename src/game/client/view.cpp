@@ -83,7 +83,7 @@ cvar_t* cl_bobup;
 cvar_t* cl_waterdist;
 cvar_t* cl_chasedist;
 
-// johnhalflife camera features. See re/specs/camera_movement.md.
+// johnhalflife camera features. See docs/johnhalflife/camera_movement.md.
 cvar_t* jhl_camera_bob;
 cvar_t* jhl_camera_viewroll;
 cvar_t* jhl_camera_verticallag;

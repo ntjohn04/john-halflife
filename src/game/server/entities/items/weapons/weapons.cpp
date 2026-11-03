@@ -388,16 +388,11 @@ void W_Precache()
 		UTIL_PrecacheModel(sprite);
 	}
 
-	// Bullet water splash droplets and ripple (client weapon_effects.cpp); the ripple's sprite is optional until it's made.
+	// Bullet water splash droplets (client weapon_effects.cpp).
 	UTIL_PrecacheModel("sprites/wsplash3.spr");
 	// Opposing Force's blood chunk sprite, which no code used, and a yellow copy of it: the gibbing blood splash.
 	UTIL_PrecacheModel("sprites/blood_chnk.spr");
 	UTIL_PrecacheModel("sprites/blood_chnk_yellow.spr");
-
-	if (g_pFileSystem->FileExists("sprites/water_splash_ring.spr"))
-	{
-		UTIL_PrecacheModel("sprites/water_splash_ring.spr");
-	}
 
 	// johnhalflife: Opposing Force's shell, the Desert Eagle's (installed from the player's Opposing Force; ev_hldm.cpp).
 	if (g_pFileSystem->FileExists("models/shell_op4.mdl"))
