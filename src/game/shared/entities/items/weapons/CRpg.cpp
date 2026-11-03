@@ -27,6 +27,11 @@
 
 LINK_ENTITY_TO_CLASS(weapon_rpg, CRpg);
 
+// johnhalflife: the reload had no sound. Its hit lands as the rocket is pushed home: frame 41 of the 30 fps reload
+// animation, less the 0.14 s into the sound that the hit peaks.
+constexpr const char* RpgReloadSound = "weapons/weapon_reload_rpg.wav";
+constexpr float RpgReloadSoundDelay = 1.2f;
+
 BEGIN_DATAMAP(CRpg)
 DEFINE_FIELD(m_fSpotActive, FIELD_BOOLEAN),
 	DEFINE_FIELD(m_cActiveRockets, FIELD_INTEGER),
@@ -92,8 +97,8 @@ void CRpg::Reload()
 		{
 			m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat(m_pPlayer->random_seed, 10, 15);
 #ifndef CLIENT_DLL
-			// johnhalflife: the reload had no sound. From the server, as the switch sounds.
-			m_pPlayer->EmitSound(CHAN_ITEM, "weapons/weapon_reload_rpg.wav", VOL_NORM, ATTN_NORM);
+			// From the server, as the switch sounds.
+			m_flReloadSoundTime = gpGlobals->time + RpgReloadSoundDelay;
 #endif
 		}
 	}
@@ -117,7 +122,7 @@ void CRpg::Precache()
 	UTIL_PrecacheOther("rpg_rocket");
 
 	PrecacheSound("weapons/rocketfire1.wav");
-	PrecacheSound("weapons/weapon_reload_rpg.wav");
+	PrecacheSound(RpgReloadSound);
 	PrecacheSound("weapons/glauncher.wav"); // alternative fire sound
 
 	m_usRpg = PRECACHE_EVENT(1, "events/rpg.sc");
@@ -168,6 +173,7 @@ bool CRpg::CanHolster()
 void CRpg::Holster()
 {
 	m_fInReload = false; // cancel any reload in progress.
+	m_flReloadSoundTime = 0;
 
 	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5;
 
@@ -287,6 +293,19 @@ void CRpg::WeaponIdle()
 	{
 		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 1;
 	}
+}
+
+void CRpg::ItemPostFrame()
+{
+#ifndef CLIENT_DLL
+	if (0 != m_flReloadSoundTime && gpGlobals->time >= m_flReloadSoundTime)
+	{
+		m_flReloadSoundTime = 0;
+		m_pPlayer->EmitSound(CHAN_ITEM, RpgReloadSound, VOL_NORM, ATTN_NORM);
+	}
+#endif
+
+	CBasePlayerWeapon::ItemPostFrame();
 }
 
 void CRpg::UpdateSpot()

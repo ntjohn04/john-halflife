@@ -1,8 +1,8 @@
 # Effects plan
 
 A map of the game's visual effects, used to work through them one category at a time. Each category gets the
-same treatment the bullet impacts did: look at what MMod does (`re/specs/`), decide a reserved version, build
-it, then tune it in game.
+same treatment the bullet impacts did: look at what vanilla does, decide a reserved version, build it, then tune it
+in game.
 
 ## How effects reach the screen
 
@@ -21,8 +21,8 @@ Effects of the local player's own weapons are already client-side events (muzzle
 **Default choice:** client enrichment for the shared paths below, all behind **one** global toggle,
 `jhl_fx_particlesystem` (the user's choice over one per theme; created with the first effect that uses it), with
 richer combinations; tune or add on the server for one-off set pieces. Vanilla sprites and models only, as with
-the impacts: more, longer or layered particles, short lights, reused stock sprites. johnhalflife's own assets
-only where nothing stock fits.
+the impacts: more, longer or layered particles, short lights, reused stock sprites. New
+assets only where nothing stock fits.
 
 ## Shared paths (change once, applies everywhere)
 
@@ -40,16 +40,16 @@ The most effective changes are at the few functions everything calls:
 
 ## Categories
 
-| # | Theme | Examples | Mechanism | Difficulty | MMod reference |
-|---|---|---|---|---|---|
-| 0 | **Done** | Bullet impacts, water splashes, muzzle light and smoke, RPG backblast | Client events, `BulletHit`, `WaterSplash` | — | `bullet_impacts.md` |
-| 1 | **Explosions and fire** | Grenades, RPG, satchel, tripmine, mortars, explosive barrels, `env_explosion` | Two shared paths (`UTIL_ExplosionEffect`, `ExplosionCreate`) | Low to medium | Explosion style, fiery trails |
-| 2 | **Blood and wounds** | Hits, headshots, bleeding | `SpawnBlood`/`TraceBleed` in `TraceAttack`; hit group | Low to medium | Alpha blood sprites, blood style, corpse blood pools |
-| 3 | **Gibs and death** | Gibbing, corpses | `GibMonster`, client gibs | Medium | Gib bounce sounds, gib blood pools, corpse fade/flinch |
-| 4 | **Sparks and debris** | Breakables, electrical sparks, ricochets | `UTIL_Sparks`, `spark_shower`, `TE_BREAKMODEL` | Low | — |
-| 5 | **Energy and alien attacks** | Vortigaunt zap, controller, houndeye, gargantua flame, displacer, shock rifle, spore | Per-monster beams and lights (`TE_BEAM*`, `TE_DLIGHT`, `TE_ELIGHT`) | Medium, one file each | — |
-| 6 | **Set pieces** | Apache and Osprey destruction, gargantua death, Nihilanth | Per-entity sequences (explosions, smoke, `TE_BREAKMODEL`); partly inherit from 1 and 4 | Medium, one file each | — |
-| 7 | **Water and environment** | Bubbles, underwater explosions | `UTIL_Bubbles`, `UTIL_BubbleTrail` | Low | Water impacts (done) |
+| # | Theme | Examples | Mechanism | Difficulty |
+|---|---|---|---|---|
+| 0 | **Done** | Bullet impacts, water splashes, muzzle light and smoke, RPG backblast | Client events, `BulletHit`, `WaterSplash` | — |
+| 1 | **Explosions and fire** | Grenades, RPG, satchel, tripmine, mortars, explosive barrels, `env_explosion` | Two shared paths (`UTIL_ExplosionEffect`, `ExplosionCreate`) | Low to medium |
+| 2 | **Blood and wounds** | Hits, headshots, bleeding | `SpawnBlood`/`TraceBleed` in `TraceAttack`; hit group | Low to medium |
+| 3 | **Gibs and death** | Gibbing, corpses | `GibMonster`, client gibs | Medium |
+| 4 | **Sparks and debris** | Breakables, electrical sparks, ricochets | `UTIL_Sparks`, `spark_shower`, `TE_BREAKMODEL` | Low |
+| 5 | **Energy and alien attacks** | Vortigaunt zap, controller, houndeye, gargantua flame, displacer, shock rifle, spore | Per-monster beams and lights (`TE_BEAM*`, `TE_DLIGHT`, `TE_ELIGHT`) | Medium, one file each |
+| 6 | **Set pieces** | Apache and Osprey destruction, gargantua death, Nihilanth | Per-entity sequences (explosions, smoke, `TE_BREAKMODEL`); partly inherit from 1 and 4 | Medium, one file each |
+| 7 | **Water and environment** | Bubbles, underwater explosions | `UTIL_Bubbles`, `UTIL_BubbleTrail` | Low |
 
 Suggested order: **1 → 2 → 3 → 4 → 5 → 6 → 7**. Explosions first because one change reaches grenades, rockets,
 barrels and part of every set piece; blood second because it's on screen the most; set pieces late because
@@ -134,7 +134,7 @@ Changes:
   `blood_chnk_yellow.spr`, the same sprite with its palette recolored to mustard yellow (brightest 160,135,40) by
   `scripts/make_yellow_blood_chunk.py` and committed in `config/mod/sprites`. Sized by the gib profile's `Splash` (headcrab 0.5, baby crab and rat 0.25, large aliens 1.25);
   a barnacle's single coughed-up gibs don't splash. Both sprites are precached in `W_Precache`.
-* **Blood pool** (`SpawnBloodPool`, as MMod's gibbing blood pools): a decal on the floor under a gibbed body,
+* **Blood pool** (`SpawnBloodPool`): a decal on the floor under a gibbed body,
   traced straight down (floors only, up to 256 units): `{bigblood1`/`{bigblood2` (96/80 px) for red, three
   overlapping `{yblood1` for yellow (its largest is 48 px); `{blood5`/`{yblood1` at splash 0.5 (headcrab),
   `{blood7`/`{yblood2` below (rat, baby crab).
@@ -634,7 +634,7 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
 ## Per-category checklist
 
 1. List the call sites and what they send now.
-2. Look at what MMod does (decompile, or its options and assets) and what vanilla already has.
+2. Look at what vanilla already has.
 3. Decide the reserved version and the lever (tune, add, enrich); name the toggle.
 4. Build, test with the commands above, tune with the user.
 5. Write it up in `weapons.md` or a new `effects.md`; flag any new network message.

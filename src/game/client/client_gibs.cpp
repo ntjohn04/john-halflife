@@ -205,7 +205,7 @@ static void FloorDecal(const Vector& point, const char* decalName, bool inTempEn
 	gEngfuncs.pEfxAPI->R_DecalShoot(textureIndex, gEngfuncs.pEventAPI->EV_IndexFromTrace(&tr), 0, &tr.endpos.x, 0);
 }
 
-// A pool of blood on the floor where a gibbed body was (as MMod does): the game's big blood splat, or for yellow
+// A pool of blood on the floor where a gibbed body was: the game's big blood splat, or for yellow
 // blood, whose largest decal is smaller, three overlapping. Smaller for small creatures.
 static void SpawnBloodPool(const Vector& origin, int bloodColor, float scale, bool inTempEntUpdate)
 {

@@ -1,6 +1,6 @@
 # johnhalflife
 
-An MMod-inspired mod for Half-Life, Opposing Force and Blue Shift, built on the Half-Life Unified SDK.
+A mod for Half-Life, Opposing Force and Blue Shift, built on the Half-Life Unified SDK.
 These pages record what johnhalflife changes compared with the stock SDK, and why; the settings, launch options
 and versions are on the [front page](../../README.md).
 
@@ -45,7 +45,7 @@ entries read and write the real value; `NUMBER` is clamped to its min and max (-
 
 The engine's options tabs are fixed, and only the `user.scr` list can hold mod settings: a tab's layout file
 can move or hide its controls, but which setting a control changes is decided in Valve's code. Single
-player only games (`type "singleplayer_only"` in `liblist.gam`, as MMod) show that list as a tab in place of
+player only games (`type "singleplayer_only"` in `liblist.gam`) show that list as a tab in place of
 Multiplayer; johnhalflife keeps multiplayer, so it sits behind a button. A dedicated settings window is
 possible with client VGUI2 (see BugfixedHL-Rebased) but was judged not worth the port for now.
 
@@ -126,11 +126,6 @@ Force's ally grunts and black ops can take headshots, which Gearbox's models did
   config files (model/sound replacement, skill, server config, map cycle) from `GAMECONFIG`, the mod's own folder
   only, to keep downloaded content out, so `FileSystem_LoadFileIntoBuffer` also tries `GAME_FALLBACK` when a
   `GAMECONFIG` read finds nothing. Without it, the expansions' view models stayed Half-Life's.
-
-## Own assets
-
-johnhalflife's own files (sounds, sprites) are in `config/mod/`, installed into every game folder; the list is in
-the [README](../../README.md#own-assets). None of MMod's are used.
 
 ## Networking
 
