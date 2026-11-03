@@ -422,16 +422,30 @@ void ConvertMaps(const fs::path& root, SetupStats& stats)
 			continue;
 		}
 
-		const fs::path bsp = root / BaseFolder / "maps" / (map + ".bsp");
-		WriteContents(bsp, converted, stats);
+		WriteContents(root / BaseFolder / "maps" / (map + ".bsp"), converted, stats);
+	}
+}
 
-		// The map's node graph (the release has the Unified SDK's) must be newer than the map, or the game takes it
-		// for out of date and builds it again the first time the map loads (server nodes.cpp CheckNODFile).
-		const fs::path graph = root / BaseFolder / "maps" / "graphs" / (map + ".nod");
+// The maps' node graphs (the release has the Unified SDK's) must be newer than the maps, or the game takes them for
+// out of date and builds them again the first time each map loads, a short freeze (server nodes.cpp CheckNODFile).
+// The maps are written here, after the release's files, but a newer release extracted over an install puts its graphs
+// back with the time they had when it was made, older than the maps: so on every start, not only when setting up.
+void RefreshGraphs(const fs::path& root)
+{
+	const fs::path maps = root / BaseFolder / "maps";
+	std::error_code error;
+
+	for (const auto& entry : fs::directory_iterator(maps / "graphs", error))
+	{
+		if (entry.path().extension() != ".nod")
+			continue;
+
+		const fs::path bsp = maps / entry.path().stem().concat(".bsp");
 		std::error_code timeError;
+		const auto mapTime = fs::last_write_time(bsp, timeError);
 
-		if (IsFile(graph) && fs::last_write_time(graph, timeError) <= fs::last_write_time(bsp, timeError))
-			fs::last_write_time(graph, fs::file_time_type::clock::now(), timeError);
+		if (!timeError && entry.last_write_time(timeError) <= mapTime && !timeError)
+			fs::last_write_time(entry.path(), fs::file_time_type::clock::now(), timeError);
 	}
 }
 
@@ -450,6 +464,7 @@ void Setup(bool force)
 
 	if (!force && ReadStamp(stamp) == SetupVersion)
 	{
+		RefreshGraphs(root);
 		return;
 	}
 
@@ -469,6 +484,7 @@ void Setup(bool force)
 	}
 
 	ConvertMaps(root, stats);
+	RefreshGraphs(root);
 
 	// Key bindings for a game folder with no config of its own yet, never over the player's own: the keyboard tab's
 	// "Use Defaults" ones (gfx/shell/kb_def.lst, Opposing Force's: Half-Life's and slots 6 to 10). The Unified SDK's
