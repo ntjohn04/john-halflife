@@ -123,19 +123,10 @@ void MusicSystem::Play(std::string&& fileName, bool looping)
 			return;
 	}
 
-	char absolutePath[MAX_PATH_LENGTH];
-
-	if (!g_pFileSystem->GetLocalPath(fileName.c_str(), absolutePath, std::size(absolutePath)))
-	{
-		m_Logger->error("File \"{}\" does not exist", fileName);
-		return;
-	}
-
-	FILE* file = fopen(absolutePath, "rb");
+	FILE* file = OpenFile(fileName);
 
 	if (!file)
 	{
-		m_Logger->error("Could not open file \"{}\"", fileName.c_str());
 		return;
 	}
 
@@ -145,10 +136,77 @@ void MusicSystem::Play(std::string&& fileName, bool looping)
 
 	FileWrapper deleter{file};
 
-	RunOnWorkerThread(&MusicSystem::StartPlaying, looping, std::move(deleter));
+	RunOnWorkerThread(&MusicSystem::StartPlaying, looping, std::move(deleter), MusicState{});
 }
 
-void MusicSystem::StartPlaying(bool looping, FileWrapper file)
+MusicState MusicSystem::GetState()
+{
+	MusicState state;
+
+	if (!m_Playing && !m_Paused)
+	{
+		return state;
+	}
+
+	state.FileName = m_FileName;
+	state.Looping = m_Looping;
+	state.Paused = m_PausedByCommand;
+	state.Position = m_Position;
+
+	if (const auto fadeEnd = m_FadeStartTime.load(); fadeEnd != std::chrono::system_clock::time_point{})
+	{
+		const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(fadeEnd - std::chrono::system_clock::now()).count();
+		state.FadeRemaining = std::max(0.001f, millis / 1000.f);
+		state.FadeDuration = m_FadeDuration;
+	}
+
+	return state;
+}
+
+void MusicSystem::PlayFrom(const MusicState& state)
+{
+	if (state.FileName.empty())
+	{
+		return;
+	}
+
+	FILE* file = OpenFile(state.FileName);
+
+	if (!file)
+	{
+		return;
+	}
+
+	m_Logger->debug("Starting music \"{}\" at {} seconds", state.FileName, state.Position);
+
+	m_FileName = state.FileName;
+
+	FileWrapper deleter{file};
+
+	RunOnWorkerThread(&MusicSystem::StartPlaying, state.Looping, std::move(deleter), state);
+}
+
+FILE* MusicSystem::OpenFile(const std::string& fileName)
+{
+	char absolutePath[MAX_PATH_LENGTH];
+
+	if (!g_pFileSystem->GetLocalPath(fileName.c_str(), absolutePath, std::size(absolutePath)))
+	{
+		m_Logger->error("File \"{}\" does not exist", fileName);
+		return nullptr;
+	}
+
+	FILE* file = fopen(absolutePath, "rb");
+
+	if (!file)
+	{
+		m_Logger->error("Could not open file \"{}\"", fileName.c_str());
+	}
+
+	return file;
+}
+
+void MusicSystem::StartPlaying(bool looping, FileWrapper file, MusicState from)
 {
 	if (!m_Enabled)
 		return;
@@ -192,6 +250,24 @@ void MusicSystem::StartPlaying(bool looping, FileWrapper file)
 	// No longer need the file.
 	file.reset();
 
+	// johnhalflife: from where it was saved (round again for a looping track; a track that had ended stays ended).
+	const std::size_t channels = m_Info.Data->channelCount;
+	const std::size_t frames = channels > 0 ? m_Info.Data->samples.size() / channels : 0;
+	std::size_t startFrame = static_cast<std::size_t>(std::max(0.f, from.Position) * m_Info.Data->sampleRate);
+
+	if (startFrame >= frames)
+	{
+		if (!looping || frames == 0)
+		{
+			return;
+		}
+
+		startFrame %= frames;
+	}
+
+	m_Info.NextSampleIndex = startFrame * channels;
+	m_Queued.clear();
+
 	// Clear error state.
 	alGetError();
 
@@ -216,12 +292,14 @@ void MusicSystem::StartPlaying(bool looping, FileWrapper file)
 
 	for (auto& buffer : m_Buffers)
 	{
+		const std::size_t first = m_Info.NextSampleIndex;
 		const std::size_t bytesRead = Read(dataBuffer, sizeof(dataBuffer));
 
 		if (bytesRead == 0)
 			break;
 
 		alBufferData(buffer.Id, m_Info.Format, dataBuffer, bytesRead, m_Info.Data->sampleRate);
+		m_Queued.emplace_back(first, bytesRead / sizeof(float));
 
 		++buffersFilled;
 	}
@@ -242,7 +320,18 @@ void MusicSystem::StartPlaying(bool looping, FileWrapper file)
 		return;
 	}
 
-	if (m_Volume == 0.0)
+	m_Position = static_cast<float>(startFrame) / m_Info.Data->sampleRate;
+
+	// johnhalflife: as it was saved: still fading out, or paused by the map.
+	if (from.FadeRemaining > 0)
+	{
+		m_FadeDuration = from.FadeDuration > 0 ? from.FadeDuration : from.FadeRemaining;
+		m_FadeStartTime = std::chrono::system_clock::now() + std::chrono::milliseconds{static_cast<long long>(from.FadeRemaining * 1000.f)};
+	}
+
+	m_PausedByCommand = from.Paused;
+
+	if (m_Volume == 0.0 || from.Paused)
 		Pause();
 }
 
@@ -263,9 +352,12 @@ void MusicSystem::Stop()
 
 	// Unqueue all buffers as well to free them up.
 	alSourcei(m_Source.Id, AL_BUFFER, NullBuffer);
+	m_Queued.clear();
+	m_Position = 0;
 
 	m_Paused = false;
 	m_Playing = false;
+	m_PausedByCommand = false;
 }
 
 void MusicSystem::Pause()
@@ -300,10 +392,35 @@ void MusicSystem::Resume()
 	if (!m_Paused)
 		return;
 
+	// johnhalflife: the game unpausing doesn't resume a track the map paused (music pause; music resume clears this
+	// first).
+	if (m_PausedByCommand)
+		return;
+
 	alSourcePlay(m_Source.Id);
 
 	m_Paused = false;
 	m_Playing = true;
+}
+
+void MusicSystem::SetPausedByCommand(bool paused)
+{
+	// On the worker thread, in order with a track being started (which sets it as the track was saved).
+	if (RunOnWorkerThread(&MusicSystem::SetPausedByCommand, paused))
+	{
+		return;
+	}
+
+	m_PausedByCommand = paused;
+
+	if (paused)
+	{
+		Pause();
+	}
+	else
+	{
+		Resume();
+	}
 }
 
 void MusicSystem::Block()
@@ -419,6 +536,10 @@ void MusicSystem::Update()
 			{
 				alSourceUnqueueBuffers(m_Source.Id, 1, &bufferId);
 
+				if (!m_Queued.empty())
+					m_Queued.pop_front();
+
+				std::size_t first = m_Info.NextSampleIndex;
 				std::size_t bytesRead = Read(dataBuffer, sizeof(dataBuffer));
 
 				if (bytesRead == 0)
@@ -431,6 +552,7 @@ void MusicSystem::Update()
 
 					m_Info.NextSampleIndex = 0;
 
+					first = 0;
 					bytesRead = Read(dataBuffer, sizeof(dataBuffer));
 				}
 
@@ -443,6 +565,7 @@ void MusicSystem::Update()
 				alBufferData(bufferId, m_Info.Format, dataBuffer, bytesRead, m_Info.Data->sampleRate);
 
 				alSourceQueueBuffers(m_Source.Id, 1, &bufferId);
+				m_Queued.emplace_back(first, bytesRead / sizeof(float));
 
 				ALint state = AL_STOPPED;
 				alGetSourcei(m_Source.Id, AL_SOURCE_STATE, &state);
@@ -459,6 +582,10 @@ void MusicSystem::Update()
 			{
 				Stop();
 			}
+			else
+			{
+				UpdatePosition();
+			}
 		}
 	}
 
@@ -466,6 +593,35 @@ void MusicSystem::Update()
 	{
 		UpdateVolume();
 	}
+}
+
+void MusicSystem::UpdatePosition()
+{
+	if (m_Queued.empty() || !m_Info.Data || m_Info.Data->channelCount <= 0 || m_Info.Data->sampleRate <= 0)
+	{
+		return;
+	}
+
+	// The source's offset is from the start of its queue, which m_Queued mirrors.
+	ALint offset = 0;
+	alGetSourcei(m_Source.Id, AL_SAMPLE_OFFSET, &offset);
+
+	const std::size_t channels = m_Info.Data->channelCount;
+	std::size_t remaining = static_cast<std::size_t>(std::max(0, offset)) * channels;
+	std::size_t sample = m_Queued.back().first + m_Queued.back().second;
+
+	for (const auto& [first, count] : m_Queued)
+	{
+		if (remaining < count)
+		{
+			sample = first + remaining;
+			break;
+		}
+
+		remaining -= count;
+	}
+
+	m_Position = static_cast<float>(sample / channels) / m_Info.Data->sampleRate;
 }
 
 void MusicSystem::UpdateVolume(bool force)
@@ -548,11 +704,11 @@ void MusicSystem::Music_Command(const CommandArgs& args)
 	}
 	else if (stricmp(command, "pause") == 0)
 	{
-		Pause();
+		SetPausedByCommand(true);
 	}
 	else if (stricmp(command, "resume") == 0)
 	{
-		Resume();
+		SetPausedByCommand(false);
 	}
 	else if (stricmp(command, "info") == 0)
 	{

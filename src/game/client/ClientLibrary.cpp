@@ -28,6 +28,7 @@
 #include "jhl_softwarewater.h"
 #include "jhl_skyboxes.h"
 #include "jhl_egon.h"
+#include "jhl_music.h"
 #include "fx_test.h"
 #include "ClientLibrary.h"
 #include "entity.h"
@@ -68,6 +69,7 @@ bool ClientLibrary::Initialize()
 	TempEntity_Initialize();
 	ClientGibs_Initialize();
 	WeaponEffects_Initialize();
+	JhlMusic_Initialize();
 	JhlSettings_Initialize();
 	JhlFlushFaces_Initialize();
 	JhlSoftwareLook_Initialize();
@@ -194,6 +196,9 @@ void ClientLibrary::RunFrame()
 			// Stop music playback if we disconnect or start a new map.
 			sound::g_SoundSystem->GetMusicSystem()->Stop();
 
+			// johnhalflife: a save being loaded plays its music again (jhl_music.cpp).
+			JhlMusic_ConnectionReset();
+
 			// Clear out old server info.
 			g_ProjectInfo.SetServerInfo(LibraryInfo{});
 		}
@@ -216,6 +221,8 @@ void ClientLibrary::RunFrame()
 
 		gpGlobals->mapname = MAKE_STRING(m_BaseMapName.c_str());
 	}
+
+	JhlMusic_RunFrame();
 
 	// Unblock audio if we can't find the window.
 	if (auto window = FindWindow(); !window || (SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) != 0)

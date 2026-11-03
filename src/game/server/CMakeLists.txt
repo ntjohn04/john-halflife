@@ -45,6 +45,8 @@ target_sources(server PRIVATE
 	plane.cpp
 	plane.h
 	ServerConfigContext.h
+	jhl_music.cpp
+	jhl_music.h
 	ServerLibrary.cpp
 	ServerLibrary.h
 	UserMessages.cpp

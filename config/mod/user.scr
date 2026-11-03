@@ -188,6 +188,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"jhl_snd_musicsaves"
+	{
+		"JHL | Sound: music picks up where it was when a save is loaded"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"crosshair"
 	{
 		"Vanilla | Crosshair"

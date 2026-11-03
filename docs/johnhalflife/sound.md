@@ -39,3 +39,25 @@ it only acts where a sound would otherwise be silent.
 
 `cl_snd_channels` prints every sound playing, the device's real settings (rate, output mode, limiter,
 HRTF, resampler) and, for the loudest sounds, each ear's volume and what OpenAL was given.
+
+## Music in saves
+
+`jhl_snd_musicsaves` (default 1; 0: loading a save stops the music, as vanilla).
+
+Saves keep the music: loading one plays the track that was playing when it was saved, from that point, paused if
+the map had paused it and still fading out if it was fading. In vanilla, loading a save stopped the music. The
+Unified SDK already keeps music playing across level changes. Single player only (saves are).
+
+* **Saving:** the client is in the server's process in single player, so the server asks the client's music system
+  directly as it saves the player (`DispatchSave` → `JhlMusic_BeforeSave`, the client's exported `JhlMusic_GetState`,
+  `jhl_musicstate.h`). What's saved is exact at that moment: the position is where the source is in the track
+  (`MusicSystem::UpdatePosition`: OpenAL's offset in its queue, the buffers queued mirrored with where each starts in
+  the track), and the game pausing pauses the music, so a save from the menu holds the second it was paused at.
+* **Loading:** it's in the player's data (`CBasePlayer::m_JhlMusic*`, added to its data map: older saves load, with
+  no music). The `JhlMusic` message sends it each time the player's HUD starts. Loading a save resets the
+  connection, which stops the music (`ClientLibrary::RunFrame`); only then does the client play what was sent
+  (`jhl_music.cpp`, `MusicSystem::PlayFrom`). A level change doesn't reset it, and the music plays on as it was.
+* A track the map paused (`music pause`) stays paused when the game unpauses: the game's pause and the map's are
+  kept apart (`MusicSystem::m_PausedByCommand`). Before, unpausing the game resumed it.
+* The server finds the client library by name (`client.dll`, or `cl_dlls/client.so` on Linux, only if already
+  loaded). If it can't, the player's music is saved as it was last.
