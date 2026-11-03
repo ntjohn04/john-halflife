@@ -908,6 +908,13 @@ void CFuncTank::Fire(const Vector& barrelEnd, const Vector& forward, CBaseEntity
 {
 	if (m_fireLast != 0)
 	{
+		// johnhalflife: by kind: 0 a machine gun, 1 a rocket launcher, 2 a cannon (func_tankmortar), 3 a laser. A machine
+		// gun firing no bullets (bullet 0) fires nothing in vanilla but its sprites, if it has any: the Opposing Force
+		// boot camp's security cameras are func_tanks that track the player, "firing" a round a second. Nothing of
+		// johnhalflife's for those.
+		const int kind = ClassnameIs("func_tankrocket") ? 1 : ClassnameIs("func_tankmortar") ? 2 : ClassnameIs("func_tanklaser") ? 3 : 0;
+		const bool jhlShot = UTIL_JhlParticleSystem() && (kind != 0 || m_bulletType != TANK_BULLET_NONE);
+
 		if (!FStringNull(m_iszSpriteSmoke))
 		{
 			CSprite* pSprite = CSprite::SpriteCreate(STRING(m_iszSpriteSmoke), barrelEnd, true);
@@ -919,7 +926,7 @@ void CFuncTank::Fire(const Vector& barrelEnd, const Vector& forward, CBaseEntity
 		// johnhalflife: its flash drawn by the client instead (JhlTank_ParseFire), flickering a frame and a turn at a time:
 		// a server sprite stays at least a tenth of a second, the same way round, so a fast gun's piled up into one still
 		// blob.
-		if (!FStringNull(m_iszSpriteFlash) && !UTIL_JhlParticleSystem())
+		if (!FStringNull(m_iszSpriteFlash) && !jhlShot)
 		{
 			CSprite* pSprite = CSprite::SpriteCreate(STRING(m_iszSpriteFlash), barrelEnd, true);
 			pSprite->AnimateAndDie(60);
@@ -931,11 +938,9 @@ void CFuncTank::Fire(const Vector& barrelEnd, const Vector& forward, CBaseEntity
 		}
 
 		// johnhalflife (jhl_fx_particlesystem): its shot's effects at its muzzle, by kind (the client's,
-		// weapon_effects.cpp's JhlTank_ParseFire): 0 a machine gun, 1 a rocket launcher, 2 a cannon (func_tankmortar),
-		// 3 a laser (its color, where it hit).
-		if (UTIL_JhlParticleSystem())
+		// weapon_effects.cpp's JhlTank_ParseFire), by kind (a laser's color, where it hit).
+		if (jhlShot)
 		{
-			const int kind = ClassnameIs("func_tankrocket") ? 1 : ClassnameIs("func_tankmortar") ? 2 : ClassnameIs("func_tanklaser") ? 3 : 0;
 			const Vector laserColor = kind == 3 ? JhlLaserColor() : g_vecZero;
 
 			MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, barrelEnd);
@@ -959,9 +964,8 @@ void CFuncTank::Fire(const Vector& barrelEnd, const Vector& forward, CBaseEntity
 
 		// johnhalflife (jhl_fx_particlesystem): a kick to whoever's manning it, by its kind (a machine gun's light, it
 		// fires fast; a cannon's hardest).
-		if (UTIL_JhlParticleSystem() && m_pController)
+		if (jhlShot && m_pController)
 		{
-			const int kind = ClassnameIs("func_tankrocket") ? 1 : ClassnameIs("func_tankmortar") ? 2 : ClassnameIs("func_tanklaser") ? 3 : 0;
 			constexpr float Kick[4] = {0.3f, 2.0f, 3.0f, 1.5f};
 			m_pController->pev->punchangle.x -= Kick[kind] * RANDOM_FLOAT(0.8f, 1.2f);
 			m_pController->pev->punchangle.y += Kick[kind] * RANDOM_FLOAT(-0.25f, 0.25f);

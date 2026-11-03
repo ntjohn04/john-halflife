@@ -477,7 +477,10 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
   forgotten on a new map. Only these maps: c4a1b's ring beams (on machines) and of6a5's Gene Worm orbs are left alone.
 * Mounted guns, the `func_tank` family (`func_tank.cpp`; every one, by kind): vanilla's shots had only the map's
   flash and smoke sprites (if it gave any), no light. Each shot now also sends its muzzle, aim and kind
-  (`TE_MULTIGUNSHOT`; the client's `JhlTank_ParseFire`):
+  (`TE_MULTIGUNSHOT`; the client's `JhlTank_ParseFire`). Not a machine gun firing no bullets (`bullet 0`), which
+  fires nothing in vanilla (a fire rate of 0 is made 1, so it "fires" a round a second): the Opposing Force boot
+  camp's and Uplink's security cameras (ofboot1, ofboot2, hldemo3), which track the player, and the tanks' turrets in
+  c2a5b, c2a5e and c3a1a, whose shots are what they trigger. Those keep vanilla's (the map's flash sprite, if any).
   * Machine guns (`func_tank`: emplacements, the Bradley's, the player's `biggun`): a gun's muzzle light and wisp
     1.6 times as big, and its brass, up to 2 a shot, thrown out to its right from a little behind its muzzle,
     lingering as guns' do: rifle casings (`saw_shell.mdl`) for 12 mm, else 9 mm brass. Its flash sprite (the map's,
