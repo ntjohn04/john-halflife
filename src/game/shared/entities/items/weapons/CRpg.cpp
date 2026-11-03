@@ -21,8 +21,6 @@
 #include "items/weapons/CLaserSpot.h"
 #include "items/weapons/CRpgRocket.h"
 #include "jhl_effects.h"
-#else
-#include "weapon_effects.h"
 #endif
 
 LINK_ENTITY_TO_CLASS(weapon_rpg, CRpg);
@@ -83,10 +81,6 @@ void CRpg::Reload()
 		m_pSpot->Suspend(2.1);
 		m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 2.1;
 	}
-#else
-	// johnhalflife: its dot's hidden while it reloads, and coming back isn't coming on (no laser line).
-	if (m_fSpotActive)
-		RpgLaser_Reloading();
 #endif
 
 	if (GetMagazine1() == 0)
@@ -295,8 +289,9 @@ void CRpg::WeaponIdle()
 	}
 }
 
-void CRpg::ItemPostFrame()
+void CRpg::ItemAlwaysFrame()
 {
+	// Not ItemPostFrame: the player's busy reloading, so that isn't called until the reload's done.
 #ifndef CLIENT_DLL
 	if (0 != m_flReloadSoundTime && gpGlobals->time >= m_flReloadSoundTime)
 	{
@@ -304,8 +299,6 @@ void CRpg::ItemPostFrame()
 		m_pPlayer->EmitSound(CHAN_ITEM, RpgReloadSound, VOL_NORM, ATTN_NORM);
 	}
 #endif
-
-	CBasePlayerWeapon::ItemPostFrame();
 }
 
 void CRpg::UpdateSpot()

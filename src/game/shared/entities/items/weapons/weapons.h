@@ -355,6 +355,12 @@ public:
 	 */
 	virtual void ItemPostFrame();
 
+	/**
+	 *	@brief johnhalflife: called each frame by player PostThink even when ItemPostFrame isn't (the player busy
+	 *	reloading or switching, or on a mounted gun), for sounds timed to an animation.
+	 */
+	virtual void ItemAlwaysFrame() {}
+
 	// called by CBasePlayerWeapons ItemPostFrame()
 
 	/**

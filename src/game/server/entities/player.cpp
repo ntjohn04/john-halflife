@@ -3773,6 +3773,9 @@ void CBasePlayer::ItemPreFrame()
 
 void CBasePlayer::ItemPostFrame()
 {
+	if (m_pActiveWeapon)
+		m_pActiveWeapon->ItemAlwaysFrame();
+
 	// check if the player is using a tank
 	if (m_pTank != nullptr)
 		return;

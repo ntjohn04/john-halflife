@@ -127,13 +127,7 @@ void GrenadePivot(cl_entity_t* grenade, const char* modelname);
 void RpgLaserDot(cl_entity_t* dot, const char* modelname);
 
 /**
- *	@brief johnhalflife: the local player's RPG is reloading (CRpg::Reload, predicted): its dot is hidden 2.1 s, and
- *	coming back isn't coming on.
- */
-void RpgLaser_Reloading();
-
-/**
- *	@brief Draws the RPG's laser line when its dot comes on (turned on, or the RPG taken out with it on): a thin red line
+ *	@brief Draws the RPG's laser line when its laser comes on (turned on, or the RPG taken out with it on): a thin red line
  *	from the laser's housing to the dot, fading out over a second (V_CalcRefdef, once the view model's placed).
  */
 void RpgLaserLine_Update(double time);
