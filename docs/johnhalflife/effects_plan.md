@@ -192,7 +192,10 @@ anywhere in its volume.
 
 **Gibs pass through gibs** (`ShouldCollide`, cbase.cpp): two thrown into the same spot (an env_shooter's, from its one
 origin) were stuck in each other and crept down through the air a few units a second instead of falling (c4a2b's
-Gonarch's legs again: vanilla too, though its gibs fade in 4 s).
+Gonarch's legs again: vanilla too, though its gibs fade in 4 s). The engine asks `ShouldCollide` for every entity near every trace, hundreds of thousands of times when an
+NPC looks for cover; it first looked the setting up by name each time (the engine goes down its whole list of cvars), which
+made a scientist's think in c2a3c take 150 ms. The classes are compared first now, and the server's johnhalflife cvars
+are found once and kept (`UTIL_JhlClientCvar`, jhl_effects.h).
 
 **Surface debris** (`SurfaceDebris`, `jhl_explosions.cpp`): every two-fireball explosion that hit a surface (not
 in water or mid-air) throws pieces of it, from where it hit: 6-18 for a grenade, up to twice that for bigger
