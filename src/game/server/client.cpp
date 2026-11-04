@@ -40,6 +40,7 @@
 #include "UserMessages.h"
 #include "ClientCommandRegistry.h"
 #include "ServerLibrary.h"
+#include "jhl_hitch.h"
 #include "pm_materials.h"
 #include "sound/MaterialSystem.h"
 #include "utils/filesystem_utils.h"
@@ -1176,6 +1177,9 @@ void ServerDeactivate()
 
 void ServerActivate(edict_t* pEdictList, int edictCount, int clientMax)
 {
+	// johnhalflife (jhl_debug_hitch): a map loading isn't a hitch.
+	JhlHitch_Skip();
+
 	int i;
 	CBaseEntity* pClass;
 
@@ -1248,8 +1252,37 @@ void ParmsChangeLevel()
 //
 // GLOBALS ASSUMED SET:  g_ulFrameCount
 //
+// johnhalflife (jhl_debug_hitch, the client's setting): a frame is from one of these to the next (jhl_hitch.h).
+static void JhlHitch_ServerFrame()
+{
+	static const cvar_t* threshold = nullptr;
+
+	if (!threshold)
+	{
+		threshold = CVAR_GET_POINTER("jhl_debug_hitch");
+	}
+
+	if (!threshold || threshold->value <= 0)
+	{
+		JhlHitch_EndFrame("sv", 0, "");
+		return;
+	}
+
+	std::string where = STRING(gpGlobals->mapname);
+
+	if (CBasePlayer* player = UTIL_GetLocalPlayer(); player)
+	{
+		where += fmt::format(" at ({:.0f} {:.0f} {:.0f})", player->pev->origin.x, player->pev->origin.y, player->pev->origin.z);
+	}
+
+	JhlHitch_EndFrame("sv", threshold->value, where.c_str());
+}
+
 void StartFrame()
 {
+	JhlHitch_ServerFrame();
+	JhlHitchScope hitchScope{"StartFrame"};
+
 	g_Server.RunFrame();
 
 	if (g_pGameRules)

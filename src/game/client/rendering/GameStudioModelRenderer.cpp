@@ -19,6 +19,7 @@
 #include "StudioModelRenderer.h"
 #include "GameStudioModelRenderer.h"
 #include "Exports.h"
+#include "jhl_hitch.h"
 
 //
 // Override the StudioModelRender virtual member functions here to implement custom bone
@@ -81,8 +82,8 @@ void R_StudioInit()
 r_studio_interface_t studio =
 	{
 		STUDIO_INTERFACE_VERSION,
-		R_StudioDrawModel,
-		R_StudioDrawPlayer,
+		JHL_TIMED(R_StudioDrawModel),
+		JHL_TIMED(R_StudioDrawPlayer),
 };
 
 /**

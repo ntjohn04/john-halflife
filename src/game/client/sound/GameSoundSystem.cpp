@@ -27,6 +27,7 @@
 #include "event_api.h"
 #include "ISoundSystem.h"
 #include "GameSoundSystem.h"
+#include "jhl_hitch.h"
 #include "view.h"
 
 namespace sound
@@ -1554,6 +1555,9 @@ void GameSoundSystem::UpdateRoomEffect()
 
 		if (m_PreviousRoomType != roomType)
 		{
+			const auto roomName = std::to_string(roomType);
+			JhlHitchScope hitchScope{"sound.room", roomName.c_str()};
+
 			m_PreviousRoomType = roomType;
 			alAuxiliaryEffectSloti(m_AuxiliaryEffectSlot, AL_EFFECTSLOT_EFFECT,
 				static_cast<ALint>(vanilla ? m_VanillaReverbEffects[roomType] : m_RoomEffects[roomType]));

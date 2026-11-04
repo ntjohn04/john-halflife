@@ -20,6 +20,7 @@
 #include "cbase.h"
 #include "client.h"
 #include "pm_shared.h"
+#include "jhl_hitch.h"
 
 #ifdef WIN32
 #define GIVEFNPTRSTODLL_DLLEXPORT __stdcall
@@ -37,11 +38,11 @@ static DLL_FUNCTIONS gFunctionTable =
 		GameDLLInit,			   // pfnGameInit
 		DispatchSpawn,			   // pfnSpawn
 		DispatchThink,			   // pfnThink
-		DispatchUse,			   // pfnUse
+		JHL_TIMED(DispatchUse),			   // pfnUse
 		DispatchTouch,			   // pfnTouch
-		DispatchBlocked,		   // pfnBlocked
+		JHL_TIMED(DispatchBlocked),		   // pfnBlocked
 		DispatchKeyValue,		   // pfnKeyValue
-		DispatchSave,			   // pfnSave
+		JHL_TIMED(DispatchSave),			   // pfnSave
 		DispatchRestore,		   // pfnRestore
 		DispatchObjectCollsionBox, // pfnAbsBox
 
@@ -56,13 +57,13 @@ static DLL_FUNCTIONS gFunctionTable =
 		ClientDisconnect,	   // pfnClientDisconnect
 		ClientKill,			   // pfnClientKill
 		ClientPutInServer,	   // pfnClientPutInServer
-		ExecuteClientCommand,  // pfnClientCommand
+		JHL_TIMED(ExecuteClientCommand),  // pfnClientCommand
 		ClientUserInfoChanged, // pfnClientUserInfoChanged
 		ServerActivate,		   // pfnServerActivate
 		ServerDeactivate,	   // pfnServerDeactivate
 
-		PlayerPreThink,	 // pfnPlayerPreThink
-		PlayerPostThink, // pfnPlayerPostThink
+		JHL_TIMED(PlayerPreThink),	 // pfnPlayerPreThink
+		JHL_TIMED(PlayerPostThink), // pfnPlayerPostThink
 
 		StartFrame,		  // pfnStartFrame
 		ParmsNewLevel,	  // pfnParmsNewLevel
@@ -77,19 +78,19 @@ static DLL_FUNCTIONS gFunctionTable =
 
 		Sys_Error, // pfnSys_Error				Called when engine has encountered an error
 
-		PM_Move, // pfnPM_Move
+		JHL_TIMED(PM_Move), // pfnPM_Move
 		PM_Init, // pfnPM_Init				Server version of player movement initialization
 		[](const char* name)
 		{ return g_MaterialSystem.FindTextureType(name); }, // pfnPM_FindTextureType
 
-		SetupVisibility,		  // pfnSetupVisibility        Set up PVS and PAS for networking for this client
-		UpdateClientData,		  // pfnUpdateClientData       Set up data sent only to specific client
-		AddToFullPack,			  // pfnAddToFullPack
+		JHL_TIMED(SetupVisibility),		  // pfnSetupVisibility        Set up PVS and PAS for networking for this client
+		JHL_TIMED(UpdateClientData),		  // pfnUpdateClientData       Set up data sent only to specific client
+		JHL_TIMED(AddToFullPack),			  // pfnAddToFullPack
 		CreateBaseline,			  // pfnCreateBaseline			Tweak entity baseline for network encoding, allows setup of player baselines, too.
 		RegisterEncoders,		  // pfnRegisterEncoders		Callbacks for network encoding
 		GetWeaponData,			  // pfnGetWeaponData
-		CmdStart,				  // pfnCmdStart
-		CmdEnd,					  // pfnCmdEnd
+		JHL_TIMED(CmdStart),				  // pfnCmdStart
+		JHL_TIMED(CmdEnd),					  // pfnCmdEnd
 		ConnectionlessPacket,	  // pfnConnectionlessPacket
 		GetHullBounds,			  // pfnGetHullBounds
 		CreateInstancedBaselines, // pfnCreateInstancedBaselines
@@ -101,7 +102,7 @@ NEW_DLL_FUNCTIONS gNewDLLFunctions =
 	{
 		OnFreeEntPrivateData, // pfnOnFreeEntPrivateData
 		GameDLLShutdown,
-		ShouldCollide, // pfnShouldCollide
+		JHL_TIMED(ShouldCollide), // pfnShouldCollide
 };
 
 extern "C" {
