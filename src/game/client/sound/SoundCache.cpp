@@ -21,6 +21,7 @@
 #include "cbase.h"
 #include "RiffChunkReader.h"
 #include "SoundCache.h"
+#include "jhl_hitch.h"
 
 namespace sound
 {
@@ -77,6 +78,8 @@ bool SoundCache::LoadSound(Sound& sound)
 	{
 		return true;
 	}
+
+	JhlHitchScope hitchScope{"sound.load", sound.Name.c_str()};
 
 	m_Logger->trace("Loading sound {}", sound.Name.c_str());
 
@@ -398,6 +401,8 @@ const PitchedSound* SoundCache::GetPitched(Sound& sound, int pitch)
 	{
 		return nullptr;
 	}
+
+	JhlHitchScope hitchScope{"sound.pitch", sound.Name.c_str()};
 
 	// The engine pitches a sound by stepping through it at its own rate without interpolating (fixed point, truncated),
 	// and only then brings it to its 22050 Hz: off the sound's own pitch the uneven steps scatter a faint distortion

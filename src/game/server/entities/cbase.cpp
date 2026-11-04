@@ -17,6 +17,7 @@
 
 #include "cbase.h"
 #include "jhl_effects.h"
+#include "jhl_hitch.h"
 #include "jhl_music.h"
 #include "ServerLibrary.h"
 #include "pm_shared.h"
@@ -171,7 +172,11 @@ void DispatchTouch(edict_t* pentTouched, edict_t* pentOther)
 	CBaseEntity* pOther = (CBaseEntity*)GET_PRIVATE(pentOther);
 
 	if (pEntity && pOther && ((pEntity->pev->flags | pOther->pev->flags) & FL_KILLME) == 0)
+	{
+		// johnhalflife (jhl_debug_hitch).
+		JhlHitchScope hitchScope{"touch", STRING(pEntity->pev->classname)};
 		pEntity->Touch(pOther);
+	}
 }
 
 void DispatchUse(edict_t* pentUsed, edict_t* pentOther)
@@ -191,6 +196,8 @@ void DispatchThink(edict_t* pent)
 		if (FBitSet(pEntity->pev->flags, FL_DORMANT))
 			CBaseEntity::Logger->error("Dormant entity {} is thinking!!", STRING(pEntity->pev->classname));
 
+		// johnhalflife (jhl_debug_hitch).
+		JhlHitchScope hitchScope{"think", STRING(pEntity->pev->classname)};
 		pEntity->Think();
 	}
 }

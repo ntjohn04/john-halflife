@@ -18,9 +18,12 @@
 #include "hud.h"
 #include "ClientLibrary.h"
 #include "ClientUserMessages.h"
+#include "jhl_hitch.h"
 
 static int DispatchUserMessageInternal(const char* pszName, int iSize, void* pbuf)
 {
+	JhlHitchScope hitchScope{"UserMsg", pszName};
+
 	return static_cast<int>(g_ClientUserMessages.DispatchUserMessage(pszName, iSize, pbuf));
 }
 

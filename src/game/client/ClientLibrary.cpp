@@ -29,6 +29,7 @@
 #include "jhl_skyboxes.h"
 #include "jhl_egon.h"
 #include "jhl_music.h"
+#include "jhl_hitch.h"
 #include "fx_test.h"
 #include "ClientLibrary.h"
 #include "entity.h"
@@ -222,7 +223,10 @@ void ClientLibrary::RunFrame()
 		gpGlobals->mapname = MAKE_STRING(m_BaseMapName.c_str());
 	}
 
-	JhlMusic_RunFrame();
+	{
+		JhlHitchScope hitchScope{"music"};
+		JhlMusic_RunFrame();
+	}
 
 	// Unblock audio if we can't find the window.
 	if (auto window = FindWindow(); !window || (SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS) != 0)
@@ -243,7 +247,10 @@ void ClientLibrary::RunFrame()
 		sound::g_SoundSystem->Resume();
 	}
 
-	sound::g_SoundSystem->Update();
+	{
+		JhlHitchScope hitchScope{"sound.update"};
+		sound::g_SoundSystem->Update();
+	}
 
 	if (isConnected)
 	{

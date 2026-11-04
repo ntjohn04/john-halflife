@@ -16,6 +16,7 @@
 #include "event_api.h"
 #include "pmtrace.h"
 #include "ev_hldm.h"
+#include "jhl_hitch.h"
 
 /*
 ======================
@@ -31,32 +32,32 @@ That was what we were going to do, but we ran out of time...oh well.
 */
 void Game_HookEvents()
 {
-	gEngfuncs.pfnHookEvent("events/glock1.sc", EV_FireGlock1);
-	gEngfuncs.pfnHookEvent("events/glock2.sc", EV_FireGlock2);
-	gEngfuncs.pfnHookEvent("events/shotgun1.sc", EV_FireShotGunSingle);
-	gEngfuncs.pfnHookEvent("events/shotgun2.sc", EV_FireShotGunDouble);
-	gEngfuncs.pfnHookEvent("events/mp5.sc", EV_FireMP5);
-	gEngfuncs.pfnHookEvent("events/mp52.sc", EV_FireMP52);
-	gEngfuncs.pfnHookEvent("events/python.sc", EV_FirePython);
-	gEngfuncs.pfnHookEvent("events/gauss.sc", EV_FireGauss);
-	gEngfuncs.pfnHookEvent("events/gaussspin.sc", EV_SpinGauss);
-	gEngfuncs.pfnHookEvent("events/crowbar.sc", EV_Crowbar);
-	gEngfuncs.pfnHookEvent("events/crossbow1.sc", EV_FireCrossbow);
-	gEngfuncs.pfnHookEvent("events/crossbow2.sc", EV_FireCrossbow2);
-	gEngfuncs.pfnHookEvent("events/rpg.sc", EV_FireRpg);
-	gEngfuncs.pfnHookEvent("events/egon_fire.sc", EV_EgonFire);
-	gEngfuncs.pfnHookEvent("events/egon_stop.sc", EV_EgonStop);
-	gEngfuncs.pfnHookEvent("events/firehornet.sc", EV_HornetGunFire);
-	gEngfuncs.pfnHookEvent("events/tripfire.sc", EV_TripmineFire);
-	gEngfuncs.pfnHookEvent("events/snarkfire.sc", EV_SnarkFire);
+	gEngfuncs.pfnHookEvent("events/glock1.sc", JHL_TIMED(EV_FireGlock1));
+	gEngfuncs.pfnHookEvent("events/glock2.sc", JHL_TIMED(EV_FireGlock2));
+	gEngfuncs.pfnHookEvent("events/shotgun1.sc", JHL_TIMED(EV_FireShotGunSingle));
+	gEngfuncs.pfnHookEvent("events/shotgun2.sc", JHL_TIMED(EV_FireShotGunDouble));
+	gEngfuncs.pfnHookEvent("events/mp5.sc", JHL_TIMED(EV_FireMP5));
+	gEngfuncs.pfnHookEvent("events/mp52.sc", JHL_TIMED(EV_FireMP52));
+	gEngfuncs.pfnHookEvent("events/python.sc", JHL_TIMED(EV_FirePython));
+	gEngfuncs.pfnHookEvent("events/gauss.sc", JHL_TIMED(EV_FireGauss));
+	gEngfuncs.pfnHookEvent("events/gaussspin.sc", JHL_TIMED(EV_SpinGauss));
+	gEngfuncs.pfnHookEvent("events/crowbar.sc", JHL_TIMED(EV_Crowbar));
+	gEngfuncs.pfnHookEvent("events/crossbow1.sc", JHL_TIMED(EV_FireCrossbow));
+	gEngfuncs.pfnHookEvent("events/crossbow2.sc", JHL_TIMED(EV_FireCrossbow2));
+	gEngfuncs.pfnHookEvent("events/rpg.sc", JHL_TIMED(EV_FireRpg));
+	gEngfuncs.pfnHookEvent("events/egon_fire.sc", JHL_TIMED(EV_EgonFire));
+	gEngfuncs.pfnHookEvent("events/egon_stop.sc", JHL_TIMED(EV_EgonStop));
+	gEngfuncs.pfnHookEvent("events/firehornet.sc", JHL_TIMED(EV_HornetGunFire));
+	gEngfuncs.pfnHookEvent("events/tripfire.sc", JHL_TIMED(EV_TripmineFire));
+	gEngfuncs.pfnHookEvent("events/snarkfire.sc", JHL_TIMED(EV_SnarkFire));
 
-	gEngfuncs.pfnHookEvent("events/eagle.sc", EV_FireEagle);
-	gEngfuncs.pfnHookEvent("events/pipewrench.sc", EV_Pipewrench);
-	gEngfuncs.pfnHookEvent("events/m249.sc", EV_FireM249);
-	gEngfuncs.pfnHookEvent("events/displacer.sc", EV_FireDisplacer);
-	gEngfuncs.pfnHookEvent("events/shock.sc", EV_FireShockRifle);
-	gEngfuncs.pfnHookEvent("events/spore.sc", EV_FireSpore);
-	gEngfuncs.pfnHookEvent("events/sniper.sc", EV_SniperRifle);
-	gEngfuncs.pfnHookEvent("events/knife.sc", EV_Knife);
-	gEngfuncs.pfnHookEvent("events/penguinfire.sc", EV_PenguinFire);
+	gEngfuncs.pfnHookEvent("events/eagle.sc", JHL_TIMED(EV_FireEagle));
+	gEngfuncs.pfnHookEvent("events/pipewrench.sc", JHL_TIMED(EV_Pipewrench));
+	gEngfuncs.pfnHookEvent("events/m249.sc", JHL_TIMED(EV_FireM249));
+	gEngfuncs.pfnHookEvent("events/displacer.sc", JHL_TIMED(EV_FireDisplacer));
+	gEngfuncs.pfnHookEvent("events/shock.sc", JHL_TIMED(EV_FireShockRifle));
+	gEngfuncs.pfnHookEvent("events/spore.sc", JHL_TIMED(EV_FireSpore));
+	gEngfuncs.pfnHookEvent("events/sniper.sc", JHL_TIMED(EV_SniperRifle));
+	gEngfuncs.pfnHookEvent("events/knife.sc", JHL_TIMED(EV_Knife));
+	gEngfuncs.pfnHookEvent("events/penguinfire.sc", JHL_TIMED(EV_PenguinFire));
 }

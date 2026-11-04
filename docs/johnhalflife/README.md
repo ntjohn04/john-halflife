@@ -11,6 +11,11 @@ and versions are on the [front page](../../README.md).
 * [Sound](sound.md): Half-Life's own mixing and room effects on the SDK's OpenAL sound system
 * [Effects plan](effects_plan.md): the plan the effects (v0.2.0 to v0.8.0) were built from, with what each does
 * [Effects test command](effects_test.md): `jhl_fx_test`, for designing particle effects
+* Hitch finder: `jhl_debug_hitch <ms>` (console, 0 off) reports every frame longer than that: the client's and the
+  server's time by part (each engine call into them, user messages, sound loading, resampling and reverb changes,
+  entity thinks and touches, by class), their slowest calls, and what the engine took beyond them. Printed to the
+  console and added to `jhl_hitches.txt` in the game's folder; the 2 seconds after a map loads, and pauses, aren't
+  counted (`src/game/shared/jhl_hitch.h`).
 * [Release](release.md): the install targets, what's shipped and what's made from the player's games
 * [Tuning sheet](tuning.md): the numbers on the changes since `v0.7.0-prealpha` (shared systems, gargantua,
   tentacles, mounted guns), where each is and where to see it

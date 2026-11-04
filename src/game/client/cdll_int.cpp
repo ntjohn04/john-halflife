@@ -51,6 +51,7 @@
 #include "jhl_flushfaces.h"
 #include "jhl_softwarelook.h"
 #include "jhl_setup.h"
+#include "jhl_hitch.h"
 #include "weapon_effects.h"
 
 extern bool g_ResetMousePosition;
@@ -167,6 +168,9 @@ int DLLEXPORT HUD_VidInit()
 {
 	g_Client.VidInit();
 
+	// johnhalflife (jhl_debug_hitch): a map loading isn't a hitch.
+	JhlHitch_Skip();
+
 	// johnhalflife: a new map frees the engine's beams.
 	JhlRings_Reset();
 	JhlTracers_Reset();
@@ -184,6 +188,29 @@ int DLLEXPORT HUD_VidInit()
 	return 1;
 }
 
+// johnhalflife (jhl_debug_hitch): frames longer than this many milliseconds are reported (jhl_hitch.h).
+static cvar_t* g_JhlDebugHitch;
+
+static void JhlHitch_ClientFrame()
+{
+	const float threshold = g_JhlDebugHitch ? g_JhlDebugHitch->value : 0;
+
+	if (threshold <= 0)
+	{
+		JhlHitch_EndFrame("cl", 0, "");
+		return;
+	}
+
+	std::string where = gEngfuncs.pfnGetLevelName() ? gEngfuncs.pfnGetLevelName() : "";
+
+	if (cl_entity_t* player = gEngfuncs.GetLocalPlayer(); player)
+	{
+		where += fmt::format(" at ({:.0f} {:.0f} {:.0f})", player->origin.x, player->origin.y, player->origin.z);
+	}
+
+	JhlHitch_EndFrame("cl", threshold, where.c_str());
+}
+
 /**
  *	@brief Called when the game initializes and whenever the vid_mode is changed so the HUD can reinitialize itself.
  *	@details The original documentation for this and HUD_VidInit() were swapped.
@@ -193,6 +220,7 @@ void DLLEXPORT HUD_Init()
 	g_Client.HudInit();
 	InitInput();
 	JhlSetup_Init();
+	g_JhlDebugHitch = gEngfuncs.pfnRegisterVariable("jhl_debug_hitch", "0", 0);
 	gHUD.Init();
 	Scheme_Init();
 }
@@ -243,6 +271,10 @@ void DLLEXPORT HUD_Reset()
  */
 void DLLEXPORT HUD_Frame(double time)
 {
+	// johnhalflife (jhl_debug_hitch): a frame is from one of these to the next.
+	JhlHitch_ClientFrame();
+	JhlHitchScope hitchScope{"HUD_Frame"};
+
 	GetClientVoiceMgr()->Frame(time);
 
 	g_Client.RunFrame();
@@ -297,40 +329,40 @@ extern "C" void DLLEXPORT F(void* pv)
 			Initialize,
 			HUD_Init,
 			HUD_VidInit,
-			HUD_Redraw,
-			HUD_UpdateClientData,
+			JHL_TIMED(HUD_Redraw),
+			JHL_TIMED(HUD_UpdateClientData),
 			HUD_Reset,
-			HUD_PlayerMove,
+			JHL_TIMED(HUD_PlayerMove),
 			HUD_PlayerMoveInit,
-			HUD_PlayerMoveTexture,
+			JHL_TIMED(HUD_PlayerMoveTexture),
 			IN_ActivateMouse,
 			IN_DeactivateMouse,
 			IN_MouseEvent,
 			IN_ClearStates,
 			IN_Accumulate,
-			CL_CreateMove,
+			JHL_TIMED(CL_CreateMove),
 			CL_IsThirdPerson,
 			CL_CameraOffset,
 			KB_Find,
-			CAM_Think,
-			V_CalcRefdef,
-			HUD_AddEntity,
-			HUD_CreateEntities,
-			HUD_DrawNormalTriangles,
-			HUD_DrawTransparentTriangles,
-			HUD_StudioEvent,
-			HUD_PostRunCmd,
+			JHL_TIMED(CAM_Think),
+			JHL_TIMED(V_CalcRefdef),
+			JHL_TIMED(HUD_AddEntity),
+			JHL_TIMED(HUD_CreateEntities),
+			JHL_TIMED(HUD_DrawNormalTriangles),
+			JHL_TIMED(HUD_DrawTransparentTriangles),
+			JHL_TIMED(HUD_StudioEvent),
+			JHL_TIMED(HUD_PostRunCmd),
 			HUD_Shutdown,
-			HUD_TxferLocalOverrides,
-			HUD_ProcessPlayerState,
-			HUD_TxferPredictionData,
+			JHL_TIMED(HUD_TxferLocalOverrides),
+			JHL_TIMED(HUD_ProcessPlayerState),
+			JHL_TIMED(HUD_TxferPredictionData),
 			Demo_ReadBuffer,
 			HUD_ConnectionlessPacket,
 			HUD_GetHullBounds,
 			HUD_Frame,
-			HUD_Key_Event,
-			HUD_TempEntUpdate,
-			HUD_GetUserEntity,
+			JHL_TIMED(HUD_Key_Event),
+			JHL_TIMED(HUD_TempEntUpdate),
+			JHL_TIMED(HUD_GetUserEntity),
 			HUD_VoiceStatus,
 			HUD_DirectorMessage,
 			HUD_GetStudioModelInterface,
