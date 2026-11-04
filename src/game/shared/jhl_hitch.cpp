@@ -13,6 +13,7 @@
  *
  ****/
 
+#include <cmath>
 #include <fstream>
 #include <string>
 #include <thread>
@@ -50,7 +51,7 @@ constexpr double SkipSeconds = 2;
 // Longer than this is a pause (the game paused with the console or menu open stops the server's frames), not a hitch.
 constexpr double PauseMs = 5000;
 // A server "frame" that ran more of the player's moves than this is the engine not having started frames (paused).
-constexpr int MostMoves = 4;
+constexpr int MostMoves = 20;
 
 std::unordered_map<const char*, Part> g_Parts;		  // By name (string literals, so by address).
 std::unordered_map<std::string, Part> g_DetailParts; // By name and detail.
@@ -62,6 +63,7 @@ int g_Moves = 0;
 Clock::time_point g_LastCallEnd;
 const char* g_LastCallName = "";
 double g_GapMs = 0;
+Clock::time_point g_GapStart;
 const char* g_GapAfter = "";
 const char* g_GapBefore = "";
 Clock::time_point g_FrameStart;
@@ -89,6 +91,7 @@ void NoteGap(Clock::time_point now, const char* before)
 	if (const double gap = Ms(now - g_LastCallEnd); gap > g_GapMs)
 	{
 		g_GapMs = gap;
+		g_GapStart = g_LastCallEnd;
 		g_GapAfter = g_LastCallName;
 		g_GapBefore = before;
 	}
@@ -99,7 +102,19 @@ void Report(const char* side, double frameMs, const std::string& where)
 	std::string text = fmt::format("[jhl_hitch {}] {}: frame {:.1f} ms; {} code {:.1f} ms, the engine and the rest {:.1f} ms\n",
 		side, where, frameMs, side[0] == 'c' ? "client" : "server", g_TopLevelMs, std::max(0.0, frameMs - g_TopLevelMs));
 
-	text += fmt::format("  longest stretch in the engine: {:.1f} ms, after {}, before {}\n", g_GapMs, g_GapAfter, g_GapBefore);
+	// Clock times (ms, the same clock in both libraries) so the client's and the server's reports can be lined up.
+	const auto clockMs = [](Clock::time_point time)
+	{
+		return std::fmod(std::chrono::duration<double, std::milli>(time.time_since_epoch()).count(), 1000000.0);
+	};
+
+	text += fmt::format("  longest stretch in the engine: {:.1f} ms, after {}, before {} (clock {:.1f} to {:.1f}; frame from {:.1f})\n",
+		g_GapMs, g_GapAfter, g_GapBefore, clockMs(g_GapStart), clockMs(g_GapStart) + g_GapMs, clockMs(g_FrameStart));
+
+	if (side[0] == 's')
+	{
+		text += fmt::format("  the player's moves run this frame: {}{}\n", g_Moves, g_Moves > 1 ? " (more than one: the engine may have run no frames meanwhile, e.g. paused)" : "");
+	}
 
 	std::vector<std::pair<const char*, Part>> parts{g_Parts.begin(), g_Parts.end()};
 	std::sort(parts.begin(), parts.end(), [](const auto& a, const auto& b)
