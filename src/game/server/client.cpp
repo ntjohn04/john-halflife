@@ -1221,6 +1221,9 @@ void PlayerPreThink(edict_t* pEntity)
 {
 	CBasePlayer* pPlayer = ToBasePlayer(pEntity);
 
+	// johnhalflife (jhl_debug_hitch).
+	JhlHitch_CountMove();
+
 	if (pPlayer)
 		pPlayer->PreThink();
 }

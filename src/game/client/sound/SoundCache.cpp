@@ -13,8 +13,10 @@
  *
  ****/
 
+#include <algorithm>
 #include <numbers>
 #include <optional>
+#include <thread>
 
 #include <AL/alext.h>
 
@@ -245,6 +247,9 @@ constexpr int ConverterHalf = 32;
 constexpr int ConverterPhases = 512;
 constexpr double ConverterCutoff = 10900;
 constexpr double ConverterBeta = 5.65; // About 60 dB down past the cut off.
+// Sounds this long (a second at the device's rate) or longer are converted on several threads.
+constexpr std::size_t ParallelConvertFrames = 48000;
+constexpr std::size_t MaxConvertThreads = 8;
 
 static double BesselI0(double x)
 {
@@ -333,48 +338,84 @@ std::vector<float> SoundCache::ToDeviceRate(const std::vector<float>& samples, s
 
 	std::vector<float> out(outFrames * channels);
 
-	for (std::size_t i = 0; i < outFrames; ++i)
+	const auto convert = [&](std::size_t begin, std::size_t end)
 	{
-		const double position = i * step;
-		auto base = static_cast<std::ptrdiff_t>(position);
-		int phase = static_cast<int>((position - static_cast<double>(base)) * ConverterPhases + 0.5);
-
-		if (phase == ConverterPhases)
+		for (std::size_t i = begin; i < end; ++i)
 		{
-			phase = 0;
-			++base;
-		}
+			const double position = i * step;
+			auto base = static_cast<std::ptrdiff_t>(position);
+			int phase = static_cast<int>((position - static_cast<double>(base)) * ConverterPhases + 0.5);
 
-		const float* kernel = &table[static_cast<std::size_t>(phase) * taps];
-		const std::ptrdiff_t first = base - ConverterHalf + 1;
-		const bool inside = first >= 0 && first + taps <= static_cast<std::ptrdiff_t>(frames) && (!looping || first + taps <= loopEnd);
-
-		for (std::size_t c = 0; c < channels; ++c)
-		{
-			float sum = 0;
-
-			if (inside)
+			if (phase == ConverterPhases)
 			{
-				const float* source = &samples[static_cast<std::size_t>(first) * channels + c];
-
-				for (int k = 0; k < taps; ++k)
-				{
-					sum += source[static_cast<std::size_t>(k) * channels] * kernel[k];
-				}
+				phase = 0;
+				++base;
 			}
-			else
+
+			const float* kernel = &table[static_cast<std::size_t>(phase) * taps];
+			const std::ptrdiff_t first = base - ConverterHalf + 1;
+			const bool inside = first >= 0 && first + taps <= static_cast<std::ptrdiff_t>(frames) && (!looping || first + taps <= loopEnd);
+
+			for (std::size_t c = 0; c < channels; ++c)
 			{
-				for (int k = 0; k < taps; ++k)
+				float sum = 0;
+
+				if (inside)
 				{
-					if (const auto index = frameAt(first + k); index >= 0)
+					const float* source = &samples[static_cast<std::size_t>(first) * channels + c];
+
+					for (int k = 0; k < taps; ++k)
 					{
-						sum += samples[static_cast<std::size_t>(index) * channels + c] * kernel[k];
+						sum += source[static_cast<std::size_t>(k) * channels] * kernel[k];
 					}
 				}
-			}
+				else
+				{
+					for (int k = 0; k < taps; ++k)
+					{
+						if (const auto index = frameAt(first + k); index >= 0)
+						{
+							sum += samples[static_cast<std::size_t>(index) * channels + c] * kernel[k];
+						}
+					}
+				}
 
-			out[i * channels + c] = sum;
+				out[i * channels + c] = sum;
+			}
 		}
+	};
+
+	// johnhalflife: a long sound (a scientist's speech: 29 s, some 90 million multiplies) took a frame of 60 ms or more
+	// the first time it played. It's shared out among the processor's threads, each converting its own stretch, so the
+	// same samples come out in a fraction of the time.
+	const std::size_t workers = outFrames >= ParallelConvertFrames
+									? std::clamp<std::size_t>(std::thread::hardware_concurrency(), 1, MaxConvertThreads)
+									: 1;
+
+	if (workers <= 1)
+	{
+		convert(0, outFrames);
+		return out;
+	}
+
+	const std::size_t stretch = (outFrames + workers - 1) / workers;
+	std::vector<std::thread> threads;
+
+	for (std::size_t w = 1; w < workers; ++w)
+	{
+		const std::size_t begin = w * stretch;
+
+		if (begin < outFrames)
+		{
+			threads.emplace_back(convert, begin, std::min(begin + stretch, outFrames));
+		}
+	}
+
+	convert(0, std::min(stretch, outFrames));
+
+	for (auto& thread : threads)
+	{
+		thread.join();
 	}
 
 	return out;
