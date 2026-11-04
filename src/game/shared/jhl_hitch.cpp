@@ -73,7 +73,7 @@ double Ms(Clock::duration duration)
 	return std::chrono::duration<double, std::milli>(duration).count();
 }
 
-void Report(const char* side, double frameMs, const char* where)
+void Report(const char* side, double frameMs, const std::string& where)
 {
 	std::string text = fmt::format("[jhl_hitch {}] {}: frame {:.1f} ms; {} code {:.1f} ms, the engine and the rest {:.1f} ms\n",
 		side, where, frameMs, side[0] == 'c' ? "client" : "server", g_TopLevelMs, std::max(0.0, frameMs - g_TopLevelMs));
@@ -189,7 +189,7 @@ void JhlHitchScope::End()
 	}
 }
 
-void JhlHitch_EndFrame(const char* side, float thresholdMs, const char* where)
+void JhlHitch_EndFrame(const char* side, float thresholdMs, std::string (*where)())
 {
 	const auto now = Clock::now();
 
@@ -215,7 +215,7 @@ void JhlHitch_EndFrame(const char* side, float thresholdMs, const char* where)
 
 		if (frameMs > thresholdMs && frameMs < PauseMs)
 		{
-			Report(side, frameMs, where);
+			Report(side, frameMs, where());
 		}
 	}
 
