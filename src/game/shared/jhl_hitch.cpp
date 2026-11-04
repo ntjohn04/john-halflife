@@ -69,6 +69,11 @@ Clock::time_point g_SkipUntil;
 bool g_HaveFrame = false;
 std::thread::id g_MainThread;
 
+double Ms(Clock::duration duration)
+{
+	return std::chrono::duration<double, std::milli>(duration).count();
+}
+
 void Clear()
 {
 	g_Parts.clear();
@@ -87,11 +92,6 @@ void NoteGap(Clock::time_point now, const char* before)
 		g_GapAfter = g_LastCallName;
 		g_GapBefore = before;
 	}
-}
-
-double Ms(Clock::duration duration)
-{
-	return std::chrono::duration<double, std::milli>(duration).count();
 }
 
 void Report(const char* side, double frameMs, const std::string& where)
