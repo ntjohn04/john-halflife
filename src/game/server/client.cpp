@@ -1262,20 +1262,17 @@ static void JhlHitch_ServerFrame()
 		threshold = CVAR_GET_POINTER("jhl_debug_hitch");
 	}
 
-	if (!threshold || threshold->value <= 0)
-	{
-		JhlHitch_EndFrame("sv", 0, "");
-		return;
-	}
+	JhlHitch_EndFrame("sv", threshold ? threshold->value : 0, []
+		{
+			std::string where = STRING(gpGlobals->mapname);
 
-	std::string where = STRING(gpGlobals->mapname);
+			if (CBasePlayer* player = UTIL_GetLocalPlayer(); player)
+			{
+				where += fmt::format(" at ({:.0f} {:.0f} {:.0f})", player->pev->origin.x, player->pev->origin.y, player->pev->origin.z);
+			}
 
-	if (CBasePlayer* player = UTIL_GetLocalPlayer(); player)
-	{
-		where += fmt::format(" at ({:.0f} {:.0f} {:.0f})", player->pev->origin.x, player->pev->origin.y, player->pev->origin.z);
-	}
-
-	JhlHitch_EndFrame("sv", threshold->value, where.c_str());
+			return where;
+		});
 }
 
 void StartFrame()

@@ -52,6 +52,7 @@
 #include "jhl_softwarelook.h"
 #include "jhl_setup.h"
 #include "jhl_hitch.h"
+#include "view.h"
 #include "weapon_effects.h"
 
 extern bool g_ResetMousePosition;
@@ -193,22 +194,12 @@ static cvar_t* g_JhlDebugHitch;
 
 static void JhlHitch_ClientFrame()
 {
-	const float threshold = g_JhlDebugHitch ? g_JhlDebugHitch->value : 0;
-
-	if (threshold <= 0)
-	{
-		JhlHitch_EndFrame("cl", 0, "");
-		return;
-	}
-
-	std::string where = gEngfuncs.pfnGetLevelName() ? gEngfuncs.pfnGetLevelName() : "";
-
-	if (cl_entity_t* player = gEngfuncs.GetLocalPlayer(); player)
-	{
-		where += fmt::format(" at ({:.0f} {:.0f} {:.0f})", player->origin.x, player->origin.y, player->origin.z);
-	}
-
-	JhlHitch_EndFrame("cl", threshold, where.c_str());
+	// Where the view last was: the local player's entity isn't there yet while a map or save loads.
+	JhlHitch_EndFrame("cl", g_JhlDebugHitch ? g_JhlDebugHitch->value : 0, []
+		{
+			const char* level = gEngfuncs.pfnGetLevelName();
+			return fmt::format("{} at ({:.0f} {:.0f} {:.0f})", level ? level : "", v_origin.x, v_origin.y, v_origin.z);
+		});
 }
 
 /**

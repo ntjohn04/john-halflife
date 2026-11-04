@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <string>
 
 // johnhalflife (jhl_debug_hitch, a debugging aid): what makes a frame slow. Each library times the calls the engine
 // makes into it and the parts of them that might be slow (JhlHitchScope, JHL_TIMED); a frame longer than
@@ -64,9 +65,10 @@ private:
 
 /**
  *	@brief Ends a frame: if it took longer than @p thresholdMs (0: off), what it was spent on is printed and logged,
- *	tagged @p side ("cl", "sv") and @p where (map and position). Called as each frame starts.
+ *	tagged @p side ("cl", "sv") and what @p where gives (map and position; asked only then, the frame being one that
+ *	was played). Called as each frame starts.
  */
-void JhlHitch_EndFrame(const char* side, float thresholdMs, const char* where);
+void JhlHitch_EndFrame(const char* side, float thresholdMs, std::string (*where)());
 
 /**
  *	@brief Frames for the next 2 seconds aren't reported (a map loading).
