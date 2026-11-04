@@ -49,6 +49,8 @@ constexpr std::size_t SlowCallsShown = 12;
 constexpr double SkipSeconds = 2;
 // Longer than this is a pause (the game paused with the console or menu open stops the server's frames), not a hitch.
 constexpr double PauseMs = 5000;
+// A server "frame" that ran more of the player's moves than this is the engine not having started frames (paused).
+constexpr int MostMoves = 4;
 
 std::unordered_map<const char*, Part> g_Parts;		  // By name (string literals, so by address).
 std::unordered_map<std::string, Part> g_DetailParts; // By name and detail.
@@ -56,6 +58,12 @@ std::vector<SlowCall> g_SlowCalls;
 double g_TopLevelMs = 0;
 int g_Depth = 0;
 int g_Moves = 0;
+// The longest stretch between two of this library's calls (the engine's own work), and the calls either side.
+Clock::time_point g_LastCallEnd;
+const char* g_LastCallName = "";
+double g_GapMs = 0;
+const char* g_GapAfter = "";
+const char* g_GapBefore = "";
 Clock::time_point g_FrameStart;
 Clock::time_point g_SkipUntil;
 bool g_HaveFrame = false;
@@ -68,6 +76,17 @@ void Clear()
 	g_SlowCalls.clear();
 	g_TopLevelMs = 0;
 	g_Moves = 0;
+	g_GapMs = 0;
+}
+
+void NoteGap(Clock::time_point now, const char* before)
+{
+	if (const double gap = Ms(now - g_LastCallEnd); gap > g_GapMs)
+	{
+		g_GapMs = gap;
+		g_GapAfter = g_LastCallName;
+		g_GapBefore = before;
+	}
 }
 
 double Ms(Clock::duration duration)
@@ -79,6 +98,8 @@ void Report(const char* side, double frameMs, const std::string& where)
 {
 	std::string text = fmt::format("[jhl_hitch {}] {}: frame {:.1f} ms; {} code {:.1f} ms, the engine and the rest {:.1f} ms\n",
 		side, where, frameMs, side[0] == 'c' ? "client" : "server", g_TopLevelMs, std::max(0.0, frameMs - g_TopLevelMs));
+
+	text += fmt::format("  longest stretch in the engine: {:.1f} ms, after {}, before {}\n", g_GapMs, g_GapAfter, g_GapBefore);
 
 	std::vector<std::pair<const char*, Part>> parts{g_Parts.begin(), g_Parts.end()};
 	std::sort(parts.begin(), parts.end(), [](const auto& a, const auto& b)
@@ -152,18 +173,27 @@ void JhlHitchScope::Begin(const char* name, const char* detail)
 	m_Name = name;
 	m_Detail = detail;
 	m_Start = Clock::now();
+
+	if (g_Depth == 0)
+	{
+		NoteGap(m_Start, name);
+	}
+
 	++g_Depth;
 }
 
 void JhlHitchScope::End()
 {
-	const double ms = Ms(Clock::now() - m_Start);
+	const auto now = Clock::now();
+	const double ms = Ms(now - m_Start);
 
 	--g_Depth;
 
 	if (g_Depth == 0)
 	{
 		g_TopLevelMs += ms;
+		g_LastCallEnd = now;
+		g_LastCallName = m_Name;
 	}
 
 	Part& part = g_Parts[m_Name];
@@ -215,7 +245,9 @@ void JhlHitch_EndFrame(const char* side, float thresholdMs, std::string (*where)
 	{
 		const double frameMs = Ms(now - g_FrameStart);
 
-		if (frameMs > thresholdMs && frameMs < PauseMs && g_Moves <= 1)
+		NoteGap(now, "the next frame");
+
+		if (frameMs > thresholdMs && frameMs < PauseMs && g_Moves <= MostMoves)
 		{
 			Report(side, frameMs, where());
 		}
@@ -224,6 +256,8 @@ void JhlHitch_EndFrame(const char* side, float thresholdMs, std::string (*where)
 	g_HaveFrame = true;
 	g_FrameStart = now;
 	Clear();
+	g_LastCallEnd = now;
+	g_LastCallName = side[0] == 'c' ? "the frame's start (HUD_Frame)" : "the frame's start (StartFrame)";
 }
 
 void JhlHitch_CountMove()

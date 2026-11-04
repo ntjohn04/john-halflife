@@ -77,7 +77,7 @@ void JhlHitch_Skip();
 
 /**
  *	@brief The server ran a player's move: a server "frame" with several isn't a hitch, the engine not having started
- *	frames meanwhile (it runs the player's moves, not frames, while the game is paused, e.g. by the console).
+ *	frames meanwhile (it runs the player's moves, not frames, while the game is paused, e.g. by the console); a few are let through.
  */
 void JhlHitch_CountMove();
 
