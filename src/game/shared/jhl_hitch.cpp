@@ -55,6 +55,7 @@ std::unordered_map<std::string, Part> g_DetailParts; // By name and detail.
 std::vector<SlowCall> g_SlowCalls;
 double g_TopLevelMs = 0;
 int g_Depth = 0;
+int g_Moves = 0;
 Clock::time_point g_FrameStart;
 Clock::time_point g_SkipUntil;
 bool g_HaveFrame = false;
@@ -66,6 +67,7 @@ void Clear()
 	g_DetailParts.clear();
 	g_SlowCalls.clear();
 	g_TopLevelMs = 0;
+	g_Moves = 0;
 }
 
 double Ms(Clock::duration duration)
@@ -213,7 +215,7 @@ void JhlHitch_EndFrame(const char* side, float thresholdMs, std::string (*where)
 	{
 		const double frameMs = Ms(now - g_FrameStart);
 
-		if (frameMs > thresholdMs && frameMs < PauseMs)
+		if (frameMs > thresholdMs && frameMs < PauseMs && g_Moves <= 1)
 		{
 			Report(side, frameMs, where());
 		}
@@ -222,6 +224,11 @@ void JhlHitch_EndFrame(const char* side, float thresholdMs, std::string (*where)
 	g_HaveFrame = true;
 	g_FrameStart = now;
 	Clear();
+}
+
+void JhlHitch_CountMove()
+{
+	++g_Moves;
 }
 
 void JhlHitch_Skip()
