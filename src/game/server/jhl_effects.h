@@ -19,12 +19,28 @@
 #include "jhl_framerate.h"
 
 /**
+ *	@brief One of the client's cvars, found once (@p cache) and kept: the engine finds a cvar by name by going down the
+ *	list of them all, and some of these are asked for very often (ShouldCollide, for every entity near every move an
+ *	NPC tries: a scientist looking for cover asked 321,000 times in one think, a frame of 150 ms).
+ */
+inline const cvar_t* UTIL_JhlClientCvar(const char* name, const cvar_t*& cache)
+{
+	if (!cache)
+	{
+		cache = g_engfuncs.pfnCVarGetPointer(name);
+	}
+
+	return cache;
+}
+
+/**
  *	@brief Whether jhl_physics_fpsfix is on (see JhlReferenceFrameRate): the client's setting, read as
  *	jhl_fx_particlesystem is.
  */
 inline bool UTIL_JhlFpsFix()
 {
-	const cvar_t* cvar = g_engfuncs.pfnCVarGetPointer("jhl_physics_fpsfix");
+	static const cvar_t* cache = nullptr;
+	const cvar_t* cvar = UTIL_JhlClientCvar("jhl_physics_fpsfix", cache);
 	return !cvar || cvar->value != 0;
 }
 
@@ -35,7 +51,8 @@ inline bool UTIL_JhlFpsFix()
  */
 inline bool UTIL_JhlParticleSystem()
 {
-	const cvar_t* cvar = g_engfuncs.pfnCVarGetPointer("jhl_fx_particlesystem");
+	static const cvar_t* cache = nullptr;
+	const cvar_t* cvar = UTIL_JhlClientCvar("jhl_fx_particlesystem", cache);
 	return !cvar || cvar->value != 0;
 }
 
@@ -143,7 +160,8 @@ inline void UTIL_JhlDisplacerSpecks(const Vector& position)
  */
 inline bool UTIL_JhlTracers()
 {
-	const cvar_t* cvar = g_engfuncs.pfnCVarGetPointer("jhl_fx_tracers");
+	static const cvar_t* cache = nullptr;
+	const cvar_t* cvar = UTIL_JhlClientCvar("jhl_fx_tracers", cache);
 	return UTIL_JhlParticleSystem() && (!cvar || cvar->value != 0);
 }
 

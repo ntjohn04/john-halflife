@@ -102,7 +102,7 @@ NEW_DLL_FUNCTIONS gNewDLLFunctions =
 	{
 		OnFreeEntPrivateData, // pfnOnFreeEntPrivateData
 		GameDLLShutdown,
-		JHL_TIMED(ShouldCollide), // pfnShouldCollide
+		ShouldCollide, // pfnShouldCollide
 };
 
 extern "C" {
