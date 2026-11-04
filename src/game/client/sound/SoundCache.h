@@ -77,6 +77,15 @@ public:
 
 	bool LoadSound(Sound& sound);
 
+	/**
+	 *	@brief johnhalflife: loads a sound now if its file is long (PreloadBytes or more), so its first play doesn't
+	 *	stall a frame converting it (a map's sounds, as the map loads).
+	 */
+	void PreloadIfLong(SoundIndex index);
+
+	// About 3 seconds of a 16-bit 11025 Hz sound; a long one took several milliseconds to convert.
+	static constexpr int PreloadBytes = 64 * 1024;
+
 	void ClearBuffers();
 
 	void Clear();

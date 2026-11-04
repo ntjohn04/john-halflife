@@ -20,6 +20,11 @@
 
 #include <AL/alext.h>
 
+#if defined(__SSE__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 1)
+#include <xmmintrin.h>
+#define JHL_SOUND_SSE 1
+#endif
+
 #include "cbase.h"
 #include "RiffChunkReader.h"
 #include "SoundCache.h"
@@ -210,6 +215,65 @@ bool SoundCache::LoadSound(Sound& sound)
 	return true;
 }
 
+// johnhalflife: work on a long sound shared out among the processor's threads, each doing its own stretch of the
+// frames it makes (the same samples come out): a scientist's 29 s speech took a frame of 60 ms or more the first time
+// it played. Sounds this long (a second at the device's rate) or longer are; shorter ones are quick on their own.
+constexpr std::size_t ParallelFrames = 48000;
+constexpr std::size_t MaxThreads = 8;
+
+template <typename Work>
+static void ParallelFor(std::size_t count, const Work& work)
+{
+	const std::size_t workers = count >= ParallelFrames
+									? std::clamp<std::size_t>(std::thread::hardware_concurrency(), 1, MaxThreads)
+									: 1;
+
+	if (workers <= 1)
+	{
+		work(0, count);
+		return;
+	}
+
+	const std::size_t stretch = (count + workers - 1) / workers;
+	std::vector<std::thread> threads;
+
+	for (std::size_t begin = stretch; begin < count; begin += stretch)
+	{
+		threads.emplace_back(work, begin, std::min(begin + stretch, count));
+	}
+
+	work(0, std::min(stretch, count));
+
+	for (auto& thread : threads)
+	{
+		thread.join();
+	}
+}
+
+void SoundCache::PreloadIfLong(SoundIndex index)
+{
+	Sound* sound = GetSound(index);
+
+	if (!sound || sound->Name.empty() || sound->Buffer.IsValid())
+	{
+		return;
+	}
+
+	Filename fileName = SoundDirectoryName;
+
+	if (sound->Name.front() != '/')
+	{
+		fileName += '/';
+	}
+
+	fileName.append(sound->Name.begin(), sound->Name.end());
+
+	if (g_pFileSystem->Size(fileName.c_str()) >= static_cast<unsigned int>(PreloadBytes))
+	{
+		LoadSound(*sound);
+	}
+}
+
 std::vector<float> SoundCache::Resample(const std::vector<float>& samples, std::size_t channels, double step, bool interpolate)
 {
 	const std::size_t frames = samples.size() / channels;
@@ -222,20 +286,23 @@ std::vector<float> SoundCache::Resample(const std::vector<float>& samples, std::
 	const std::size_t outFrames = std::max<std::size_t>(static_cast<std::size_t>(frames / step), 1);
 	std::vector<float> out(outFrames * channels);
 
-	for (std::size_t i = 0; i < outFrames; ++i)
-	{
-		const double position = i * step;
-		const std::size_t from = std::min(static_cast<std::size_t>(position), frames - 1);
-		const std::size_t next = std::min(from + 1, frames - 1);
-		const float fraction = interpolate ? static_cast<float>(position - static_cast<double>(from)) : 0.f;
-
-		for (std::size_t c = 0; c < channels; ++c)
+	ParallelFor(outFrames, [&](std::size_t begin, std::size_t end)
 		{
-			const float a = samples[from * channels + c];
-			const float b = samples[next * channels + c];
-			out[i * channels + c] = a + (b - a) * fraction;
-		}
-	}
+			for (std::size_t i = begin; i < end; ++i)
+			{
+				const double position = i * step;
+				const std::size_t from = std::min(static_cast<std::size_t>(position), frames - 1);
+				const std::size_t next = std::min(from + 1, frames - 1);
+				const float fraction = interpolate ? static_cast<float>(position - static_cast<double>(from)) : 0.f;
+
+				for (std::size_t c = 0; c < channels; ++c)
+				{
+					const float a = samples[from * channels + c];
+					const float b = samples[next * channels + c];
+					out[i * channels + c] = a + (b - a) * fraction;
+				}
+			}
+		});
 
 	return out;
 }
@@ -247,9 +314,6 @@ constexpr int ConverterHalf = 32;
 constexpr int ConverterPhases = 512;
 constexpr double ConverterCutoff = 10900;
 constexpr double ConverterBeta = 5.65; // About 60 dB down past the cut off.
-// Sounds this long (a second at the device's rate) or longer are converted on several threads.
-constexpr std::size_t ParallelConvertFrames = 48000;
-constexpr std::size_t MaxConvertThreads = 8;
 
 static double BesselI0(double x)
 {
@@ -360,6 +424,30 @@ std::vector<float> SoundCache::ToDeviceRate(const std::vector<float>& samples, s
 			{
 				float sum = 0;
 
+#ifdef JHL_SOUND_SSE
+				// A mono sound's taps 4 at a time (summed in another order: within a millionth).
+				if (inside && channels == 1)
+				{
+					const float* source = &samples[static_cast<std::size_t>(first)];
+					__m128 sum0 = _mm_setzero_ps();
+					__m128 sum1 = _mm_setzero_ps();
+					__m128 sum2 = _mm_setzero_ps();
+					__m128 sum3 = _mm_setzero_ps();
+
+					for (int k = 0; k < taps; k += 16)
+					{
+						sum0 = _mm_add_ps(sum0, _mm_mul_ps(_mm_loadu_ps(source + k), _mm_loadu_ps(kernel + k)));
+						sum1 = _mm_add_ps(sum1, _mm_mul_ps(_mm_loadu_ps(source + k + 4), _mm_loadu_ps(kernel + k + 4)));
+						sum2 = _mm_add_ps(sum2, _mm_mul_ps(_mm_loadu_ps(source + k + 8), _mm_loadu_ps(kernel + k + 8)));
+						sum3 = _mm_add_ps(sum3, _mm_mul_ps(_mm_loadu_ps(source + k + 12), _mm_loadu_ps(kernel + k + 12)));
+					}
+
+					alignas(16) float lanes[4];
+					_mm_store_ps(lanes, _mm_add_ps(_mm_add_ps(sum0, sum1), _mm_add_ps(sum2, sum3)));
+					sum = (lanes[0] + lanes[1]) + (lanes[2] + lanes[3]);
+				}
+				else
+#endif
 				if (inside)
 				{
 					const float* source = &samples[static_cast<std::size_t>(first) * channels + c];
@@ -385,38 +473,7 @@ std::vector<float> SoundCache::ToDeviceRate(const std::vector<float>& samples, s
 		}
 	};
 
-	// johnhalflife: a long sound (a scientist's speech: 29 s, some 90 million multiplies) took a frame of 60 ms or more
-	// the first time it played. It's shared out among the processor's threads, each converting its own stretch, so the
-	// same samples come out in a fraction of the time.
-	const std::size_t workers = outFrames >= ParallelConvertFrames
-									? std::clamp<std::size_t>(std::thread::hardware_concurrency(), 1, MaxConvertThreads)
-									: 1;
-
-	if (workers <= 1)
-	{
-		convert(0, outFrames);
-		return out;
-	}
-
-	const std::size_t stretch = (outFrames + workers - 1) / workers;
-	std::vector<std::thread> threads;
-
-	for (std::size_t w = 1; w < workers; ++w)
-	{
-		const std::size_t begin = w * stretch;
-
-		if (begin < outFrames)
-		{
-			threads.emplace_back(convert, begin, std::min(begin + stretch, outFrames));
-		}
-	}
-
-	convert(0, std::min(stretch, outFrames));
-
-	for (auto& thread : threads)
-	{
-		thread.join();
-	}
+	ParallelFor(outFrames, convert);
 
 	return out;
 }
