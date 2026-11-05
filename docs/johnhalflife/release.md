@@ -85,7 +85,11 @@ One zip for Windows and Linux, made by hand when there's one to make (no automat
    HalfLifeUnified-V1.0.0.zip` (from Windows, WSL's Linux staging is
    `\\wsl.localhost\Ubuntu-22.04\home\<user>\jhl-build-linux\install`). It writes
    `dist/johnhalflife-v<version>-<release type>.zip`.
-4. Version, changelog row and tag as for any version ([Versioning](README.md#versioning)); upload the zip to the
+4. Credits and licences: `config/licenses/` (installed as `johnhalflife/licenses/`) holds `CREDITS.txt` and the licence
+   of everything shipped: the Half-Life SDK's, OpenAL Soft's (LGPL: a library of its own, with where its source is),
+   and those of the libraries built into the game code (vcpkg.json's, libnyquist's codecs among them). A library
+   added, removed or updated means its licence there changes too.
+5. Version, changelog row and tag as for any version ([Versioning](README.md#versioning)); upload the zip to the
    GitHub release.
 
 Testing goes the same way, so what's played is what players get: build, then `package_release.py` with
