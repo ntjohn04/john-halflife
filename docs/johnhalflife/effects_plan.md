@@ -511,7 +511,7 @@ squad size; the Apache's and Osprey's crash rings, to 800 in 0.4 s, `white`/`rop
     laser 1.5, ±20%, a little sideways).
 * Chargers (`chargers.cpp`: `func_healthcharger`, `func_recharge`): while one gives, a soft light on its face toward
   the player (the engine's `TE_DLIGHT`, 60-70 units, a fifth of a second at a time, refreshed each tenth it gives):
-  health blue-green (48,164,144), the HEV's amber (204,136,56); sparks (`UTIL_Sparks`) as it runs dry.
+  health blue-green (48,164,144), the HEV's amber (204,136,56), green (72,192,56) for Opposing Force's own armour chargers (P.C.V., Ohms Power Inc.: a `pcv` or `civ` texture on the face, from `TRACE_TEXTURE`); sparks (`UTIL_Sparks`) as it runs dry.
 * Ichthyosaur (`ichthyosaur.cpp`): its bite's bubbles (vanilla's 16 in a 16-unit cube, 32 ahead, placed by an aim
   only set with its enemy in sight) at its mouth always, and drawn on the client (`TE_BUBBLES` on `gmsgTempEntity`:
   `JhlExplosion_ParseBiteBubbles`): 26 of the engine's bubbles, sized as its own, thrown out mostly ahead at 50-130,

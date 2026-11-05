@@ -129,7 +129,7 @@ The shells' explosions are the shared explosion code's (`CGrenade::Explode`), as
 
 | Part | Knob | Value | See |
 |---|---|---|---|
-| Charger light (`chargers.cpp`, `CBaseCharger::Use`) | `TE_DLIGHT` | 60-70 units, 0.2 s, refreshed every 0.1 s it gives; health (48,164,144), HEV (204,136,56) | Any charger: `map c1a1` on |
+| Charger light (`chargers.cpp`, `CBaseCharger::Use`) | `TE_DLIGHT` | 60-70 units, 0.2 s, refreshed every 0.1 s it gives; health (48,164,144), HEV (204,136,56), Opposing Force's P.C.V. and Ohms chargers (72,192,56), by the texture on the face | Any charger: `map c1a1` on; green: `map ofboot2` (johnhalflife_op4) |
 | Charger running dry | `UTIL_Sparks` | A spark burst as it empties | Drain one |
 | Shooter pieces' life (`effects.cpp`, `ShootThink`) | `JhlShooterGibLife` | At least 45 s, ±20% (models only) | `map c1a1f` (computers, glass, plates), `c2a4e`, `c1a1a` (cans) |
 | Shooter pieces kept | `JhlShooterGibsKept` | 64 at once; past that the oldest (by its `fuser4`, when thrown) fades | |
