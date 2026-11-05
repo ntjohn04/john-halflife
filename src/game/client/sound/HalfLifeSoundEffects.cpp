@@ -198,9 +198,14 @@ constexpr float VanillaReverbTrim[RoomEffectCount] = {
 	30, 0, 27,			// 26-28 weirdo (27: none; 28: its feedback, rounded as the engine's, had run away)
 };
 
+// 2-7, by band (2026-11-04: the tail split into 0.1-8 kHz bands, against vanilla's): an echo's first repeat here is the
+// sound itself, in vanilla it has gone once through the feedback (2-4: 2.5 dB louder here); and the engine's three-tap
+// lowpass, run at its 22050 Hz, takes far more highs off each time round than AL_ECHO_DAMPING can (5-7's short echoes
+// rang 3-6 dB loud at 0.5-3 kHz, tinny). Lowered, each band up to 3 kHz is within about 1 dB (6-7's bass and 7's
+// 1.5-3 kHz within 3).
 constexpr float VanillaEchoTrim[RoomEffectCount] = {
-	0, -15, 0, 0, 0,	// 0-4: room 1's faint 65 ms echo barely there in vanilla
-	0, 0, 0,			// 5-7 tunnel
+	0, -15, -3, -3, -3, // 0-4: room 1's faint 65 ms echo barely there in vanilla
+	-3, -3, -4,			// 5-7 tunnel
 	0, 0, 0,			// 8-10: no echo
 	0, 0, 0,			// 11-13: no echo
 	0, -3, -6,			// 14-16 water
