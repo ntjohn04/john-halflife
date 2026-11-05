@@ -13,6 +13,7 @@
  *
  ****/
 #include "cbase.h"
+#include "jhl_effects.h"
 
 #include "CRopeSample.h"
 #include "CRope.h"
@@ -78,12 +79,16 @@ void CRopeSegment::Touch(CBaseEntity* pOther)
 	// Electrified wires deal damage.
 	if (m_bCauseDamage)
 	{
-		// Like trigger_hurt we need to deal half a second's worth of damage per touch to make this frametime-independent.
-		if (m_LastDamageTime < gpGlobals->time)
+		// johnhalflife (jhl_physics_fpsfix): vanilla's 1 a touch, every frame, is 72 a second at 72 fps; dealt half a
+		// second's worth at a time, as trigger_hurt does (Half-Life Updated had it as at 30 fps, 30 a second). Off,
+		// vanilla's.
+		if (!UTIL_JhlFpsFix())
 		{
-			// 1 damage per tick is 30 damage per second at 30 FPS.
-			const float damagePerHalfSecond = 30.f / 2;
-			pOther->TakeDamage(this, this, damagePerHalfSecond, DMG_SHOCK);
+			pOther->TakeDamage(this, this, 1, DMG_SHOCK);
+		}
+		else if (m_LastDamageTime < gpGlobals->time)
+		{
+			pOther->TakeDamage(this, this, JhlReferenceFrameRate / 2, DMG_SHOCK);
 			m_LastDamageTime = gpGlobals->time + 0.5f;
 		}
 	}

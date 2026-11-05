@@ -220,7 +220,6 @@ public:
 	SCRIPTSTATE m_scriptState; //!< internal cinematic state
 	CCineMonster* m_pCine;
 
-	float m_flLastYawTime;
 
 	bool m_AllowItemDropping = true;
 
