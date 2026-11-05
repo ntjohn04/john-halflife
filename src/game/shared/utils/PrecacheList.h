@@ -51,6 +51,8 @@ public:
 
 	std::size_t GetCount() const { return m_Precaches.size(); }
 
+	unsigned int GetMaxEnginePrecaches() const { return m_MaxEnginePrecaches; }
+
 	const char* GetString(std::size_t index) const { return m_Precaches[index]; }
 
 	int IndexOf(const char* str) const;
