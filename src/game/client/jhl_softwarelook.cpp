@@ -384,7 +384,10 @@ void JhlSoftwareLook_EndModel()
 	gl.TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, saved.Mode);
 	gl.BindTexture(GL_TEXTURE_2D, saved.Texture);
 
-	if (GL_TRUE != saved.Enabled)
+	// On only if it was and still is: the engine turns the unit off itself when it has left it on (after a
+	// kRenderTransColor brush, c3a1b's goo) and then draws as if it's off; turned back on, the sprites drawn next were
+	// multiplied by its lightmap stage, twice as bright and opaque.
+	if (GL_TRUE != saved.Enabled || !gl.IsEnabled(GL_TEXTURE_2D))
 	{
 		gl.Disable(GL_TEXTURE_2D);
 	}
