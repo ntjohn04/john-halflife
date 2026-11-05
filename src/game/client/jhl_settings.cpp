@@ -13,7 +13,7 @@
  *
  ****/
 
-// Recommended settings for johnhalflife (see docs/johnhalflife/README.md#settings).
+// Recommended settings for johnhalflife (see docs/README.md#settings).
 // Vanilla settings are saved in config.cfg, so their defaults can't simply be changed without overriding what the
 // player chose. Instead the recommended values are applied once, the first time a version of them is seen.
 
@@ -283,7 +283,7 @@ bool JhlFpsFixEnabled()
 
 void JhlSettings_Initialize()
 {
-	// One switch for all of johnhalflife's particle system changes (see docs/johnhalflife/effects_plan.md).
+	// One switch for all of johnhalflife's particle system changes (see docs/effects.md).
 	g_ParticleSystem = gEngfuncs.pfnRegisterVariable("jhl_fx_particlesystem", "1", FCVAR_ARCHIVE);
 
 	// Half-Life's game code acting at any frame rate as it did at 72 fps (see jhl_framerate.h); the server reads it too.

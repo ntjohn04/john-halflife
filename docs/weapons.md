@@ -1,7 +1,7 @@
 # Weapons
 
 Reserved changes to the weapons, keeping Valve's weapon models. Settings are listed on the
-[front page](../../README.md#settings).
+[front page](../README.md#settings).
 
 ## Feel
 
@@ -150,7 +150,7 @@ On top of the stock decal, specks and ricochet:
 
 The material comes from Valve's table (`sound/materials.json`, all three games' `materials.txt`), which lists only
 364 of the 2,818 textures the maps use; the rest count as concrete, so in vanilla most metal walls ricochet like
-concrete. For impacts only, `config/mod/sound/jhl_impact_materials.json` gives 1,595 textures their own material: a
+concrete. For impacts only, `config/mod/sound/jhl_impact_materials.json` gives about 1,600 textures their own material: a
 reviewed classification of every texture the three games' maps use. Texture sets were grouped by name and look so
 a wall's variants behave alike; each set was decided from Valve's table, Half-Life: Source's surface types (Valve's own
 later judgement), MMod's table and the names, and every set where those disagree (about 830 textures) was looked at.

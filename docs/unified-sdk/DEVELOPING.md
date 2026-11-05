@@ -34,11 +34,11 @@ The source code for the mod SDK is in the repository that this file is included 
 
 Mod installations are available on the releases page of this repository.
 
-The source files for game assets are stored in the [Asset Source Files](docs/README.md#developer-resources) repository. This includes sources for all types of models, configuration files, scripts, fgds; anything that's not mod source code.
+The source files for game assets are stored in the [Asset Source Files](README.md#developer-resources) repository. This includes sources for all types of models, configuration files, scripts, fgds; anything that's not mod source code.
 
 See the README for more information on what exactly is stored there.
 
-The source code for tools written in C# are stored in the [C# Tools Source Code](docs/README.md#developer-resources) repository. These tools are used to automate some parts of development such as the copying of source files from the assets repository to the game installation, as well as the packaging of mods and installation of game content taken from the original games.
+The source code for tools written in C# are stored in the [C# Tools Source Code](README.md#developer-resources) repository. These tools are used to automate some parts of development such as the copying of source files from the assets repository to the game installation, as well as the packaging of mods and installation of game content taken from the original games.
 
 The tools are included with mod installations.
 
@@ -64,19 +64,19 @@ When creating a new mod, change the `game` value to change the display name for 
 
 Because there is no repository for the mod installation itself assets need to be copied from the assets repository to the game installation.
 
-The [AssetSynchronizer](docs/tools/asset-synchronizer.md) tool automates this. When you run it it will copy any files that are different and will then monitor the assets repository for changes to automatically mirror to the mod directory.
+The [AssetSynchronizer](tools/asset-synchronizer.md) tool automates this. When you run it it will copy any files that are different and will then monitor the assets repository for changes to automatically mirror to the mod directory.
 
 This tool uses a configuration file to control which files are watched and where they are copied.
 
-The [Packager](docs/tools/packager.md) tool is used to create the mod installation archive. This tool uses a configuration file to control which files are included and excluded and creates an archive containing the installation.
+The [Packager](tools/packager.md) tool is used to create the mod installation archive. This tool uses a configuration file to control which files are included and excluded and creates an archive containing the installation.
 
 Archive filenames include a UTC timestamp to uniquely identify them. On successful completion old archives are automatically removed.
 
-The [ContentInstaller](docs/tools/content-installer.md) tool is used to copy, convert and upgrade maps from Half-Life, Opposing Force and Blue Shift.
+The [ContentInstaller](tools/content-installer.md) tool is used to copy, convert and upgrade maps from Half-Life, Opposing Force and Blue Shift.
 
 Original maps can't be redistributed, and changes made to SDK code require changes to be made to these maps. This tool does that automatically.
 
-The [MapUpgrader](docs/tools/map-upgrader.md) tool is a standalone version of the installer's map upgrade functionality. It can be used to upgrade a map to the Unified SDK, provided that the map was made for the original version of Half-Life and not another mod or game.
+The [MapUpgrader](tools/map-upgrader.md) tool is a standalone version of the installer's map upgrade functionality. It can be used to upgrade a map to the Unified SDK, provided that the map was made for the original version of Half-Life and not another mod or game.
 
 Most modders won't need to use these tools, but they are there to streamline the development process as much as possible.
 

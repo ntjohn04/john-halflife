@@ -17,7 +17,7 @@
 
 /**
  *	@brief Registers jhl_fx_test, which plays effects where the player is aiming for designing particle effects
- *	(see docs/johnhalflife/effects_test.md).
+ *	(see docs/effects_test.md).
  */
 void FxTest_Initialize();
 

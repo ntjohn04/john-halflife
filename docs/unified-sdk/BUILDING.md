@@ -76,7 +76,7 @@ Start the CMake GUI; you will see a few options. Let's go over the ones we'll ne
 
 A typical setup should look like this:
 
-![CMake initial state](docs/images/cmake-setup1.png)
+![CMake initial state](images/cmake-setup1.png)
 
 If a problem occurs where CMake repeatedly fails to find third party dependencies, deleting the CMake cache and regenerating everything can help to solve problems related to cached data.
 
@@ -84,7 +84,7 @@ If a problem occurs where CMake repeatedly fails to find third party dependencie
 
 Now click the `Configure` button on the bottom left part of the screen. You will see this dialog:
 
-![Configure dialog](docs/images/cmake-setup2.png)
+![Configure dialog](images/cmake-setup2.png)
 
 Enter the following settings:
 * Generator: Visual Studio 16 2019 (or newer if you prefer)
@@ -93,7 +93,7 @@ Enter the following settings:
 
 Click the `Next` button. You will now see this dialog:
 
-![Toolchain dialog](docs/images/cmake-setup3.png)
+![Toolchain dialog](images/cmake-setup3.png)
 
 Browse to the source code directory, open the `cmake` directory and select the file `WindowsToolchain.cmake`.
 
@@ -103,7 +103,7 @@ Click the `Finish` button. CMake will now perform first-run setup to prepare for
 
 Now click the `Configure` button on the bottom left part of the screen. You will see this dialog:
 
-![Configure dialog](docs/images/cmake-setup2b.png)
+![Configure dialog](images/cmake-setup2b.png)
 
 Enter the following settings:
 * Generator: Unix makefiles
@@ -111,7 +111,7 @@ Enter the following settings:
 
 Click the `Next` button. You will now see this dialog:
 
-![Toolchain dialog](docs/images/cmake-setup3b.png)
+![Toolchain dialog](images/cmake-setup3b.png)
 
 Browse to the source code directory, open the `cmake` directory and select the file `LinuxToolchain.cmake`.
 
@@ -123,7 +123,7 @@ CMake will now perform its initial configuration. vcpkg will run as well and wil
 
 You should now see new variables marked red:
 
-![Configured](docs/images/cmake-setup4.png)
+![Configured](images/cmake-setup4.png)
 
 Modify the `CMAKE_INSTALL_PREFIX` variable to point to your mod directory, e.g. `C:/Program Files (x86)/Steam/steamapps/common/Half-Life/hlu`.
 
@@ -131,7 +131,7 @@ Substitute `hlu` with the name of your mod directory. This name should be short 
 
 If you want to launch a dedicated server through Visual Studio you will need to point the `HalfLife_HLDS_DIRECTORY` variable to the directory that contains `hlds.exe`/`hlds_linux`.
 
-To aid developers project info is displayed on-screen automatically if `HalfLife_RELEASE_TYPE` is set to `Pre-Alpha` or `Alpha`. Configure this variable as needed to suit your needs. This is used solely for in-game diagnostics messages and display and does not affect the source code in any way. See [Hud Project info](docs/features/hud-project-info.md) for more information.
+To aid developers project info is displayed on-screen automatically if `HalfLife_RELEASE_TYPE` is set to `Pre-Alpha` or `Alpha`. Configure this variable as needed to suit your needs. This is used solely for in-game diagnostics messages and display and does not affect the source code in any way. See [Hud Project info](features/hud-project-info.md) for more information.
 
 You can set up the game for debugging by using these optional variables to provide command line arguments to the game:
 * `HalfLife_ENABLE_CONSOLE`: If set, the console will be enabled on startup

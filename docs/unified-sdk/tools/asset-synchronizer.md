@@ -33,7 +33,7 @@ Options:
 
 The assets directory should point to your local copy of the [assets repository](../README.md#developer-resources).
 
-The mod directory should point to your local copy of the [mod installation](../../INSTALL.md).
+The mod directory should point to your local copy of the [mod installation](../INSTALL.md).
 
 The asset manifest should point to the asset manifest file contained in the assets repository.
 

@@ -101,7 +101,8 @@ The packager needs no Half-Life install: the Unified SDK's files it ships are li
 made once on a machine with the games: `package_release.py --make-list`, `restore_npc_speeds.py --make-table`; again
 if the Unified SDK's release changes).
 
-v0.12.0's zip: 89 MB (200 MB extracted, 971 files). Most of it is the game code, a copy in each of the four game
+v0.13.0's zip, Windows and Linux: 89 MB (200 MB extracted). v0.18.0's Windows-only test zip: 62 MB (121 MB extracted,
+1,050 files). Most of it is the game code, a copy in each of the four game
 folders, Windows' and Linux's; then the Unified SDK's models (50 MB).
 
 ## Linux build

@@ -1,8 +1,8 @@
-# Effects plan
+# Effects
 
-A map of the game's visual effects, used to work through them one category at a time. Each category gets the
-same treatment the bullet impacts did: look at what vanilla does, decide a reserved version, build it, then tune it
-in game.
+The game's visual effects, category by category (`jhl_fx_particlesystem`): what vanilla does and what John Half-Life
+does instead. Each was worked through the way the bullet impacts were: look at what vanilla does, decide a reserved
+version, build it, then tune it in game. The numbers are in the [tuning sheet](tuning.md).
 
 ## How effects reach the screen
 

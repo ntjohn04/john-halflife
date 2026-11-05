@@ -1,6 +1,6 @@
 /***
  *
- *	johnhalflife: the first start (docs/johnhalflife/release.md#first-start).
+ *	johnhalflife: the first start (docs/release.md#first-start).
  *
  ****/
 

@@ -1,7 +1,7 @@
 /***
  *
  *	johnhalflife: Valve's maps converted for the Unified SDK's game code, as its ContentInstaller does
- *	(docs/johnhalflife/release.md#first-start). Plain C++, no engine: a command line test builds it too.
+ *	(docs/release.md#first-start). Plain C++, no engine: a command line test builds it too.
  *
  ****/
 

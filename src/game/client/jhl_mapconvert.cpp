@@ -1,6 +1,6 @@
 /***
  *
- *	johnhalflife: Valve's maps converted for the Unified SDK's game code (docs/johnhalflife/release.md#first-start).
+ *	johnhalflife: Valve's maps converted for the Unified SDK's game code (docs/release.md#first-start).
  *
  *	The Unified SDK's ContentInstaller rewrites each map's entities with its map upgrades
  *	(HalfLife.UnifiedSdk-CSharp, MapUpgrader.Upgrades, version 1.0.0): old class names and keyvalues into the ones the

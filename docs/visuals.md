@@ -115,7 +115,7 @@ so gamma and filtering match). Water is what the engine treats as water: names s
   (render modes normal, texture and additive). Opaque entities partly water have their water drawn over the engine's;
   see-through ones partly water are left to the engine.
 
-For the display (the stretch to the desktop, anti-aliasing), see the [front page](../../README.md#recommended-launch-options-and-display).
+For the display (the stretch to the desktop, anti-aliasing), see the [front page](../README.md#recommended-launch-options-and-display).
 
 ## Known engine quirks, left as they are
 
