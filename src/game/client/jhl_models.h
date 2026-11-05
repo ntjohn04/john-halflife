@@ -15,40 +15,15 @@
 
 #pragma once
 
-#include <string>
-
 #include "hud.h"
 #include "event_api.h"
-#include "utils/filesystem_utils.h"
 
 /**
- *	@brief A sprite or model only the client's effects use, loaded by the client (CL_LoadModel) instead of precached by
- *	the server: the engine's 512 models a map are shared with the map's brush entities, and with johnhalflife's
- *	effects precached of4a4 came within 4 of them (op4ctf_crash went over). Asked for only in play, once the server's
- *	models are all in the client's list, so a client-loaded one never takes a slot of theirs. 0 if it can't be had
- *	(not installed, or the client's list full): the effect is left out.
+ *	@brief A sprite or model only johnhalflife's client effects use. The server precaches them last, only while the map
+ *	has room (W_Precache: the engine's 512 models a map are shared with its brush entities), and the client can't load
+ *	one the server didn't (CL_LoadModel gives -1). 0 where it isn't precached: the effect is left out.
  */
 inline int JhlEffectModel(const char* name)
 {
-	int index = gEngfuncs.pEventAPI->EV_FindModelIndex(name);
-
-	if (index == 0 && g_pFileSystem && g_pFileSystem->FileExists(name))
-	{
-		// It gives -1 when it can't (the engine's "No model -1!" from every effect handed it), said once a name.
-		if (!gEngfuncs.CL_LoadModel(name, &index) || index <= 0)
-		{
-			static std::string failed;
-
-			if (failed.find(name) == std::string::npos)
-			{
-				failed += name;
-				failed += ';';
-				gEngfuncs.Con_Printf("johnhalflife: couldn't load %s for an effect (index %d); left out\n", name, index);
-			}
-
-			index = 0;
-		}
-	}
-
-	return index;
+	return gEngfuncs.pEventAPI->EV_FindModelIndex(name);
 }

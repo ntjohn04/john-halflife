@@ -195,12 +195,14 @@ fix is tagged the same way.
 ## Model slots
 
 The engine has 512 model slots a map, and the map's brush entities (doors, walls, glass: `*1`, `*2`...) take theirs
-first: of4a4 has 330, and with every weapon of both games precached it used 496 (508 before johnhalflife's effects
-stopped taking slots; vanilla Opposing Force used about as many). Past 512 a model isn't precached, and its first use
-ends the map (`Host_Error: no precache`); the console now says when it happens, and `jhl_debug_precache [list]` counts
-them. So a sprite or model only the client's effects use is loaded by the client, with `JhlEffectModel`
-(`src/game/client/jhl_models.h`), not precached by the server: it costs no slot, and if the client's list is ever full
-the effect is left out.
+first: of4a4 has 330, and with every weapon of both games precached it used 508 of them with johnhalflife's effect
+sprites (vanilla Opposing Force used about as many). Past 512 a model isn't precached, and its first use ends the map
+(`Host_Error: no precache`); the console says when it happens, and `jhl_debug_precache [list]` counts them. The client
+can't load a model the server didn't precache (`CL_LoadModel` gives -1), so the sprites and models only
+johnhalflife's effects use are precached last in `W_Precache`, most-seen first, only while the map has room for its
+own models twice over; on the few giant maps (of4a4, ofboot2, of3a5, op4ctf_crash) some or all are left out and those
+effects draw their vanilla part only. The client asks for them with `JhlEffectModel` (`src/game/client/jhl_models.h`),
+0 where they aren't precached. Anything new precached on every map: check `jhl_debug_precache` on of4a4.
 
 ## Saves
 
