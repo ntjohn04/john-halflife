@@ -412,9 +412,10 @@ void W_Precache()
 	// The engine's 512 models a map are shared with its brush entities, and past them a model the map needs isn't
 	// precached and its first use ends the map: of4a4, with 330 brush entities, came within 4 with these, and
 	// op4ctf_crash went over. So, in order of how much each is seen, as many as leave room for the map's own models
-	// (its NPCs, their gibs, its breakables: about 32 on of4a4) twice over. An effect whose sprite isn't precached
-	// is left out, its vanilla part drawn (the client can't load a model the server didn't precache).
-	constexpr std::size_t RoomForTheMapsOwnModels = 64;
+	// (its NPCs, their gibs, its breakables, precached after this: at most about 21, of4a4's) half as much again. An
+	// effect whose sprite isn't precached is left out, its vanilla part drawn (the client can't load a model the server
+	// didn't precache). Only op4ctf_crash (none), of4a4 (5) and op4ctf_power (8) get fewer.
+	constexpr std::size_t RoomForTheMapsOwnModels = 32;
 	constexpr std::size_t EngineModels = 512;
 
 	const char* const effectModels[] = {
@@ -426,11 +427,23 @@ void W_Precache()
 		"sprites/glow_blu.spr",									   // A laser turret's flash (weapon_effects.cpp).
 		"sprites/dexplo.spr", "sprites/eexplo.spr", "sprites/fexplo.spr", "sprites/gexplo.spr", "sprites/hexplo.spr"};
 
+	std::size_t precached = 0;
+
 	for (const char* model : effectModels)
 	{
 		if (g_ModelPrecache->GetCount() + RoomForTheMapsOwnModels >= EngineModels)
 		{
-			g_GameLogger->debug("Map has too many models for johnhalflife's effect models; left out from {}", model);
+			// Said in the console, once a map: which effects draw only their vanilla part here.
+			std::string leftOut;
+
+			for (std::size_t i = precached; i < std::size(effectModels); ++i)
+			{
+				leftOut += (leftOut.empty() ? "" : ", ") + std::string{effectModels[i]};
+			}
+
+			g_GameLogger->info("This map's models nearly fill the engine's 512 ({} before its own): {} of johnhalflife's {} "
+							   "effect sprites left out, those effects drawn as vanilla's ({})",
+				g_ModelPrecache->GetCount(), std::size(effectModels) - precached, std::size(effectModels), leftOut);
 			break;
 		}
 
@@ -439,6 +452,8 @@ void W_Precache()
 		{
 			UTIL_PrecacheModel(model);
 		}
+
+		++precached;
 	}
 }
 
