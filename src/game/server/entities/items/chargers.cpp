@@ -13,6 +13,8 @@
  *
  ****/
 
+#include <cctype>
+
 #include "cbase.h"
 #include "jhl_effects.h"
 
@@ -71,6 +73,10 @@ protected:
 	const char* m_StartupSound = nullptr;
 	const char* m_DenySound = nullptr;
 	const char* m_DispensingSound = nullptr;
+
+	// johnhalflife: an armour charger's light is green for Opposing Force's own chargers (P.C.V., Ohms Power Inc.),
+	// told by the texture on its face; not saved, found again on the next use.
+	bool m_JhlGreen = false;
 };
 
 BEGIN_DATAMAP(CBaseCharger)
@@ -232,20 +238,38 @@ void CBaseCharger::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE u
 	}
 
 	// johnhalflife (jhl_fx_particlesystem): a soft light on its face while it gives (health blue-green, the HEV's
-	// amber), a little pulsing, kept on a tenth of a second at a time; sparks as it runs dry.
+	// amber, Opposing Force's own armour chargers green), a little pulsing, kept on a tenth of a second at a time; sparks as it runs dry.
 	if (UTIL_JhlParticleSystem())
 	{
 		const Vector center = (pev->absmin + pev->absmax) * 0.5f;
 		const Vector face = center + (player->EyePosition() - center).Normalize() * 8;
 		const bool health = ClassnameIs("func_healthcharger");
 
+		// Amber for the HEV's (Half-Life's, and Blue Shift's look in Opposing Force), green for the P.C.V.'s and Ohms'.
+		// Only a charger's own textures decide: the face the player sees might be a crate it's built into.
+		if (const char* texture = health ? nullptr : TRACE_TEXTURE(edict(), player->EyePosition(), center); texture)
+		{
+			std::string name{texture};
+			std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c)
+				{ return static_cast<char>(std::tolower(c)); });
+
+			if (name.find("pcv") != std::string::npos || name.find("civ") != std::string::npos)
+				m_JhlGreen = true;
+			else if (name.find("recharge") != std::string::npos)
+				m_JhlGreen = false;
+		}
+
+		const int red = health ? 48 : (m_JhlGreen ? 72 : 204);
+		const int green = health ? 164 : (m_JhlGreen ? 192 : 136);
+		const int blue = health ? 144 : (56);
+
 		MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, face);
 		WRITE_BYTE(TE_DLIGHT);
 		WRITE_COORD_VECTOR(face);
 		WRITE_BYTE(RANDOM_LONG(6, 7)); // Radius, tens.
-		WRITE_BYTE(health ? 48 : 204);
-		WRITE_BYTE(health ? 164 : 136);
-		WRITE_BYTE(health ? 144 : 56);
+		WRITE_BYTE(red);
+		WRITE_BYTE(green);
+		WRITE_BYTE(blue);
 		WRITE_BYTE(2); // Life, tenths.
 		WRITE_BYTE(0); // Decay, tens.
 		MESSAGE_END();
