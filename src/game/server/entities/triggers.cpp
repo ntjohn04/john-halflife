@@ -1401,8 +1401,9 @@ void CTriggerCamera::FollowTarget()
 	if (dy > 180)
 		dy = dy - 360;
 
-	pev->avelocity.x = dx * 40 * 0.01;
-	pev->avelocity.y = dy * 40 * 0.01;
+	// johnhalflife (jhl_physics_fpsfix): vanilla's frametime here, as at 72 fps (Half-Life Updated had 0.01: 100 fps).
+	pev->avelocity.x = dx * 40 * UTIL_JhlVanillaFrametime();
+	pev->avelocity.y = dy * 40 * UTIL_JhlVanillaFrametime();
 
 
 	if (!(FBitSet(pev->spawnflags, SF_CAMERA_PLAYER_TAKECONTROL)))

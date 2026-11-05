@@ -21,6 +21,7 @@
 #include <EASTL/fixed_string.h>
 
 #include "cbase.h"
+#include "jhl_effects.h"
 #include "nodes.h"
 #include "scripted.h"
 #include "squadmonster.h"
@@ -2262,16 +2263,7 @@ float CBaseMonster::ChangeYaw(int yawSpeed)
 	ideal = pev->ideal_yaw;
 	if (current != ideal)
 	{
-		float delta = gpGlobals->time - m_flLastYawTime;
-
-		m_flLastYawTime = gpGlobals->time;
-
-		if (delta > 0.25)
-		{
-			delta = 0.25;
-		}
-
-		speed = yawSpeed * delta * 2;
+		speed = yawSpeed * UTIL_JhlVanillaFrametime() * 10;
 		move = ideal - current;
 
 		if (ideal > current)

@@ -13,6 +13,7 @@
  *
  ****/
 #include "cbase.h"
+#include "jhl_effects.h"
 #include "flyingmonster.h"
 
 #define FLYING_AE_FLAP (8)
@@ -90,21 +91,7 @@ float CFlyingMonster::ChangeYaw(int speed)
 				target = -90;
 		}
 
-		if (m_flLastZYawTime == 0)
-		{
-			m_flLastZYawTime = gpGlobals->time - gpGlobals->frametime;
-		}
-
-		float delta = gpGlobals->time - m_flLastZYawTime;
-
-		m_flLastZYawTime = gpGlobals->time;
-
-		if (delta > 0.25)
-		{
-			delta = 0.25;
-		}
-
-		pev->angles.z = UTIL_Approach(target, pev->angles.z, 220.0 * delta);
+		pev->angles.z = UTIL_Approach(target, pev->angles.z, 220.0 * UTIL_JhlVanillaFrametime());
 	}
 	return CBaseMonster::ChangeYaw(speed);
 }

@@ -92,7 +92,6 @@ public:
 
 	float m_flNextAlert;
 
-	float m_flLastPitchTime;
 
 	static const char* pIdleSounds[];
 	static const char* pAlertSounds[];
@@ -769,21 +768,7 @@ float CIchthyosaur::ChangePitch(int speed)
 				target = -45;
 		}
 
-		if (m_flLastPitchTime == 0)
-		{
-			m_flLastPitchTime = gpGlobals->time - gpGlobals->frametime;
-		}
-
-		float delta = gpGlobals->time - m_flLastPitchTime;
-
-		m_flLastPitchTime = gpGlobals->time;
-
-		if (delta > 0.25)
-		{
-			delta = 0.25;
-		}
-
-		pev->angles.x = UTIL_Approach(target, pev->angles.x, 220.0 * delta);
+		pev->angles.x = UTIL_Approach(target, pev->angles.x, 220.0 * UTIL_JhlVanillaFrametime());
 	}
 	return 0;
 }
@@ -803,21 +788,7 @@ float CIchthyosaur::ChangeYaw(int speed)
 				target = -20;
 		}
 
-		if (m_flLastZYawTime == 0)
-		{
-			m_flLastZYawTime = gpGlobals->time - gpGlobals->frametime;
-		}
-
-		float delta = gpGlobals->time - m_flLastZYawTime;
-
-		m_flLastZYawTime = gpGlobals->time;
-
-		if (delta > 0.25)
-		{
-			delta = 0.25;
-		}
-
-		pev->angles.z = UTIL_Approach(target, pev->angles.z, 220.0 * delta);
+		pev->angles.z = UTIL_Approach(target, pev->angles.z, 220.0 * UTIL_JhlVanillaFrametime());
 	}
 	return CFlyingMonster::ChangeYaw(speed);
 }

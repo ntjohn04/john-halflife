@@ -52,6 +52,16 @@ inline bool UTIL_JhlFpsFix()
 }
 
 /**
+ *	@brief The frame time for vanilla's once-a-frame formulas (an NPC's turn, the stomp's speed-up): a 72 fps frame's
+ *	with jhl_physics_fpsfix, as vanilla played at 72 fps; else this frame's, as vanilla has it, following the frame rate.
+ *	Half-Life Updated had made them steady at other rates (NPC turns as at 50 fps, flying banks at 10, the stomp at 40).
+ */
+inline float UTIL_JhlVanillaFrametime()
+{
+	return UTIL_JhlFpsFix() ? 1.0f / JhlReferenceFrameRate : gpGlobals->frametime;
+}
+
+/**
  *	@brief Whether johnhalflife's particle system changes are on for effects the server sends (hit blood).
  *	It's the client's jhl_fx_particlesystem, which the server can read in single player since the engine's cvars are
  *	shared; a server without it (dedicated) always uses them.

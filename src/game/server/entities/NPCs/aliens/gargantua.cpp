@@ -69,7 +69,7 @@ public:
 	void Think() override;
 	static CStomp* StompCreate(const Vector& origin, const Vector& end, float speed);
 
-	float m_flLastThinkTime;
+	float m_flLastThinkTime; // Unused (Half-Life Updated's stomp timing): kept for saves.
 
 	// johnhalflife: how far it's gone since it last scorched the floor (not saved: it lasts a second or two).
 	float m_JhlSinceMark = 0;
@@ -115,15 +115,7 @@ void CStomp::Spawn()
 
 void CStomp::Think()
 {
-	if (m_flLastThinkTime == 0)
-	{
-		m_flLastThinkTime = gpGlobals->time - gpGlobals->frametime;
-	}
-
-	// Use 1/4th the delta time to match the original behavior more closely
-	const float deltaTime = (gpGlobals->time - m_flLastThinkTime) / 4;
-
-	m_flLastThinkTime = gpGlobals->time;
+	const float deltaTime = UTIL_JhlVanillaFrametime();
 
 	TraceResult tr;
 

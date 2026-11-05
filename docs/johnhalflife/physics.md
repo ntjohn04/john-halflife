@@ -24,6 +24,10 @@ The helpers live in `shared/jhl_framerate.h`:
 | trigger_camera drift (c2a3e, c5a1) | Velocity × 0.8 every frame | As at 72 fps | `CTriggerCamera::FollowTarget` |
 | Client gibs, debris and shells coming to rest | Only when they hit the floor slower than three frames of gravity, so at high fps they make extra tiny bounces (and bounce sounds) first | No slower than three 72 fps frames of gravity | `HUD_TempEntUpdate` |
 | Fire rate of the guns | A shot due partway through a frame goes with the frame and the time it waited is dropped: up to a frame lost each shot | The time it waited comes off the next shot (client and server, so prediction agrees) | `GetNextAttackDelay`, used by the automatic and repeating guns |
+| NPCs turning (every NPC), the ichthyosaur and fliers banking | A turn's step every think of yaw speed × frametime × 10 (banking 220 × frametime): turning slower the higher the fps. Half-Life Updated made it steady, but as at 50 fps (banking at 10) | As at 72 fps: grunts turn 0.7× as fast as Half-Life Updated's | `CBaseMonster::ChangeYaw`, `CFlyingMonster::ChangeYaw`, `CIchthyosaur` |
+| The gargantua's stomp speeding up | Its speed added to every think by frametime. Half-Life Updated: steady, as at 40 fps | As at 72 fps | `CStomp::Think` |
+| Electrified wires (Opposing Force) | 1 damage a touch, every frame: 72 a second at 72 fps. Half-Life Updated: 30 a second (30 fps) | 36 every half second (72 a second) | `CRopeSegment::Touch` |
+| trigger_camera turning | Error × 40 × frametime. Half-Life Updated: as at 100 fps | As at 72 fps | `CTriggerCamera::FollowTarget` |
 
 The engine itself is fine:
 * Current builds carry the leftover fraction of each millisecond into the player's input frames, so there's no
