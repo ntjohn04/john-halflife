@@ -244,6 +244,9 @@ install(FILES
 # johnhalflife's settings dialog and menu text (docs/johnhalflife/README.md#settings).
 install(DIRECTORY config/mod/ DESTINATION .)
 
+# Credits and the licences of everything shipped (the game folder only: the expansions' are the same game).
+install(DIRECTORY config/licenses/ DESTINATION licenses)
+
 # johnhalflife's hornet dart splats, added to the installed decals.wad (made from the player's own games when the
 # Unified SDK's assets were installed; see the script). Without Python they're left out and darts don't splat.
 find_package(Python3 COMPONENTS Interpreter)

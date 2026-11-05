@@ -1,0 +1,38 @@
+John Half-Life
+==============
+
+Half-Life, Opposing Force and Blue Shift as they played in 1998-2001, on a modern base: the original look, sound
+and feel, with long-standing bugs fixed and some optional effects. https://github.com/ntjohn04/john-halflife
+
+Made by ntjohn04. Free; not for sale (see Half-Life-SDK.txt).
+
+
+Built on
+--------
+
+* Half-Life (Valve), Half-Life: Opposing Force and Half-Life: Blue Shift (Gearbox Software). You need Half-Life on
+  Steam to play; Opposing Force's and Blue Shift's campaigns need those games too. None of their files are shipped
+  that your own games already have: the first start takes them from your install.
+* The Half-Life Unified SDK, by Sam Vanheer (Solokiller) and its contributors: https://github.com/twhl-community/halflife-unified-sdk
+* Half-Life Updated, Opposing Force Updated and Blue Shift Updated, by the TWHL community and their contributors:
+  https://github.com/twhl-community
+* The Half-Life SDK, by Valve, under its licence (Half-Life-SDK.txt).
+
+Xash3D FWGS's engine source was a reference for how the engine's sound effects work; none of its code is used.
+
+
+Libraries
+---------
+
+Each one's licence is in this folder.
+
+* OpenAL Soft 1.22.2 (sound), by Chris Robinson and contributors: GNU Library General Public License, version 2
+  (OpenAL-Soft.txt). It's its own library, cl_dlls/openal-hlu.dll (libopenal-hlu.so.1 on Linux), which you may
+  replace with your own build. Its source: https://github.com/kcat/openal-soft (tag 1.22.2). The only change is its
+  library's name, by the patch in this game's source, vcpkg_config/registry/ports/openal-soft.
+* fmt (fmt.txt), spdlog (spdlog.txt), nlohmann/json (nlohmann-json.txt), JSON schema validator
+  (json-schema-validator.txt): MIT License.
+* EASTL and EABase, by Electronic Arts: BSD 3-Clause License (EASTL.txt, EABase.txt).
+* AngelScript, by Andreas Jonsson: zlib License (AngelScript.txt).
+* libnyquist, by Dimitri Diakopoulos: BSD 2-Clause License (libnyquist.txt), with the codecs it builds in: FLAC,
+  Opus, Musepack, libogg, libvorbis, WavPack (BSD licences) and minimp3 (public domain) (libnyquist-codecs.txt).
