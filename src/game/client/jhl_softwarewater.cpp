@@ -58,6 +58,7 @@ constexpr int RenderTransAdd = 5;
 
 JhlGL& gl = g_JhlGL;
 cvar_t* g_SoftwareWater = nullptr;
+cvar_t* g_WaterSides = nullptr;
 
 using Field = std::array<std::int16_t, FieldCells>;
 Field g_Fields[2]{};
@@ -97,6 +98,7 @@ struct WaterEntity
 	float Alpha = 1;
 	bool Hidden = false; // The engine isn't drawing it.
 	float Distance = 0;
+	float Bottom = 0; // Its lowest point as the engine reckons it (see DrawModel).
 };
 
 std::string g_MapName;
@@ -456,9 +458,12 @@ Vector Turn(const Vector& point, int axis, float degrees)
 	return turned;
 }
 
-// Draws a model's water faces that face the view, placed as the engine places a brush model (R_RotateForEntity: moved
-// to its origin, turned by yaw about z, pitch (negated) about y, roll about x).
-void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Vector& angles)
+// Draws a model's water faces, placed as the engine places a brush model (R_RotateForEntity: moved to its origin,
+// turned by yaw about z, pitch (negated) about y, roll about x). The world's: those that face the view. An entity's: as
+// the engine's R_DrawBrushModel (hw.dll) has them, only its level ones (any, gl_watersides 1) higher than a unit above
+// its bottom (the entity's origin and its model's lowest point; turned, its origin less its radius), from either side:
+// its top, seen from above and from under it, not its sides and floor.
+void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Vector& angles, float bottom = 0)
 {
 	const auto& model = g_Models[modelIndex];
 	const bool turned = angles != g_vecZero;
@@ -494,9 +499,23 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 		{
 			const auto& face = bsp.Faces[index];
 
-			if (DotProduct(face.Normal, view) - face.Dist <= 0)
+			if (modelIndex == 0)
 			{
-				continue;
+				if (DotProduct(face.Normal, view) - face.Dist <= 0)
+				{
+					continue;
+				}
+			}
+			else
+			{
+				// The plane as the map keeps it: a level one points up.
+				const bool level = face.Normal.x == 0 && face.Normal.y == 0;
+				const float height = face.Normal.z < 0 ? -face.Dist : face.Dist;
+
+				if ((!level && (!g_WaterSides || g_WaterSides->value == 0)) || bottom + 1 >= height)
+				{
+					continue;
+				}
 			}
 
 			if (g_Textures[t].HasFog)
@@ -587,6 +606,7 @@ bool JhlSoftwareWater_LastFog(int (&fog)[4])
 void JhlSoftwareWater_Initialize()
 {
 	g_SoftwareWater = gEngfuncs.pfnRegisterVariable("jhl_visuals_softwarewater", "1", FCVAR_ARCHIVE);
+	g_WaterSides = gEngfuncs.pfnGetCvarPointer("gl_watersides");
 }
 
 bool JhlSoftwareWater_Add(cl_entity_t* ent)
@@ -615,6 +635,7 @@ bool JhlSoftwareWater_Add(cl_entity_t* ent)
 	water.RenderMode = renderMode;
 	water.Alpha = renderMode == RenderNormal ? 1.0f : std::clamp(ent->curstate.renderamt / 255.0f, 0.0f, 1.0f);
 	water.Distance = (ent->origin + (ent->model->mins + ent->model->maxs) * 0.5f - v_origin).Length();
+	water.Bottom = ent->angles != g_vecZero ? ent->origin.z - ent->model->radius : ent->origin.z + ent->model->mins.z;
 
 	if (model.AllWater && knownMode)
 	{
@@ -662,7 +683,7 @@ void JhlSoftwareWater_DrawOpaque()
 	{
 		if (!water.Hidden && water.RenderMode == RenderNormal)
 		{
-			DrawModel(*bsp, water.Model, water.Origin, water.Angles);
+			DrawModel(*bsp, water.Model, water.Origin, water.Angles, water.Bottom);
 		}
 	}
 
@@ -674,7 +695,7 @@ void JhlSoftwareWater_DrawOpaque()
 	{
 		if (water.Hidden && water.RenderMode == RenderNormal)
 		{
-			DrawModel(*bsp, water.Model, water.Origin, water.Angles);
+			DrawModel(*bsp, water.Model, water.Origin, water.Angles, water.Bottom);
 		}
 	}
 }
@@ -735,6 +756,6 @@ void JhlSoftwareWater_DrawTransparent()
 			gl.Color4f(1, 1, 1, water->Alpha);
 		}
 
-		DrawModel(*bsp, water->Model, water->Origin, water->Angles);
+		DrawModel(*bsp, water->Model, water->Origin, water->Angles, water->Bottom);
 	}
 }
