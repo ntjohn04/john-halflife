@@ -381,9 +381,7 @@ void W_Precache()
 	g_sModelIndexWExplosion = UTIL_PrecacheModel("sprites/WXplo1.spr");		// underwater fireball
 	g_sModelIndexSmoke = UTIL_PrecacheModel("sprites/steam1.spr");			// smoke
 
-	// johnhalflife: the sprites and models only its client effects use (second fireballs, lingering smoke, water splash
-	// droplets, blood chunks, the Desert Eagle's shell, the laser turret's flash) aren't precached here: the client
-	// loads them itself (client jhl_models.h), keeping the 512 model slots a map shares with its brush entities free.
+	// johnhalflife's effect sprites and models: at the end, while the map has room.
 
 	g_sModelIndexBubbles = UTIL_PrecacheModel("sprites/bubble.spr");		// bubbles
 	g_sModelIndexBloodSpray = UTIL_PrecacheModel("sprites/bloodspray.spr"); // initial blood
@@ -409,6 +407,39 @@ void W_Precache()
 	UTIL_PrecacheSound("weapons/bullet_hit2.wav"); // hit by bullet
 
 	UTIL_PrecacheSound("items/weapondrop1.wav"); // weapon falls to the ground
+
+	// johnhalflife: the sprites and models only its client effects use, last and only while the map clearly has room.
+	// The engine's 512 models a map are shared with its brush entities, and past them a model the map needs isn't
+	// precached and its first use ends the map: of4a4, with 330 brush entities, came within 4 with these, and
+	// op4ctf_crash went over. So, in order of how much each is seen, as many as leave room for the map's own models
+	// (its NPCs, their gibs, its breakables: about 32 on of4a4) twice over. An effect whose sprite isn't precached
+	// is left out, its vanilla part drawn (the client can't load a model the server didn't precache).
+	constexpr std::size_t RoomForTheMapsOwnModels = 64;
+	constexpr std::size_t EngineModels = 512;
+
+	const char* const effectModels[] = {
+		"sprites/blood_chnk.spr", "sprites/blood_chnk_yellow.spr", // Gibbing blood splash chunks.
+		"sprites/bexplo.spr", "sprites/cexplo.spr",				   // Second fireballs (jhl_explosions.cpp).
+		"sprites/wep_smoke_01.spr",								   // Lingering explosion smoke.
+		"sprites/wsplash3.spr",									   // Bullet water splash droplets.
+		"models/shell_op4.mdl",									   // The Desert Eagle's shell (ev_hldm.cpp).
+		"sprites/glow_blu.spr",									   // A laser turret's flash (weapon_effects.cpp).
+		"sprites/dexplo.spr", "sprites/eexplo.spr", "sprites/fexplo.spr", "sprites/gexplo.spr", "sprites/hexplo.spr"};
+
+	for (const char* model : effectModels)
+	{
+		if (g_ModelPrecache->GetCount() + RoomForTheMapsOwnModels >= EngineModels)
+		{
+			g_GameLogger->debug("Map has too many models for johnhalflife's effect models; left out from {}", model);
+			break;
+		}
+
+		// Opposing Force's, installed from the player's game; without it, left out.
+		if (g_pFileSystem->FileExists(model))
+		{
+			UTIL_PrecacheModel(model);
+		}
+	}
 }
 
 void CBasePlayerWeapon::PostRestore()
