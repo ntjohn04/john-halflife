@@ -411,11 +411,12 @@ void W_Precache()
 	// johnhalflife: the sprites and models only its client effects use, last and only while the map clearly has room.
 	// The engine's 512 models a map are shared with its brush entities, and past them a model the map needs isn't
 	// precached and its first use ends the map: of4a4, with 330 brush entities, came within 4 with these, and
-	// op4ctf_crash went over. So, in order of how much each is seen, as many as leave room for the map's own models
-	// (its NPCs, their gibs, its breakables, precached after this: at most about 21, of4a4's) half as much again. An
-	// effect whose sprite isn't precached is left out, its vanilla part drawn (the client can't load a model the server
-	// didn't precache). Only op4ctf_crash (none), of4a4 (5) and op4ctf_power (8) get fewer.
-	constexpr std::size_t RoomForTheMapsOwnModels = 32;
+	// op4ctf_crash went over. So, in order of how much each is seen, as many as leave room for what's precached after
+	// this (the player, gibs, the map's NPCs and breakables: 33 on of4a4, the most) and 10 to spare, as vanilla had more
+	// (followers crossing a level change bring their models). An effect whose sprite isn't precached is left out, its
+	// vanilla part drawn (the client can't load a model the server didn't precache). Only op4ctf_crash (none), of4a4
+	// (6 of 13) and op4ctf_power get fewer.
+	constexpr std::size_t RoomForTheMapsOwnModels = 43;
 	constexpr std::size_t EngineModels = 512;
 
 	const char* const effectModels[] = {
