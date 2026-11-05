@@ -192,6 +192,16 @@ The version is `project(HalfLifeMod VERSION ...)` in `CMakeLists.txt` and the re
 minor version and get a git tag, `v<version>-<release type>`, and a row in the [changelog](CHANGELOG.md); fixes between milestones raise the patch, and a released
 fix is tagged the same way.
 
+## Model slots
+
+The engine has 512 model slots a map, and the map's brush entities (doors, walls, glass: `*1`, `*2`...) take theirs
+first: of4a4 has 330, and with every weapon of both games precached it used 496 (508 before johnhalflife's effects
+stopped taking slots; vanilla Opposing Force used about as many). Past 512 a model isn't precached, and its first use
+ends the map (`Host_Error: no precache`); the console now says when it happens, and `jhl_debug_precache [list]` counts
+them. So a sprite or model only the client's effects use is loaded by the client, with `JhlEffectModel`
+(`src/game/client/jhl_models.h`), not precached by the server: it costs no slot, and if the client's list is ever full
+the effect is left out.
+
 ## Saves
 
 Don't add a data map (`DECLARE_DATAMAP`/`BEGIN_DATAMAP`) to an entity class that doesn't have one, for example

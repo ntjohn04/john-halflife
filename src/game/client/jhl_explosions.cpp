@@ -16,6 +16,7 @@
 #include <span>
 
 #include "hud.h"
+#include "jhl_models.h"
 #include "client_gibs.h"
 #include "com_model.h"
 #include "dlight.h"
@@ -335,7 +336,7 @@ Vector AwayFromWalls(const Vector& origin, float range)
 
 bool JhlExplosion_LingeringSmoke(const Vector& origin, float scale, const JhlLingeringSmoke& settings)
 {
-	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex(LingeringSmokeSprite);
+	const int model = JhlEffectModel(LingeringSmokeSprite);
 
 	if (model == 0)
 		return false;
@@ -899,7 +900,7 @@ void FallingFireball(const Vector& origin, int model, float scale)
 {
 	const int pick = gEngfuncs.pfnRandomLong(0, std::size(RoundFireballs));
 	const Fireball& fireball = pick == 0 ? Vanilla : RoundFireballs[pick - 1];
-	const int fireballModel = pick == 0 ? model : gEngfuncs.pEventAPI->EV_FindModelIndex(fireball.Sprite);
+	const int fireballModel = pick == 0 ? model : JhlEffectModel(fireball.Sprite);
 
 	if (fireballModel == 0)
 		return;
@@ -1036,7 +1037,7 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 		second = &RoundFireballs[gEngfuncs.pfnRandomLong(0, std::size(RoundFireballs) - 1)];
 	}
 
-	const int secondModel = gEngfuncs.pEventAPI->EV_FindModelIndex(second->Sprite);
+	const int secondModel = JhlEffectModel(second->Sprite);
 
 	if (secondModel == 0)
 		return true;

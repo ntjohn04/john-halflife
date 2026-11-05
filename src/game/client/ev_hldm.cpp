@@ -13,6 +13,7 @@
  *
  ****/
 #include "hud.h"
+#include "jhl_models.h"
 
 #include "cbase.h"
 
@@ -1957,7 +1958,7 @@ void EV_FireEagle(event_args_t* args)
 	// burnt-looking shell, as its M249's and sniper rifle's (shell_op4.mdl, installed from the player's Opposing Force:
 	// 3 units long along its y, 1.09 by 0.94 across), else Half-Life's (its casing its bone 1, 3 long along its z, 1.45
 	// across).
-	const int op4Shell = gEngfuncs.pEventAPI->EV_FindModelIndex("models/shell_op4.mdl");
+	const int op4Shell = JhlEffectModel("models/shell_op4.mdl");
 
 	if (JhlParticleSystemEnabled() && op4Shell != 0)
 		JhlEjectShapedBrass(ShellOrigin, ShellVelocity, {0, args->angles[1], 0}, op4Shell, 0, {1.6f, 1.5f, 1.86f});
