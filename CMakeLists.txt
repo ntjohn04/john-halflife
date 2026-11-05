@@ -10,7 +10,7 @@ set(VCPKG_OVERLAY_TRIPLETS ${CMAKE_SOURCE_DIR}/vcpkg_config/triplets)
 
 project(HalfLifeMod
 	# John Half-Life's own version: milestones raise the minor version, fixes the patch (docs/README.md#versioning).
-	VERSION 0.18.0
+	VERSION 0.19.0
 	DESCRIPTION "Half-Life CMake Mod Template"
 	LANGUAGES CXX)
 
@@ -40,9 +40,9 @@ cmake_path(GET CMAKE_INSTALL_PREFIX STEM MOD_NAME)
 # All Half-Life specific commands are prefixed with HalfLife so they show up in the same group in the CMake GUI
 set(HalfLife_HLDS_DIRECTORY "" CACHE PATH "Path to the Half-Life Dedicated Server directory. Must be specified to automatically set up dedicated server debugging settings and to copy libraries")
 
-# Default to Pre-Alpha. The documentation explains how to use this, so check that first!
+# Default to Alpha (the community releases; Release for v1.0.0). The documentation explains how to use this, so check that first!
 set(RELEASE_TYPE "Pre-Alpha" "Alpha" "Beta" "Release")
-set(HalfLife_RELEASE_TYPE "Pre-Alpha" CACHE STRING "What type of release you're building")
+set(HalfLife_RELEASE_TYPE "Alpha" CACHE STRING "What type of release you're building")
 set_property(CACHE HalfLife_RELEASE_TYPE PROPERTY STRINGS ${RELEASE_TYPE})
 
 list(FIND RELEASE_TYPE "${HalfLife_RELEASE_TYPE}" RELEASE_TYPE_INDEX)
