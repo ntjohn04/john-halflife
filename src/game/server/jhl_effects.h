@@ -23,14 +23,21 @@
  *	list of them all, and some of these are asked for very often (ShouldCollide, for every entity near every move an
  *	NPC tries: a scientist looking for cover asked 321,000 times in one think, a frame of 150 ms).
  */
-inline const cvar_t* UTIL_JhlClientCvar(const char* name, const cvar_t*& cache)
+struct JhlCvarCache
 {
-	if (!cache)
+	const cvar_t* Cvar = nullptr;
+	bool Looked = false; // Also when it isn't there (a dedicated server has no client): not looked for again.
+};
+
+inline const cvar_t* UTIL_JhlClientCvar(const char* name, JhlCvarCache& cache)
+{
+	if (!cache.Looked)
 	{
-		cache = g_engfuncs.pfnCVarGetPointer(name);
+		cache.Cvar = g_engfuncs.pfnCVarGetPointer(name);
+		cache.Looked = true;
 	}
 
-	return cache;
+	return cache.Cvar;
 }
 
 /**
@@ -39,7 +46,7 @@ inline const cvar_t* UTIL_JhlClientCvar(const char* name, const cvar_t*& cache)
  */
 inline bool UTIL_JhlFpsFix()
 {
-	static const cvar_t* cache = nullptr;
+	static JhlCvarCache cache;
 	const cvar_t* cvar = UTIL_JhlClientCvar("jhl_physics_fpsfix", cache);
 	return !cvar || cvar->value != 0;
 }
@@ -51,7 +58,7 @@ inline bool UTIL_JhlFpsFix()
  */
 inline bool UTIL_JhlParticleSystem()
 {
-	static const cvar_t* cache = nullptr;
+	static JhlCvarCache cache;
 	const cvar_t* cvar = UTIL_JhlClientCvar("jhl_fx_particlesystem", cache);
 	return !cvar || cvar->value != 0;
 }
@@ -160,7 +167,7 @@ inline void UTIL_JhlDisplacerSpecks(const Vector& position)
  */
 inline bool UTIL_JhlTracers()
 {
-	static const cvar_t* cache = nullptr;
+	static JhlCvarCache cache;
 	const cvar_t* cvar = UTIL_JhlClientCvar("jhl_fx_tracers", cache);
 	return UTIL_JhlParticleSystem() && (!cvar || cvar->value != 0);
 }
