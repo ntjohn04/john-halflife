@@ -175,7 +175,9 @@ const JhlTracerStyle& JhlTracers_Style(JhlTracerKind kind)
 
 bool JhlTracersEnabled()
 {
-	return JhlParticleSystemEnabled() && 0 != gEngfuncs.pfnGetCvarFloat("jhl_fx_tracers");
+	// Found once: the engine finds a cvar by name by going down the list of them all, and this is asked a few times a shot.
+	static const cvar_t* const tracers = gEngfuncs.pfnGetCvarPointer("jhl_fx_tracers");
+	return JhlParticleSystemEnabled() && tracers && 0 != tracers->value;
 }
 
 void JhlTracers_ParseNpcTracer(BufferReader& reader)
