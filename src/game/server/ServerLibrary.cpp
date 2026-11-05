@@ -131,8 +131,10 @@ bool ServerLibrary::Initialize()
 	// johnhalflife: how many models (the map's brush entities among them), sounds and other files the map has precached,
 	// against the engine's limits; past one, using a file not precached ends the map.
 	g_ConCommands.CreateCommand(
-		"jhl_debug_precache", [](const auto&)
+		"jhl_debug_precache", [](const auto& args)
 		{
+			// "list": every model that isn't one of the map's brush entities, in the order precached.
+			const bool list = args.Count() > 1 && 0 == strcmp(args.Argument(1), "list");
 			std::size_t brushModels = 0;
 
 			for (std::size_t i = 0; i < g_ModelPrecache->GetCount(); ++i)
@@ -140,6 +142,10 @@ bool ServerLibrary::Initialize()
 				if (g_ModelPrecache->GetString(i)[0] == '*')
 				{
 					++brushModels;
+				}
+				else if (list)
+				{
+					Con_Printf("%3zu %s\n", i, g_ModelPrecache->GetString(i));
 				}
 			}
 
