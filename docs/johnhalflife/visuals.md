@@ -116,3 +116,16 @@ so gamma and filtering match). Water is what the engine treats as water: names s
   see-through ones partly water are left to the engine.
 
 For the display (the stretch to the desktop, anti-aliasing), see the [front page](../../README.md#recommended-launch-options-and-display).
+
+## Known engine quirks, left as they are
+
+* **A bright white, opaque sprite next to a colour-mode brush.** A brush entity drawn in rendermode 1 (Color) leaves the
+  engine's second texture unit on and active. The next sprite drawn in the engine's back-to-front order then sets its
+  texture mode on that unit just before the engine turns it off, so the sprite is drawn with the previous sprite's
+  `GL_REPLACE`: no tint, no transparency (hw.dll's R_DrawBrushModel and R_DrawSpriteModel). Vanilla has the same bug
+  but few sprites to show it; johnhalflife's impact puffs and smoke show it beside c3a1b's green goo, and could in the
+  9 other maps with such brushes (c1a2, c1a2b, c1a2c, c1a4b, c1a4d, c3a2b, of2a4, of2a6, of3a6). No client code runs
+  between the two draws, so fixing it would mean patching the engine's GL calls in memory: not done.
+* **A strip of water surface at the mouth of c3a2a/c3a2b's coolant tunnels.** The water brush's top (z -408) is just
+  above the tunnel's ceiling (-416), so where the mouth's frame rises above it there's a real air gap, and its surface
+  is drawn. The map's geometry, drawn correctly.
