@@ -27,7 +27,7 @@ Options:
   -?, -h, --help                             Show help and usage information
 ```
 
-The mod directory should point to your local copy of the [mod installation](../../INSTALL.md).
+The mod directory should point to your local copy of the [mod installation](../INSTALL.md).
 
 You can optionally provide `--dry-run` to see which files would be copied without actually making any changes.
 

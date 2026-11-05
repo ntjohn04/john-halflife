@@ -3,7 +3,7 @@
 The knobs on the changes made since `v0.7.0-prealpha`, while they settle: what each sets, its value, where it is,
 and where to see it. They're sweeping changes to shared code, so each also lists what else it touches. Everything here
 is behind `jhl_fx_particlesystem` unless it says otherwise. The full descriptions are in
-[Effects plan](effects_plan.md) and [Weapons](weapons.md); this page is only the numbers.
+[Effects](effects.md) and [Weapons](weapons.md); this page is only the numbers.
 
 To see things quickly: `sv_cheats 1`, `god`, `notarget` (to watch without being attacked), `impulse 101`,
 `npc_create <classname>` (spawns where you aim).

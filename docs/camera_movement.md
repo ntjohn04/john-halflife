@@ -2,7 +2,7 @@
 
 The code lives in
 `src/game/client/view.cpp` (camera), `src/game/server/entities/player.cpp` (jolts) and
-`src/game/shared/player_movement/pm_shared.cpp` (sounds). Settings are listed on the [front page](../../README.md#settings).
+`src/game/shared/player_movement/pm_shared.cpp` (sounds). Settings are listed on the [front page](../README.md#settings).
 
 ## Camera
 

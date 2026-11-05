@@ -1,11 +1,11 @@
-# johnhalflife
+# John Half-Life
 
 A mod for Half-Life, Opposing Force and Blue Shift, built on the
 [Half-Life Unified SDK](https://github.com/twhl-community/halflife-unified-sdk). It keeps Valve's look and
 models and adds reserved changes to the camera, movement, weapon feel and effects; every feature can be
 switched off in the console to compare with vanilla.
 
-Status: pre-alpha ([versions](#versions)), no download yet.
+Status: pre-alpha, the first public release in preparation ([changelog](docs/CHANGELOG.md)).
 
 ## Install
 
@@ -34,30 +34,30 @@ All are client settings: in John Settings (below) or the console.
 
 | Setting | Default | Turns on/off | Page |
 |---|---|---|---|
-| `jhl_camera_bob` | 1 | Dual-rate view bob and figure-eight weapon sway | [Camera](docs/johnhalflife/camera_movement.md#view-bob-and-weapon-sway) |
-| `jhl_camera_viewroll` | 1 | Stronger strafe roll | [Camera](docs/johnhalflife/camera_movement.md#strafe-roll) |
-| `jhl_camera_verticallag` | 1 | Eye lift while moving upward | [Camera](docs/johnhalflife/camera_movement.md#vertical-lag) |
-| `jhl_camera_jumplandjolt` | 1 | Jump and landing view jolts | [Camera](docs/johnhalflife/camera_movement.md#jump-and-landing-jolts) |
-| `jhl_visuals_weaponlag` | 1 | Weapon lags behind when turning | [Camera](docs/johnhalflife/camera_movement.md#weapon-lag-and-wall-push) |
-| `jhl_visuals_weaponwallpush` | 1 | Weapon pulls back near walls | [Camera](docs/johnhalflife/camera_movement.md#weapon-lag-and-wall-push) |
-| `jhl_visuals_flushfaces` | 1 | Signs, posters and panels built flush with walls drawn steady (they flickered in OpenGL and vanished in software) | [Visuals](docs/johnhalflife/visuals.md) |
-| `jhl_visuals_16bitcolor` | 1 | The software renderer's 16-bit color: every frame cut to 565, as it drew | [Visuals](docs/johnhalflife/visuals.md#16-bit-color-jhl_visuals_16bitcolor) |
-| `jhl_visuals_softwarewater` | 1 | The software renderer's water: its ripple simulation in place of OpenGL's sine wobble, and under water its 320 x 200 view and fog by depth | [Visuals](docs/johnhalflife/visuals.md#software-renderer-touches) |
-| `jhl_visuals_renderfixes` | 1 | Models lit up to 4/3 as the world is; with texture filtering off, textures point sampled with mipmaps and the sky pixelated as the world is | [Visuals](docs/johnhalflife/visuals.md#software-renderer-touches) |
-| `jhl_physics_fpsfix` | 1 | Pushables, +use walking, grenades and gibs sliding, debris settling and fire rates acting at any frame rate as at 72 fps | [Physics](docs/johnhalflife/physics.md) |
-| `jhl_weapons_smoothrecoil` | 1 | Spring-damped recoil (0 = original punches) | [Weapons](docs/johnhalflife/weapons.md#recoil) |
-| `jhl_fx_bulletimpacts` | 1 | Bullet impact sparks/dust and water splashes | [Weapons](docs/johnhalflife/weapons.md#bullet-impacts) |
-| `jhl_fx_muzzleflash` | 1 | Muzzle light and smoke, RPG backblast | [Weapons](docs/johnhalflife/weapons.md#muzzle-light-and-smoke) |
-| `jhl_fx_particlesystem` | 1 | The particle system changes (gibs, blood, explosions, debris, beams, rings) | [Effects plan](docs/johnhalflife/effects_plan.md#gibs-done) |
-| `jhl_fx_tracers` | 1 | johnhalflife's tracers (with the particle system on): the M249's tracer rounds, every gun's faint streaks, NPCs' | [Weapons](docs/johnhalflife/weapons.md#tracers) |
+| `jhl_camera_bob` | 1 | Dual-rate view bob and figure-eight weapon sway | [Camera](docs/camera_movement.md#view-bob-and-weapon-sway) |
+| `jhl_camera_viewroll` | 1 | Stronger strafe roll | [Camera](docs/camera_movement.md#strafe-roll) |
+| `jhl_camera_verticallag` | 1 | Eye lift while moving upward | [Camera](docs/camera_movement.md#vertical-lag) |
+| `jhl_camera_jumplandjolt` | 1 | Jump and landing view jolts | [Camera](docs/camera_movement.md#jump-and-landing-jolts) |
+| `jhl_visuals_weaponlag` | 1 | Weapon lags behind when turning | [Camera](docs/camera_movement.md#weapon-lag-and-wall-push) |
+| `jhl_visuals_weaponwallpush` | 1 | Weapon pulls back near walls | [Camera](docs/camera_movement.md#weapon-lag-and-wall-push) |
+| `jhl_visuals_flushfaces` | 1 | Signs, posters and panels built flush with walls drawn steady (they flickered in OpenGL and vanished in software) | [Visuals](docs/visuals.md) |
+| `jhl_visuals_16bitcolor` | 1 | The software renderer's 16-bit color: every frame cut to 565, as it drew | [Visuals](docs/visuals.md#16-bit-color-jhl_visuals_16bitcolor) |
+| `jhl_visuals_softwarewater` | 1 | The software renderer's water: its ripple simulation in place of OpenGL's sine wobble, and under water its 320 x 200 view and fog by depth | [Visuals](docs/visuals.md#software-renderer-touches) |
+| `jhl_visuals_renderfixes` | 1 | Models lit up to 4/3 as the world is; with texture filtering off, textures point sampled with mipmaps and the sky pixelated as the world is | [Visuals](docs/visuals.md#software-renderer-touches) |
+| `jhl_physics_fpsfix` | 1 | Pushables, +use walking, grenades and gibs sliding, debris settling and fire rates acting at any frame rate as at 72 fps | [Physics](docs/physics.md) |
+| `jhl_weapons_smoothrecoil` | 1 | Spring-damped recoil (0 = original punches) | [Weapons](docs/weapons.md#recoil) |
+| `jhl_fx_bulletimpacts` | 1 | Bullet impact sparks/dust and water splashes | [Weapons](docs/weapons.md#bullet-impacts) |
+| `jhl_fx_muzzleflash` | 1 | Muzzle light and smoke, RPG backblast | [Weapons](docs/weapons.md#muzzle-light-and-smoke) |
+| `jhl_fx_particlesystem` | 1 | The particle system changes (gibs, blood, explosions, debris, beams, rings) | [Effects](docs/effects.md#gibs-done) |
+| `jhl_fx_tracers` | 1 | johnhalflife's tracers (with the particle system on): the M249's tracer rounds, every gun's faint streaks, NPCs' | [Weapons](docs/weapons.md#tracers) |
 | `jhl_hud_scale` | 1 | Sprite HUD scale (0 = automatic by screen height) | [HUD](#hud-scale) |
-| `jhl_snd_vanilla` | 1 | Half-Life's own mixing (22 kHz, its pitch grain, ear volumes, clipping) and room effects, in place of the SDK's OpenAL sound | [Sound](docs/johnhalflife/sound.md) |
-| `jhl_snd_musicsaves` | 1 | Loading a save plays the music that was playing when it was saved, from that point (0: loading stops the music, as vanilla) | [Sound](docs/johnhalflife/sound.md#music-in-saves) |
+| `jhl_snd_vanilla` | 1 | Half-Life's own mixing (22 kHz, its pitch grain, ear volumes, clipping) and room effects, in place of the SDK's OpenAL sound | [Sound](docs/sound.md) |
+| `jhl_snd_musicsaves` | 1 | Loading a save plays the music that was playing when it was saved, from that point (0: loading stops the music, as vanilla) | [Sound](docs/sound.md#music-in-saves) |
 
 Changed defaults of existing settings: `gamma` 1.92 and `brightness` 0 (the engine's are 2.2 and 0, Steam's before
 the 25th anniversary update 2.5 and 1; gamma goes from 1.8, darkest and most contrast, to 3.0), `cl_rollangle` 0.65
 and `cl_rollspeed` 300 (see
-[strafe roll](docs/johnhalflife/camera_movement.md#strafe-roll)).
+[strafe roll](docs/camera_movement.md#strafe-roll)).
 
 Options → Multiplayer → **John Settings...** lists the settings above plus a few vanilla ones (crosshair
 scale, field of view, frame rate limit, vertical sync, raw mouse input), with **Reset all to recommended
@@ -81,7 +81,7 @@ once as it starts, before any of the mod's code runs, so the mod can't set them 
   specks, tracer particles), which the effects use more of than vanilla. Without it, a chain of big explosions can
   run the engine's pool dry: the console says "not enough free particles", and a few specks don't appear for a
   moment. Harmless either way (nothing breaks; the explosions also thin their own out as they near it:
-  [tuning sheet](docs/johnhalflife/tuning.md#explosion-particles-clientjhl_explosionscpp-particleshare)); this just keeps them all.
+  [tuning sheet](docs/tuning.md#explosion-particles-clientjhl_explosionscpp-particleshare)); this just keeps them all.
   Modern PCs don't feel it.
 * **`-condebug`** (optional, for troubleshooting): writes the console to `qconsole.log` in the game folder as you
   play, so its last lines survive a crash. With the crash's details from Windows' event log, that usually shows
@@ -104,7 +104,7 @@ The 25th anniversary engine smooths what 1998 drew sharp. For pixels as they wer
   is drawn with.
 * **Texture filtering off** (Options → Video): textures point sampled, blocky up close. With
   `jhl_visuals_renderfixes`, mipmapped as software was, so distant textures don't sparkle
-  ([Visuals](docs/johnhalflife/visuals.md#software-renderer-touches)). On by default, as Half-Life's OpenGL renderer
+  ([Visuals](docs/visuals.md#software-renderer-touches)). On by default, as Half-Life's OpenGL renderer
   always drew.
 
 If the picture's still soft with `-nofbo`, the monitor or graphics card is smoothing the stretch to the screen:
@@ -134,39 +134,24 @@ ships Opposing Force and Blue Shift on top of Half-Life.
 
 ## Versions
 
-| Tag | What it covers |
-|---|---|
-| `v0.1.0-prealpha` | Camera and movement, weapons (recoil, accuracy, effects, sounds), John Settings and the menus on the 25th anniversary engine, separate game folders for Half-Life, Opposing Force, Blue Shift and Uplink |
-| `v0.2.0-prealpha` | Gibs (counts, lifetime, bounce sounds, blood trails, per-NPC profiles, central blood splash with red and yellow chunks, blood pools) and hit blood (sizes, colors, exit spurts, melee bursts, headshot streams), `jhl_fx_test`, the `jhl_fx_particlesystem` toggle |
-| `v0.3.0-prealpha` | Explosions: vanilla placement restored (Half-Life Updated sank them into surfaces), two-fireball pool with randomness, bigger RPG rockets and explosive breakables, helicopter deaths (varied falling fireballs, crash mushroom cloud), smoke (bigger puff, lingering cloud), client spark showers (by surface material), surface debris by material, ember specks, size-scaled lights, scorches, screen shake, underwater fireballs and bubbles; debris lasting 60 s with a shared budget (barrels, helicopters, gibs) |
-| `v0.4.0-prealpha` | Beams and rings: the vortigaunt's strand pattern (a thin, wild, dimmer strand, endpoint and impact lights, sparks by what was hit) on vortigaunts, voltigores, the displacer and shock rifle, controllers (round animated balls) and the Nihilanth (zaps, death bolts, a finale of flashes and spark showers), map arcs, Gene Worm warp beams and electrified wires; a noisy torus on every ring (houndeye, helicopter crashes, displacer), houndeye light, shake and dust, the displacer's implosion; Xen spire rings layered three deep, drifting in and out of step; breakable shards lasting like gibs (crates throw wood, computers spark), varied spark bursts, armor ricochet sparks, blob particles and fewer non-metal spark showers on explosions; fixes: controller energy ball NaN velocity, gluon view drift after a map change |
-| `v0.5.0-prealpha` | Weapons: tracers (the M249's red tracer rounds with a white-hot core and burning specks off walls; faint streaks on every gun, NPCs' too, from the muzzle; `jhl_fx_tracers`), the M249's muzzle smoke building with sustained fire, per-pellet shotgun smoke, the gluon gun's dragged, bending beam (vanilla colors restored) with scorches, leaking sparks, a fizzle on release and lights, the Gauss gun's visible charge (glow, arcs, unstable sparks), brighter layered beams, release bursts, afterimages of charged shots and impact and reflection lights, a crossbow bolt wake, melee sparks on metal, the tripmine light; corpse gibbing by bullet damage (headcrabs, shock roaches, houndeyes, pit drones, bullsquids, controllers), displacer specks; fixes: controller spark burst on corpse gib |
-| `v0.6.0-prealpha` | Weapons, continued: hornets' twirling trails in five colours (calm and flourishing moods, straight on the strike), their spit, dart splats, blood on stings and a death light; the shock rifle's bolt as a glow and spark circling its path, tightening with range, half spinning each way, with a double-helix wake, purple fizzles or cyan arcs on impact and a muzzle light; projectiles aimed at the crosshair (shock rifle, RPG, hornet gun, spore rocket); the barnacle grapple's springy tongue (slack flying out, bowing as you move, twanging taut on latching, swallowing as it pulls), reeling back in on letting go, a bite of blood, a wet mark where it latches, blended view model transitions; fixes: shock rifle crash on firing, shock bolt helix on the grapple's tongue tip, grapple animation flicker from prediction |
-| `v0.7.0-prealpha` | Weapons, finished: the spore launcher's lights, burst off the surface and a blast ring showing its reach; weapon particles carrying the player's movement; the RPG's fuller launch (backblast, billows, flame flashes), laser dot light and a laser line from its housing, the rocket's flickering motor glow and smoke-puff trail; the sniper rifle's trace with a hot start, bolt smoke, barrel flash and heavy impacts; small touches on the standard weapons (Glock smoke heat, revolver impacts, Desert Eagle barrel wisps, MP5 grenade launch, double-shot blast, melee dust); the hand grenade tumbling and rolling; the snark's death burst; explosion fill light; spent casings (the revolver's and sniper rifle's handed off from their animations, .50 AE and 5.56 shapes, the M249's casing every shot with links, lying along the gun then tumbling, Half-Life's brass on Half-Life's guns, shotgun shells on the pump from the receiver, brass lingering 6-10 s, silent under water); the gluon bend fixed at 0.25; fixes: Desert Eagle and M249 shells thrown from behind the player's head, sniper smoke stopping after a map change |
-| `v0.8.0-prealpha` | Monsters and the world: the gargantua's flickering flame lights, embers and heat smoke, its stomp as a wave down a lane, eye light, stomp dust and lingering death plates; tentacle strikes throwing up what they hit by material, slams cratering; the pit worm's lit eye, beam core and scorches; the gene worm's eye lights, lit heart, smacks and acid clouds; the Gonarch's spit dripping white droplets; the ichthyosaur's bite bubbles bursting from its mouth; mounted guns' (`func_tank`) muzzle lights, flashes, smoke and brass, and NPC turrets' flashes and brass; laser turrets' fuller beams and recoil for whoever mans a turret; mortar fields' falling streaks, the Opposing Force mortar's launch and trail; chargers' soft light and sparks running dry; env_shooter pieces lingering 45 s; Opposing Force and Blue Shift view models getting the weapon effects; reload blending (Glock, revolver, Desert Eagle, shotgun); bounce sounds thinned; fixes: the Opposing Force mortar's oversized fireball, floating pieces over breakable floors (c4a2b's Gonarch), gibs stuck in each other, satchel switch sounds, the satchel flap sound |
-| `v0.9.0-prealpha` | Sound: Half-Life's own mixing and room effects on the SDK's OpenAL sound system (`jhl_snd_vanilla`), checked against recordings of vanilla: sounds at the engine's 22 kHz, pitched the engine's way (the faint grain of vanilla's sound), its ear volumes (sounds ahead and the player's own full in both ears), clipping rather than a limiter, and its room types in place of the SDK's EAX presets (reverb and echo per room set to vanilla's, water rooms muffling the whole mix); `cl_snd_channels`; fixes: sounds (gunfire, explosions) going silent when OpenAL ran out of sources |
-| `v0.9.1-prealpha` | Sound fix: 22 kHz sounds (the guns, many effects) no longer muffled with `jhl_snd_vanilla`: converted to the device's rate flat to 10.5 kHz, as the system converts the engine's output (OpenAL's resamplers rolled off from 6 kHz) |
-| `v0.10.0-prealpha` | Visuals: brush entities built flush with walls (signs, posters, panels, gears, rails: about 2,700 faces in Half-Life's maps) found from each map's BSP and drawn just out of the wall, so they no longer flicker in OpenGL or vanish in software (`jhl_visuals_flushfaces`) |
-| `v0.11.0-prealpha` | Physics: Half-Life's game code acting at any frame rate as it did at 72 fps, its 1998 `fps_max` (`jhl_physics_fpsfix`): boxes and barrels pushed and pulled at the 72 fps rate, pulling no faster than pushing (it ran away, worse the higher the fps), walking with +use, grenades, satchels, gibs and spores sliding as far as they did, client gibs, debris and shells settling without extra bounces, trigger_camera drift, and guns keeping the time a shot waited (up to a frame was lost each shot) |
-| `v0.12.0-prealpha` | Visuals: the software renderer's touches on OpenGL, found in its code and measured on screenshots of the same view: its rippling water (the ripple simulation in place of OpenGL's sine wobble) and under water its 320 x 200 view and fog by depth (`jhl_visuals_softwarewater`); models lit up to 4/3 as the world is, and with texture filtering off textures point sampled with mipmaps and the sky pixelated like the world (`jhl_visuals_renderfixes`); its 16-bit color (`jhl_visuals_16bitcolor`); every johnhalflife setting on by default, as recommended; the map's BSP read in one place (`jhl_bsp`) |
-| `v0.13.0-prealpha` | Release: one zip for Windows and Linux, extracted into the Half-Life folder, nothing else to install; the first start sets the mod up from the player's own games (Valve's maps converted for the Unified SDK by its map upgrades ported to C++, Opposing Force's and Blue Shift's files, the menu art, default key bindings) and the first launch applies the recommended settings (now also the crosshair on, auto-aim off, field of view 100); the Linux build (Ubuntu 22.04 and newer); an audit of the Unified SDK against vanilla: Blue Shift's batteries back to 20, mounted guns aiming only at the player in Half-Life and Blue Shift, NPCs walking and running at vanilla speed (2-6% slower in the SDK's recompiled models), each game's own versions of shared sounds and sprites |
-| `v0.13.1-prealpha` | Fix from a pass over Half-Life Updated's and the Unified SDK's changelogs: Opposing Force's cleansuit scientists give no health, as in vanilla (Opposing Force Updated gave them 25) |
-| `v0.14.0-prealpha` | johnhalflife's own sounds in place of MMod's: a draw sound for every weapon (the shotgun shares the MP5's), the grenade pin, the satchel's flap and pickup, and the RPG's reload, timed to the rocket being pushed home; MMod's movement sounds, texture material table and water ripple dropped; the RPG's laser line only when the laser comes on (it came back whenever the dot came back into sight); launch options for the 1998 look (`-nofbo`, `-nomsaa`, texture filtering off); fixes: security cameras and tank turrets (mounted guns firing no bullets) showing a machine gun's flash, smoke and brass |
-| `v0.15.0-prealpha` | Music in saves: loading a save plays the track that was playing when it was saved, from that point, paused or fading as it was (`jhl_snd_musicsaves`; a track the map paused stays paused when the game unpauses); gamma 1.92 and brightness 0 in John Settings and the recommended settings; the recommended settings also set texture filtering off, the original models and Video's and technical settings at the engine's defaults (not shown in John Settings), and a reset survives the Options window's OK; fixes: each map rebuilding its node graph on first load (a short freeze) after a newer release was extracted over an install |
-| `v0.16.0-prealpha` | Bullet impacts, melee sparks and explosion debris show the right material on every texture: a reviewed table of 1,595 textures Valve's table leaves as concrete (metal walls, signs, crates and containers now spark; lights break as glass; jungle walls and plywood splinter), footsteps and ricochet sounds unchanged; `jhl_texture [material]` prints the texture under the crosshair and its materials and logs it to `jhl_textures.txt`, for corrections |
-| `v0.17.0-prealpha` | Opposing Force's P.C.V. and Ohms Power armour chargers glow green (HEV chargers stay amber); fixes: random stutters of up to 200 ms near scientists and vortigaunts (a johnhalflife check run hundreds of thousands of times as they looked for cover), and a stutter the first time a long speech or sound played (long sounds now prepared as the map loads, converted faster); `jhl_debug_hitch <ms>` reports what slow frames were spent on, to the console and `jhl_hitches.txt` |
-| `v0.17.1-prealpha` | Fixes: the metal and tunnel room types' echo (room_type 2-7) 3-4 dB quieter, the tunnels no longer ringing bright and tinny (matched to vanilla band by band); software water draws a water entity (func_water) as the engine does, its top only, seen from above and below, not its sides and floor from inside; `jhl_debug_muzzle` prints what keeps the muzzle light and smoke off, for the rare times they've stopped |
-| `v0.18.0-prealpha` | Half-Life Updated's frame rate fixes as at 72 fps, as the rest of `jhl_physics_fpsfix`: NPCs turn as they did at 72 fps (Updated's as at 50, a little faster), the ichthyosaur and fliers bank as at 72 (Updated's as at 10), the gargantua's stomp speeds up as at 72 (Updated's 40), Opposing Force's electrified wires deal 72 damage a second as at 72 fps (Updated's 30), scripted cameras turn as at 72 (Updated's 100); impact materials: wall_grn04 metal, c1a1_w1 and fiftsfile2 concrete |
+The latest is `v0.18.0-prealpha`. Every version and what it brought: [changelog](docs/CHANGELOG.md).
 
 ## Building from source
 
 Windows (Visual Studio) and Linux (Ubuntu 22.04, or WSL) builds, then one script that makes the zip from both:
-[Making a release](docs/johnhalflife/release.md#making-a-release). Testing goes the same way, the zip extracted into
+[Making a release](docs/release.md#making-a-release). Testing goes the same way, the zip extracted into
 the game, so what's played is what players get.
 
 ## Documentation
 
-* [How johnhalflife works](docs/johnhalflife/README.md): the pages on each system, and notes for working on the code.
-* [The Half-Life Unified SDK](UNIFIED_SDK.md): the SDK this is built on, its building and installing
-  ([BUILDING.md](BUILDING.md), [INSTALL.md](INSTALL.md)), its documentation ([docs/README.md](docs/README.md)),
-  changelogs and Valve's SDK license.
+* [How John Half-Life works](docs/README.md): every system it changes and why, the changelog, making a release, and
+  notes for working on the code. All of John Half-Life's documentation is in `docs/`.
+* [The Half-Life Unified SDK](docs/unified-sdk/UNIFIED_SDK.md): the SDK this is built on, with its own
+  documentation, building and installing notes and changelogs, as it ships them, in `docs/unified-sdk/`.
+
+## Credits and licences
+
+Made by John, on Valve's Half-Life (and Gearbox's Opposing Force and Blue Shift), the Half-Life Unified SDK and
+Half-Life Updated. Free, not for sale, under Valve's [Half-Life SDK licence](LICENSE); John Half-Life's own sounds
+and art are [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The credits and every licence of what's
+shipped: [config/licenses](config/licenses/CREDITS.txt), in the game as `johnhalflife/licenses`.

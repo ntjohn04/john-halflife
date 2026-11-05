@@ -2,7 +2,7 @@
 
 ## Half-Life Unified SDK
 
-The [Half-Life Unified SDK](docs/README.md#developer-resources) is a project that provides an updated version of the Half-Life SDK, with full support for the expansion packs Opposing Force and Blue Shift as well as new features.
+The [Half-Life Unified SDK](README.md#developer-resources) is a project that provides an updated version of the Half-Life SDK, with full support for the expansion packs Opposing Force and Blue Shift as well as new features.
 
 [![CI/CD](https://github.com/twhl-community/halflife-unified-sdk/actions/workflows/ci-cd.yml/badge.svg?branch=master)](https://github.com/twhl-community/halflife-unified-sdk/actions/workflows/ci-cd.yml)
 
@@ -47,13 +47,13 @@ See the TWHL thread for status updates about these projects: https://twhl.info/t
 
 Updated game assets provided by [Marc-Antoine Lortie](https://github.com/malortie).
 
-The source code for the C# tools can be found [here](docs/README.md#developer-resources)
+The source code for the C# tools can be found [here](README.md#developer-resources)
 
-The map decompiler can be found [here](docs/README.md#developer-resources)
+The map decompiler can be found [here](README.md#developer-resources)
 
 # Documentation
 
-See [docs/README.md](docs/README.md) for a list of documentation, resources and tutorials.
+See [docs/README.md](README.md) for a list of documentation, resources and tutorials.
 
 See [FULL_UPDATED_CHANGELOG.md](FULL_UPDATED_CHANGELOG.md) for changes inherited from Half-Life Updated and [UNIFIED_CHANGELOG.md](UNIFIED_CHANGELOG.md) for changes specific to the Unified SDK.
 
@@ -113,7 +113,7 @@ Metamod and AMXMod are not supported. The changes made to the source code render
 
 The source code for Deathmatch Classic and Ricochet is in the original Half-Life SDK. The purpose of these updated repositories is to provide updated versions only for Half-Life and its expansion packs, so the source code for these mods has been removed.
 
-Since the vanilla versions don't compile under newer versions of Visual Studio separate repositories have been made that provide the same updates to make them compile. These projects can be found [here](docs/README.md#other-source-code-repositories).
+Since the vanilla versions don't compile under newer versions of Visual Studio separate repositories have been made that provide the same updates to make them compile. These projects can be found [here](README.md#other-source-code-repositories).
 
 Unlike the other updated repositories these only provide basic fixes. No further development and support will be provided.
 

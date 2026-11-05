@@ -452,7 +452,7 @@ Fixes for bugs introduced in beta builds are not included in this list.
 * Linux compilation fixes (Thanks Shepard and LogicAndTrick)
 * Made Half-Life client dll depend on server dll to ensure server is built when launching a client debug session
 *  Update Linux makefiles to use g++ instead of gcc to compile and link all code [#33](https://github.com/twhl-community/halflife-updated/issues/33) (Thanks MegaBrutal for bringing this to my attention)
-* Moved DMC & Ricochet source code, projects, makefiles and fgds to their own repositories. See [README.md](README.md) for more information
+* Moved DMC & Ricochet source code, projects, makefiles and fgds to their own repositories. See [README.md](../../README.md) for more information
 * Enabled multiprocessor compilation for Windows builds [#39](https://github.com/twhl-community/halflife-updated/issues/39)
 * Changed default toolset to non-XP compatible one and set Windows SDK version to Windows 10 [#44](https://github.com/twhl-community/halflife-updated/issues/44)
 * Set C++ standard to 17 [#85](https://github.com/twhl-community/halflife-updated/issues/85)

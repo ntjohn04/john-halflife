@@ -1,6 +1,6 @@
 /***
  *
- *	johnhalflife: the first start (docs/johnhalflife/release.md#first-start).
+ *	johnhalflife: the first start (docs/release.md#first-start).
  *
  *	The release ships johnhalflife's files and the Unified SDK's; what's Valve's comes from the player's own games
  *	(valve, gearbox, bshift, next to the mod). On the first start, and whenever SetupVersion is raised, this puts

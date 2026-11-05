@@ -1,4 +1,4 @@
-"""Makes John Half-Life's release zip (docs/johnhalflife/release.md): one zip for Windows and Linux, extracted into the
+"""Makes John Half-Life's release zip (docs/release.md): one zip for Windows and Linux, extracted into the
 Half-Life folder.
 
 It holds:

@@ -26,7 +26,7 @@ Options:
   --version                                         Show version information
   -?, -h, --help                                    Show help and usage information
 ```
-The mod directory should point to your local copy of the [mod installation](../../INSTALL.md).
+The mod directory should point to your local copy of the [mod installation](../INSTALL.md).
 
 The package manifest should point to the package manifest file contained in the game installation.
 

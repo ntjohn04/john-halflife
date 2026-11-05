@@ -401,8 +401,8 @@ Table of contents:
 
 ## Prototypes
 
-* [GameNetworkingSockets networking system](docs/prototypes/nonfunctional-gns-networking-system.md)
-* [Angelscript scripting system](docs/prototypes/nonfunctional-scripting-system.md)
+* [GameNetworkingSockets networking system](prototypes/nonfunctional-gns-networking-system.md)
+* [Angelscript scripting system](prototypes/nonfunctional-scripting-system.md)
 
 ## Asset Changes
 

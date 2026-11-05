@@ -9,7 +9,7 @@ endif()
 set(VCPKG_OVERLAY_TRIPLETS ${CMAKE_SOURCE_DIR}/vcpkg_config/triplets)
 
 project(HalfLifeMod
-	# John Half-Life's own version: milestones raise the minor version, fixes the patch (docs/johnhalflife/README.md#versions).
+	# John Half-Life's own version: milestones raise the minor version, fixes the patch (docs/README.md#versioning).
 	VERSION 0.18.0
 	DESCRIPTION "Half-Life CMake Mod Template"
 	LANGUAGES CXX)
@@ -241,7 +241,7 @@ install(FILES
 	${CMAKE_BINARY_DIR}/liblist.gam
 	DESTINATION .)
 
-# johnhalflife's settings dialog and menu text (docs/johnhalflife/README.md#settings).
+# johnhalflife's settings dialog and menu text (docs/README.md#settings).
 install(DIRECTORY config/mod/ DESTINATION .)
 
 # Credits and the licences of everything shipped (the game folder only: the expansions' are the same game).
@@ -266,7 +266,7 @@ endif()
 
 # Valve's files the mod folders need (the menu art, Opposing Force's and Blue Shift's files, Half-Life's shell, each
 # game's own versions of shared files) are put in place by the game itself on the first start, from the player's own
-# games (client jhl_setup.cpp, docs/johnhalflife/release.md#first-start).
+# games (client jhl_setup.cpp, docs/release.md#first-start).
 
 # CMake doesn't currently support installing imported libraries of type UNKNOWN.
 # See https://gitlab.kitware.com/cmake/cmake/-/issues/22406
@@ -275,7 +275,7 @@ endif()
 install(FILES $<TARGET_FILE:OpenAL::OpenAL> DESTINATION cl_dlls)
 
 # John Half-Life's expansions: thin mod folders next to the base one that borrow all its content through
-# fallback_dir, each with its own name, main menu and saves (docs/johnhalflife/README.md#expansions).
+# fallback_dir, each with its own name, main menu and saves (docs/README.md#expansions).
 function(jhl_install_expansion name)
 	set(dir ../johnhalflife_${name})
 
