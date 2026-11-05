@@ -917,7 +917,7 @@
 		"Impact": "M"
 	},
 	"C1A1_W1": {
-		"Impact": "M"
+		"Impact": "C"
 	},
 	"C1A1_W1B": {
 		"Impact": "M"
@@ -2270,7 +2270,7 @@
 		"Impact": "M"
 	},
 	"FIFTSFILE2": {
-		"Impact": "M"
+		"Impact": "C"
 	},
 	"FIFTSFILE2B": {
 		"Impact": "M"
@@ -4662,6 +4662,9 @@
 	},
 	"VINE1": {
 		"Impact": "D"
+	},
+	"WALL_GRN04": {
+		"Impact": "M"
 	},
 	"WALL_GRN_MTL_01": {
 		"Impact": "M"
