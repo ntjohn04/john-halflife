@@ -128,6 +128,29 @@ bool ServerLibrary::Initialize()
 	g_ConCommands.CreateCommand("stop_loading_all_maps", [this](const auto&)
 		{ m_MapsToLoad.clear(); });
 
+	// johnhalflife: how many models (the map's brush entities among them), sounds and other files the map has precached,
+	// against the engine's limits; past one, using a file not precached ends the map.
+	g_ConCommands.CreateCommand(
+		"jhl_debug_precache", [](const auto&)
+		{
+			std::size_t brushModels = 0;
+
+			for (std::size_t i = 0; i < g_ModelPrecache->GetCount(); ++i)
+			{
+				if (g_ModelPrecache->GetString(i)[0] == '*')
+				{
+					++brushModels;
+				}
+			}
+
+			Con_Printf("jhl_debug_precache: models %zu of %u (%zu the map's brush entities, %zu other), sounds %zu of %u, "
+					   "other files %zu of %u\n",
+				g_ModelPrecache->GetCount(), g_ModelPrecache->GetMaxEnginePrecaches(), brushModels,
+				g_ModelPrecache->GetCount() - brushModels, g_SoundPrecache->GetCount(), g_SoundPrecache->GetMaxEnginePrecaches(),
+				g_GenericPrecache->GetCount(), g_GenericPrecache->GetMaxEnginePrecaches());
+		},
+		CommandLibraryPrefix::No);
+
 	g_ConCommands.RegisterChangeCallback(&sv_allowbunnyhopping, [](const auto& state)
 		{
 			const bool allowBunnyHopping = state.Cvar->value != 0;
