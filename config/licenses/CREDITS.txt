@@ -4,7 +4,11 @@ John Half-Life
 Half-Life, Opposing Force and Blue Shift as they played in 1998-2001, on a modern base: the original look, sound
 and feel, with long-standing bugs fixed and some optional effects. https://github.com/ntjohn04/john-halflife
 
-Made by ntjohn04. Free; not for sale (see Half-Life-SDK.txt).
+Made by John. Free; not for sale (see Half-Life-SDK.txt).
+
+John Half-Life's own sounds and art (its weapon sounds, the hornet splats and the other sprites and textures it makes
+or ships) are licensed under Creative Commons Attribution 4.0 (CC BY 4.0,
+https://creativecommons.org/licenses/by/4.0/): use them as you like, crediting John Half-Life.
 
 
 Built on
