@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "hud.h"
+#include "jhl_models.h"
 #include "cbase.h"
 #include "CRpg.h"
 #include "com_weapons.h"
@@ -656,7 +657,7 @@ void JhlTank_ParseFire(BufferReader& reader)
 
 		if (bullet == 1)
 		{
-			if (const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/glow_blu.spr"); model != 0)
+			if (const int model = JhlEffectModel("sprites/glow_blu.spr"); model != 0)
 			{
 				Vector position = muzzle;
 				Vector still{0, 0, 0};
@@ -1565,7 +1566,7 @@ void BulletWaterSplashAlongPath(const Vector& start, const Vector& end)
 
 static TEMPENTITY* SplashSprite(const char* spriteName, Vector origin, float scale, float alpha, int renderMode, float frameRate)
 {
-	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex(spriteName);
+	const int modelIndex = JhlEffectModel(spriteName);
 
 	if (modelIndex == 0)
 	{

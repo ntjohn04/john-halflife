@@ -381,30 +381,10 @@ void W_Precache()
 	g_sModelIndexWExplosion = UTIL_PrecacheModel("sprites/WXplo1.spr");		// underwater fireball
 	g_sModelIndexSmoke = UTIL_PrecacheModel("sprites/steam1.spr");			// smoke
 
-	// johnhalflife's second fireballs and lingering explosion smoke (client jhl_explosions.cpp).
-	for (const char* sprite : {"sprites/bexplo.spr", "sprites/cexplo.spr", "sprites/dexplo.spr", "sprites/eexplo.spr",
-			 "sprites/fexplo.spr", "sprites/gexplo.spr", "sprites/hexplo.spr", "sprites/wep_smoke_01.spr"})
-	{
-		UTIL_PrecacheModel(sprite);
-	}
+	// johnhalflife: the sprites and models only its client effects use (second fireballs, lingering smoke, water splash
+	// droplets, blood chunks, the Desert Eagle's shell, the laser turret's flash) aren't precached here: the client
+	// loads them itself (client jhl_models.h), keeping the 512 model slots a map shares with its brush entities free.
 
-	// Bullet water splash droplets (client weapon_effects.cpp).
-	UTIL_PrecacheModel("sprites/wsplash3.spr");
-	// Opposing Force's blood chunk sprite, which no code used, and a yellow copy of it: the gibbing blood splash.
-	UTIL_PrecacheModel("sprites/blood_chnk.spr");
-	UTIL_PrecacheModel("sprites/blood_chnk_yellow.spr");
-
-	// johnhalflife: Opposing Force's shell, the Desert Eagle's (installed from the player's Opposing Force; ev_hldm.cpp).
-	if (g_pFileSystem->FileExists("models/shell_op4.mdl"))
-	{
-		UTIL_PrecacheModel("models/shell_op4.mdl");
-	}
-
-	// johnhalflife: a real laser turret's flash (Opposing Force's, weapon_effects.cpp's JhlTank_ParseFire).
-	if (g_pFileSystem->FileExists("sprites/glow_blu.spr"))
-	{
-		UTIL_PrecacheModel("sprites/glow_blu.spr");
-	}
 	g_sModelIndexBubbles = UTIL_PrecacheModel("sprites/bubble.spr");		// bubbles
 	g_sModelIndexBloodSpray = UTIL_PrecacheModel("sprites/bloodspray.spr"); // initial blood
 	g_sModelIndexBloodDrop = UTIL_PrecacheModel("sprites/blood.spr");		// splattered blood

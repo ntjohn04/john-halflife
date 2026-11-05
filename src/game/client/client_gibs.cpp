@@ -14,6 +14,7 @@
  ****/
 
 #include "hud.h"
+#include "jhl_models.h"
 #include "client_gibs.h"
 #include "ClientLibrary.h"
 #include "com_model.h"
@@ -323,7 +324,7 @@ static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bl
 	// Opposing Force's blood chunk sprite is red; alien blood uses a yellow copy of it
 	// (scripts/make_yellow_blood_chunk.py).
 	const char* const chunkSprite = bloodColor == BLOOD_COLOR_YELLOW ? "sprites/blood_chnk_yellow.spr" : "sprites/blood_chnk.spr";
-	const int chunk = gEngfuncs.pEventAPI->EV_FindModelIndex(chunkSprite);
+	const int chunk = JhlEffectModel(chunkSprite);
 
 	if ((bloodColor != BLOOD_COLOR_RED && bloodColor != BLOOD_COLOR_YELLOW) || chunk == 0)
 		return;
@@ -368,7 +369,7 @@ void ClientGibs_Pop(const Vector& origin, int bloodColor, int chunks)
 		efx->R_BloodSprite(position, bloodColor == BLOOD_COLOR_RED ? SplashPuffRed : DarkYellow, spray, drop, 6);
 	}
 
-	const int chunk = gEngfuncs.pEventAPI->EV_FindModelIndex(bloodColor == BLOOD_COLOR_YELLOW ? "sprites/blood_chnk_yellow.spr" : "sprites/blood_chnk.spr");
+	const int chunk = JhlEffectModel(bloodColor == BLOOD_COLOR_YELLOW ? "sprites/blood_chnk_yellow.spr" : "sprites/blood_chnk.spr");
 
 	for (int i = 0; chunk != 0 && i < chunks; ++i)
 	{
