@@ -200,8 +200,8 @@ sprites (vanilla Opposing Force used about as many). Past 512 a model isn't prec
 (`Host_Error: no precache`); the console says when it happens, and `jhl_debug_precache [list]` counts them. The client
 can't load a model the server didn't precache (`CL_LoadModel` gives -1), so the sprites and models only
 johnhalflife's effects use are precached last in `W_Precache`, most-seen first, only while the map has room for its
-own models twice over; on the few giant maps (of4a4, ofboot2, of3a5, op4ctf_crash) some or all are left out and those
-effects draw their vanilla part only. The client asks for them with `JhlEffectModel` (`src/game/client/jhl_models.h`),
+own models half as much again (32; of4a4's are about 21): op4ctf_crash gets none, of4a4 5, op4ctf_power 8, and those
+effects draw their vanilla part only, the console saying so as the map loads. The client asks for them with `JhlEffectModel` (`src/game/client/jhl_models.h`),
 0 where they aren't precached. Anything new precached on every map: check `jhl_debug_precache` on of4a4.
 
 ## Saves
