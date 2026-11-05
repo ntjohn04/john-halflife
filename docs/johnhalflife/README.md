@@ -11,6 +11,9 @@ and versions are on the [front page](../../README.md).
 * [Sound](sound.md): Half-Life's own mixing and room effects on the SDK's OpenAL sound system
 * [Effects plan](effects_plan.md): the plan the effects (v0.2.0 to v0.8.0) were built from, with what each does
 * [Effects test command](effects_test.md): `jhl_fx_test`, for designing particle effects
+* Muzzle check: `jhl_debug_muzzle` (console) prints everything that keeps the muzzle light and smoke from being made:
+  `jhl_fx_muzzleflash`, third person or a spectator state, a zoomed field of view against `default_fov`, the view
+  model's muzzle point, `r_dynamic`, and whether a temporary entity can be had. For the rare times they've stopped.
 * Hitch finder: `jhl_debug_hitch <ms>` (console, 0 off) reports every frame longer than that: the client's and the
   server's time by part (each engine call into them, user messages, sound loading, resampling and reverb changes,
   entity thinks and touches, by class), their slowest calls, and what the engine took beyond them. Printed to the

@@ -1617,8 +1617,44 @@ static void MsgFunc_BulletImpact(const char* pszName, BufferReader& reader)
 	BulletImpactEffects(position, normal, textureType, kind);
 }
 
+// jhl_debug_muzzle: each thing that keeps the muzzle light and smoke from being made, as it is now (they've been seen
+// to stop for good, rarely, the cause unknown).
+static void DebugMuzzleCommand()
+{
+	const auto value = [](const char* name)
+	{
+		const cvar_t* cvar = gEngfuncs.pfnGetCvarPointer(name);
+		return cvar ? cvar->string : "(none)";
+	};
+
+	cl_entity_t* local = gEngfuncs.GetLocalPlayer();
+	cl_entity_t* viewModel = gEngfuncs.GetViewModel();
+	const Vector attachment = viewModel ? viewModel->attachment[0] : g_vecZero;
+
+	// The temporary entities: one taken and given straight back, to see that there are any left.
+	bool tempEntity = false;
+	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
+
+	if (TEMPENTITY* test = model != 0 ? gEngfuncs.pEfxAPI->CL_TempEntAlloc(v_origin, gEngfuncs.hudGetModelByIndex(model)) : nullptr; test)
+	{
+		tempEntity = true;
+		test->die = 0;
+		test->entity.curstate.renderamt = 0;
+		test->entity.curstate.rendermode = kRenderTransAlpha;
+	}
+
+	gEngfuncs.Con_Printf("jhl_debug_muzzle: jhl_fx_muzzleflash %s; third person %d (cam_thirdperson or spectating: iuser1 %d, iuser2 %d, you %d); "
+						 "zoomed %d (fov %d, default_fov %s); view model %s, muzzle (%.0f %.0f %.0f); r_dynamic %s, r_drawviewmodel %s, "
+						 "jhl_fx_particlesystem %s, cl_lw %s; a temporary entity to be had %d; effects drawn now %d\n",
+		value("jhl_fx_muzzleflash"), CL_IsThirdPerson(), g_iUser1, g_iUser2, local ? local->index : -1,
+		IsZoomed() ? 1 : 0, gHUD.m_iFOV, value("default_fov"), viewModel && viewModel->model ? viewModel->model->name : "(none)",
+		attachment.x, attachment.y, attachment.z, value("r_dynamic"), value("r_drawviewmodel"), value("jhl_fx_particlesystem"),
+		value("cl_lw"), tempEntity ? 1 : 0, MuzzleEffectsEnabled() && !IsZoomed() && attachment != g_vecZero ? 1 : 0);
+}
+
 void WeaponEffects_Initialize()
 {
+	gEngfuncs.pfnAddCommand("jhl_debug_muzzle", &DebugMuzzleCommand);
 	g_cl_bulletimpacts = gEngfuncs.pfnRegisterVariable("jhl_fx_bulletimpacts", "1", FCVAR_ARCHIVE);
 	g_cl_muzzleflash = gEngfuncs.pfnRegisterVariable("jhl_fx_muzzleflash", "1", FCVAR_ARCHIVE);
 
