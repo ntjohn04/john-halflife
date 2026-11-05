@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "hud.h"
 #include "event_api.h"
 #include "utils/filesystem_utils.h"
@@ -32,7 +34,20 @@ inline int JhlEffectModel(const char* name)
 
 	if (index == 0 && g_pFileSystem && g_pFileSystem->FileExists(name))
 	{
-		gEngfuncs.CL_LoadModel(name, &index);
+		// It gives -1 when it can't (the engine's "No model -1!" from every effect handed it), said once a name.
+		if (!gEngfuncs.CL_LoadModel(name, &index) || index <= 0)
+		{
+			static std::string failed;
+
+			if (failed.find(name) == std::string::npos)
+			{
+				failed += name;
+				failed += ';';
+				gEngfuncs.Con_Printf("johnhalflife: couldn't load %s for an effect (index %d); left out\n", name, index);
+			}
+
+			index = 0;
+		}
 	}
 
 	return index;
