@@ -33,9 +33,6 @@
 
 #include "sound/ISoundSystem.h"
 
-// johnhalflife (jhl_hud_hideammobars): the weapon menu without its ammo bars, the small green bars under each weapon.
-static cvar_t* g_HideAmmoBars = nullptr;
-
 extern engine_studio_api_t IEngineStudio;
 
 WEAPON* gpActiveSel; // nullptr means off, 1 means just the menu bar, otherwise
@@ -373,7 +370,6 @@ bool CHudAmmo::Init()
 
 	CVAR_CREATE("hud_drawhistory_time", HISTORY_DRAW_TIME, 0);
 	CVAR_CREATE("hud_fastswitch", "0", FCVAR_ARCHIVE); // controls whether or not weapons can be selected in one keypress
-	g_HideAmmoBars = CVAR_CREATE("jhl_hud_hideammobars", "1", FCVAR_ARCHIVE);
 	m_pCvarCrosshairScale = CVAR_CREATE("crosshair_scale", "2", FCVAR_ARCHIVE); // johnhalflife: its recommended value
 
 	m_iFlags |= HUD_ACTIVE; //!!!
@@ -1324,7 +1320,8 @@ bool CHudAmmo::DrawWList(float flTime)
 
 				// Draw Ammo Bar
 
-				if (!g_HideAmmoBars || 0 == g_HideAmmoBars->value)
+				// johnhalflife (jhl_hud_minimal): without the ammo bars, the small green bars under each weapon.
+				if (!gHUD.m_pCvarHudMinimal || 0 == gHUD.m_pCvarHudMinimal->value)
 				{
 					DrawAmmoBar(p, x + giABWidth / 2, y, giABWidth, giABHeight);
 				}

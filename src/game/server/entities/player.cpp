@@ -1828,6 +1828,12 @@ void CBasePlayer::PreThink()
 		g_engfuncs.pfnSetPhysicsKeyValue(edict(), "jfps", fpsFix);
 	}
 
+	// johnhalflife: and jhl_camera_jumplandjolt, for the long jump's sound.
+	if (const char* jolt = UTIL_JhlJumpLandJolt() ? "1" : "0"; 0 != strcmp(g_engfuncs.pfnGetPhysicsKeyValue(edict(), "jlj"), jolt))
+	{
+		g_engfuncs.pfnSetPhysicsKeyValue(edict(), "jlj", jolt);
+	}
+
 	int buttonsChanged = (m_afButtonLast ^ pev->button); // These buttons have changed this frame
 
 	// Debounced button codes for pressed/released

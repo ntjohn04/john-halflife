@@ -37,7 +37,7 @@ All are client settings: in John Settings (below) or the console.
 | `jhl_camera_bob` | 1 | Dual-rate view bob and figure-eight weapon sway | [Camera](docs/camera_movement.md#view-bob-and-weapon-sway) |
 | `jhl_camera_viewroll` | 1 | Stronger strafe roll | [Camera](docs/camera_movement.md#strafe-roll) |
 | `jhl_camera_verticallag` | 1 | Eye lift while moving upward | [Camera](docs/camera_movement.md#vertical-lag) |
-| `jhl_camera_jumplandjolt` | 1 | Jump and landing view jolts | [Camera](docs/camera_movement.md#jump-and-landing-jolts) |
+| `jhl_camera_jumplandjolt` | 1 | Jump and landing view jolts, and a sound for the long jump module's jump | [Camera](docs/camera_movement.md#jump-and-landing-jolts) |
 | `jhl_visuals_weaponlag` | 1 | Weapon lags behind when turning | [Camera](docs/camera_movement.md#weapon-lag-and-wall-push) |
 | `jhl_visuals_weaponwallpush` | 1 | Weapon pulls back near walls | [Camera](docs/camera_movement.md#weapon-lag-and-wall-push) |
 | `jhl_visuals_flushfaces` | 1 | Signs, posters and panels built flush with walls drawn steady (they flickered in OpenGL and vanished in software) | [Visuals](docs/visuals.md) |
@@ -51,7 +51,7 @@ All are client settings: in John Settings (below) or the console.
 | `jhl_fx_particlesystem` | 1 | The particle system changes (gibs, blood, explosions, debris, beams, rings) | [Effects](docs/effects.md#gibs-done) |
 | `jhl_fx_tracers` | 1 | johnhalflife's tracers (with the particle system on): the M249's tracer rounds, every gun's faint streaks, NPCs' | [Weapons](docs/weapons.md#tracers) |
 | `jhl_hud_scale` | 0 | Sprite HUD scale: 0 automatic (Valve's half-size HUD at 800x600 and below, 1 up to 1439 tall, 2 from 1440, 3 from 2160), 0.5 half size, 1, 2, 3... that size | [HUD](#hud-scale) |
-| `jhl_hud_hideammobars` | 1 | The weapon menu without its ammo bars, the small green (red when empty) bars under each weapon | [HUD](#hud-scale) |
+| `jhl_hud_minimal` | 1 | A minimal HUD: the weapon menu without its ammo bars (the small green, red when empty, bars under each weapon), and the flashlight icon fading away while it's off and fully charged (back at once when on or charging) | [HUD](#hud-scale) |
 | `jhl_snd_vanilla` | 1 | Half-Life's own mixing (22 kHz, its pitch grain, ear volumes, clipping) and room effects, in place of the SDK's OpenAL sound | [Sound](docs/sound.md) |
 | `jhl_snd_musicsaves` | 1 | Loading a save plays the music that was playing when it was saved, from that point (0: loading stops the music, as vanilla) | [Sound](docs/sound.md#music-in-saves) |
 
