@@ -52,6 +52,17 @@ inline bool UTIL_JhlFpsFix()
 }
 
 /**
+ *	@brief Whether jhl_camera_jumplandjolt is on: the client's setting, read as jhl_fx_particlesystem is (the long
+ *	jump's sound goes with the jump jolts).
+ */
+inline bool UTIL_JhlJumpLandJolt()
+{
+	static JhlCvarCache cache;
+	const cvar_t* cvar = UTIL_JhlClientCvar("jhl_camera_jumplandjolt", cache);
+	return !cvar || cvar->value != 0;
+}
+
+/**
  *	@brief The frame time for vanilla's once-a-frame formulas (an NPC's turn, the stomp's speed-up): a 72 fps frame's
  *	with jhl_physics_fpsfix, as vanilla played at 72 fps; else this frame's, as vanilla has it, following the frame rate.
  *	Half-Life Updated had made them steady at other rates (NPC turns as at 50 fps, flying banks at 10, the stomp at 40).

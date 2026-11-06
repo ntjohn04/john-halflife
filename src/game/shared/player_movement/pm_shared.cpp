@@ -2565,6 +2565,12 @@ void PM_Jump()
 			{
 				PM_PlaySound(CHAN_STATIC, "ctf/pow_big_jump.wav", VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 			}
+			// johnhalflife (jhl_camera_jumplandjolt, sent by the server as "jlj"): the long jump module's jump, a
+			// reserved burst (vanilla's is silent, but for the jump's own sound).
+			else if (atoi(pmove->PM_Info_ValueForKey(pmove->physinfo, "jlj")) == 1)
+			{
+				PM_PlaySound(CHAN_STATIC, "player/power_jump.wav", VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
+			}
 		}
 		else
 		{

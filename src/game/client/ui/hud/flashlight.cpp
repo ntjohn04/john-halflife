@@ -18,6 +18,8 @@
 // implementation of CHudFlashlight class
 //
 
+#include <algorithm>
+
 #include "hud.h"
 
 bool CHudFlashlight::Init()
@@ -106,7 +108,32 @@ bool CHudFlashlight::Draw(float flTime)
 	if (!gHUD.HasSuit())
 		return true;
 
-	const int a = m_fOn ? 225 : MIN_ALPHA;
+	int a = m_fOn ? 225 : MIN_ALPHA;
+
+	// johnhalflife (jhl_hud_minimal): off and fully charged it has nothing to say, so after a moment it fades away;
+	// on, or charging, it's back at once.
+	constexpr float IdleHold = 1.5f;
+	constexpr float IdleFade = 1.0f;
+
+	if (!m_fOn && m_iBat >= 100 && gHUD.m_pCvarHudMinimal && 0 != gHUD.m_pCvarHudMinimal->value)
+	{
+		if (m_flIdleSince < 0 || m_flIdleSince > flTime)
+		{
+			m_flIdleSince = flTime;
+		}
+
+		const float fade = std::clamp((flTime - m_flIdleSince - IdleHold) / IdleFade, 0.f, 1.f);
+		a = static_cast<int>(a * (1 - fade));
+
+		if (a <= 0)
+		{
+			return true;
+		}
+	}
+	else
+	{
+		m_flIdleSince = -1;
+	}
 
 	const auto& originalColor = m_flBat < 0.20 ? RGB_REDISH : gHUD.m_HudItemColor;
 

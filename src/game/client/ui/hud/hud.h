@@ -394,6 +394,7 @@ private:
 	int m_iBat;
 	bool m_fOn;
 	float m_fFade;
+	float m_flIdleSince = -1; // johnhalflife: since when it's been off and fully charged (jhl_hud_minimal).
 };
 
 //
@@ -869,6 +870,12 @@ public:
 	std::string HudConfigFile(const std::string& fileName) const;
 
 	cvar_t* m_pCvarHudScale = nullptr;
+
+	/**
+	 *	@brief johnhalflife (jhl_hud_minimal): the weapon menu without its ammo bars, and the flashlight icon fading away
+	 *	while it's off and fully charged.
+	 */
+	cvar_t* m_pCvarHudMinimal = nullptr;
 
 	std::uint64_t m_iWeaponBits = 0;
 	std::uint32_t m_HudFlags = 0;

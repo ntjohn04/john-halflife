@@ -1421,6 +1421,7 @@ void ClientPrecache()
 	UTIL_PrecacheSound("player/geiger1.wav");
 
 	UTIL_PrecacheSound("ctf/pow_big_jump.wav");
+	UTIL_PrecacheSound("player/power_jump.wav"); // johnhalflife: the long jump module's jump (pm_shared.cpp).
 
 	// for cheat_givemagazine
 	UTIL_PrecacheSound(DefaultItemPickupSound);

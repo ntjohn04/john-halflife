@@ -115,6 +115,7 @@ void CHud::Init()
 	CVAR_CREATE("cl_autowepswitch", "1", FCVAR_ARCHIVE | FCVAR_USERINFO);
 	default_fov = CVAR_CREATE("default_fov", "100", FCVAR_ARCHIVE); // johnhalflife: its recommended value
 	m_pCvarHudScale = CVAR_CREATE("jhl_hud_scale", "0", FCVAR_ARCHIVE);
+	m_pCvarHudMinimal = CVAR_CREATE("jhl_hud_minimal", "1", FCVAR_ARCHIVE);
 	m_pCvarStealMouse = CVAR_CREATE("hud_capturemouse", "1", FCVAR_ARCHIVE);
 	m_pCvarDraw = CVAR_CREATE("hud_draw", "1", FCVAR_ARCHIVE);
 	m_pCvarCrosshair = gEngfuncs.pfnGetCvarPointer("crosshair");

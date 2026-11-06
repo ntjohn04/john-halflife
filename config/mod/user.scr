@@ -181,9 +181,9 @@ DESCRIPTION INFO_OPTIONS
 		{ "0.000000" }
 	}
 
-	"jhl_hud_hideammobars"
+	"jhl_hud_minimal"
 	{
-		"JHL | HUD: weapon menu without its ammo bars"
+		"JHL | HUD: minimal (no weapon menu ammo bars, idle flashlight icon fades)"
 		{ BOOL }
 		{ "1" }
 	}
