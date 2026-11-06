@@ -181,6 +181,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "0.000000" }
 	}
 
+	"jhl_hud_hideammobars"
+	{
+		"JHL | HUD: weapon menu without its ammo bars"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"jhl_snd_vanilla"
 	{
 		"JHL | Sound: Half-Life's own mixing and room effects"

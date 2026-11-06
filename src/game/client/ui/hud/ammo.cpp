@@ -370,6 +370,7 @@ bool CHudAmmo::Init()
 
 	CVAR_CREATE("hud_drawhistory_time", HISTORY_DRAW_TIME, 0);
 	CVAR_CREATE("hud_fastswitch", "0", FCVAR_ARCHIVE); // controls whether or not weapons can be selected in one keypress
+	g_HideAmmoBars = CVAR_CREATE("jhl_hud_hideammobars", "1", FCVAR_ARCHIVE);
 	m_pCvarCrosshairScale = CVAR_CREATE("crosshair_scale", "2", FCVAR_ARCHIVE); // johnhalflife: its recommended value
 
 	m_iFlags |= HUD_ACTIVE; //!!!
@@ -1133,6 +1134,9 @@ bool CHudAmmo::Draw(float flTime)
 //
 // Draws the ammo bar on the hud
 //
+// johnhalflife (jhl_hud_hideammobars): the weapon menu without its ammo bars, the small green bars under each weapon.
+static cvar_t* g_HideAmmoBars = nullptr;
+
 int DrawBar(int x, int y, int width, int height, float f)
 {
 	if (f < 0)
@@ -1320,7 +1324,10 @@ bool CHudAmmo::DrawWList(float flTime)
 
 				// Draw Ammo Bar
 
-				DrawAmmoBar(p, x + giABWidth / 2, y, giABWidth, giABHeight);
+				if (!g_HideAmmoBars || 0 == g_HideAmmoBars->value)
+				{
+					DrawAmmoBar(p, x + giABWidth / 2, y, giABWidth, giABHeight);
+				}
 
 				y += p->rcActive.bottom - p->rcActive.top + 5;
 			}
