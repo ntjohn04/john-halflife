@@ -200,7 +200,7 @@ void WeaponsResource::LoadWeaponSprites(WEAPON* pWeapon)
 			}
 		}
 
-		return g_HudSpriteConfig.Load(fmt::format("sprites/{}.json", pWeapon->Info->Name.c_str()).c_str());
+		return g_HudSpriteConfig.Load(gHUD.HudConfigFile(fmt::format("sprites/{}.json", pWeapon->Info->Name.c_str())).c_str());
 	}();
 
 	if (sprites.empty())

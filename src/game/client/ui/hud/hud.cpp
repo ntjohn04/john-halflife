@@ -114,7 +114,7 @@ void CHud::Init()
 	CVAR_CREATE("zoom_sensitivity_ratio", "1.2", 0);
 	CVAR_CREATE("cl_autowepswitch", "1", FCVAR_ARCHIVE | FCVAR_USERINFO);
 	default_fov = CVAR_CREATE("default_fov", "100", FCVAR_ARCHIVE); // johnhalflife: its recommended value
-	m_pCvarHudScale = CVAR_CREATE("jhl_hud_scale", "1", FCVAR_ARCHIVE);
+	m_pCvarHudScale = CVAR_CREATE("jhl_hud_scale", "0", FCVAR_ARCHIVE);
 	m_pCvarStealMouse = CVAR_CREATE("hud_capturemouse", "1", FCVAR_ARCHIVE);
 	m_pCvarDraw = CVAR_CREATE("hud_draw", "1", FCVAR_ARCHIVE);
 	m_pCvarCrosshair = gEngfuncs.pfnGetCvarPointer("crosshair");
@@ -234,13 +234,14 @@ void CHud::VidInit()
 	m_hsprLogo = 0;
 	m_hsprCursor = 0;
 
-	// johnhalflife: the half-size sprites below 640 wide, as vanilla, or with jhl_hud_scale below 1.
+	// johnhalflife: the half-size sprites below 640 wide, as vanilla, with jhl_hud_scale below 1 (0.5), or automatic (0)
+	// at 600 tall and below (800x600, 640x480).
 	{
 		SCREENINFO screen{};
 		screen.iSize = sizeof(screen);
 		GetScreenInfo(&screen);
 		const float hudScale = m_pCvarHudScale ? m_pCvarHudScale->value : 1;
-		m_bHalfSizeHud = screen.iWidth < 640 || (hudScale > 0 && hudScale < 1);
+		m_bHalfSizeHud = screen.iWidth < 640 || (hudScale > 0 && hudScale < 1) || (hudScale <= 0 && screen.iHeight <= 600);
 	}
 
 	// we need to load the hud.json, and all sprites within
