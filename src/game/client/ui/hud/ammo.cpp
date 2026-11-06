@@ -370,7 +370,7 @@ bool CHudAmmo::Init()
 
 	CVAR_CREATE("hud_drawhistory_time", HISTORY_DRAW_TIME, 0);
 	CVAR_CREATE("hud_fastswitch", "0", FCVAR_ARCHIVE); // controls whether or not weapons can be selected in one keypress
-	m_pCvarCrosshairScale = CVAR_CREATE("crosshair_scale", "2", FCVAR_ARCHIVE); // johnhalflife: its recommended value
+	m_pCvarCrosshairScale = CVAR_CREATE("crosshair_scale", "0", FCVAR_ARCHIVE); // johnhalflife: 0, automatic (below)
 
 	m_iFlags |= HUD_ACTIVE; //!!!
 
@@ -932,7 +932,16 @@ void CHudAmmo::DrawCrosshair(int x, int y)
 			const int iOrigWidth = gEngfuncs.pfnSPR_Width(crosshair.sprite, 0);
 			const int iOrigHeight = gEngfuncs.pfnSPR_Height(crosshair.sprite, 0);
 
-			const float flScale = std::max(1.f, m_pCvarCrosshairScale->value);
+			// johnhalflife: 0 is automatic, as jhl_hud_scale is: 1 at 600 tall and below (where the HUD is half size),
+			// 3 from 2160 (where it's 3x), else 2.
+			float flScale = m_pCvarCrosshairScale->value;
+
+			if (flScale <= 0)
+			{
+				flScale = ScreenHeight <= 600 ? 1.f : (ScreenHeight >= 2160 ? 3.f : 2.f);
+			}
+
+			flScale = std::max(1.f, flScale);
 
 			Rect rect;
 

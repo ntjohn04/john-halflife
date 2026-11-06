@@ -40,8 +40,9 @@ struct RecommendedSetting
 // old default: gamma 2.5, brightness 1; the engine's are 2.2 and 0, and gamma can't go below 1.8). 6: the hidden
 // settings below, texture filtering off among them, and the original (not HD) models. 7: jhl_hud_scale 0 (automatic:
 // Valve's half-size HUD at 800x600 and below), and only that: a player's own settings aren't applied again, the HUD
-// scale moved along only if still at the old default, 1.
-constexpr int RecommendedSettingsVersion = 7;
+// scale moved along only if still at the old default, 1. 8: crosshair_scale 0 (automatic: 1 at 800x600 and below, 2
+// above, 3 from 2160 tall), likewise moved along only if still at the old default, 2.
+constexpr int RecommendedSettingsVersion = 8;
 constexpr int LastFullRecommendedVersion = 6;
 
 // Applied on first launch and by a reset: every setting listed in the John Settings dialog (config/mod/user.scr), and
@@ -71,7 +72,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_snd_vanilla", "1"},
 	{"jhl_snd_musicsaves", "1"},
 	{"crosshair", "1"},
-	{"crosshair_scale", "2"},
+	{"crosshair_scale", "0"},
 	{"default_fov", "100"},
 	{"gamma", "1.92"},
 	{"brightness", "0"},
@@ -327,9 +328,14 @@ void JhlSettings_RunFrame()
 		}
 		else if (g_RecommendedVersion->value < RecommendedSettingsVersion)
 		{
-			if (gEngfuncs.pfnGetCvarFloat("jhl_hud_scale") == 1)
+			if (g_RecommendedVersion->value < 7 && gEngfuncs.pfnGetCvarFloat("jhl_hud_scale") == 1)
 			{
 				gEngfuncs.Cvar_Set("jhl_hud_scale", "0");
+			}
+
+			if (g_RecommendedVersion->value < 8 && gEngfuncs.pfnGetCvarFloat("crosshair_scale") == 2)
+			{
+				gEngfuncs.Cvar_Set("crosshair_scale", "0");
 			}
 
 			gEngfuncs.Cvar_Set(g_RecommendedVersion->name, std::to_string(RecommendedSettingsVersion).c_str());
