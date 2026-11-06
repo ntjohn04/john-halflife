@@ -33,6 +33,9 @@
 
 #include "sound/ISoundSystem.h"
 
+// johnhalflife (jhl_hud_hideammobars): the weapon menu without its ammo bars, the small green bars under each weapon.
+static cvar_t* g_HideAmmoBars = nullptr;
+
 extern engine_studio_api_t IEngineStudio;
 
 WEAPON* gpActiveSel; // nullptr means off, 1 means just the menu bar, otherwise
@@ -1134,9 +1137,6 @@ bool CHudAmmo::Draw(float flTime)
 //
 // Draws the ammo bar on the hud
 //
-// johnhalflife (jhl_hud_hideammobars): the weapon menu without its ammo bars, the small green bars under each weapon.
-static cvar_t* g_HideAmmoBars = nullptr;
-
 int DrawBar(int x, int y, int width, int height, float f)
 {
 	if (f < 0)
