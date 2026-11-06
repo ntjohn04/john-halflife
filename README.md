@@ -51,6 +51,7 @@ All are client settings: in John Settings (below) or the console.
 | `jhl_fx_particlesystem` | 1 | The particle system changes (gibs, blood, explosions, debris, beams, rings) | [Effects](docs/effects.md#gibs-done) |
 | `jhl_fx_tracers` | 1 | johnhalflife's tracers (with the particle system on): the M249's tracer rounds, every gun's faint streaks, NPCs' | [Weapons](docs/weapons.md#tracers) |
 | `jhl_hud_scale` | 0 | Sprite HUD scale: 0 automatic (Valve's half-size HUD at 800x600 and below, 1 up to 1439 tall, 2 from 1440, 3 from 2160), 0.5 half size, 1, 2, 3... that size | [HUD](#hud-scale) |
+| `jhl_hud_hideammobars` | 1 | The weapon menu without its ammo bars, the small green (red when empty) bars under each weapon | [HUD](#hud-scale) |
 | `jhl_snd_vanilla` | 1 | Half-Life's own mixing (22 kHz, its pitch grain, ear volumes, clipping) and room effects, in place of the SDK's OpenAL sound | [Sound](docs/sound.md) |
 | `jhl_snd_musicsaves` | 1 | Loading a save plays the music that was playing when it was saved, from that point (0: loading stops the music, as vanilla) | [Sound](docs/sound.md#music-in-saves) |
 
