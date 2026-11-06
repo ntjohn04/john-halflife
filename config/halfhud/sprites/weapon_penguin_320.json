@@ -1,0 +1,23 @@
+{
+	"weapon": {
+		"SpriteName": "half/hudof03",
+		"Left": 0,
+		"Top": 90,
+		"Width": 85,
+		"Height": 22
+	},
+	"weapon_s": {
+		"SpriteName": "half/hudof04",
+		"Left": 0,
+		"Top": 90,
+		"Width": 85,
+		"Height": 22
+	},
+	"ammo": {
+		"SpriteName": "half/hud3",
+		"Left": 109,
+		"Top": 48,
+		"Width": 12,
+		"Height": 12
+	}
+}

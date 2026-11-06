@@ -1350,6 +1350,7 @@ johnhalflife	sound/weapons/spore_ammo.wav	gearbox/sound/weapons/spore_ammo.wav
 johnhalflife	sound/weapons/spore_hit1.wav	gearbox/sound/weapons/spore_hit1.wav	gearbox/sound/weapons/splauncher_bounce.wav	gearbox/sound/weapons/spore_hit2.wav	gearbox/sound/weapons/spore_hit3.wav
 johnhalflife	sound/weapons/spore_hit2.wav	gearbox/sound/weapons/spore_hit2.wav	gearbox/sound/weapons/splauncher_bounce.wav	gearbox/sound/weapons/spore_hit1.wav	gearbox/sound/weapons/spore_hit3.wav
 johnhalflife	sound/weapons/spore_hit3.wav	gearbox/sound/weapons/spore_hit3.wav	gearbox/sound/weapons/splauncher_bounce.wav	gearbox/sound/weapons/spore_hit1.wav	gearbox/sound/weapons/spore_hit2.wav
+johnhalflife	sprites/320_logo.spr	valve/sprites/320_logo.spr
 johnhalflife	sprites/640_logo.spr	valve/sprites/640_logo.spr
 johnhalflife	sprites/_tongue.spr	gearbox/sprites/_tongue.spr
 johnhalflife	sprites/ba_gun2.spr	bshift/sprites/ba_gun2.spr
@@ -1401,6 +1402,11 @@ johnhalflife	sprites/of_nv_a.spr	gearbox/sprites/of_nv_a.spr
 johnhalflife	sprites/of_nv_b.spr	gearbox/sprites/of_nv_b.spr
 johnhalflife	sprites/of_nv_int.spr	gearbox/sprites/of_nv_int.spr
 johnhalflife	sprites/ofch2.spr	gearbox/sprites/ofch2.spr
+johnhalflife	sprites/op4/320_pain.spr	gearbox/sprites/320_pain.spr
+johnhalflife	sprites/op4/320_train.spr	gearbox/sprites/320_train.spr
+johnhalflife	sprites/op4/320hud2.spr	gearbox/sprites/320hud2.spr
+johnhalflife	sprites/op4/320hud3.spr	gearbox/sprites/320hud3.spr
+johnhalflife	sprites/op4/320hudof01.spr	gearbox/sprites/320hudof01.spr
 johnhalflife	sprites/op4/hud1.spr	gearbox/sprites/640hud1.spr
 johnhalflife	sprites/op4/hud4.spr	gearbox/sprites/640hud4.spr
 johnhalflife	sprites/op4/hud5.spr	gearbox/sprites/640hud5.spr
@@ -1434,6 +1440,7 @@ johnhalflife_bs	sound/common/null.wav	bshift/sound/common/null.wav
 johnhalflife_bs	sound/misc/talk.wav	bshift/sound/misc/talk.wav
 johnhalflife_bs	sound/scientist/needsleep.wav	bshift/sound/scientist/needsleep.wav
 johnhalflife_bs	sound/scientist/survival.wav	bshift/sound/scientist/survival.wav
+johnhalflife_bs	sprites/320_logo.spr	bshift/sprites/320_logo.spr
 johnhalflife_bs	sprites/640_logo.spr	bshift/sprites/640_logo.spr
 johnhalflife_bs	sprites/laserdot.spr	bshift/sprites/laserdot.spr
 johnhalflife_op4	sound/barney/icanhear.wav	gearbox/sound/barney/icanhear.wav
@@ -1441,5 +1448,6 @@ johnhalflife_op4	sound/common/null.wav	gearbox/sound/common/null.wav
 johnhalflife_op4	sound/misc/talk.wav	gearbox/sound/misc/talk.wav
 johnhalflife_op4	sound/scientist/needsleep.wav	gearbox/sound/scientist/needsleep.wav
 johnhalflife_op4	sound/scientist/survival.wav	gearbox/sound/scientist/survival.wav
+johnhalflife_op4	sprites/320_logo.spr	gearbox/sprites/320_logo.spr
 johnhalflife_op4	sprites/640_logo.spr	gearbox/sprites/640_logo.spr
 johnhalflife_op4	sprites/laserdot.spr	gearbox/sprites/laserdot.spr

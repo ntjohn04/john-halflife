@@ -1,0 +1,51 @@
+{
+	"weapon": {
+		"SpriteName": "320hud1",
+		"Left": 80,
+		"Top": 0,
+		"Width": 80,
+		"Height": 20
+	},
+	"weapon_s": {
+		"SpriteName": "320hud1",
+		"Left": 80,
+		"Top": 20,
+		"Width": 80,
+		"Height": 20
+	},
+	"ammo": {
+		"SpriteName": "op4/320hud2",
+		"Left": 72,
+		"Top": 16,
+		"Width": 18,
+		"Height": 18
+	},
+	"crosshair": {
+		"SpriteName": "crosshairs",
+		"Left": 72,
+		"Top": 0,
+		"Width": 24,
+		"Height": 24
+	},
+	"autoaim": {
+		"SpriteName": "crosshairs",
+		"Left": 0,
+		"Top": 96,
+		"Width": 24,
+		"Height": 24
+	},
+	"zoom": {
+		"SpriteName": "crosshairs",
+		"Left": 24,
+		"Top": 96,
+		"Width": 104,
+		"Height": 16
+	},
+	"zoom_autoaim": {
+		"SpriteName": "crosshairs",
+		"Left": 24,
+		"Top": 112,
+		"Width": 104,
+		"Height": 16
+	}
+}

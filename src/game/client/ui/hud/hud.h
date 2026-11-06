@@ -856,6 +856,18 @@ public:
 	 */
 	float m_flHudScale = 1;
 
+	/**
+	 *	@brief johnhalflife: the half-size HUD (vanilla's "320" sprites), below 640 wide as vanilla, or with a
+	 *	jhl_hud_scale below 1 (0.5); decided as sprites load (VidInit), drawn at scale 1.
+	 */
+	bool m_bHalfSizeHud = false;
+
+	/**
+	 *	@brief A HUD layout file, its half-size version (name_320.json, scripts/make_half_hud.py) when the half-size
+	 *	HUD is on and there is one.
+	 */
+	std::string HudConfigFile(const std::string& fileName) const;
+
 	cvar_t* m_pCvarHudScale = nullptr;
 
 	std::uint64_t m_iWeaponBits = 0;

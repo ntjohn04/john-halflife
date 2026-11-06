@@ -43,7 +43,7 @@ namespace fs = std::filesystem;
 namespace
 {
 // Raise when what the setup makes changes, so installed folders are set up again.
-constexpr int SetupVersion = 6;
+constexpr int SetupVersion = 7;
 
 constexpr const char* BaseFolder = "johnhalflife";
 constexpr const char* StampFile = "jhl_setup.txt";

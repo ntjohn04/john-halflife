@@ -168,15 +168,31 @@ int CHud::GetSpriteIndex(const char* SpriteName)
 	return -1; // invalid sprite
 }
 
+std::string CHud::HudConfigFile(const std::string& fileName) const
+{
+	if (m_bHalfSizeHud && fileName.size() > 5 && fileName.ends_with(".json"))
+	{
+		std::string half = fileName.substr(0, fileName.size() - 5) + "_320.json";
+
+		if (g_pFileSystem->FileExists(half.c_str()))
+		{
+			return half;
+		}
+	}
+
+	return fileName;
+}
+
 void CHud::UpdateScreenInfo()
 {
 	m_scrinfo.iSize = sizeof(m_scrinfo);
 	GetScreenInfo(&m_scrinfo);
 
-	// Scaling draws sprites through the triangle API, so software rendering stays at native size.
+	// Scaling draws sprites through the triangle API, so software rendering stays at native size. The half-size HUD
+	// is drawn at native size too.
 	float scale = 1;
 
-	if (m_pCvarHudScale && IEngineStudio.IsHardware && 0 != IEngineStudio.IsHardware())
+	if (m_pCvarHudScale && !m_bHalfSizeHud && IEngineStudio.IsHardware && 0 != IEngineStudio.IsHardware())
 	{
 		scale = m_pCvarHudScale->value;
 
@@ -218,17 +234,26 @@ void CHud::VidInit()
 	m_hsprLogo = 0;
 	m_hsprCursor = 0;
 
+	// johnhalflife: the half-size sprites below 640 wide, as vanilla, or with jhl_hud_scale below 1.
+	{
+		SCREENINFO screen{};
+		screen.iSize = sizeof(screen);
+		GetScreenInfo(&screen);
+		const float hudScale = m_pCvarHudScale ? m_pCvarHudScale->value : 1;
+		m_bHalfSizeHud = screen.iWidth < 640 || (hudScale > 0 && hudScale < 1);
+	}
+
 	// we need to load the hud.json, and all sprites within
 	m_Sprites.clear();
 
 	if (g_pFileSystem->FileExists(g_HudReplacements.HudReplacementFileName.c_str()))
 	{
-		m_Sprites = g_HudSpriteConfig.Load(g_HudReplacements.HudReplacementFileName.c_str());
+		m_Sprites = g_HudSpriteConfig.Load(HudConfigFile(g_HudReplacements.HudReplacementFileName).c_str());
 	}
 
 	if (m_Sprites.empty())
 	{
-		m_Sprites = g_HudSpriteConfig.Load("sprites/hud.json");
+		m_Sprites = g_HudSpriteConfig.Load(HudConfigFile("sprites/hud.json").c_str());
 	}
 
 	// we have already have loaded the sprite reference from hud.json, but
