@@ -146,6 +146,7 @@ def package(windows, linux, release_zip, out, install=None):
         python = [sys.executable, "-I"]
         subprocess.run(python + [os.path.join(HERE, "restore_npc_speeds.py"), base], check=True)
         subprocess.run(python + [os.path.join(HERE, "make_hornet_decals.py"), base], check=True)
+        subprocess.run(python + [os.path.join(HERE, "make_half_hud.py"), "sprites", base], check=True)
         unified_decals = os.path.join(base, "decals_unified.wad")
         if os.path.exists(unified_decals):
             os.remove(unified_decals)

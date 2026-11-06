@@ -247,6 +247,9 @@ install(DIRECTORY config/mod/ DESTINATION .)
 # Credits and the licences of everything shipped (the game folder only: the expansions' are the same game).
 install(DIRECTORY config/licenses/ DESTINATION licenses)
 
+# The half-size HUD's layouts (scripts/make_half_hud.py), the game folder only: the expansions find them there.
+install(DIRECTORY config/halfhud/ DESTINATION .)
+
 # johnhalflife's hornet dart splats, added to the installed decals.wad (made from the player's own games when the
 # Unified SDK's assets were installed; see the script). Without Python they're left out and darts don't splat.
 find_package(Python3 COMPONENTS Interpreter)

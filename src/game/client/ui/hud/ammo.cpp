@@ -192,7 +192,7 @@ void WeaponsResource::LoadWeaponSprites(WEAPON* pWeapon)
 	{
 		if (g_pFileSystem->FileExists(pWeapon->Info->HudConfigFileName.c_str()))
 		{
-			auto sprites = g_HudSpriteConfig.Load(pWeapon->Info->HudConfigFileName.c_str());
+			auto sprites = g_HudSpriteConfig.Load(gHUD.HudConfigFile(pWeapon->Info->HudConfigFileName).c_str());
 
 			if (!sprites.empty())
 			{

@@ -1,0 +1,23 @@
+{
+	"weapon": {
+		"SpriteName": "320hud1",
+		"Left": 160,
+		"Top": 0,
+		"Width": 80,
+		"Height": 20
+	},
+	"weapon_s": {
+		"SpriteName": "320hud1",
+		"Left": 160,
+		"Top": 20,
+		"Width": 80,
+		"Height": 20
+	},
+	"ammo": {
+		"SpriteName": "320hud2",
+		"Left": 36,
+		"Top": 34,
+		"Width": 18,
+		"Height": 18
+	}
+}

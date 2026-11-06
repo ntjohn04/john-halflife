@@ -50,7 +50,7 @@ All are client settings: in John Settings (below) or the console.
 | `jhl_fx_muzzleflash` | 1 | Muzzle light and smoke, RPG backblast | [Weapons](docs/weapons.md#muzzle-light-and-smoke) |
 | `jhl_fx_particlesystem` | 1 | The particle system changes (gibs, blood, explosions, debris, beams, rings) | [Effects](docs/effects.md#gibs-done) |
 | `jhl_fx_tracers` | 1 | johnhalflife's tracers (with the particle system on): the M249's tracer rounds, every gun's faint streaks, NPCs' | [Weapons](docs/weapons.md#tracers) |
-| `jhl_hud_scale` | 1 | Sprite HUD scale (0 = automatic by screen height) | [HUD](#hud-scale) |
+| `jhl_hud_scale` | 1 | Sprite HUD scale (0 = automatic by screen height, 0.5 = Valve's half-size HUD) | [HUD](#hud-scale) |
 | `jhl_snd_vanilla` | 1 | Half-Life's own mixing (22 kHz, its pitch grain, ear volumes, clipping) and room effects, in place of the SDK's OpenAL sound | [Sound](docs/sound.md) |
 | `jhl_snd_musicsaves` | 1 | Loading a save plays the music that was playing when it was saved, from that point (0: loading stops the music, as vanilla) | [Sound](docs/sound.md#music-in-saves) |
 
@@ -119,6 +119,12 @@ Without `-nofbo`, a resolution the screen shows 1:1 (the desktop's, or 4:3 at it
 The sprite HUD is laid out on a virtual screen (real size divided by the scale) and drawn scaled. Engine
 text keeps its size; VGUI and the spectator HUD stay in real pixels. Crosshair size stays on
 `crosshair_scale`. The crosshair itself is vanilla.
+
+**Half size** (`0.5`, and always below 640 pixels wide, as vanilla): Valve's half-size HUD, the "320" sprites
+vanilla used at low resolutions, which the Unified SDK left out. Each icon is Valve's own half-size one where the
+Unified SDK's icon is Valve's (Opposing Force's in its game, from its own sprites); the Unified SDK's own icons (its
+Half-Life-style Opposing Force weapon icons, the game titles) are halved exactly. Crosshairs keep their size. It
+changes as the next map loads (`scripts/make_half_hud.py`).
 
 ## Games
 

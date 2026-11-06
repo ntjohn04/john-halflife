@@ -1,0 +1,16 @@
+{
+	"weapon": {
+		"SpriteName": "half/hudof01",
+		"Left": 0,
+		"Top": 0,
+		"Width": 85,
+		"Height": 22
+	},
+	"weapon_s": {
+		"SpriteName": "half/hudof02",
+		"Left": 0,
+		"Top": 0,
+		"Width": 85,
+		"Height": 22
+	}
+}
