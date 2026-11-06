@@ -77,7 +77,7 @@ are on), and changing it sets all four. It isn't saved itself; the four are.
 
 The recommended values are the defaults: every setting listed in the dialog, and only those (`DialogSettings`), with
 the same values as `user.scr`'s defaults and the game code's own (`crosshair_scale`, `default_fov`). Notable ones:
-`crosshair 1`, `crosshair_scale 2`, `default_fov 100`, `sv_aim 0` (auto-aim), `fps_override 1` with `fps_max 240`,
+`crosshair 1`, `crosshair_scale 0` (automatic), `default_fov 100`, `sv_aim 0` (auto-aim), `fps_override 1` with `fps_max 240`,
 `gl_vsync 0`,
 `m_rawinput 1`, blood and gibs on (the content lock isn't used).
 

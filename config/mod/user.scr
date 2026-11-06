@@ -211,9 +211,9 @@ DESCRIPTION INFO_OPTIONS
 
 	"crosshair_scale"
 	{
-		"Vanilla | Crosshair scale"
-		{ NUMBER 1.000000 4.000000 }
-		{ "2.000000" }
+		"Vanilla | Crosshair scale (0 = automatic)"
+		{ NUMBER 0.000000 4.000000 }
+		{ "0.000000" }
 	}
 
 	"default_fov"

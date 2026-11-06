@@ -119,7 +119,8 @@ Without `-nofbo`, a resolution the screen shows 1:1 (the desktop's, or 4:3 at it
 
 The sprite HUD is laid out on a virtual screen (real size divided by the scale) and drawn scaled. Engine
 text keeps its size; VGUI and the spectator HUD stay in real pixels. Crosshair size stays on
-`crosshair_scale`. The crosshair itself is vanilla.
+`crosshair_scale` (Half-Life Updated's), 0 by default: automatic, as the HUD scale, 1 at 600 tall and below, 2
+above, 3 from 2160. The crosshair itself is vanilla.
 
 **Half size** (`0.5`; automatic, `0`, at 600 tall and below; and always below 640 wide, as vanilla): Valve's half-size HUD, the "320" sprites
 vanilla used at low resolutions, which the Unified SDK left out. Each icon is Valve's own half-size one where the
