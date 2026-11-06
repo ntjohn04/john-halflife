@@ -240,14 +240,7 @@ cfg/maps/t0a0b1.json
 cfg/maps/t0a0b2.json
 cfg/maps/t0a0c.json
 cfg/maps/t0a0d.json
-cfg/maps/test_replacements_model.json
-cfg/maps/test_replacements_sentence.json
-cfg/maps/test_replacements_sound.json
-cfg/maps/test_trigger_script.json
 cfg/maps/undertow.json
-cfg/maps/zoo_items_spawn_replacement.json
-cfg/maps/zoo_npcs.json
-cfg/maps/zoo_npcs_skill.json
 cfg/replacements/silent_item_respawn.json
 cfg/server/mapcycle.json
 cfg/server/server.json
