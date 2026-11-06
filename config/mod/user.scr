@@ -178,7 +178,7 @@ DESCRIPTION INFO_OPTIONS
 	{
 		"JHL | HUD scale (0 = automatic, 0.5 = half size)"
 		{ NUMBER 0.000000 4.000000 }
-		{ "1.000000" }
+		{ "0.000000" }
 	}
 
 	"jhl_snd_vanilla"

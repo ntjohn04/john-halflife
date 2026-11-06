@@ -32,6 +32,9 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 CONFIG = os.path.join(HERE, "..", "config", "halfhud", "sprites")
 UNIFIED_FILES = os.path.join(HERE, "release_unified_files.txt")
+# Opposing Force's half-size sprites that differ from Half-Life's and are copied at first start to sprites/op4/
+# (make_setup_files.py); a half-size icon needing another of Opposing Force's own sprites isn't used.
+OP4_COPIES = ("320_pain", "320_train", "320hud2", "320hud3", "320hudof01")
 TRANSPARENT = 255  # Index 255 is transparent in HUD sprites (alpha tested).
 
 
@@ -102,10 +105,13 @@ def layouts(half_life):
 
     def sprite_name_for(game, name):
         """A vanilla half-size sprite of game's, as a name the game folder finds."""
-        if game == "valve" or md5(f"{half_life}/{game}/sprites/{name}.spr") == md5(f"{half_life}/valve/sprites/{name}.spr"):
+        own = md5(f"{half_life}/{game}/sprites/{name}.spr")
+        if not own:
+            return None  # Named in the game's layout but never shipped (Opposing Force's "320hudof1").
+        if game == "valve" or own == md5(f"{half_life}/valve/sprites/{name}.spr"):
             return name
         if game == "gearbox":
-            return f"op4/{name}"
+            return f"op4/{name}" if name in OP4_COPIES else None
         return name  # Blue Shift's own (bs_hud) is in the mod folder already.
 
     report = {"pixels": 0, "name": 0, "halved": 0, "full": 0, "crosshair": 0}
@@ -150,9 +156,10 @@ def layouts(half_life):
                             vs, vr = rows[(entry, "640")]
                             if mine and crop(f"{half_life}/{game}/sprites/{vs}.spr", vr) == mine:
                                 name, r = rows[(entry, "320")]
-                                result = {"SpriteName": sprite_name_for(game, name), "Left": r[0], "Top": r[1],
-                                          "Width": r[2], "Height": r[3]}
-                                report["pixels"] += 1
+                                if sprite_name_for(game, name):
+                                    result = {"SpriteName": sprite_name_for(game, name), "Left": r[0], "Top": r[1],
+                                              "Width": r[2], "Height": r[3]}
+                                    report["pixels"] += 1
                                 break
 
                     if not result:
@@ -160,9 +167,10 @@ def layouts(half_life):
                             rows = txt_rows(f"{half_life}/{layout_game}/sprites/{base}.txt")
                             if (entry, "320") in rows:
                                 name, r = rows[(entry, "320")]
-                                result = {"SpriteName": sprite_name_for(sprite_game, name), "Left": r[0], "Top": r[1],
-                                          "Width": r[2], "Height": r[3]}
-                                report["name"] += 1
+                                if sprite_name_for(sprite_game, name):
+                                    result = {"SpriteName": sprite_name_for(sprite_game, name), "Left": r[0], "Top": r[1],
+                                              "Width": r[2], "Height": r[3]}
+                                    report["name"] += 1
                                 break
 
                     if not result and f"sprites/{sprite}.spr".lower() in shipped:

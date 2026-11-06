@@ -38,8 +38,11 @@ struct RecommendedSetting
 // 3: crosshair, the engine's default being off. 4: auto-aim off (sv_aim, on by the engine's default), field of
 // view 100. 5: gamma 1.92 and brightness 0 (else a new game folder took its first config's, Half-Life's, often an
 // old default: gamma 2.5, brightness 1; the engine's are 2.2 and 0, and gamma can't go below 1.8). 6: the hidden
-// settings below, texture filtering off among them, and the original (not HD) models.
-constexpr int RecommendedSettingsVersion = 6;
+// settings below, texture filtering off among them, and the original (not HD) models. 7: jhl_hud_scale 0 (automatic:
+// Valve's half-size HUD at 800x600 and below), and only that: a player's own settings aren't applied again, the HUD
+// scale moved along only if still at the old default, 1.
+constexpr int RecommendedSettingsVersion = 7;
+constexpr int LastFullRecommendedVersion = 6;
 
 // Applied on first launch and by a reset: every setting listed in the John Settings dialog (config/mod/user.scr), and
 // the hidden ones below. Keep in sync with that file, whose defaults should match. jhl_gore: the content lock isn't used, so
@@ -63,7 +66,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_fx_muzzleflash", "1"},
 	{"jhl_fx_particlesystem", "1"},
 	{"jhl_fx_tracers", "1"},
-	{"jhl_hud_scale", "1"},
+	{"jhl_hud_scale", "0"},
 	{"jhl_snd_vanilla", "1"},
 	{"jhl_snd_musicsaves", "1"},
 	{"crosshair", "1"},
@@ -315,11 +318,20 @@ void JhlSettings_RunFrame()
 
 		SyncGoreFromContentLock();
 
-		if (g_RecommendedVersion->value < RecommendedSettingsVersion)
+		if (g_RecommendedVersion->value < LastFullRecommendedVersion)
 		{
 			ApplyRecommended();
 			gEngfuncs.Cvar_Set(g_RecommendedVersion->name, std::to_string(RecommendedSettingsVersion).c_str());
 			gEngfuncs.Con_Printf("johnhalflife: first launch, recommended settings applied\n");
+		}
+		else if (g_RecommendedVersion->value < RecommendedSettingsVersion)
+		{
+			if (gEngfuncs.pfnGetCvarFloat("jhl_hud_scale") == 1)
+			{
+				gEngfuncs.Cvar_Set("jhl_hud_scale", "0");
+			}
+
+			gEngfuncs.Cvar_Set(g_RecommendedVersion->name, std::to_string(RecommendedSettingsVersion).c_str());
 		}
 	}
 
