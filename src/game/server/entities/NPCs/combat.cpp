@@ -1037,7 +1037,7 @@ bool CBaseMonster::DeadTakeDamage(CBaseEntity* inflictor, CBaseEntity* attacker,
 	pev->origin.z += 1;
 
 	// let the damage scoot the corpse around a bit.
-	if (!FNullEnt(inflictor) && (attacker->pev->solid != SOLID_TRIGGER))
+	if (!FNullEnt(inflictor) && (!attacker || attacker->pev->solid != SOLID_TRIGGER))
 	{
 		pev->velocity = pev->velocity + vecDir * -DamageForce(flDamage);
 	}
