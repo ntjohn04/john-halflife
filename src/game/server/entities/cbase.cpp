@@ -363,6 +363,49 @@ void JhlRaiseRiders()
 	}
 
 	g_JhlRiderRaises.clear();
+
+	// johnhalflife (jhl_physics_fpsfix): the engine takes a walking NPC's standing flag away each time a mover carries it
+	// (players keep theirs), so the next frame it isn't carried: a lift going down drops away and it falls after it, about
+	// 1.5 units, landing eight times a second (ba_elevator's scientists bouncing); a tram leaves it behind until a wall
+	// shoves it along (NPCs rubber banding in trains). One whose ground is a moving mover, no more than 4 units over its
+	// floor, is set back down on it standing, so it's carried every frame.
+	if (!UTIL_JhlFpsFix())
+		return;
+
+	constexpr float MaxGap = 4;
+
+	for (int i = 1; i < gpGlobals->maxEntities; ++i)
+	{
+		edict_t* edict = INDEXENT(i);
+
+		if (!edict || 0 != edict->free || edict->v.movetype != MOVETYPE_STEP || (edict->v.flags & (FL_ONGROUND | FL_FLY | FL_SWIM)) != 0 ||
+			edict->v.solid == SOLID_NOT || FNullEnt(edict->v.groundentity))
+		{
+			continue;
+		}
+
+		edict_t* ground = edict->v.groundentity;
+
+		if (ground->v.movetype != MOVETYPE_PUSH || ground->v.velocity == g_vecZero || ground->v.avelocity != g_vecZero)
+			continue;
+
+		CBaseEntity* rider = CBaseEntity::Instance(edict);
+
+		if (!rider || !rider->MyMonsterPointer())
+			continue;
+
+		TraceResult tr;
+		TRACE_MONSTER_HULL(edict, edict->v.origin, edict->v.origin - Vector(0, 0, MaxGap), dont_ignore_monsters, edict, &tr);
+
+		if (0 != tr.fStartSolid || 0 != tr.fAllSolid || tr.flFraction >= 1 || tr.pHit != ground)
+			continue;
+
+		rider->SetOrigin(tr.vecEndPos);
+		edict->v.flags |= FL_ONGROUND;
+
+		if (edict->v.velocity.z < 0)
+			edict->v.velocity.z = 0;
+	}
 }
 
 void DispatchBlocked(edict_t* pentBlocked, edict_t* pentOther)
