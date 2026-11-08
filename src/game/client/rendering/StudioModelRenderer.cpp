@@ -506,15 +506,36 @@ void CStudioModelRenderer::StudioSetUpTransform(bool trivial_accept)
 
 		const auto pseqdesc = (mstudioseqdesc_t*)((byte*)m_pStudioHeader + m_pStudioHeader->seqindex) + m_pCurrentEntity->curstate.sequence;
 
+		// johnhalflife (jhl_visuals_renderfixes): with a sequence that moves it (a turn, a walk), this smooths an NPC's steps
+		// (one a think, every 0.1 seconds) by drawing it back along its move since its last animation update. Carried by a
+		// lift or train, it keeps moving after the update, and all of that was drawn back too, so it lagged and caught up
+		// ten times a second (ba_elevator's scientist bouncing as he turns). Only the step the update brought (from where it
+		// was to where it was when the update came) is smoothed; moved after, it's drawn where it is. Not carried, that's the
+		// same as before.
+		static cvar_t* renderFixes = gEngfuncs.pfnGetCvarPointer("jhl_visuals_renderfixes");
+		static float updateTimes[MAX_EDICTS];
+		static Vector updateOrigins[MAX_EDICTS];
+		const int index = m_pCurrentEntity->index;
+		Vector step = m_pCurrentEntity->origin - m_pCurrentEntity->latched.prevorigin;
+
+		if (renderFixes && renderFixes->value != 0 && index > 0 && index < MAX_EDICTS)
+		{
+			if (updateTimes[index] != m_pCurrentEntity->latched.prevanimtime)
+			{
+				updateTimes[index] = m_pCurrentEntity->latched.prevanimtime;
+				updateOrigins[index] = m_pCurrentEntity->origin;
+			}
+
+			step = updateOrigins[index] - m_pCurrentEntity->latched.prevorigin;
+		}
+
 		if ((pseqdesc->motiontype & STUDIO_LX) != 0 || (m_pCurrentEntity->curstate.eflags & EFLAG_SLERP) != 0)
 		{
 			for (i = 0; i < 3; i++)
 			{
-				modelpos[i] += (m_pCurrentEntity->origin[i] - m_pCurrentEntity->latched.prevorigin[i]) * f;
+				modelpos[i] += step[i] * f;
 			}
 		}
-
-		const int index = m_pCurrentEntity->index;
 
 		// johnhalflife (jhl_debug_npcdraw): where an NPC is drawn against where it is, a line every 1/50 second each.
 		static cvar_t* debugDraw = gEngfuncs.pfnRegisterVariable("jhl_debug_npcdraw", "0", 0);
@@ -524,9 +545,9 @@ void CStudioModelRenderer::StudioSetUpTransform(bool trivial_accept)
 			(m_clTime < debugTimes[index] || m_clTime >= debugTimes[index] + 0.02f))
 		{
 			debugTimes[index] = m_clTime;
-			gEngfuncs.Con_Printf("jhl_debug_npcdraw: %.3f #%d z %.2f (state %.2f, before update %.2f) anim %.3f (before %.3f) f %.2f%s drawn %.2f\n",
+			gEngfuncs.Con_Printf("jhl_debug_npcdraw: %.3f #%d z %.2f (state %.2f, before update %.2f) anim %.3f (before %.3f) sequence %d f %.2f%s drawn %.2f\n",
 				m_clTime, index, m_pCurrentEntity->origin.z, m_pCurrentEntity->curstate.origin.z, m_pCurrentEntity->latched.prevorigin.z,
-				m_pCurrentEntity->curstate.animtime, m_pCurrentEntity->latched.prevanimtime, f,
+				m_pCurrentEntity->curstate.animtime, m_pCurrentEntity->latched.prevanimtime, m_pCurrentEntity->curstate.sequence, f,
 				((pseqdesc->motiontype & STUDIO_LX) != 0 || (m_pCurrentEntity->curstate.eflags & EFLAG_SLERP) != 0) ? "" : " (not moved)",
 				modelpos.z);
 		}

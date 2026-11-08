@@ -62,6 +62,15 @@ the same). While the engine draws a model's polygons (`StudioDrawPoints`), the s
 lit colour by 4/3 (a constant 2/3, scaled by 2), clamped as software clamps; additive models and glow shells, which
 aren't lit, are left alone. The engine's model drawing never touches that unit, and it's put back as it was after.
 
+### NPCs turning on lifts and trains (`jhl_visuals_renderfixes`)
+
+With a sequence that moves it (a turn, a walk), the client smooths an NPC's steps (one a think, every 0.1 seconds) by
+drawing it back along its move since its previous animation update, less and less until the next
+(`StudioSetUpTransform`). Carried by a lift or train, it keeps moving after the update, and all of that was drawn back
+too, so it lagged and caught up ten times a second: ba_elevator's scientist bouncing as he turned. Only the step the
+update brought is smoothed now, from where it was before the update to where it was when it came; moved after, it's
+drawn where it is. Not carried, it's drawn as before. The client's own model drawing, so on both renderers.
+
 ### 16-bit color (`jhl_visuals_16bitcolor`)
 
 Software drew into a 16-bit frame: red and blue to multiples of 8, green to multiples of 4, cut down, never rounded or
