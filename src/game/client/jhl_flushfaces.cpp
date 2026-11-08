@@ -346,12 +346,8 @@ void LoadMap(const char* mapName)
 			continue;
 		}
 
-		// Placed turned: left alone (rare, and where it's drawn turned isn't worth working out here).
-		if (const auto angles = keys.find("angles"); angles != keys.end() && JhlBsp_ParseVector(angles->second) != g_vecZero)
-		{
-			continue;
-		}
-
+		// The map's angles aren't looked at: doors and buttons take them as the way they move and are drawn unturned. One
+		// drawn turned is left alone when it's drawn (JhlFlushFaces_Add).
 		auto& flush = g_Models[submodel];
 		Vector origin;
 
