@@ -269,40 +269,100 @@ static void JhlDebugBlocked(CBaseEntity* pusher, CBaseEntity* other)
 	calls = 0;
 }
 
-// johnhalflife (jhl_physics_fpsfix): at high frame rates an NPC riding a lift down can block it every frame, though by
-// every test it's free (ba_elevator's scientist at 240 fps): the lift barely moves, and its damage kills him, a lost game
-// since he's essential. A lift going straight down blocked by an NPC over its floor finishes its move instead: the floor
-// only moves away from the rider, who falls after it or is carried the next frame. One blocked otherwise (a door closing
-// on an NPC, a lift coming up under one) is blocked and hurt as before.
-static bool JhlFinishLiftMove(CBaseEntity* pusher, CBaseEntity* other)
+// johnhalflife (jhl_physics_fpsfix): a lift carries its riders by adding its move to their origin each frame. Far from
+// the map's centre a float holds an origin to about 1/4000 of a unit, and the lift's origin (near 0) much finer, so a
+// rider's height above the floor drifts a little each move. At high frame rates the moves are small and the drift
+// builds one way until the rider is a hair into the floor: from then on every push ends with it stuck, so it blocks
+// every frame and is hurt (ba_elevator at 240 fps: the scientist, essential, crushed; the player hurt a point at a
+// time). A rider over the mover's floor that a raise of no more than a unit frees is raised at the start of the next
+// frame (the engine puts it back after Blocked) and not hurt. One blocked otherwise (a door closing on it, a lift
+// crushing it against a ceiling) is blocked and hurt as before.
+namespace
+{
+struct JhlRiderRaise
+{
+	EHANDLE Rider;
+	Vector Origin;
+	float Time;
+};
+
+std::vector<JhlRiderRaise> g_JhlRiderRaises;
+
+// Whether an entity at origin is stuck in anything; the mover left out when it's to be moved along.
+bool JhlStuck(CBaseEntity* other, const Vector& origin, CBaseEntity* passable = nullptr)
+{
+	const int solid = passable ? passable->pev->solid : 0;
+
+	if (passable)
+		passable->pev->solid = SOLID_NOT;
+
+	TraceResult tr;
+	TRACE_MONSTER_HULL(other->edict(), origin, origin, dont_ignore_monsters, other->edict(), &tr);
+
+	if (passable)
+		passable->pev->solid = solid;
+
+	return 0 != tr.fStartSolid || 0 != tr.fAllSolid;
+}
+
+bool JhlRaiseRider(CBaseEntity* pusher, CBaseEntity* other)
 {
 	constexpr float StepHeight = 18;
+	constexpr float MaxRaise = 1;
+	constexpr float RaiseStep = 1.0f / 32;
 
-	if (!UTIL_JhlFpsFix() || !other || other->IsPlayer() || !other->MyMonsterPointer() || other->pev->solid == SOLID_NOT ||
-		pusher->pev->movetype != MOVETYPE_PUSH || pusher->pev->avelocity != g_vecZero || pusher->pev->velocity.x != 0 ||
-		pusher->pev->velocity.y != 0 || pusher->pev->velocity.z >= 0)
+	if (!UTIL_JhlFpsFix() || !other || (!other->IsPlayer() && !other->MyMonsterPointer()) || other->pev->solid == SOLID_NOT ||
+		other->pev->solid == SOLID_TRIGGER || pusher->pev->avelocity != g_vecZero)
 	{
 		return false;
 	}
 
+	const Vector feet = other->pev->origin + Vector(0, 0, other->pev->mins.z);
 	TraceResult tr;
-	UTIL_TraceLine(other->pev->origin + Vector(0, 0, 1), other->pev->origin - Vector(0, 0, StepHeight), ignore_monsters,
-		other->edict(), &tr);
+	UTIL_TraceLine(feet + Vector(0, 0, 1), feet - Vector(0, 0, StepHeight), ignore_monsters, other->edict(), &tr);
 
 	if (tr.flFraction >= 1 || tr.pHit != pusher->edict())
 	{
 		return false;
 	}
 
-	// The engine's move time (SV_Physics_Pusher), its local time already put back.
-	float movetime = gpGlobals->frametime;
+	// Free raised, against the mover where it is (as it will be moved along) and anything else moved along.
+	const Vector move = pusher->pev->velocity * gpGlobals->frametime;
 
-	if (pusher->pev->nextthink < pusher->pev->ltime + gpGlobals->frametime)
-		movetime = std::max(0.0f, pusher->pev->nextthink - pusher->pev->ltime);
+	for (float raise = RaiseStep; raise <= MaxRaise; raise += RaiseStep)
+	{
+		const Vector raised = other->pev->origin + Vector(0, 0, raise);
 
-	pusher->pev->ltime += movetime;
-	g_engfuncs.pfnSetOrigin(pusher->edict(), pusher->pev->origin + pusher->pev->velocity * movetime);
-	return true;
+		if (!JhlStuck(other, raised) && !JhlStuck(other, raised + move, pusher))
+		{
+			JhlRiderRaise riderRaise;
+			riderRaise.Rider = other;
+			riderRaise.Origin = raised;
+			riderRaise.Time = gpGlobals->time;
+			g_JhlRiderRaises.push_back(riderRaise);
+
+			if (g_JhlDebugBlocked)
+				Con_Printf("jhl_debug_blocked:   %s to be raised %.3f\n", STRING(other->pev->classname), raise);
+
+			return true;
+		}
+	}
+
+	return false;
+}
+}
+
+void JhlRaiseRiders()
+{
+	for (auto& riderRaise : g_JhlRiderRaises)
+	{
+		CBaseEntity* rider = riderRaise.Rider;
+
+		if (rider && gpGlobals->time >= riderRaise.Time && gpGlobals->time < riderRaise.Time + 0.25f && !JhlStuck(rider, riderRaise.Origin))
+			rider->SetOrigin(riderRaise.Origin);
+	}
+
+	g_JhlRiderRaises.clear();
 }
 
 void DispatchBlocked(edict_t* pentBlocked, edict_t* pentOther)
@@ -313,7 +373,7 @@ void DispatchBlocked(edict_t* pentBlocked, edict_t* pentOther)
 	if (pEntity && g_JhlDebugBlocked)
 		JhlDebugBlocked(pEntity, pOther);
 
-	if (pEntity && JhlFinishLiftMove(pEntity, pOther))
+	if (pEntity && JhlRaiseRider(pEntity, pOther))
 		return;
 
 	if (pEntity)

@@ -1284,6 +1284,7 @@ void StartFrame()
 	JhlHitchScope hitchScope{"StartFrame"};
 
 	g_Server.RunFrame();
+	JhlRaiseRiders();
 
 	if (g_pGameRules)
 		g_pGameRules->Think();
