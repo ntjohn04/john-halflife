@@ -439,10 +439,10 @@ void JhlRaiseRiders()
 
 		if (0 != tr.fStartSolid || 0 != tr.fAllSolid || tr.flFraction >= 1 || tr.pHit != ground)
 		{
-			if (g_JhlDebugBlocked)
+			// Not one more than 4 units over it: jumping or falling, as it should be, and it floods the console.
+			if (g_JhlDebugBlocked && tr.flFraction < 1)
 				Con_Printf("jhl_debug_blocked: %s \"%s\" left off %s: %s (movetype %d)\n", STRING(edict->v.classname), STRING(edict->v.targetname),
-					STRING(ground->v.classname), 0 != tr.fStartSolid ? "stuck" : tr.flFraction >= 1 ? "more than 4 units over it" : "over something else",
-					edict->v.movetype);
+					STRING(ground->v.classname), 0 != tr.fStartSolid ? "stuck" : "over something else", edict->v.movetype);
 
 			continue;
 		}
