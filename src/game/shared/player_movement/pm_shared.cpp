@@ -1015,8 +1015,26 @@ void PM_WalkMove()
 
 	// Set pmove velocity
 	pmove->velocity[2] = 0;
+
+	const float speedBefore = pmove->velocity.Length();
+
 	PM_Accelerate(wishdir, wishspeed, pmove->movevars->accelerate);
 	pmove->velocity[2] = 0;
+
+	// johnhalflife (jhl_physics_wallfix, sent by the server as "jwf"): walking at an angle into a wall, the wall takes
+	// away the speed into it each frame and accelerating puts it back, so along the wall it builds to the full speed
+	// asked for in the direction pressed: 1.4 times as fast at 45 degrees. Accelerating on the ground now goes no faster
+	// than asked for, or than already going (a landing, a push); in the air, as before.
+	if (atoi(pmove->PM_Info_ValueForKey(pmove->physinfo, "jwf")) == 1)
+	{
+		const float speedAfter = pmove->velocity.Length();
+		const float limit = std::max(speedBefore, wishspeed);
+
+		if (speedAfter > limit && speedAfter > speedBefore)
+		{
+			pmove->velocity = pmove->velocity * (limit / speedAfter);
+		}
+	}
 
 	// Add in any base velocity to the current velocity.
 	pmove->velocity = pmove->velocity + pmove->basevelocity;

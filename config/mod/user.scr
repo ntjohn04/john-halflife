@@ -146,6 +146,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"jhl_physics_wallfix"
+	{
+		"JHL | Physics: no extra speed walking into a wall"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"jhl_fx_bulletimpacts"
 	{
 		"JHL | Effects: bullet impacts and water splashes"

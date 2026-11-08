@@ -34,3 +34,14 @@ The engine itself is fine:
   slow motion between 1000/n fps.
 * Half-Life Updated and the Unified SDK already made NPC turning, the gargantua's stomp, trigger_camera
   rotation, ropes and electrified wire independent of frame rate.
+
+## No extra speed walking into a wall (`jhl_physics_wallfix`, default 1)
+
+Walking at an angle into a wall, the wall takes away the speed going into it each frame and accelerating puts it
+back. So along the wall the speed builds until its part in the direction pressed is full walking speed: about
+1.4 times as fast at 45 degrees. It's the ground version of air strafing, and some players use it on purpose.
+
+With the setting on, accelerating on the ground goes no faster than the speed asked for, or than the player was
+already going: a landing, a push or an explosion keeps its speed and loses it to friction as before. Air
+movement isn't touched, so bunny hopping and air strafing are as vanilla. `pm_shared.cpp`'s `PM_WalkMove`,
+through the `jwf` physics key so prediction agrees. Set it to 0 for vanilla's wall running.

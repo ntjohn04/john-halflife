@@ -63,6 +63,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_visuals_renderfixes", "1"},
 	{"jhl_weapons_smoothrecoil", "1"},
 	{"jhl_physics_fpsfix", "1"},
+	{"jhl_physics_wallfix", "1"},
 	{"jhl_fx_bulletimpacts", "1"},
 	{"jhl_fx_muzzleflash", "1"},
 	{"jhl_fx_particlesystem", "1"},
@@ -293,6 +294,9 @@ void JhlSettings_Initialize()
 
 	// Half-Life's game code acting at any frame rate as it did at 72 fps (see jhl_framerate.h); the server reads it too.
 	g_FpsFix = gEngfuncs.pfnRegisterVariable("jhl_physics_fpsfix", "1", FCVAR_ARCHIVE);
+
+	// Walking along a wall no faster than in the open (pm_shared.cpp's PM_WalkMove); the server reads it too.
+	gEngfuncs.pfnRegisterVariable("jhl_physics_wallfix", "1", FCVAR_ARCHIVE);
 
 	// johnhalflife's tracers on their own (jhl_tracers.cpp); they also need the particle system.
 	gEngfuncs.pfnRegisterVariable("jhl_fx_tracers", "1", FCVAR_ARCHIVE);

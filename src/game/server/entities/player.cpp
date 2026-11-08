@@ -1828,6 +1828,12 @@ void CBasePlayer::PreThink()
 		g_engfuncs.pfnSetPhysicsKeyValue(edict(), "jfps", fpsFix);
 	}
 
+	// johnhalflife: and jhl_physics_wallfix.
+	if (const char* wallFix = UTIL_JhlWallFix() ? "1" : "0"; 0 != strcmp(g_engfuncs.pfnGetPhysicsKeyValue(edict(), "jwf"), wallFix))
+	{
+		g_engfuncs.pfnSetPhysicsKeyValue(edict(), "jwf", wallFix);
+	}
+
 	// johnhalflife: and jhl_camera_jumplandjolt, for the long jump's sound.
 	if (const char* jolt = UTIL_JhlJumpLandJolt() ? "1" : "0"; 0 != strcmp(g_engfuncs.pfnGetPhysicsKeyValue(edict(), "jlj"), jolt))
 	{

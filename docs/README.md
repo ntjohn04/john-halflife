@@ -27,6 +27,8 @@ Console commands for finding problems; none changes anything in play.
 * Muzzle check: `jhl_debug_muzzle` (console) prints everything that keeps the muzzle light and smoke from being made:
   `jhl_fx_muzzleflash`, third person or a spectator state, a zoomed field of view against `default_fov`, the view
   model's muzzle point, `r_dynamic`, and whether a temporary entity can be had. For the rare times they've stopped.
+* Blocked movers: `jhl_debug_blocked` (console, toggles) prints each time something blocks an elevator, door or train:
+  the mover, its height and speed, and the blocker's health, feet and footing. For NPCs crushed on lifts.
 * Texture materials: `jhl_texture [material]` prints the texture under the crosshair and the materials bullet impacts
   use for it, and adds it to `jhl_textures.txt` with the material given, for corrections to
   `config/mod/sound/jhl_impact_materials.json` ([weapons](weapons.md#bullet-impacts)).

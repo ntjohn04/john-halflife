@@ -52,6 +52,17 @@ inline bool UTIL_JhlFpsFix()
 }
 
 /**
+ *	@brief Whether jhl_physics_wallfix is on (walking along a wall no faster than in the open): the client's setting,
+ *	read as jhl_fx_particlesystem is.
+ */
+inline bool UTIL_JhlWallFix()
+{
+	static JhlCvarCache cache;
+	const cvar_t* cvar = UTIL_JhlClientCvar("jhl_physics_wallfix", cache);
+	return !cvar || cvar->value != 0;
+}
+
+/**
  *	@brief Whether jhl_camera_jumplandjolt is on: the client's setting, read as jhl_fx_particlesystem is (the long
  *	jump's sound goes with the jump jolts).
  */

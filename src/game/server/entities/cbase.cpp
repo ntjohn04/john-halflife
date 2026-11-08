@@ -202,10 +202,45 @@ void DispatchThink(edict_t* pent)
 	}
 }
 
+bool g_JhlDebugBlocked = false;
+
+// johnhalflife (jhl_debug_blocked): who blocks a mover and where, at most every quarter second a pair.
+static void JhlDebugBlocked(CBaseEntity* pusher, CBaseEntity* other)
+{
+	static CBaseEntity* lastPusher = nullptr;
+	static CBaseEntity* lastOther = nullptr;
+	static float lastTime = -1;
+	static int calls = 0;
+
+	++calls;
+
+	if (pusher == lastPusher && other == lastOther && gpGlobals->time >= lastTime && gpGlobals->time < lastTime + 0.25f)
+	{
+		return;
+	}
+
+	Con_Printf("jhl_debug_blocked: %.2f (frame %.4f, %d calls) %s \"%s\" (z %.1f to %.1f, moving z %.1f) by %s \"%s\" "
+			   "(health %.0f, feet %.1f, %s, movetype %d)\n",
+		gpGlobals->time, gpGlobals->frametime, calls, STRING(pusher->pev->classname), STRING(pusher->pev->targetname),
+		pusher->pev->absmin.z, pusher->pev->absmax.z, pusher->pev->velocity.z,
+		other ? STRING(other->pev->classname) : "?", other ? STRING(other->pev->targetname) : "",
+		other ? other->pev->health : 0, other ? other->pev->absmin.z : 0,
+		!other ? "" : (other->pev->flags & FL_ONGROUND) == 0 ? "in the air" : other->GetGroundEntity() == pusher ? "standing on it" : "on the ground",
+		other ? other->pev->movetype : -1);
+
+	lastPusher = pusher;
+	lastOther = other;
+	lastTime = gpGlobals->time;
+	calls = 0;
+}
+
 void DispatchBlocked(edict_t* pentBlocked, edict_t* pentOther)
 {
 	CBaseEntity* pEntity = (CBaseEntity*)GET_PRIVATE(pentBlocked);
 	CBaseEntity* pOther = (CBaseEntity*)GET_PRIVATE(pentOther);
+
+	if (pEntity && g_JhlDebugBlocked)
+		JhlDebugBlocked(pEntity, pOther);
 
 	if (pEntity)
 		pEntity->Blocked(pOther);

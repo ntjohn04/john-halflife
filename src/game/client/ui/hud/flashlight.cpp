@@ -117,7 +117,12 @@ bool CHudFlashlight::Draw(float flTime)
 
 	if (!m_fOn && m_iBat >= 100 && gHUD.m_pCvarHudMinimal && 0 != gHUD.m_pCvarHudMinimal->value)
 	{
-		if (m_flIdleSince < 0 || m_flIdleSince > flTime)
+		if (m_flIdleSince > flTime)
+		{
+			// The clock restarted (a map change or a load): faded before, it stays so.
+			m_flIdleSince = flTime - IdleHold - IdleFade;
+		}
+		else if (m_flIdleSince < 0)
 		{
 			m_flIdleSince = flTime;
 		}

@@ -157,6 +157,15 @@ bool ServerLibrary::Initialize()
 		},
 		CommandLibraryPrefix::No);
 
+	// johnhalflife: logs what blocks movers (elevators, doors, trains) and where, to see why something gets crushed.
+	g_ConCommands.CreateCommand(
+		"jhl_debug_blocked", [](const auto&)
+		{
+			g_JhlDebugBlocked = !g_JhlDebugBlocked;
+			Con_Printf("jhl_debug_blocked: %s\n", g_JhlDebugBlocked ? "on" : "off");
+		},
+		CommandLibraryPrefix::No);
+
 	g_ConCommands.RegisterChangeCallback(&sv_allowbunnyhopping, [](const auto& state)
 		{
 			const bool allowBunnyHopping = state.Cvar->value != 0;
