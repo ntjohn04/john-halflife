@@ -506,7 +506,29 @@ void CStudioModelRenderer::StudioSetUpTransform(bool trivial_accept)
 
 		const auto pseqdesc = (mstudioseqdesc_t*)((byte*)m_pStudioHeader + m_pStudioHeader->seqindex) + m_pCurrentEntity->curstate.sequence;
 
-		if ((pseqdesc->motiontype & STUDIO_LX) != 0 || (m_pCurrentEntity->curstate.eflags & EFLAG_SLERP) != 0)
+		// johnhalflife (jhl_visuals_renderfixes): this draws an NPC from where it was at its last animation update, to smooth
+		// its steps (one a think, every 0.1 seconds). Carried by a lift or tram, or falling, it moves between its updates
+		// too, so it was drawn up to 0.1 seconds behind and snapped forward at each update: ten bounces a second. Moved
+		// between its updates within the last 0.2 seconds, it's drawn where it is.
+		static cvar_t* renderFixes = gEngfuncs.pfnGetCvarPointer("jhl_visuals_renderfixes");
+		static float carriedAt[MAX_EDICTS];
+		const int index = m_pCurrentEntity->index;
+		bool carried = false;
+
+		if (index > 0 && index < MAX_EDICTS)
+		{
+			if (m_pCurrentEntity->curstate.origin != m_pCurrentEntity->prevstate.origin &&
+				m_pCurrentEntity->curstate.animtime == m_pCurrentEntity->prevstate.animtime)
+			{
+				carriedAt[index] = m_clTime;
+			}
+
+			carried = m_clTime >= carriedAt[index] && m_clTime < carriedAt[index] + 0.2f && carriedAt[index] > 0;
+		}
+
+		const bool drawnWhereItIs = carried && renderFixes && renderFixes->value != 0;
+
+		if (!drawnWhereItIs && ((pseqdesc->motiontype & STUDIO_LX) != 0 || (m_pCurrentEntity->curstate.eflags & EFLAG_SLERP) != 0))
 		{
 			for (i = 0; i < 3; i++)
 			{

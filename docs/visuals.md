@@ -37,7 +37,8 @@ screenshots of the same view. They light the world identically: the same light g
 the brightest light is 1.33× (OpenGL's `gl_overbright`, on by default, matches), the same tone curve. Several touches
 differ, in two settings, and 16-bit color on its own:
 * `jhl_visuals_renderfixes` (default 1): models lit as the world is, and with texture filtering off textures
-  point sampled with mipmaps and the sky pixelated like the world: OpenGL made consistent with itself.
+  point sampled with mipmaps and the sky pixelated like the world: OpenGL made consistent with itself. Also, on both
+  renderers, NPCs riding lifts and trams drawn without bouncing (below).
 * `jhl_visuals_softwarewater` (default 1): the water's ripples, and under water the 320 × 200 view and fog.
 * `jhl_visuals_16bitcolor` (default 1): the 16-bit frame.
 
@@ -61,6 +62,16 @@ duller than the room they stand in (measured: software's models 1.33 times as br
 the same). While the engine draws a model's polygons (`StudioDrawPoints`), the second texture unit multiplies their
 lit colour by 4/3 (a constant 2/3, scaled by 2), clamped as software clamps; additive models and glow shells, which
 aren't lit, are left alone. The engine's model drawing never touches that unit, and it's put back as it was after.
+
+### NPCs riding lifts and trams (`jhl_visuals_renderfixes`)
+
+The client draws an NPC from where it was at its previous animation update, blending to where it is over the time
+between updates (`StudioSetUpTransform`), to smooth its steps: it moves once a think, every 0.1 seconds. Carried by a
+lift or tram, or falling, it moves between its updates as well, so it was drawn up to 0.1 seconds behind and snapped
+forward at each update: on ba_elevator's lift (50 units a second) a 5 unit bounce ten times a second, the rubber
+banding NPCs on trains have always had. An NPC whose origin changed in an update its animation time didn't is drawn
+where it is for 0.2 seconds after; its own steps are smoothed as before. This is the client's own model drawing, so
+it acts on both renderers.
 
 ### 16-bit color (`jhl_visuals_16bitcolor`)
 
