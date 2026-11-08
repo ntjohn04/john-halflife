@@ -545,9 +545,9 @@ void CStudioModelRenderer::StudioSetUpTransform(bool trivial_accept)
 			(m_clTime < debugTimes[index] || m_clTime >= debugTimes[index] + 0.02f))
 		{
 			debugTimes[index] = m_clTime;
-			gEngfuncs.Con_Printf("jhl_debug_npcdraw: %.3f #%d z %.2f (state %.2f, before update %.2f) anim %.3f (before %.3f) sequence %d f %.2f%s drawn %.2f\n",
+			gEngfuncs.Con_Printf("jhl_debug_npcdraw: %.3f #%d z %.2f (state %.2f, before update %.2f) anim %.3f (before %.3f) sequence %d (frame %.0f) yaw %.0f f %.2f%s drawn %.2f\n",
 				m_clTime, index, m_pCurrentEntity->origin.z, m_pCurrentEntity->curstate.origin.z, m_pCurrentEntity->latched.prevorigin.z,
-				m_pCurrentEntity->curstate.animtime, m_pCurrentEntity->latched.prevanimtime, m_pCurrentEntity->curstate.sequence, f,
+				m_pCurrentEntity->curstate.animtime, m_pCurrentEntity->latched.prevanimtime, m_pCurrentEntity->curstate.sequence, m_pCurrentEntity->curstate.frame, m_pCurrentEntity->angles.y, f,
 				((pseqdesc->motiontype & STUDIO_LX) != 0 || (m_pCurrentEntity->curstate.eflags & EFLAG_SLERP) != 0) ? "" : " (not moved)",
 				modelpos.z);
 		}
