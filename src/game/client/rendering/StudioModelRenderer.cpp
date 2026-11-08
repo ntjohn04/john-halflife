@@ -536,6 +536,21 @@ void CStudioModelRenderer::StudioSetUpTransform(bool trivial_accept)
 			}
 		}
 
+		// johnhalflife (jhl_debug_npcdraw): where an NPC is drawn against where it is, a line every 1/50 second each.
+		static cvar_t* debugDraw = gEngfuncs.pfnRegisterVariable("jhl_debug_npcdraw", "0", 0);
+		static float debugTimes[MAX_EDICTS];
+
+		if (debugDraw && debugDraw->value != 0 && index > 0 && index < MAX_EDICTS &&
+			(m_clTime < debugTimes[index] || m_clTime >= debugTimes[index] + 0.02f))
+		{
+			debugTimes[index] = m_clTime;
+			gEngfuncs.Con_Printf("jhl_debug_npcdraw: %.3f #%d z %.2f (state %.2f, before update %.2f) anim %.3f (before %.3f) f %.2f%s drawn %.2f\n",
+				m_clTime, index, m_pCurrentEntity->origin.z, m_pCurrentEntity->curstate.origin.z, m_pCurrentEntity->latched.prevorigin.z,
+				m_pCurrentEntity->curstate.animtime, m_pCurrentEntity->latched.prevanimtime, f,
+				((pseqdesc->motiontype & STUDIO_LX) != 0 || (m_pCurrentEntity->curstate.eflags & EFLAG_SLERP) != 0) ? "" : " (not moved)",
+				modelpos.z);
+		}
+
 		// NOTE:  Because multiplayer lag can be relatively large, we don't want to cap
 		//  f at 1.5 anymore.
 		// if (f > -1.0 && f < 1.5) {}
