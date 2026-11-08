@@ -81,7 +81,6 @@ void DispatchUse(edict_t* pentUsed, edict_t* pentOther);
 void DispatchThink(edict_t* pent);
 void DispatchBlocked(edict_t* pentBlocked, edict_t* pentOther);
 extern bool g_JhlDebugBlocked; // johnhalflife: jhl_debug_blocked, logging what blocks movers (elevators, doors).
-void JhlMoveRiders();          // johnhalflife (jhl_physics_fpsfix): NPCs blocking a lift they ride, moved free. Each frame.
 void DispatchSave(edict_t* pent, SAVERESTOREDATA* pSaveData);
 int DispatchRestore(edict_t* pent, SAVERESTOREDATA* pSaveData, int globalEntity);
 void DispatchObjectCollsionBox(edict_t* pent);

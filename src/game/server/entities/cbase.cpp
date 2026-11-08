@@ -219,36 +219,49 @@ static void JhlDebugBlocked(CBaseEntity* pusher, CBaseEntity* other)
 		return;
 	}
 
-	// What it's stuck in moved along: the mover where it is now, anything else where it was moved to.
-	const char* stuckInMover = "";
-	const char* stuckInOther = "nothing";
-
-	if (other)
-	{
-		TraceResult tr;
-		TRACE_MONSTER_HULL(other->edict(), other->pev->origin, other->pev->origin, dont_ignore_monsters, other->edict(), &tr);
-
-		if ((0 != tr.fStartSolid || 0 != tr.fAllSolid) && tr.pHit == pusher->edict())
-			stuckInMover = "the mover, ";
-
-		const Vector movedTo = other->pev->origin + pusher->pev->velocity * gpGlobals->frametime;
-		const int solid = pusher->pev->solid;
-		pusher->pev->solid = SOLID_NOT;
-		TRACE_MONSTER_HULL(other->edict(), movedTo, movedTo, dont_ignore_monsters, other->edict(), &tr);
-		pusher->pev->solid = solid;
-
-		if (0 != tr.fStartSolid || 0 != tr.fAllSolid)
-			stuckInOther = tr.pHit ? STRING(tr.pHit->v.classname) : "worldspawn";
-	}
-
-	Con_Printf("jhl_debug_blocked: %.2f (frame %.4f, %d calls) %s \"%s\" (z %.1f to %.1f, moving z %.1f) by %s \"%s\" "
-			   "(health %.0f, at %.1f %.1f %.1f, %s, movetype %d, stuck in %s%s)\n",
+	Con_Printf("jhl_debug_blocked: %.2f (frame %.4f, %d calls) %s \"%s\" (z %.2f to %.2f, moving z %.1f) by %s \"%s\" "
+			   "(health %.0f, at %.2f %.2f %.2f, size z %.0f to %.0f, %s, movetype %d)\n",
 		gpGlobals->time, gpGlobals->frametime, calls, STRING(pusher->pev->classname), STRING(pusher->pev->targetname),
 		pusher->pev->absmin.z, pusher->pev->absmax.z, pusher->pev->velocity.z,
 		other ? STRING(other->pev->classname) : "?", other ? STRING(other->pev->targetname) : "",
 		other ? other->pev->health : 0, other ? other->pev->origin.x : 0, other ? other->pev->origin.y : 0, other ? other->pev->origin.z : 0,
+		other ? other->pev->mins.z : 0, other ? other->pev->maxs.z : 0,
 		!other ? "" : (other->pev->flags & FL_ONGROUND) == 0 ? "in the air" : other->GetGroundEntity() == pusher ? "standing on it" : "on the ground",
-		other ? other->pev->movetype : -1, stuckInMover, stuckInOther);
+		other ? other->pev->movetype : -1);
+
+	// The engine's push again (SV_PushMove): the mover to where it was going, the blocker's test there, its push along
+	// (the mover not solid) and its test after. Both put back after.
+	if (other)
+	{
+		const auto hit = [](const TraceResult& tr)
+		{
+			return tr.pHit ? STRING(tr.pHit->v.classname) : "?";
+		};
+
+		const Vector pushOrigin = pusher->pev->origin;
+		const Vector move = pusher->pev->velocity * gpGlobals->frametime;
+		const Vector start = other->pev->origin;
+		g_engfuncs.pfnSetOrigin(pusher->edict(), pushOrigin + move);
+
+		TraceResult before, push, after;
+		TRACE_MONSTER_HULL(other->edict(), start, start, dont_ignore_monsters, other->edict(), &before);
+
+		const int solid = pusher->pev->solid;
+		pusher->pev->solid = SOLID_NOT;
+		TRACE_MONSTER_HULL(other->edict(), start, start + move, dont_ignore_monsters, other->edict(), &push);
+		pusher->pev->solid = solid;
+
+		const Vector end = push.flFraction != 0 ? push.vecEndPos : start;
+		TRACE_MONSTER_HULL(other->edict(), end, end, dont_ignore_monsters, other->edict(), &after);
+
+		g_engfuncs.pfnSetOrigin(pusher->edict(), pushOrigin);
+
+		Con_Printf("jhl_debug_blocked:   before %s%s, push %.3f of %.3f%s%s hitting %s, after %s%s\n",
+			0 != before.fStartSolid ? "stuck in " : "free", 0 != before.fStartSolid ? hit(before) : "",
+			push.flFraction, move.Length(), 0 != push.fStartSolid ? " starting stuck" : "", 0 != push.fAllSolid ? " all solid" : "",
+			push.flFraction < 1 ? hit(push) : "nothing",
+			0 != after.fStartSolid ? "stuck in " : "free", 0 != after.fStartSolid ? hit(after) : "");
+	}
 
 	lastPusher = pusher;
 	lastOther = other;
@@ -256,108 +269,40 @@ static void JhlDebugBlocked(CBaseEntity* pusher, CBaseEntity* other)
 	calls = 0;
 }
 
-// johnhalflife (jhl_physics_fpsfix): an NPC riding a lift blocks it when, moved along, it's still stuck in something.
-// The engine counts a rider stuck in anything (the lift, the world, the player) as blocking, so once it is, it blocks
-// every frame and is crushed: ba_elevator's scientist at high frame rates, hovering a unit over the floor. A rider (an
-// NPC over the mover's floor) is moved instead to the nearest spot within a step up and a little to the side where it's
-// free, still over the floor, and would be free moved along. One in the way otherwise (a door closing on it, a lift
-// coming up under a ledge with no room) is blocked and hurt as before.
-namespace
+// johnhalflife (jhl_physics_fpsfix): at high frame rates an NPC riding a lift down can block it every frame, though by
+// every test it's free (ba_elevator's scientist at 240 fps): the lift barely moves, and its damage kills him, a lost game
+// since he's essential. A lift going straight down blocked by an NPC over its floor finishes its move instead: the floor
+// only moves away from the rider, who falls after it or is carried the next frame. One blocked otherwise (a door closing
+// on an NPC, a lift coming up under one) is blocked and hurt as before.
+static bool JhlFinishLiftMove(CBaseEntity* pusher, CBaseEntity* other)
 {
-constexpr float JhlRiderStep = 18;
-constexpr float JhlRiderNudge = 16;
+	constexpr float StepHeight = 18;
 
-struct JhlRiderMove
-{
-	EHANDLE Rider;
-	Vector Origin;
-	float Time;
-};
-
-std::vector<JhlRiderMove> g_JhlRiderMoves;
-
-// What a monster at origin is stuck in, or null; the mover left out when it's to be moved along.
-edict_t* JhlStuckIn(CBaseEntity* other, const Vector& origin, CBaseEntity* passable = nullptr)
-{
-	const int solid = passable ? passable->pev->solid : 0;
-
-	if (passable)
-		passable->pev->solid = SOLID_NOT;
-
-	TraceResult tr;
-	TRACE_MONSTER_HULL(other->edict(), origin, origin, dont_ignore_monsters, other->edict(), &tr);
-
-	if (passable)
-		passable->pev->solid = solid;
-
-	return (0 != tr.fStartSolid || 0 != tr.fAllSolid) ? (tr.pHit ? tr.pHit : INDEXENT(0)) : nullptr;
-}
-
-bool JhlOverMover(CBaseEntity* pusher, CBaseEntity* other, const Vector& origin)
-{
-	TraceResult tr;
-	UTIL_TraceLine(origin + Vector(0, 0, 1), origin - Vector(0, 0, JhlRiderStep), ignore_monsters, other->edict(), &tr);
-	return tr.flFraction < 1 && tr.pHit == pusher->edict();
-}
-
-bool JhlFreeRiderSpot(CBaseEntity* pusher, CBaseEntity* other, Vector& spot)
-{
 	if (!UTIL_JhlFpsFix() || !other || other->IsPlayer() || !other->MyMonsterPointer() || other->pev->solid == SOLID_NOT ||
-		pusher->pev->avelocity != g_vecZero || !JhlOverMover(pusher, other, other->pev->origin))
+		pusher->pev->movetype != MOVETYPE_PUSH || pusher->pev->avelocity != g_vecZero || pusher->pev->velocity.x != 0 ||
+		pusher->pev->velocity.y != 0 || pusher->pev->velocity.z >= 0)
 	{
 		return false;
 	}
 
-	static const Vector Directions[] = {{1, 0, 0}, {0.7071f, 0.7071f, 0}, {0, 1, 0}, {-0.7071f, 0.7071f, 0}, {-1, 0, 0},
-		{-0.7071f, -0.7071f, 0}, {0, -1, 0}, {0.7071f, -0.7071f, 0}};
+	TraceResult tr;
+	UTIL_TraceLine(other->pev->origin + Vector(0, 0, 1), other->pev->origin - Vector(0, 0, StepHeight), ignore_monsters,
+		other->edict(), &tr);
 
-	const Vector move = pusher->pev->velocity * gpGlobals->frametime;
-	float best = 1e9f;
-
-	for (float up = 0; up <= JhlRiderStep; up += 1)
+	if (tr.flFraction >= 1 || tr.pHit != pusher->edict())
 	{
-		for (float side = 0; side <= JhlRiderNudge; side += 4)
-		{
-			for (const auto& direction : Directions)
-			{
-				const Vector candidate = other->pev->origin + direction * side + Vector(0, 0, up);
-				const float distance = std::sqrt(up * up + side * side);
-
-				if (distance < best && !JhlStuckIn(other, candidate) && !JhlStuckIn(other, candidate + move, pusher) &&
-					JhlOverMover(pusher, other, candidate))
-				{
-					best = distance;
-					spot = candidate;
-				}
-
-				if (side == 0)
-					break;
-			}
-		}
+		return false;
 	}
 
-	return best < 1e9f;
-}
-}
+	// The engine's move time (SV_Physics_Pusher), its local time already put back.
+	float movetime = gpGlobals->frametime;
 
-// The engine puts a blocking rider back where it was after Blocked, so it's moved at the start of the next frame.
-void JhlMoveRiders()
-{
-	for (auto& move : g_JhlRiderMoves)
-	{
-		CBaseEntity* rider = move.Rider;
+	if (pusher->pev->nextthink < pusher->pev->ltime + gpGlobals->frametime)
+		movetime = std::max(0.0f, pusher->pev->nextthink - pusher->pev->ltime);
 
-		if (rider && gpGlobals->time >= move.Time && gpGlobals->time < move.Time + 0.25f && !JhlStuckIn(rider, move.Origin))
-		{
-			if (g_JhlDebugBlocked)
-				Con_Printf("jhl_debug_blocked: %s moved %.1f up, %.1f to the side\n", STRING(rider->pev->classname),
-					move.Origin.z - rider->pev->origin.z, (move.Origin - rider->pev->origin).Make2D().Length());
-
-			rider->SetOrigin(move.Origin);
-		}
-	}
-
-	g_JhlRiderMoves.clear();
+	pusher->pev->ltime += movetime;
+	g_engfuncs.pfnSetOrigin(pusher->edict(), pusher->pev->origin + pusher->pev->velocity * movetime);
+	return true;
 }
 
 void DispatchBlocked(edict_t* pentBlocked, edict_t* pentOther)
@@ -368,15 +313,8 @@ void DispatchBlocked(edict_t* pentBlocked, edict_t* pentOther)
 	if (pEntity && g_JhlDebugBlocked)
 		JhlDebugBlocked(pEntity, pOther);
 
-	if (Vector spot; pEntity && JhlFreeRiderSpot(pEntity, pOther, spot))
-	{
-		JhlRiderMove move;
-		move.Rider = pOther;
-		move.Origin = spot;
-		move.Time = gpGlobals->time;
-		g_JhlRiderMoves.push_back(move);
+	if (pEntity && JhlFinishLiftMove(pEntity, pOther))
 		return;
-	}
 
 	if (pEntity)
 		pEntity->Blocked(pOther);

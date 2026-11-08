@@ -43,8 +43,10 @@ constexpr float PlaneEpsilon = 0.02f;
 constexpr float NormalEpsilon = 0.0005f;
 constexpr float MinOverlap = 1;
 
-// The entity is at a place it rested before within this (its origin is sent to 1/8 unit).
+// The entity is at a place it rested before within this (its origin is sent to 1/8 unit), turned as it was within
+// this (degrees).
 constexpr float RestEpsilon = 0.2f;
+constexpr float RestAngleEpsilon = 0.1f;
 
 // Places an entity rests at that are worked out, at most: a door's two, a train's stops.
 constexpr std::size_t MaxRests = 8;
@@ -69,13 +71,14 @@ struct FlushPlane
 struct Rest
 {
 	Vector Origin;
+	Vector Angles;
 	std::vector<FlushPlane> Planes;
 };
 
 struct FlushModel
 {
 	std::vector<Face> Faces; // Its own, at origin 0.
-	std::vector<Rest> Rests; // Where the map placed it first (a door closed), then where it came to rest (open).
+	std::vector<Rest> Rests; // Where the map placed it first (a door closed), then where it came to rest (open, turned).
 };
 
 struct Moved
@@ -196,22 +199,42 @@ float OverlapArea(std::vector<Point2D> subject, const std::vector<Point2D>& clip
 	return subject.size() >= 3 ? std::abs(SignedArea(subject)) : 0;
 }
 
-// The planes a model placed at origin is flush with the world on.
-std::vector<FlushPlane> FindPlanes(const FlushModel& flush, const Vector& origin)
+// The planes a model placed at origin, turned by angles, is flush with the world on.
+std::vector<FlushPlane> FindPlanes(const FlushModel& flush, const Vector& origin, const Vector& angles)
 {
 	std::vector<FlushPlane> planes;
+
+	// Turned as the engine turns a brush entity it collides with (SV_ClipMoveToEntity), which is as it's drawn.
+	Vector forward(1, 0, 0), right(0, -1, 0), up(0, 0, 1);
+
+	if (angles != g_vecZero)
+	{
+		AngleVectors(angles, forward, right, up);
+	}
+
+	const auto turn = [&](const Vector& v)
+	{
+		return forward * v.x - right * v.y + up * v.z;
+	};
 
 	for (const auto& local : flush.Faces)
 	{
 		Face face;
-		face.Normal = local.Normal;
+		face.Normal = turn(local.Normal);
 		face.Dist = local.Dist + DotProduct(face.Normal, origin);
-		face.Mins = local.Mins + origin;
-		face.Maxs = local.Maxs + origin;
+		face.Mins = Vector(99999, 99999, 99999);
+		face.Maxs = Vector(-99999, -99999, -99999);
 
 		for (const auto& point : local.Points)
 		{
-			face.Points.push_back(point + origin);
+			const Vector placed = turn(point) + origin;
+			face.Points.push_back(placed);
+
+			for (int k = 0; k < 3; ++k)
+			{
+				face.Mins[k] = std::min(face.Mins[k], placed[k]);
+				face.Maxs[k] = std::max(face.Maxs[k], placed[k]);
+			}
 		}
 
 		int u, v;
@@ -347,7 +370,7 @@ void LoadMap(const char* mapName)
 		}
 
 		// The map's angles aren't looked at: doors and buttons take them as the way they move and are drawn unturned. One
-		// drawn turned is left alone when it's drawn (JhlFlushFaces_Add).
+		// drawn turned gets its planes worked out turned when it's drawn (JhlFlushFaces_Add).
 		auto& flush = g_Models[submodel];
 		Vector origin;
 
@@ -366,7 +389,7 @@ void LoadMap(const char* mapName)
 			}
 		}
 
-		flush.Rests.push_back({origin, FindPlanes(flush, origin)});
+		flush.Rests.push_back({origin, g_vecZero, FindPlanes(flush, origin, g_vecZero)});
 	}
 }
 
@@ -422,24 +445,40 @@ void JhlFlushFaces_Add(cl_entity_t* ent)
 
 	auto& flush = g_Models[submodel];
 
-	if (flush.Faces.empty() || ent->curstate.angles != g_vecZero)
+	if (flush.Faces.empty())
 	{
 		return;
 	}
 
 	// Only at rest (a door closed or open, not on its way): where the map placed it, or anywhere it's come to a stop,
-	// worked out the first time.
+	// moved or turned, worked out the first time.
+	const auto turnedAs = [](const Vector& a, const Vector& b)
+	{
+		for (int k = 0; k < 3; ++k)
+		{
+			const float difference = std::remainder(a[k] - b[k], 360.0f);
+
+			if (std::abs(difference) > RestAngleEpsilon)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	};
+
 	auto rest = std::find_if(flush.Rests.begin(), flush.Rests.end(), [&](const Rest& candidate)
-		{ return (ent->curstate.origin - candidate.Origin).Length() <= RestEpsilon; });
+		{ return (ent->curstate.origin - candidate.Origin).Length() <= RestEpsilon && turnedAs(ent->curstate.angles, candidate.Angles); });
 
 	if (rest == flush.Rests.end())
 	{
-		if (ent->curstate.origin != ent->prevstate.origin || flush.Rests.size() >= MaxRests)
+		if (ent->curstate.origin != ent->prevstate.origin || ent->curstate.angles != ent->prevstate.angles ||
+			flush.Rests.size() >= MaxRests)
 		{
 			return;
 		}
 
-		flush.Rests.push_back({ent->curstate.origin, FindPlanes(flush, ent->curstate.origin)});
+		flush.Rests.push_back({ent->curstate.origin, ent->curstate.angles, FindPlanes(flush, ent->curstate.origin, ent->curstate.angles)});
 		rest = flush.Rests.end() - 1;
 	}
 

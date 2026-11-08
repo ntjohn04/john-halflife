@@ -28,7 +28,7 @@ The helpers live in `shared/jhl_framerate.h`:
 | The gargantua's stomp speeding up | Its speed added to every think by frametime. Half-Life Updated: steady, as at 40 fps | As at 72 fps | `CStomp::Think` |
 | Electrified wires (Opposing Force) | 1 damage a touch, every frame: 72 a second at 72 fps. Half-Life Updated: 30 a second (30 fps) | 36 every half second (72 a second) | `CRopeSegment::Touch` |
 | trigger_camera turning | Error × 40 × frametime. Half-Life Updated: as at 100 fps | As at 72 fps | `CTriggerCamera::FollowTarget` |
-| NPCs riding elevators | The engine counts a rider that's still stuck in anything once moved along (the lift, the world, the player) as blocking the lift. Once it is, it blocks every frame and is crushed: ba_elevator's scientist at high frame rates, a lost game since he's essential | A rider (an NPC over the mover's floor) is moved to the nearest free spot within a step up and 16 units to the side, at the start of the next frame since the engine puts it back after `Blocked`; one in its way otherwise is blocked and hurt as before | `JhlFreeRiderSpot`, in `DispatchBlocked`; `JhlMoveRiders` |
+| NPCs riding elevators | At high frame rates an NPC riding a lift down can block it every frame (ba_elevator's scientist at 240 fps): the lift barely moves and its damage kills him, a lost game since he's essential | A lift going straight down that's blocked by an NPC over its floor finishes its move (the floor only moves away from the rider); one blocked otherwise is blocked and hurt as before | `JhlFinishLiftMove`, in `DispatchBlocked` |
 
 The engine itself is fine:
 * Current builds carry the leftover fraction of each millisecond into the player's input frames, so there's no
