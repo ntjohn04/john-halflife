@@ -506,33 +506,33 @@ void CStudioModelRenderer::StudioSetUpTransform(bool trivial_accept)
 
 		const auto pseqdesc = (mstudioseqdesc_t*)((byte*)m_pStudioHeader + m_pStudioHeader->seqindex) + m_pCurrentEntity->curstate.sequence;
 
-		// johnhalflife (jhl_visuals_renderfixes): this draws an NPC from where it was at its last animation update, to smooth
-		// its steps (one a think, every 0.1 seconds). Carried by a lift or tram, or falling, it moves between its updates
-		// too, so it was drawn up to 0.1 seconds behind and snapped forward at each update: ten bounces a second. Moved
-		// between its updates within the last 0.2 seconds, it's drawn where it is.
+		// johnhalflife (jhl_visuals_renderfixes): this smooths an NPC's steps (one a think, every 0.1 seconds) by drawing it
+		// back along its move since its last animation update. Carried by a lift or tram, or falling, it keeps moving after
+		// the update, and all of that was drawn back too: on ba_elevator's lift a bounce ten times a second. Only the step
+		// the update brought (from where it was to where it was when the update came) is smoothed; moved after, it's drawn
+		// where it is. Not carried, that's the same as before.
 		static cvar_t* renderFixes = gEngfuncs.pfnGetCvarPointer("jhl_visuals_renderfixes");
-		static float carriedAt[MAX_EDICTS];
+		static float updateTimes[MAX_EDICTS];
+		static Vector updateOrigins[MAX_EDICTS];
 		const int index = m_pCurrentEntity->index;
-		bool carried = false;
+		Vector step = m_pCurrentEntity->origin - m_pCurrentEntity->latched.prevorigin;
 
-		if (index > 0 && index < MAX_EDICTS)
+		if (renderFixes && renderFixes->value != 0 && index > 0 && index < MAX_EDICTS)
 		{
-			if (m_pCurrentEntity->curstate.origin != m_pCurrentEntity->prevstate.origin &&
-				m_pCurrentEntity->curstate.animtime == m_pCurrentEntity->prevstate.animtime)
+			if (updateTimes[index] != m_pCurrentEntity->latched.prevanimtime)
 			{
-				carriedAt[index] = m_clTime;
+				updateTimes[index] = m_pCurrentEntity->latched.prevanimtime;
+				updateOrigins[index] = m_pCurrentEntity->origin;
 			}
 
-			carried = m_clTime >= carriedAt[index] && m_clTime < carriedAt[index] + 0.2f && carriedAt[index] > 0;
+			step = updateOrigins[index] - m_pCurrentEntity->latched.prevorigin;
 		}
 
-		const bool drawnWhereItIs = carried && renderFixes && renderFixes->value != 0;
-
-		if (!drawnWhereItIs && ((pseqdesc->motiontype & STUDIO_LX) != 0 || (m_pCurrentEntity->curstate.eflags & EFLAG_SLERP) != 0))
+		if ((pseqdesc->motiontype & STUDIO_LX) != 0 || (m_pCurrentEntity->curstate.eflags & EFLAG_SLERP) != 0)
 		{
 			for (i = 0; i < 3; i++)
 			{
-				modelpos[i] += (m_pCurrentEntity->origin[i] - m_pCurrentEntity->latched.prevorigin[i]) * f;
+				modelpos[i] += step[i] * f;
 			}
 		}
 

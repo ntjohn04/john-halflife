@@ -65,13 +65,13 @@ aren't lit, are left alone. The engine's model drawing never touches that unit, 
 
 ### NPCs riding lifts and trams (`jhl_visuals_renderfixes`)
 
-The client draws an NPC from where it was at its previous animation update, blending to where it is over the time
-between updates (`StudioSetUpTransform`), to smooth its steps: it moves once a think, every 0.1 seconds. Carried by a
-lift or tram, or falling, it moves between its updates as well, so it was drawn up to 0.1 seconds behind and snapped
-forward at each update: on ba_elevator's lift (50 units a second) a 5 unit bounce ten times a second, the rubber
-banding NPCs on trains have always had. An NPC whose origin changed in an update its animation time didn't is drawn
-where it is for 0.2 seconds after; its own steps are smoothed as before. This is the client's own model drawing, so
-it acts on both renderers.
+The client smooths an NPC's steps (it moves once a think, every 0.1 seconds) by drawing it back along its move since
+its previous animation update, less and less until the next (`StudioSetUpTransform`). Carried by a lift or tram, or
+falling, it keeps moving after the update, and all of that was drawn back too, so it lagged and caught up ten times a
+second: on ba_elevator's lift a bounce, the rubber banding NPCs on trains have always had. Now only the step the update
+brought is smoothed: from where it was before the update to where it was when the update came. Moved after, it's
+drawn where it is; not carried, it's drawn as before. This is the client's own model drawing, so it acts on both
+renderers.
 
 ### 16-bit color (`jhl_visuals_16bitcolor`)
 
