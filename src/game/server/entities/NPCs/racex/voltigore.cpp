@@ -948,7 +948,7 @@ void COFVoltigore::RunTask(const Task_t* pTask)
 					SetSize({-4, -4, 0}, {4, 4, 1});
 				}
 
-				if (ShouldFadeOnDeath())
+				if (JhlFadeCorpse())
 				{
 					SUB_StartFadeOut();
 				}

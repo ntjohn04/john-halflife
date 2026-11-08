@@ -35,6 +35,7 @@
 BEGIN_DATAMAP(CBaseMonster)
 DEFINE_FIELD(m_hEnemy, FIELD_EHANDLE),
 	DEFINE_FIELD(m_JhlCorpseDamage, FIELD_FLOAT),
+	DEFINE_FIELD(m_JhlCorpseKept, FIELD_TIME),
 	DEFINE_FIELD(m_hTargetEnt, FIELD_EHANDLE),
 	DEFINE_ARRAY(m_hOldEnemy, FIELD_EHANDLE, MAX_OLD_ENEMIES),
 	DEFINE_ARRAY(m_vecOldEnemy, FIELD_POSITION_VECTOR, MAX_OLD_ENEMIES),
@@ -3152,6 +3153,62 @@ bool CBaseMonster::ShouldFadeOnDeath()
 		return true;
 
 	return false;
+}
+
+// johnhalflife (jhl_fx_keepcorpses): how many corpses vanilla would have faded are kept at once, oldest faded first;
+// bodies placed by the map aren't counted, as vanilla keeps them all.
+constexpr int JhlKeptCorpses = 40;
+
+bool CBaseMonster::JhlFadeCorpse()
+{
+	if (!ShouldFadeOnDeath())
+	{
+		return false;
+	}
+
+	if (!UTIL_JhlKeepCorpses())
+	{
+		return true;
+	}
+
+	m_JhlCorpseKept = gpGlobals->time;
+
+	int kept = 0;
+	CBaseMonster* oldest = nullptr;
+
+	for (auto entity : UTIL_FindEntities())
+	{
+		if (auto monster = entity->MyMonsterPointer(); monster && monster->m_JhlCorpseKept > 0)
+		{
+			++kept;
+
+			if (!oldest || monster->m_JhlCorpseKept < oldest->m_JhlCorpseKept)
+			{
+				oldest = monster;
+			}
+		}
+	}
+
+	if (kept > JhlKeptCorpses && oldest)
+	{
+		oldest->m_JhlCorpseKept = 0;
+		oldest->SUB_StartFadeOut();
+	}
+
+	return false;
+}
+
+bool CBaseMonster::JhlMakeRoom()
+{
+	if (m_JhlCorpseKept <= 0 || pev->deadflag != DEAD_DEAD)
+	{
+		return false;
+	}
+
+	m_JhlCorpseKept = 0;
+	SUB_StartFadeOut();
+	pev->flags &= ~FL_MONSTER; // Out of monstermakers' way while it fades.
+	return true;
 }
 
 void CBaseMonster::AddShockEffect(float r, float g, float b, float size, float flShockDuration)

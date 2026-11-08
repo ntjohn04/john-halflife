@@ -63,6 +63,17 @@ inline bool UTIL_JhlWallFix()
 }
 
 /**
+ *	@brief Whether jhl_fx_keepcorpses is on (corpses vanilla fades are kept, see CBaseMonster::JhlFadeCorpse): the
+ *	client's setting, read as jhl_fx_particlesystem is.
+ */
+inline bool UTIL_JhlKeepCorpses()
+{
+	static JhlCvarCache cache;
+	const cvar_t* cvar = UTIL_JhlClientCvar("jhl_fx_keepcorpses", cache);
+	return !cvar || cvar->value != 0;
+}
+
+/**
  *	@brief Whether jhl_camera_jumplandjolt is on: the client's setting, read as jhl_fx_particlesystem is (the long
  *	jump's sound goes with the jump jolts).
  */

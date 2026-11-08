@@ -234,6 +234,34 @@ static void JhlDebugBlocked(CBaseEntity* pusher, CBaseEntity* other)
 	calls = 0;
 }
 
+// johnhalflife (jhl_physics_fpsfix): at high frame rates an NPC riding an elevator down can end up a few units into its
+// floor (ba_elevator's scientist: 3 units in at 240 fps), and from then on blocks it every frame and is crushed. An NPC
+// sunk no more than a step into the top of a mover is set back on it instead, to ride it; one in its way otherwise (a
+// door closing on it, a lift coming up under a ledge) is blocked and hurt as before.
+static bool JhlLiftOntoMover(CBaseEntity* pusher, CBaseEntity* other)
+{
+	constexpr float StepHeight = 18;
+
+	if (!UTIL_JhlFpsFix() || !other || other->IsPlayer() || !other->MyMonsterPointer() || other->pev->solid == SOLID_NOT)
+	{
+		return false;
+	}
+
+	TraceResult tr;
+	TRACE_MONSTER_HULL(other->edict(), other->pev->origin + Vector(0, 0, StepHeight), other->pev->origin, dont_ignore_monsters,
+		other->edict(), &tr);
+
+	if (0 != tr.fStartSolid || 0 != tr.fAllSolid || tr.flFraction >= 1 || tr.pHit != pusher->edict())
+	{
+		return false;
+	}
+
+	other->SetOrigin(tr.vecEndPos);
+	other->pev->flags |= FL_ONGROUND;
+	other->pev->groundentity = pusher->edict();
+	return true;
+}
+
 void DispatchBlocked(edict_t* pentBlocked, edict_t* pentOther)
 {
 	CBaseEntity* pEntity = (CBaseEntity*)GET_PRIVATE(pentBlocked);
@@ -241,6 +269,14 @@ void DispatchBlocked(edict_t* pentBlocked, edict_t* pentOther)
 
 	if (pEntity && g_JhlDebugBlocked)
 		JhlDebugBlocked(pEntity, pOther);
+
+	if (pEntity && JhlLiftOntoMover(pEntity, pOther))
+	{
+		if (g_JhlDebugBlocked)
+			Con_Printf("jhl_debug_blocked: %s set back on top of %s\n", STRING(pOther->pev->classname), STRING(pEntity->pev->classname));
+
+		return;
+	}
 
 	if (pEntity)
 		pEntity->Blocked(pOther);

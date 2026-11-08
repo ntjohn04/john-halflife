@@ -40,7 +40,7 @@ All are client settings: in John Settings (below) or the console.
 | `jhl_camera_jumplandjolt` | 1 | Jump and landing view jolts, and a sound for the long jump module's jump | [Camera](docs/camera_movement.md#jump-and-landing-jolts) |
 | `jhl_visuals_weaponlag` | 1 | Weapon lags behind when turning | [Camera](docs/camera_movement.md#weapon-lag-and-wall-push) |
 | `jhl_visuals_weaponwallpush` | 1 | Weapon pulls back near walls | [Camera](docs/camera_movement.md#weapon-lag-and-wall-push) |
-| `jhl_visuals_flushfaces` | 1 | Signs, posters and panels built flush with walls drawn steady (they flickered in OpenGL and vanished in software) | [Visuals](docs/visuals.md) |
+| `jhl_visuals_flushfaces` | 1 | Signs, posters and panels built flush with walls, and doors at rest open or closed, drawn steady (they flickered in OpenGL and vanished in software) | [Visuals](docs/visuals.md) |
 | `jhl_visuals_16bitcolor` | 1 | The software renderer's 16-bit color: every frame cut to 565, as it drew | [Visuals](docs/visuals.md#16-bit-color-jhl_visuals_16bitcolor) |
 | `jhl_visuals_softwarewater` | 1 | The software renderer's water: its ripple simulation in place of OpenGL's sine wobble, and under water its 320 x 200 view and fog by depth | [Visuals](docs/visuals.md#software-renderer-touches) |
 | `jhl_visuals_renderfixes` | 1 | Models lit up to 4/3 as the world is; with texture filtering off, textures point sampled with mipmaps and the sky pixelated as the world is | [Visuals](docs/visuals.md#software-renderer-touches) |
@@ -51,6 +51,7 @@ All are client settings: in John Settings (below) or the console.
 | `jhl_fx_muzzleflash` | 1 | Muzzle light and smoke, RPG backblast | [Weapons](docs/weapons.md#muzzle-light-and-smoke) |
 | `jhl_fx_particlesystem` | 1 | The particle system changes (gibs, blood, explosions, debris, beams, rings) | [Effects](docs/effects.md#gibs-done) |
 | `jhl_fx_tracers` | 1 | johnhalflife's tracers (with the particle system on): the M249's tracer rounds, every gun's faint streaks, NPCs' | [Weapons](docs/weapons.md#tracers) |
+| `jhl_fx_keepcorpses` | 1 | Corpses vanilla fades a few seconds after death (monsters from a spawner, such as Race X portals and grunt drop-offs, and those the map flags to fade) stay like any other body. Up to 40 at once, the oldest fading past that; a spawner whose spot a kept corpse lies on fades it and spawns anyway | [Effects](docs/effects.md#kept-corpses) |
 | `jhl_hud_scale` | 0 | Sprite HUD scale: 0 automatic (Valve's half-size HUD at 800x600 and below, 1 up to 1439 tall, 2 from 1440, 3 from 2160), 0.5 half size, 1, 2, 3... that size | [HUD](#hud-scale) |
 | `jhl_hud_minimal` | 1 | A minimal HUD: the weapon menu without its ammo bars (the small green, red when empty, bars under each weapon), and the flashlight icon fading away while it's off and fully charged (back at once when on or charging) | [HUD](#hud-scale) |
 | `jhl_snd_vanilla` | 1 | Half-Life's own mixing (22 kHz, its pitch grain, ear volumes, clipping) and room effects, in place of the SDK's OpenAL sound | [Sound](docs/sound.md) |

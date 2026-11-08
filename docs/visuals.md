@@ -14,8 +14,9 @@ every renderer since 1998. `gl_polyoffset` doesn't help, because the engine only
   same plane, facing the same way, is noted, along with where the map placed it.
 * **Each frame (`HUD_AddEntity`):** such an entity, while you can see it, is drawn moved out of the wall along
   that face's normal. The distance is just more than the depth buffer can tell apart at that range (near plane at
-  4 units, 24 bits): 0.1 unit up close, about 0.25 at 1,000 units, at most 2. It is only moved while it sits where
-  the map placed it, unrotated, so a door that opens or a train on its way is left alone.
+  4 units, 24 bits): 0.1 unit up close, about 0.25 at 1,000 units, at most 2. It is only moved while at rest and
+  unrotated: where the map placed it (a door closed), or anywhere it has come to a stop (a door open, a lift at the
+  top), worked out the first time it stops there, up to 8 places an entity. Moving, it's left alone.
 * **After the view is drawn (`HUD_Redraw`):** the entity is put back, so collision, prediction and sounds never see
   it moved. Each frame the engine resets brush entities to their network position before the client sees them
   (checked in hw.dll), so the offset can't build up.

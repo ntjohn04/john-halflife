@@ -43,8 +43,11 @@ constexpr float PlaneEpsilon = 0.02f;
 constexpr float NormalEpsilon = 0.0005f;
 constexpr float MinOverlap = 1;
 
-// The entity is where the map placed it within this (its origin is sent to 1/8 unit).
+// The entity is at a place it rested before within this (its origin is sent to 1/8 unit).
 constexpr float RestEpsilon = 0.2f;
+
+// Places an entity rests at that are worked out, at most: a door's two, a train's stops.
+constexpr std::size_t MaxRests = 8;
 
 // A face, in the world's coordinates.
 struct Face
@@ -55,7 +58,7 @@ struct Face
 	Vector Mins, Maxs;
 };
 
-// A plane an entity is flush with the world on, where the map placed it.
+// A plane an entity is flush with the world on, at a place it rests.
 struct FlushPlane
 {
 	Vector Normal;
@@ -63,10 +66,16 @@ struct FlushPlane
 	Vector Mins, Maxs; // Of its faces there.
 };
 
+struct Rest
+{
+	Vector Origin;
+	std::vector<FlushPlane> Planes;
+};
+
 struct FlushModel
 {
-	Vector Origin; // Where the map placed it.
-	std::vector<FlushPlane> Planes;
+	std::vector<Face> Faces; // Its own, at origin 0.
+	std::vector<Rest> Rests; // Where the map placed it first (a door closed), then where it came to rest (open).
 };
 
 struct Moved
@@ -78,6 +87,11 @@ struct Moved
 cvar_t* g_FlushFaces = nullptr;
 std::string g_MapName;
 std::vector<FlushModel> g_Models; // By submodel (*1 ...).
+
+// The world's faces, by distance from the world's origin (to the unit) for finding those on a plane. Sky faces aren't
+// drawn as the world is.
+std::vector<Face> g_World;
+std::unordered_map<int, std::vector<std::size_t>> g_WorldByDist;
 std::vector<Moved> g_Moved;
 float g_MovedTime = -1;
 
@@ -182,10 +196,87 @@ float OverlapArea(std::vector<Point2D> subject, const std::vector<Point2D>& clip
 	return subject.size() >= 3 ? std::abs(SignedArea(subject)) : 0;
 }
 
-// Finds the brush entities flush with the world in the map being played.
+// The planes a model placed at origin is flush with the world on.
+std::vector<FlushPlane> FindPlanes(const FlushModel& flush, const Vector& origin)
+{
+	std::vector<FlushPlane> planes;
+
+	for (const auto& local : flush.Faces)
+	{
+		Face face;
+		face.Normal = local.Normal;
+		face.Dist = local.Dist + DotProduct(face.Normal, origin);
+		face.Mins = local.Mins + origin;
+		face.Maxs = local.Maxs + origin;
+
+		for (const auto& point : local.Points)
+		{
+			face.Points.push_back(point + origin);
+		}
+
+		int u, v;
+		PlaneAxes(face.Normal, u, v);
+		const auto polygon = Project(face, u, v);
+		bool covers = false;
+
+		for (int bucket = -1; bucket <= 1 && !covers; ++bucket)
+		{
+			const auto found = g_WorldByDist.find(static_cast<int>(std::floor(face.Dist)) + bucket);
+
+			if (found == g_WorldByDist.end())
+			{
+				continue;
+			}
+
+			for (const auto w : found->second)
+			{
+				const auto& other = g_World[w];
+
+				if (std::abs(other.Dist - face.Dist) > PlaneEpsilon || DotProduct(other.Normal, face.Normal) < 1 - NormalEpsilon)
+				{
+					continue;
+				}
+
+				if (OverlapArea(polygon, Project(other, u, v)) >= MinOverlap)
+				{
+					covers = true;
+					break;
+				}
+			}
+		}
+
+		if (!covers)
+		{
+			continue;
+		}
+
+		const auto plane = std::find_if(planes.begin(), planes.end(), [&](const FlushPlane& candidate)
+			{ return std::abs(candidate.Dist - face.Dist) <= PlaneEpsilon && DotProduct(candidate.Normal, face.Normal) >= 1 - NormalEpsilon; });
+
+		if (plane == planes.end())
+		{
+			planes.push_back({face.Normal, face.Dist, face.Mins, face.Maxs});
+		}
+		else
+		{
+			for (int k = 0; k < 3; ++k)
+			{
+				plane->Mins[k] = std::min(plane->Mins[k], face.Mins[k]);
+				plane->Maxs[k] = std::max(plane->Maxs[k], face.Maxs[k]);
+			}
+		}
+	}
+
+	return planes;
+}
+
+// Reads the map being played: the world's faces, and each brush entity's, with the planes it's flush with the world on
+// where the map placed it.
 void LoadMap(const char* mapName)
 {
 	g_Models.clear();
+	g_World.clear();
+	g_WorldByDist.clear();
 
 	const JhlBsp* bsp = JhlBsp_Get(mapName);
 
@@ -223,11 +314,6 @@ void LoadMap(const char* mapName)
 		return true;
 	};
 
-	// The world's faces, by distance from the world's origin (to the unit) for finding those on a plane. Sky faces
-	// aren't drawn as the world is.
-	std::vector<Face> world;
-	std::unordered_map<int, std::vector<std::size_t>> worldByDist;
-
 	for (int i = 0; i < bsp->Models[0].NumFaces; ++i)
 	{
 		const auto& source = bsp->Faces[bsp->Models[0].FirstFace + i];
@@ -238,8 +324,8 @@ void LoadMap(const char* mapName)
 			continue;
 		}
 
-		worldByDist[static_cast<int>(std::floor(face.Dist))].push_back(world.size());
-		world.push_back(std::move(face));
+		g_WorldByDist[static_cast<int>(std::floor(face.Dist))].push_back(g_World.size());
+		g_World.push_back(std::move(face));
 	}
 
 	g_Models.resize(bsp->Models.size());
@@ -267,73 +353,24 @@ void LoadMap(const char* mapName)
 		}
 
 		auto& flush = g_Models[submodel];
+		Vector origin;
 
-		if (const auto origin = keys.find("origin"); origin != keys.end())
+		if (const auto key = keys.find("origin"); key != keys.end())
 		{
-			flush.Origin = JhlBsp_ParseVector(origin->second);
+			origin = JhlBsp_ParseVector(key->second);
 		}
 
 		Face face;
 
 		for (int i = 0; i < bsp->Models[submodel].NumFaces; ++i)
 		{
-			if (!makeFace(bsp->Faces[bsp->Models[submodel].FirstFace + i], flush.Origin, face))
+			if (makeFace(bsp->Faces[bsp->Models[submodel].FirstFace + i], g_vecZero, face))
 			{
-				continue;
-			}
-
-			int u, v;
-			PlaneAxes(face.Normal, u, v);
-			const auto polygon = Project(face, u, v);
-			bool covers = false;
-
-			for (int bucket = -1; bucket <= 1 && !covers; ++bucket)
-			{
-				const auto found = worldByDist.find(static_cast<int>(std::floor(face.Dist)) + bucket);
-
-				if (found == worldByDist.end())
-				{
-					continue;
-				}
-
-				for (const auto w : found->second)
-				{
-					const auto& other = world[w];
-
-					if (std::abs(other.Dist - face.Dist) > PlaneEpsilon || DotProduct(other.Normal, face.Normal) < 1 - NormalEpsilon)
-					{
-						continue;
-					}
-
-					if (OverlapArea(polygon, Project(other, u, v)) >= MinOverlap)
-					{
-						covers = true;
-						break;
-					}
-				}
-			}
-
-			if (!covers)
-			{
-				continue;
-			}
-
-			const auto plane = std::find_if(flush.Planes.begin(), flush.Planes.end(), [&](const FlushPlane& candidate)
-				{ return std::abs(candidate.Dist - face.Dist) <= PlaneEpsilon && DotProduct(candidate.Normal, face.Normal) >= 1 - NormalEpsilon; });
-
-			if (plane == flush.Planes.end())
-			{
-				flush.Planes.push_back({face.Normal, face.Dist, face.Mins, face.Maxs});
-			}
-			else
-			{
-				for (int k = 0; k < 3; ++k)
-				{
-					plane->Mins[k] = std::min(plane->Mins[k], face.Mins[k]);
-					plane->Maxs[k] = std::max(plane->Maxs[k], face.Maxs[k]);
-				}
+				flush.Faces.push_back(face);
 			}
 		}
+
+		flush.Rests.push_back({origin, FindPlanes(flush, origin)});
 	}
 }
 
@@ -376,7 +413,7 @@ void JhlFlushFaces_Add(cl_entity_t* ent)
 		LoadMap(mapName);
 
 		const auto flushCount = std::count_if(g_Models.begin(), g_Models.end(), [](const FlushModel& model)
-			{ return !model.Planes.empty(); });
+			{ return !model.Rests.empty() && !model.Rests[0].Planes.empty(); });
 		gEngfuncs.Con_DPrintf("johnhalflife: %d brush entities flush with walls in %s\n", static_cast<int>(flushCount), mapName);
 	}
 
@@ -387,10 +424,30 @@ void JhlFlushFaces_Add(cl_entity_t* ent)
 		return;
 	}
 
-	const auto& flush = g_Models[submodel];
+	auto& flush = g_Models[submodel];
 
-	// Only where the map placed it (a door closed, not a train on its way).
-	if (flush.Planes.empty() || (ent->curstate.origin - flush.Origin).Length() > RestEpsilon || ent->curstate.angles != g_vecZero)
+	if (flush.Faces.empty() || ent->curstate.angles != g_vecZero)
+	{
+		return;
+	}
+
+	// Only at rest (a door closed or open, not on its way): where the map placed it, or anywhere it's come to a stop,
+	// worked out the first time.
+	auto rest = std::find_if(flush.Rests.begin(), flush.Rests.end(), [&](const Rest& candidate)
+		{ return (ent->curstate.origin - candidate.Origin).Length() <= RestEpsilon; });
+
+	if (rest == flush.Rests.end())
+	{
+		if (ent->curstate.origin != ent->prevstate.origin || flush.Rests.size() >= MaxRests)
+		{
+			return;
+		}
+
+		flush.Rests.push_back({ent->curstate.origin, FindPlanes(flush, ent->curstate.origin)});
+		rest = flush.Rests.end() - 1;
+	}
+
+	if (rest->Planes.empty())
 	{
 		return;
 	}
@@ -399,7 +456,7 @@ void JhlFlushFaces_Add(cl_entity_t* ent)
 	Vector direction;
 	float distance = 0;
 
-	for (const auto& plane : flush.Planes)
+	for (const auto& plane : rest->Planes)
 	{
 		if (DotProduct(plane.Normal, v_origin) - plane.Dist > 0)
 		{

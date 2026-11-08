@@ -213,8 +213,19 @@ void CMonsterMaker::MakeMonster()
 	maxs.z = pev->origin.z;
 	mins.z = m_flGround;
 
-	CBaseEntity* pList[2];
-	int count = UTIL_EntitiesInBox(pList, 2, mins, maxs, FL_CLIENT | FL_MONSTER);
+	CBaseEntity* pList[8];
+	const int found = UTIL_EntitiesInBox(pList, std::size(pList), mins, maxs, FL_CLIENT | FL_MONSTER);
+	int count = 0;
+
+	for (int i = 0; i < found; ++i)
+	{
+		// johnhalflife (jhl_fx_keepcorpses): a corpse kept that vanilla would have faded makes way.
+		if (auto monster = pList[i]->MyMonsterPointer(); !monster || !monster->JhlMakeRoom())
+		{
+			++count;
+		}
+	}
+
 	if (0 != count)
 	{
 		// don't build a stack of monsters!

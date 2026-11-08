@@ -68,6 +68,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_fx_muzzleflash", "1"},
 	{"jhl_fx_particlesystem", "1"},
 	{"jhl_fx_tracers", "1"},
+	{"jhl_fx_keepcorpses", "1"},
 	{"jhl_hud_scale", "0"},
 	{"jhl_hud_minimal", "1"},
 	{"jhl_snd_vanilla", "1"},
@@ -297,6 +298,9 @@ void JhlSettings_Initialize()
 
 	// Walking along a wall no faster than in the open (pm_shared.cpp's PM_WalkMove); the server reads it too.
 	gEngfuncs.pfnRegisterVariable("jhl_physics_wallfix", "1", FCVAR_ARCHIVE);
+
+	// Corpses vanilla fades (a monstermaker's, or flagged by the map) kept (CBaseMonster::JhlFadeCorpse); the server reads it.
+	gEngfuncs.pfnRegisterVariable("jhl_fx_keepcorpses", "1", FCVAR_ARCHIVE);
 
 	// johnhalflife's tracers on their own (jhl_tracers.cpp); they also need the particle system.
 	gEngfuncs.pfnRegisterVariable("jhl_fx_tracers", "1", FCVAR_ARCHIVE);

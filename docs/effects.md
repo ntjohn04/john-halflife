@@ -240,6 +240,20 @@ grenade 3; RPG rockets 1.5×, explosive breakables 1.3×):
   0.1 s later; the lights as above. Bubbles (`UTIL_JhlExplosionBubbles`): vanilla's 100 in a 128 unit box, times
   scale / 3 in count and box, and 40 × that more in a 1.5× box, rising slowly (speed 3, vanilla's 8).
 
+## Kept corpses
+
+`jhl_fx_keepcorpses` (default 1). Vanilla fades a corpse a few seconds after it comes to rest when a `monstermaker`
+made the monster (unless the spawner's "leave corpse" flag is set) or the map gave it the "fade corpse" flag
+(`CBaseMonster::ShouldFadeOnDeath`). The expansions make most of their enemies that way, Race X portals and grunt
+drop-offs among them, and flag many placed ones too, so bodies kept disappearing there. With the setting they stay
+like any other body (`CBaseMonster::JhlFadeCorpse`, from `TASK_DIE` and the voltigore's own death):
+* At most 40 kept at once, the oldest fading past that (`JhlKeptCorpses`), as vanilla faded them to save entities.
+  Bodies vanilla keeps aren't counted.
+* A spawner whose spot has a kept corpse on it fades that corpse and spawns anyway (`CMonsterMaker::MakeMonster`),
+  where vanilla would wait for the spot to clear.
+* Removals that scripts or events do themselves aren't touched: a scripted death without "leave corpse", the Osprey's
+  passengers, the Gene Worm's end, the Nihilanth's helpers.
+
 ## Explosions (done)
 
 Vanilla, from Valve's source and the engine (`hw.dll`; the SDK's client `R_Explosion` in `SoundSystem.cpp`
