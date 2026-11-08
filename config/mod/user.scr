@@ -153,6 +153,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"jhl_input_walktoggle"
+	{
+		"JHL | Controls: walk key toggles walking (off: hold to walk)"
+		{ BOOL }
+		{ "0" }
+	}
+
 	"jhl_fx_bulletimpacts"
 	{
 		"JHL | Effects: bullet impacts and water splashes"

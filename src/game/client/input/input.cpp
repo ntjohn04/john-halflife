@@ -384,8 +384,28 @@ void IN_MoverightUp()
 	KeyUp(&in_moveright);
 	gHUD.m_Spectator.HandleButtonsUp(IN_MOVERIGHT);
 }
-void IN_SpeedDown() { KeyDown(&in_speed); }
-void IN_SpeedUp() { KeyUp(&in_speed); }
+// johnhalflife (jhl_input_walktoggle): the walk key's press turns walking on or off, its release does nothing.
+static cvar_t* jhl_input_walktoggle;
+
+void IN_SpeedDown()
+{
+	if (jhl_input_walktoggle && 0 != jhl_input_walktoggle->value && (in_speed.state & 1) != 0)
+	{
+		in_speed.down[0] = in_speed.down[1] = 0;
+		in_speed.state = 4; // impulse up
+		return;
+	}
+
+	KeyDown(&in_speed);
+}
+
+void IN_SpeedUp()
+{
+	if (jhl_input_walktoggle && 0 != jhl_input_walktoggle->value)
+		return;
+
+	KeyUp(&in_speed);
+}
 void IN_StrafeDown() { KeyDown(&in_strafe); }
 void IN_StrafeUp() { KeyUp(&in_strafe); }
 
@@ -890,6 +910,7 @@ void InitInput()
 	gEngfuncs.pfnAddCommand("-break", IN_BreakUp);
 
 	lookstrafe = gEngfuncs.pfnRegisterVariable("lookstrafe", "0", FCVAR_ARCHIVE);
+	jhl_input_walktoggle = gEngfuncs.pfnRegisterVariable("jhl_input_walktoggle", "0", FCVAR_ARCHIVE);
 	lookspring = gEngfuncs.pfnRegisterVariable("lookspring", "0", FCVAR_ARCHIVE);
 	cl_anglespeedkey = gEngfuncs.pfnRegisterVariable("cl_anglespeedkey", "0.67", 0);
 	cl_yawspeed = gEngfuncs.pfnRegisterVariable("cl_yawspeed", "210", 0);

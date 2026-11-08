@@ -46,6 +46,7 @@ All are client settings: in John Settings (below) or the console.
 | `jhl_visuals_renderfixes` | 1 | Models lit up to 4/3 as the world is; with texture filtering off, textures point sampled with mipmaps and the sky pixelated as the world is | [Visuals](docs/visuals.md#software-renderer-touches) |
 | `jhl_physics_fpsfix` | 1 | Pushables, +use walking, grenades and gibs sliding, debris settling and fire rates acting at any frame rate as at 72 fps | [Physics](docs/physics.md) |
 | `jhl_physics_wallfix` | 1 | No extra speed walking at an angle into a wall (0: vanilla's wall running) | [Physics](docs/physics.md#no-extra-speed-walking-into-a-wall-jhl_physics_wallfix-default-1) |
+| `jhl_input_walktoggle` | 0 | The walk key (`+speed`) toggles walking instead of walking while held; same binding | |
 | `jhl_weapons_smoothrecoil` | 1 | Spring-damped recoil (0 = original punches) | [Weapons](docs/weapons.md#recoil) |
 | `jhl_fx_bulletimpacts` | 1 | Bullet impact sparks/dust and water splashes | [Weapons](docs/weapons.md#bullet-impacts) |
 | `jhl_fx_muzzleflash` | 1 | Muzzle light and smoke, RPG backblast | [Weapons](docs/weapons.md#muzzle-light-and-smoke) |
