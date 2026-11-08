@@ -37,8 +37,7 @@ screenshots of the same view. They light the world identically: the same light g
 the brightest light is 1.33× (OpenGL's `gl_overbright`, on by default, matches), the same tone curve. Several touches
 differ, in two settings, and 16-bit color on its own:
 * `jhl_visuals_renderfixes` (default 1): models lit as the world is, and with texture filtering off textures
-  point sampled with mipmaps and the sky pixelated like the world: OpenGL made consistent with itself. Also, on both
-  renderers, NPCs riding lifts and trams drawn without bouncing (below).
+  point sampled with mipmaps and the sky pixelated like the world: OpenGL made consistent with itself.
 * `jhl_visuals_softwarewater` (default 1): the water's ripples, and under water the 320 × 200 view and fog.
 * `jhl_visuals_16bitcolor` (default 1): the 16-bit frame.
 
@@ -62,16 +61,6 @@ duller than the room they stand in (measured: software's models 1.33 times as br
 the same). While the engine draws a model's polygons (`StudioDrawPoints`), the second texture unit multiplies their
 lit colour by 4/3 (a constant 2/3, scaled by 2), clamped as software clamps; additive models and glow shells, which
 aren't lit, are left alone. The engine's model drawing never touches that unit, and it's put back as it was after.
-
-### NPCs riding lifts and trams (`jhl_visuals_renderfixes`)
-
-The client smooths an NPC's steps (it moves once a think, every 0.1 seconds) by drawing it back along its move since
-its previous animation update, less and less until the next (`StudioSetUpTransform`). Carried by a lift or tram, or
-falling, it keeps moving after the update, and all of that was drawn back too, so it lagged and caught up ten times a
-second: on ba_elevator's lift a bounce, the rubber banding NPCs on trains have always had. Now only the step the update
-brought is smoothed: from where it was before the update to where it was when the update came. Moved after, it's
-drawn where it is; not carried, it's drawn as before. This is the client's own model drawing, so it acts on both
-renderers.
 
 ### 16-bit color (`jhl_visuals_16bitcolor`)
 
