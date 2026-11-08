@@ -29,9 +29,9 @@ Console commands for finding problems; none changes anything in play.
   model's muzzle point, `r_dynamic`, and whether a temporary entity can be had. For the rare times they've stopped.
 * Blocked movers: `jhl_debug_blocked` (console, toggles) prints each time something blocks an elevator, door or train:
   the mover, its height and speed, and the blocker's health, place and footing, then the engine's push tests replayed
-  (free before, how far it was pushed, stuck after). For NPCs crushed on lifts.
+  (free before, how far it was pushed, stuck after), any rider raised out of the floor, and any NPC on a moving mover not kept standing on it, with why. For NPCs crushed or bouncing on lifts.
 * NPC drawing: `jhl_debug_npcdraw 1` prints, 50 times a second for each NPC drawn, its height, its height before its
-  last animation update, the smoothing fraction and the height it's drawn at. For NPCs bouncing on lifts.
+  last animation update, its sequence, frame and yaw, the smoothing fraction and the height it's drawn at. For telling a real bounce from a drawn one.
 * Texture materials: `jhl_texture [material]` prints the texture under the crosshair and the materials bullet impacts
   use for it, and adds it to `jhl_textures.txt` with the material given, for corrections to
   `config/mod/sound/jhl_impact_materials.json` ([weapons](weapons.md#bullet-impacts)).

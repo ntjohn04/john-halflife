@@ -15,9 +15,11 @@ every renderer since 1998. `gl_polyoffset` doesn't help, because the engine only
 * **Each frame (`HUD_AddEntity`):** such an entity, while you can see it, is drawn moved out of the wall along
   that face's normal. The distance is just more than the depth buffer can tell apart at that range (near plane at
   4 units, 24 bits): 0.1 unit up close, about 0.25 at 1,000 units, at most 2. It is only moved while at rest: where the
-  map placed it (a door closed), or anywhere it has come to a stop, moved or turned (a door open, a lift at the top,
-  c1a0's door wheels turned against the wall), worked out the first time it stops there, up to 8 places an entity.
-  Moving, it's left alone. The map's `angles` aren't read: doors take them as the way they move.
+  map placed it (a door closed), or anywhere it has stood still a quarter of a second, moved or turned (a door open, a
+  lift at the top, c1a0's door wheels turned against the wall), worked out the first time it stops there, up to 32
+  places an entity. Moving, it's left alone. Turned about its side (pitch: a door hinged on its Y axis) it's left alone
+  too, as the renderer may turn those the other way from the collision code this follows. The map's `angles` aren't
+  read: doors take them as the way they move.
 * **After the view is drawn (`HUD_Redraw`):** the entity is put back, so collision, prediction and sounds never see
   it moved. Each frame the engine resets brush entities to their network position before the client sees them
   (checked in hw.dll), so the offset can't build up.
@@ -61,15 +63,6 @@ duller than the room they stand in (measured: software's models 1.33 times as br
 the same). While the engine draws a model's polygons (`StudioDrawPoints`), the second texture unit multiplies their
 lit colour by 4/3 (a constant 2/3, scaled by 2), clamped as software clamps; additive models and glow shells, which
 aren't lit, are left alone. The engine's model drawing never touches that unit, and it's put back as it was after.
-
-### NPCs turning on lifts and trains (`jhl_visuals_renderfixes`)
-
-With a sequence that moves it (a turn, a walk), the client smooths an NPC's steps (one a think, every 0.1 seconds) by
-drawing it back along its move since its previous animation update, less and less until the next
-(`StudioSetUpTransform`). Carried by a lift or train, it keeps moving after the update, and all of that was drawn back
-too, so it lagged and caught up ten times a second: ba_elevator's scientist bouncing as he turned. Only the step the
-update brought is smoothed now, from where it was before the update to where it was when it came; moved after, it's
-drawn where it is. Not carried, it's drawn as before. The client's own model drawing, so on both renderers.
 
 ### 16-bit color (`jhl_visuals_16bitcolor`)
 

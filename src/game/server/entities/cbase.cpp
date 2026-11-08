@@ -367,10 +367,8 @@ void JhlRaiseRiders()
 	// johnhalflife (jhl_physics_fpsfix): the engine takes a walking NPC's standing flag away each time a mover carries it
 	// (players keep theirs), so the next frame it isn't carried: a lift going down drops away and it falls after it, about
 	// 1.5 units, landing eight times a second (ba_elevator's scientists bouncing); a tram leaves it behind until a wall
-	// shoves it along (NPCs rubber banding in trains). An NPC playing a scripted sequence (a turn, a gesture) is made to
-	// fly for it, standing flag taken away (TASK_PLAY_SCRIPT), so it hung in the air as a lift went down and was dropped
-	// back to the floor after (ba_elevator's scientist bouncing as he turns). One of either whose ground is a moving
-	// mover, no more than 4 units over its floor, is set back down on it standing, so it's carried every frame.
+	// shoves it along (NPCs rubber banding in trains). One whose ground is a moving mover, no more than 4 units over its
+	// floor, is set back down on it standing, so it's carried every frame. Turning movers are left be.
 	if (!UTIL_JhlFpsFix())
 		return;
 
@@ -380,7 +378,7 @@ void JhlRaiseRiders()
 	{
 		edict_t* edict = INDEXENT(i);
 
-		if (!edict || 0 != edict->free || (edict->v.movetype != MOVETYPE_STEP && edict->v.movetype != MOVETYPE_FLY) ||
+		if (!edict || 0 != edict->free || edict->v.movetype != MOVETYPE_STEP ||
 			(edict->v.flags & (FL_ONGROUND | FL_FLY | FL_SWIM)) != 0 || edict->v.solid == SOLID_NOT || FNullEnt(edict->v.groundentity))
 		{
 			continue;
@@ -392,10 +390,8 @@ void JhlRaiseRiders()
 			continue;
 
 		CBaseEntity* rider = CBaseEntity::Instance(edict);
-		CBaseMonster* monster = rider ? rider->MyMonsterPointer() : nullptr;
 
-		// Flying only for a scripted sequence: a monster that flies (a grunt rappelling, one held by a barnacle) is left be.
-		if (!monster || (edict->v.movetype == MOVETYPE_FLY && (!monster->m_pCine || monster->m_scriptState != CBaseMonster::SCRIPT_PLAYING)))
+		if (!rider || !rider->MyMonsterPointer())
 			continue;
 
 		TraceResult tr;

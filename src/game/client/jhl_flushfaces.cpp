@@ -48,8 +48,12 @@ constexpr float MinOverlap = 1;
 constexpr float RestEpsilon = 0.2f;
 constexpr float RestAngleEpsilon = 0.1f;
 
+// A place an entity has stood still at this long (seconds) counts as a rest: a slow door or train can look still for an
+// update or two on its way.
+constexpr float RestTime = 0.25f;
+
 // Places an entity rests at that are worked out, at most: a door's two, a train's stops.
-constexpr std::size_t MaxRests = 8;
+constexpr std::size_t MaxRests = 32;
 
 // A face, in the world's coordinates.
 struct Face
@@ -81,6 +85,14 @@ struct FlushModel
 	std::vector<Rest> Rests; // Where the map placed it first (a door closed), then where it came to rest (open, turned).
 };
 
+// Where an entity was last seen and since when, for telling a rest from a pause.
+struct Still
+{
+	Vector Origin;
+	Vector Angles;
+	float Since = 0;
+};
+
 struct Moved
 {
 	cl_entity_t* Entity;
@@ -90,6 +102,7 @@ struct Moved
 cvar_t* g_FlushFaces = nullptr;
 std::string g_MapName;
 std::vector<FlushModel> g_Models; // By submodel (*1 ...).
+std::unordered_map<int, Still> g_Still; // By entity.
 
 // The world's faces, by distance from the world's origin (to the unit) for finding those on a plane. Sky faces aren't
 // drawn as the world is.
@@ -204,7 +217,14 @@ std::vector<FlushPlane> FindPlanes(const FlushModel& flush, const Vector& origin
 {
 	std::vector<FlushPlane> planes;
 
-	// Turned as the engine turns a brush entity it collides with (SV_ClipMoveToEntity), which is as it's drawn.
+	// Turned as the engine turns a brush entity it collides with (SV_ClipMoveToEntity). Drawn turned so about its up
+	// (yaw: doors swinging open) and forward axes (roll: c1a0's door wheels); about its side (pitch) the renderer may
+	// turn it the other way, so a pitched entity is left alone.
+	if (std::abs(std::remainder(angles.x, 360.0f)) > RestAngleEpsilon)
+	{
+		return planes;
+	}
+
 	Vector forward(1, 0, 0), right(0, -1, 0), up(0, 0, 1);
 
 	if (angles != g_vecZero)
@@ -298,6 +318,7 @@ std::vector<FlushPlane> FindPlanes(const FlushModel& flush, const Vector& origin
 void LoadMap(const char* mapName)
 {
 	g_Models.clear();
+	g_Still.clear();
 	g_World.clear();
 	g_WorldByDist.clear();
 
@@ -472,8 +493,16 @@ void JhlFlushFaces_Add(cl_entity_t* ent)
 
 	if (rest == flush.Rests.end())
 	{
-		if (ent->curstate.origin != ent->prevstate.origin || ent->curstate.angles != ent->prevstate.angles ||
-			flush.Rests.size() >= MaxRests)
+		const float time = gEngfuncs.GetClientTime();
+		auto& still = g_Still[ent->index];
+
+		if (still.Origin != ent->curstate.origin || still.Angles != ent->curstate.angles || time < still.Since)
+		{
+			still = {ent->curstate.origin, ent->curstate.angles, time};
+			return;
+		}
+
+		if (time - still.Since < RestTime || flush.Rests.size() >= MaxRests)
 		{
 			return;
 		}
