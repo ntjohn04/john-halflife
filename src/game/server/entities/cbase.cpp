@@ -351,6 +351,36 @@ bool JhlRaiseRider(CBaseEntity* pusher, CBaseEntity* other)
 
 	return false;
 }
+
+// A rider the drift has left in the mover's floor once it has stopped (nothing blocks it then) never stands: an NPC
+// keeps falling a frame's gravity every frame, and its corpse sinks through the floor, touching triggers as it goes
+// (ba_elevator's scientist hurt again after dying and gibbed). One stuck in nothing else is raised out.
+bool JhlUnstickRider(CBaseEntity* rider, CBaseEntity* ground)
+{
+	constexpr float MaxRaise = 1;
+	constexpr float RaiseStep = 1.0f / 32;
+
+	if (!JhlStuck(rider, rider->pev->origin) || JhlStuck(rider, rider->pev->origin, ground))
+		return false;
+
+	for (float raise = RaiseStep; raise <= MaxRaise; raise += RaiseStep)
+	{
+		const Vector raised = rider->pev->origin + Vector(0, 0, raise);
+
+		if (!JhlStuck(rider, raised))
+		{
+			rider->SetOrigin(raised);
+
+			if (g_JhlDebugBlocked)
+				Con_Printf("jhl_debug_blocked: %s \"%s\" raised %.3f out of %s\n", STRING(rider->pev->classname), STRING(rider->pev->targetname),
+					raise, STRING(ground->pev->classname));
+
+			return true;
+		}
+	}
+
+	return false;
+}
 }
 
 void JhlRaiseRiders()
@@ -369,7 +399,8 @@ void JhlRaiseRiders()
 	// (players keep theirs), so the next frame it isn't carried: a lift going down drops away and it falls after it, about
 	// 1.5 units, landing eight times a second (ba_elevator's scientists bouncing); a tram leaves it behind until a wall
 	// shoves it along (NPCs rubber banding in trains). One whose ground is a moving mover, no more than 4 units over its
-	// floor, is set back down on it standing, so it's carried every frame. Turning movers are left be.
+	// floor, is set back down on it standing, so it's carried every frame. Turning movers are left be. Before that, one
+	// left in its mover's floor is raised out (JhlUnstickRider).
 	if (!UTIL_JhlFpsFix())
 		return;
 
@@ -379,20 +410,28 @@ void JhlRaiseRiders()
 	{
 		edict_t* edict = INDEXENT(i);
 
-		if (!edict || 0 != edict->free || edict->v.movetype != MOVETYPE_STEP ||
-			(edict->v.flags & (FL_ONGROUND | FL_FLY | FL_SWIM)) != 0 || edict->v.solid == SOLID_NOT || FNullEnt(edict->v.groundentity))
+		if (!edict || 0 != edict->free || (edict->v.movetype != MOVETYPE_STEP && edict->v.movetype != MOVETYPE_TOSS) ||
+			(edict->v.flags & (FL_FLY | FL_SWIM)) != 0 || edict->v.solid == SOLID_NOT || edict->v.solid == SOLID_TRIGGER ||
+			FNullEnt(edict->v.groundentity))
 		{
 			continue;
 		}
 
 		edict_t* ground = edict->v.groundentity;
 
-		if (ground->v.movetype != MOVETYPE_PUSH || ground->v.velocity == g_vecZero || ground->v.avelocity != g_vecZero)
+		if (ground->v.movetype != MOVETYPE_PUSH || ground->v.avelocity != g_vecZero)
 			continue;
 
 		CBaseEntity* rider = CBaseEntity::Instance(edict);
 
 		if (!rider || !rider->MyMonsterPointer())
+			continue;
+
+		// NPCs and their corpses, moving or not.
+		if (CBaseEntity* groundEntity = CBaseEntity::Instance(ground); groundEntity && JhlUnstickRider(rider, groundEntity))
+			continue;
+
+		if (edict->v.movetype != MOVETYPE_STEP || (edict->v.flags & FL_ONGROUND) != 0 || ground->v.velocity == g_vecZero)
 			continue;
 
 		TraceResult tr;
