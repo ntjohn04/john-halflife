@@ -32,6 +32,9 @@ Console commands for finding problems; none changes anything in play.
   (free before, how far it was pushed, stuck after), any rider raised out of the floor, and any NPC on a moving mover not kept standing on it, with why. For NPCs crushed or bouncing on lifts.
 * NPC drawing: `jhl_debug_npcdraw 1` prints, 50 times a second for each NPC drawn, its height, its height before its
   last animation update, its sequence, frame and yaw, the smoothing fraction and the height it's drawn at. For telling a real bounce from a drawn one.
+* NPC damage: `jhl_debug_damage` (console, toggles) prints each hit an NPC takes, alive or dead: the damage, its type
+  and source, the health before, death and script state, movetype and footing, and when one is gibbed. For bodies
+  gibbed when they shouldn't be.
 * Texture materials: `jhl_texture [material]` prints the texture under the crosshair and the materials bullet impacts
   use for it, and adds it to `jhl_textures.txt` with the material given, for corrections to
   `config/mod/sound/jhl_impact_materials.json` ([weapons](weapons.md#bullet-impacts)).

@@ -203,6 +203,7 @@ void DispatchThink(edict_t* pent)
 }
 
 bool g_JhlDebugBlocked = false;
+bool g_JhlDebugDamage = false;
 
 // johnhalflife (jhl_debug_blocked): who blocks a mover and where, at most every quarter second a pair.
 static void JhlDebugBlocked(CBaseEntity* pusher, CBaseEntity* other)

@@ -166,6 +166,15 @@ bool ServerLibrary::Initialize()
 		},
 		CommandLibraryPrefix::No);
 
+	// johnhalflife: logs the damage NPCs take, alive or dead, and what gibs them.
+	g_ConCommands.CreateCommand(
+		"jhl_debug_damage", [](const auto&)
+		{
+			g_JhlDebugDamage = !g_JhlDebugDamage;
+			Con_Printf("jhl_debug_damage: %s\n", g_JhlDebugDamage ? "on" : "off");
+		},
+		CommandLibraryPrefix::No);
+
 	g_ConCommands.RegisterChangeCallback(&sv_allowbunnyhopping, [](const auto& state)
 		{
 			const bool allowBunnyHopping = state.Cvar->value != 0;

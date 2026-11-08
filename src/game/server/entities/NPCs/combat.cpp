@@ -616,6 +616,10 @@ void CBaseMonster::CallGibMonster()
 {
 	bool fade = false;
 
+	// johnhalflife (jhl_debug_damage).
+	if (g_JhlDebugDamage)
+		Con_Printf("jhl_debug_damage: %.2f %s \"%s\" gibbed, health %.1f\n", gpGlobals->time, STRING(pev->classname), STRING(pev->targetname), pev->health);
+
 	if (HasHumanGibs())
 	{
 		if (CVAR_GET_FLOAT("violence_hgibs") == 0)
@@ -884,6 +888,17 @@ bool CBaseMonster::TakeDamage(CBaseEntity* inflictor, CBaseEntity* attacker, flo
 {
 	float flTake;
 	Vector vecDir;
+
+	// johnhalflife (jhl_debug_damage).
+	if (g_JhlDebugDamage)
+	{
+		Con_Printf("jhl_debug_damage: %.2f %s \"%s\" took %.1f (type %#x) from %s, health %.1f, takedamage %.0f, dead %d, state %d, "
+				   "movetype %d, %s %s, z %.2f, velocity z %.1f\n",
+			gpGlobals->time, STRING(pev->classname), STRING(pev->targetname), flDamage, bitsDamageType,
+			inflictor ? STRING(inflictor->pev->classname) : "?", pev->health, pev->takedamage, pev->deadflag,
+			static_cast<int>(m_MonsterState), pev->movetype, (pev->flags & FL_ONGROUND) != 0 ? "on" : "off",
+			FNullEnt(pev->groundentity) ? "nothing" : STRING(pev->groundentity->v.classname), pev->origin.z, pev->velocity.z);
+	}
 
 	if (0 == pev->takedamage)
 		return false;
