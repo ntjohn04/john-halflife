@@ -28,7 +28,8 @@ LINEAR = 76
 TABLE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "npc_speeds.txt")
 # Models with no vanilla one of their name, compiled from another's animations: compared with that one's vanilla model.
 # Rosenberg was a head on Blue Shift's scientist; the Unified SDK's is its own model, on Half-Life's scientist animations.
-SAME_ANIMATIONS = {"models/rosenberg.mdl": "models/scientist.mdl"}
+# Harold (John Half-Life's own, assets/models/harold) likewise.
+SAME_ANIMATIONS = {"models/rosenberg.mdl": "models/scientist.mdl", "models/harold.mdl": "models/scientist.mdl"}
 
 
 def sequences(data):
@@ -95,6 +96,10 @@ def restore(mod):
             continue
         name, label, values = line.rstrip("\n").split("\t")
         table.setdefault(name, {})[label] = tuple(struct.unpack("<3f", struct.pack("<3f", *map(float, values.split()))))
+    # A model on another's animations that isn't in the Unified SDK's release (John Half-Life's own): that one's rows.
+    for name, source in SAME_ANIMATIONS.items():
+        if name not in table and source in table:
+            table[name] = table[source]
 
     fixed = 0
     for name, wanted in table.items():

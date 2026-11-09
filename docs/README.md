@@ -153,6 +153,9 @@ Force's ally grunts and black ops can take headshots, which Gearbox's models did
   Evy Houstuvk's vest and Paynamia's helmet (`config/mod/models`, credited in `config/licenses/CREDITS.txt`). Files
   John Half-Life ships itself are left out of the first start's copying (`scripts/make_setup_files.py`). Their HUD
   pickup icons are Blue Shift's, as drawn.
+* **Harold (Blue Shift, ba_yard3):** the wounded scientist was the glasses scientist, as any other. John Half-Life
+  gives him his own head: that one bald and without glasses (`assets/README.md`), on two models of his own, pointed
+  at by the first start's map conversion (`BaYard3HaroldModel`). Every other scientist is as before.
 * **Left as is:** Blue Shift's scientists use Half-Life's `scientist.mdl` and its frame rates; vanilla Blue
   Shift's walked and ran slower (a run at 207 units/s, Half-Life's 293). The Unified SDK's
   `models/bshift/scientist.mdl` is unused and mixes the two games' rates, so restoring them would take another

@@ -1660,7 +1660,22 @@ void BaTram2FixScientistSkinColor(Context& context)
 	}
 }
 
-// The upgrades, in the ContentInstaller's order (MapUpgradeBuilderExtensions).
+// ---- John Half-Life's own ----
+
+// ba_yard3's Harold, the wounded scientist (and his stand-in for his death), on his own models: the glasses scientist
+// made bald, without his glasses (assets/models/harold). He was the glasses scientist's head, like any other.
+void BaYard3HaroldModel(Context& context)
+{
+	if (context.MapName != "ba_yard3")
+		return;
+
+	if (Entity* harold = context.Entities.Find("dying_scientist_1"))
+		harold->Set("model", "models/harold.mdl");
+	if (Entity* dying = context.Entities.Find("dying_scientist_fake"))
+		dying->Set("model", "models/harold_cower.mdl");
+}
+
+// The upgrades, in the ContentInstaller's order (MapUpgradeBuilderExtensions), then John Half-Life's own.
 using Upgrade = void (*)(Context&);
 
 constexpr Upgrade Upgrades[] = {
@@ -1727,6 +1742,8 @@ constexpr Upgrade Upgrades[] = {
 	BaCanal1FixAlienSlaveSpawns,
 	BaTram1FixScientistHead,
 	BaTram2FixScientistSkinColor,
+	// John Half-Life's own.
+	BaYard3HaroldModel,
 };
 
 // ---- The file ----
