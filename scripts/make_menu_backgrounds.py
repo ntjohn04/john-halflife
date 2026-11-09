@@ -44,7 +44,7 @@ def write(game, picture):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("version", nargs="?", default="logos", choices=["logos", "gamelogo-only", "clean"])
+    parser.add_argument("version", nargs="?", default="clean", choices=["logos", "gamelogo-only", "clean"])
     parser.add_argument("--art", default=ART)
     args = parser.parse_args()
     for game in ("op4", "bs"):

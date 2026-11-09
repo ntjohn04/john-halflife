@@ -141,14 +141,17 @@ a copy of the game code.
   `hd_background "1"` (the 21:9 background in `HD_BackgroundLayout.txt`: 105 tiles of 256x256 at
   `resolution 3840 1600`) and `animated_title "1"`, like Valve's `valve` folder. Without them, or without the
   layout in the mod's own folder, the 25th anniversary main menu was black.
-* **Opposing Force's and Blue Shift's backgrounds are their WON versions' art, widescreen:** the 800x600 picture with
-  its logos (HALF-LIFE over the game's own), untouched in the middle, its sides carried on to 21:9 (FLUX.1 Fill) and
-  all of it upscaled to Half-Life's 3840x1600 (4xNomos8kDAT). `hd_background "1"` but no `animated_title`: the
-  engine's animated title (GameUI.dll) is always centred near the top at a size set by its picture, so it would sit on
-  the art's own logos, and with it on the small logo above the buttons (`game_menu.tga`) is hidden.
-  `scripts/make_menu_backgrounds.py` cuts a picture into the tiles (`resource/background/jhl_21_9_*.tga`, names the
-  first start's copies of the games' own 800x600 backgrounds never touch) and writes `HD_BackgroundLayout.txt`; the
-  pictures, in versions with the WON logos, only the game's own and none, are made outside the repository.
+* **Opposing Force's and Blue Shift's backgrounds are their WON versions' art, widescreen:** the 800x600 picture
+  without its logos, its sides carried on to 21:9 (FLUX.1 Fill) and all of it upscaled to Half-Life's 3840x1600
+  (4xNomos8kDAT). `scripts/make_menu_backgrounds.py` cuts a picture into the tiles
+  (`resource/background/jhl_21_9_*.tga`, names the first start's copies of the games' own 800x600 backgrounds never
+  touch) and writes `HD_BackgroundLayout.txt`; the pictures, in versions with the WON logos, only the game's own and
+  none, are made outside the repository.
+* **And Half-Life's animated title, with their names:** `animated_title "1"`, the engine (GameUI.dll) animating the
+  pictures it finds in the folder, `resource/logo*.tga`, exactly as Half-Life's: OPPOSING FORCE in its buttons'
+  stencil and gold, BLUE SHIFT in its typewriter face and blue, each of Valve's ten pictures remade at its size, its
+  letters' place, blur and opacity (`scripts/make_menu_titles.py`). As in Half-Life, the title hides the small logo
+  above the buttons (`game_menu.tga`); it's always centred near the top, sized by its picture.
 * Blue Shift keeps multiplayer, unlike vanilla, so John Settings stays in the same place.
 * Each game's own skill values load after `skill.json` (Half-Life's): `cfg/skill_blueshift.json` (batteries
   give 20 armor, as in `bshift/skill.cfg`) and `cfg/skill_opposingforce.json` (`func_tank_target_allies 1`:
