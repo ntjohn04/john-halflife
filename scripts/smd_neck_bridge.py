@@ -1,12 +1,14 @@
-"""Joins a head SMD's neck to a body SMD's neck hole: a strip of triangles from the head's open bottom edge to the
-body's open edge around the neck, all the way round, added to the head. For a head made for a body whose neck hole
-was changed to meet it, put on a body whose hole is wider.
+"""Lengthens a head SMD's neck down to where another head's ended: a strip of triangles from the head's open bottom
+edge to the reference head's, all the way round, added to the head. For a head made for a body whose neck hole was
+changed to meet it, put on a body that another head (the reference) is known to sit right on: the reference's neck
+reaches into the body's collar and covers its openings (the body's hole isn't a simple ring, and isn't welded shut by
+a head either; it's covered).
 
-Each strip vertex on the head's edge is that head vertex as it is (bone, texture coordinates); each on the body's edge
-takes the body vertex's place and bone, the nearest head edge vertex's texture coordinates (the neck's last row of
-skin, stretched down), and faces out from the neck.
+Each strip vertex on the head's edge is that head vertex as it is (bone, texture coordinates); each on the reference's
+edge takes the reference vertex's place and bone, the nearest head edge vertex's texture coordinates (the neck's last
+row of skin, stretched down), and faces out from the neck.
 
-  python smd_neck_bridge.py <head.smd> <body.smd> <out.smd> [neck axis x y, default: the body hole's centre]
+  python smd_neck_bridge.py <head.smd> <reference head.smd> <out.smd>
 """
 import math, sys
 from collections import Counter, defaultdict
@@ -36,135 +38,157 @@ def key(p):
     return tuple(round(x, 3) for x in p)
 
 
-def open_edges(tris):
+def bottom_loop(tris):
+    """A head's open bottom edge (its neck: a head's only opening, besides any open bits higher up), in order. Points
+    closer than 0.02 are one (a mesh splits its vertices along texture seams); each is given as one of its own."""
+    reps = []
+    def weld(p):
+        for r in reps:
+            if math.dist(r, p) < 0.02:
+                return r
+        reps.append(p)
+        return p
     count = Counter()
     for _, v in tris:
         for a, b in ((0, 1), (1, 2), (2, 0)):
-            ka, kb = key(v[a][1]), key(v[b][1])
+            ka, kb = weld(key(v[a][1])), weld(key(v[b][1]))
             if ka != kb:
                 count[frozenset((ka, kb))] += 1
-    return [tuple(e) for e, n in count.items() if n == 1]
-
-
-def loop(edges, keep):
-    """The open edges' vertices that pass keep, in order round the loop they make."""
+    edges = [tuple(e) for e, n in count.items() if n == 1]
+    low = min(p[2] for e in edges for p in e)
     adj = defaultdict(set)
     for a, b in edges:
-        if keep(a) and keep(b):
+        if a[2] < low + 4 and b[2] < low + 4:
             adj[a].add(b)
             adj[b].add(a)
-    if not adj:
-        raise SystemExit('no open edge found')
-    start = min(adj)
-    order, prev, cur = [start], None, start
+    # Only the ring with the lowest point (a mouth's opening can come within that height).
+    start = min(adj, key=lambda p: p[2])
+    comp, stack = set(), [start]
+    while stack:
+        p = stack.pop()
+        if p not in comp:
+            comp.add(p)
+            stack.extend(adj[p])
+    if any(len(adj[p]) != 2 for p in comp):
+        raise SystemExit('the neck edge is not a simple ring')
+    order, prev = [start], None
     while True:
-        nxt = [n for n in adj[cur] if n != prev]
-        if not nxt or nxt[0] == start:
-            break
-        prev, cur = cur, nxt[0]
-        order.append(cur)
-    return order
+        nxt = [n for n in adj[order[-1]] if n != prev]
+        if nxt[0] == start:
+            return order
+        prev = order[-1]
+        order.append(nxt[0])
 
 
 def main():
-    head_path, body_path, out = sys.argv[1:4]
+    head_path, ref_path, out = sys.argv[1:4]
     header, hnodes, htris = parse(head_path)
-    _, bnodes, btris = parse(body_path)
+    _, rnodes, rtris = parse(ref_path)
     hindex = {n.lower(): i for i, n in hnodes.items()}
 
-    # Vertex attributes by position.
     hvert, htex = {}, {}
     for tex, v in htris:
         for x in v:
             hvert.setdefault(key(x[1]), x)
             htex.setdefault(key(x[1]), tex)
-    bbone = {}
-    for _, v in btris:
+    rbone = {}
+    for _, v in rtris:
         for x in v:
-            bbone.setdefault(key(x[1]), hindex[bnodes[x[0]].lower()])
+            rbone.setdefault(key(x[1]), hindex[rnodes[x[0]].lower()])
 
-    hedges = open_edges(htris)
-    bedges = open_edges(btris)
-    hz = [p[2] for e in hedges for p in e]
-    # The head's bottom edge: its open edges' lower part (a head's only opening is its neck).
-    hloop = loop(hedges, lambda p: p[2] < min(hz) + 4)
-    hc = [sum(p[k] for p in hloop) / len(hloop) for k in range(2)]
-    # The body's hole: the open edge nearest the head's around the same axis, at about its height.
-    bloop = loop(bedges, lambda p: abs(p[2] - min(hz)) < 4 and math.hypot(p[0] - hc[0], p[1] - hc[1]) < 6)
-    cx, cy = (float(sys.argv[4]), float(sys.argv[5])) if len(sys.argv) > 5 else \
-        (sum(p[0] for p in bloop) / len(bloop), sum(p[1] for p in bloop) / len(bloop))
+    hloop = bottom_loop(htris)
+    rloop = bottom_loop(rtris)
+    cx = sum(p[0] for p in rloop) / len(rloop)
+    cy = sum(p[1] for p in rloop) / len(rloop)
 
     def angle(p):
         return math.atan2(p[1] - cy, p[0] - cx) % (2 * math.pi)
 
-    def by_angle(ring):
-        s = sorted(ring, key=angle)
-        return s
+    # Both rings in their own order, the same way round, from their point at the smallest angle; each must go
+    # round the neck steadily for the zip to follow it.
+    def arrange(ring):
+        a = [angle(p) for p in ring]
+        turn = sum(((a[(i + 1) % len(a)] - a[i] + math.pi) % (2 * math.pi)) - math.pi for i in range(len(a)))
+        if turn < 0:
+            ring = ring[::-1]
+        k = min(range(len(ring)), key=lambda i: angle(ring[i]))
+        ring = ring[k:] + ring[:k]
+        steps = [(angle(ring[(i + 1) % len(ring)]) - angle(ring[i])) % (2 * math.pi) for i in range(len(ring))]
+        if max(steps) > math.pi:
+            raise SystemExit('a neck edge doubles back round the neck')
+        return ring
 
-    H, B = by_angle(hloop), by_angle(bloop)
-    # Zip the two rings: always advance the one whose next vertex comes first round the neck.
+    H, R = arrange(hloop), arrange(rloop)
+
+    def unwrapped(ring):
+        out, base, last = [], 0.0, None
+        for p in ring:
+            a = angle(p) + base
+            if last is not None and a < last:
+                base += 2 * math.pi
+                a += 2 * math.pi
+            out.append(a)
+            last = a
+        return out
+
+    ah, ar = unwrapped(H), unwrapped(R)
+    nh, nr = len(H), len(R)
     tris = []
     i = j = 0
-    nh, nb = len(H), len(B)
-    while i < nh or j < nb:
-        h0, h1 = H[i % nh], H[(i + 1) % nh]
-        b0, b1 = B[j % nb], B[(j + 1) % nb]
-        ah = angle(h1) + (2 * math.pi if i + 1 >= nh else 0)
-        ab = angle(b1) + (2 * math.pi if j + 1 >= nb else 0)
-        if j >= nb or (i < nh and ah <= ab):
-            tris.append(('h', h0, h1, b0))
+    while i < nh or j < nr:
+        nexth = ah[i + 1] if i + 1 < nh else ah[0] + 2 * math.pi
+        nextr = ar[j + 1] if j + 1 < nr else ar[0] + 2 * math.pi
+        if j >= nr or (i < nh and nexth <= nextr):
+            tris.append((H[i % nh], H[(i + 1) % nh], R[j % nr]))
             i += 1
         else:
-            tris.append(('b', h0, b1, b0))
+            tris.append((H[i % nh], R[(j + 1) % nr], R[j % nr]))
             j += 1
 
     def outward(p):
-        d = (p[0] - cx, p[1] - cy, 0.0)
-        n = math.hypot(d[0], d[1]) or 1
+        d = (p[0] - cx, p[1] - cy)
+        n = math.hypot(*d) or 1
         return (d[0] / n, d[1] / n, 0.0)
 
-    # The winding the head's own triangles have, facing out: (b - a) x (c - a) against the outward direction.
     def facing(a, b, c):
         u = [b[k] - a[k] for k in range(3)]
         w = [c[k] - a[k] for k in range(3)]
         n = (u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0])
-        m = [(a[k] + b[k] + c[k]) / 3 for k in range(3)]
-        o = outward(m)
+        o = outward([(a[k] + b[k] + c[k]) / 3 for k in range(3)])
         return n[0] * o[0] + n[1] * o[1]
+
+    # The winding the head's own neck triangles have, facing out.
     ring = set(H)
-    sample = [v for tex, v in htris if sum(key(x[1]) in ring for x in v) >= 2]
-    sign = 1 if sum(facing(*(x[1] for x in v)) for v in sample) > 0 else -1
+    sign = 1 if sum(facing(*(x[1] for x in v)) for _, v in htris if sum(key(x[1]) in ring for x in v) >= 2) > 0 else -1
+
+    def line(bone, p, n, uv):
+        return f"{bone} {p[0]:.6f} {p[1]:.6f} {p[2]:.6f} {n[0]:.6f} {n[1]:.6f} {n[2]:.6f} {uv[0]:.6f} {uv[1]:.6f}"
 
     lines = list(header) + ['triangles']
     for tex, v in htris:
         lines.append(tex)
-        for b, p, n, uv in v:
-            lines.append(f"{b} {p[0]:.6f} {p[1]:.6f} {p[2]:.6f} {n[0]:.6f} {n[1]:.6f} {n[2]:.6f} {uv[0]:.6f} {uv[1]:.6f}")
-    added = 0
-    for kind, a, b, c in tris:
-        pts = [a, b, c]
+        lines += [line(*x) for x in v]
+    for pts in tris:
         heads = [p for p in pts if p in hvert]
         tex = htex[heads[0]]
-        ref = hvert[heads[0]]
+        ref_uv = hvert[heads[0]][3]
         verts = []
         for p in pts:
-            if p in hvert and htex[p] == tex:
+            if p in hvert:
                 bone, pos, nrm, uv = hvert[p]
-            elif p in hvert:
-                bone, pos, nrm, uv = hvert[p][0], hvert[p][1], hvert[p][2], ref[3]
+                if htex[p] != tex:
+                    uv = ref_uv
             else:
                 near = min(heads, key=lambda q: math.dist(q, p))
-                bone, pos, nrm, uv = bbone[p], p, outward(p), hvert[near][3] if htex[near] == tex else ref[3]
+                bone, pos, nrm, uv = rbone[p], p, outward(p), hvert[near][3] if htex[near] == tex else ref_uv
             verts.append((bone, pos, nrm, uv))
         if facing(*(x[1] for x in verts)) * sign < 0:
             verts = [verts[0], verts[2], verts[1]]
         lines.append(tex)
-        for bone, p, n, uv in verts:
-            lines.append(f"{bone} {p[0]:.6f} {p[1]:.6f} {p[2]:.6f} {n[0]:.6f} {n[1]:.6f} {n[2]:.6f} {uv[0]:.6f} {uv[1]:.6f}")
-        added += 1
+        lines += [line(*x) for x in verts]
     lines.append('end')
     open(out, 'w', encoding='latin-1', newline='\n').write('\n'.join(lines) + '\n')
-    print(f'smd_neck_bridge: head edge {nh} vertices, body hole {nb}, {added} triangles added (axis {cx:.2f} {cy:.2f})')
+    print(f'smd_neck_bridge: head edge {nh} vertices, reference edge {nr}, {len(tris)} triangles added')
 
 
 main()
