@@ -295,7 +295,17 @@ function(jhl_install_expansion name)
 	install(FILES $<TARGET_FILE:OpenAL::OpenAL> DESTINATION ${dir}/cl_dlls)
 	install(FILES config/network/delta.lst DESTINATION ${dir})
 
-	install(DIRECTORY config/mod/ DESTINATION ${dir})
+	# The game's own files (config/expansions/<name>) in place of config/mod's of the same name, whose are left out:
+	# installed one over the other, whichever CMake took for up to date (by its time stamp) would be kept.
+	file(GLOB_RECURSE own_files CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/config/expansions/${name}"
+		"${CMAKE_CURRENT_SOURCE_DIR}/config/expansions/${name}/*")
+	set(own_excludes)
+	foreach(own_file IN LISTS own_files)
+		get_filename_component(own_name "${own_file}" NAME)
+		list(APPEND own_excludes PATTERN "${own_name}" EXCLUDE)
+	endforeach()
+
+	install(DIRECTORY config/mod/ DESTINATION ${dir} ${own_excludes})
 	install(DIRECTORY config/expansions/${name}/ DESTINATION ${dir})
 
 endfunction()
