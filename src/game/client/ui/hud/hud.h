@@ -395,7 +395,9 @@ private:
 	int m_iBat;
 	bool m_fOn;
 	float m_fFade;
-	float m_flIdleSince = -1; // johnhalflife: since when it's been off and fully charged (jhl_hud_minimal).
+	// johnhalflife: whether, and since when, it's been off and fully charged (jhl_hud_minimal).
+	bool m_bIdle = false;
+	float m_flIdleSince = 0;
 };
 
 //

@@ -118,14 +118,16 @@ bool CHudFlashlight::Draw(float flTime)
 
 	if (!m_fOn && m_iBat >= 99 && gHUD.m_pCvarHudMinimal && 0 != gHUD.m_pCvarHudMinimal->value)
 	{
-		if (m_flIdleSince > flTime)
+		if (!m_bIdle)
 		{
-			// The clock restarted (a map change or a load): faded before, it stays so.
-			m_flIdleSince = flTime - IdleHold - IdleFade;
-		}
-		else if (m_flIdleSince < 0)
-		{
+			m_bIdle = true;
 			m_flIdleSince = flTime;
+		}
+		else if (m_flIdleSince > flTime)
+		{
+			// The clock restarted (a map change or a load): faded before, it stays so. (This going negative, early in
+			// a map, once read as not idle, bringing it back for 2.5 s.)
+			m_flIdleSince = flTime - IdleHold - IdleFade;
 		}
 
 		const float fade = std::clamp((flTime - m_flIdleSince - IdleHold) / IdleFade, 0.f, 1.f);
@@ -138,7 +140,7 @@ bool CHudFlashlight::Draw(float flTime)
 	}
 	else
 	{
-		m_flIdleSince = -1;
+		m_bIdle = false;
 	}
 
 	const auto& originalColor = m_flBat < 0.20 ? RGB_REDISH : gHUD.m_HudItemColor;
