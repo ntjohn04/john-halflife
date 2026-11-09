@@ -95,6 +95,7 @@ the same values as `user.scr`'s defaults and the game code's own (`crosshair_sca
   `jhl_recommended_version`; the engine's own settings (frame rate, vsync, the crosshair, auto-aim) have its defaults
   otherwise. Raising `RecommendedSettingsVersion` applies the list once more.
 * **Reset:** the `jhl_recommended` command, or the "Reset all to recommended settings" box in the dialog.
+* **Debug tools** (`jhl_debug_*`, above) aren't settings: not saved, off at every launch, and left out of the list.
 
 ## Expansions
 

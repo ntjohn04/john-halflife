@@ -63,6 +63,17 @@ inline bool UTIL_JhlWallFix()
 }
 
 /**
+ *	@brief Whether jhl_fx_bulletimpacts is on (bullet impacts and water splashes; the pipe wrench's big swing marks the
+ *	wall as its small one does): the client's setting, read as jhl_fx_particlesystem is.
+ */
+inline bool UTIL_JhlBulletImpacts()
+{
+	static JhlCvarCache cache;
+	const cvar_t* cvar = UTIL_JhlClientCvar("jhl_fx_bulletimpacts", cache);
+	return !cvar || cvar->value != 0;
+}
+
+/**
  *	@brief Whether jhl_fx_keepcorpses is on (corpses vanilla fades are kept, see CBaseMonster::JhlFadeCorpse): the
  *	client's setting, read as jhl_fx_particlesystem is.
  */

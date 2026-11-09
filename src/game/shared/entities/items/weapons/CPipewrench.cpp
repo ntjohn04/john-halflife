@@ -16,6 +16,10 @@
 #include "cbase.h"
 #include "CPipewrench.h"
 
+#ifndef CLIENT_DLL
+#include "jhl_effects.h"
+#endif
+
 #define PIPEWRENCH_BODYHIT_VOLUME 128
 #define PIPEWRENCH_WALLHIT_VOLUME 512
 
@@ -447,18 +451,23 @@ void CPipewrench::BigSwing()
 			// delay the decal a bit
 			m_trHit = tr;
 
-			// johnhalflife: no decal from a big swing (below), but a spark now and then off metal.
-			MeleeImpactSpark(&m_trHit, 0.8f);
+			// Shepard - The original Opposing Force's pipe wrench
+			// doesn't make a bullet hole decal when making a big
+			// swing.
+			// johnhalflife (jhl_fx_bulletimpacts): it marks the wall as a small swing does, the decal (and the spark now
+			// and then off metal) a moment later; without, as Opposing Force: no decal, the spark at once.
+			if (UTIL_JhlBulletImpacts())
+			{
+				SetThink(&CPipewrench::Smack);
+				pev->nextthink = gpGlobals->time + 0.2;
+			}
+			else
+			{
+				MeleeImpactSpark(&m_trHit, 0.8f);
+			}
 		}
 
 		m_pPlayer->m_iWeaponVolume = flVol * PIPEWRENCH_WALLHIT_VOLUME;
-
-		// Shepard - The original Opposing Force's pipe wrench
-		// doesn't make a bullet hole decal when making a big
-		// swing. If you want that decal, just uncomment the
-		// 2 lines below.
-		/*SetThink( &CPipewrench::Smack );
-		SetNextThink( UTIL_WeaponTimeBase() + 0.2 );*/
 #endif
 		m_flNextPrimaryAttack = GetNextAttackDelay(1.0);
 		m_flNextSecondaryAttack = GetNextAttackDelay(1.0);
