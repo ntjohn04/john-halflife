@@ -29,5 +29,14 @@ skeleton, moved by (0, 0.4289, -0.3316), on the matching bones of Half-Life's. T
 measured: Blue Shift's Rosenberg head taken out the same way matches its head mesh to 0.03 units on average. The mod's
 head sits where Blue Shift's did (within 0.06 units), on a body whose neck is Blue Shift's.
 
+The mod made its body's neck hole meet its simplified neck; the Unified SDK's body (Half-Life's) has a wider hole,
+which left a gap all round the neck. So the head has a strip of neck added from its bottom edge to the body's hole,
+by `scripts/smd_neck_bridge.py` (the strip's lower edge on the body's vertices and bones, textured with the neck's
+last row of skin):
+
+```
+python scripts/smd_neck_bridge.py sci_ld_rosehead_roseglass.smd "<assets>/modelsrc/models/shared/meshes/scientists/ld/SCI3_Template_Biped1(Headless_Body).smd" sci_ld_rosehead_roseglass.smd
+```
+
 The walk and run speeds are given their vanilla values by `restore_npc_speeds.py` (`npc_speeds.txt`, Rosenberg on the
 scientists' animations), as every Unified SDK model is.
