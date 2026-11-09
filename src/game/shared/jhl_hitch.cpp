@@ -13,7 +13,9 @@
  *
  ****/
 
+#include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <fstream>
 #include <string>
 #include <thread>
@@ -114,6 +116,14 @@ void Report(const char* side, double frameMs, const std::string& where)
 	if (side[0] == 's')
 	{
 		text += fmt::format("  the player's moves run this frame: {}{}\n", g_Moves, g_Moves > 1 ? " (more than one: the engine may have run no frames meanwhile, e.g. paused)" : "");
+
+		// The engine saving the game (trigger_autosave, a quick save): it asks each entity for its data, then writes the
+		// file itself, a hitch vanilla has as well (the client's report of the same frame can't tell).
+		if (std::any_of(g_Parts.begin(), g_Parts.end(), [](const auto& part)
+				{ return std::strcmp(part.first, "DispatchSave") == 0; }))
+		{
+			text += "  this frame saved the game (an autosave or a quick save): the engine writing it, as vanilla does\n";
+		}
 	}
 
 	std::vector<std::pair<const char*, Part>> parts{g_Parts.begin(), g_Parts.end()};

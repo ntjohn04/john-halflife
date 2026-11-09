@@ -23,7 +23,9 @@ Console commands for finding problems; none changes anything in play.
   server's time by part (each engine call into them, user messages, sound loading, resampling and reverb changes,
   entity thinks and touches, by class), their slowest calls, and what the engine took beyond them. Printed to the
   console and added to `jhl_hitches.txt` in the game's folder; the 2 seconds after a map loads, and pauses, aren't
-  counted (`src/game/shared/jhl_hitch.h`).
+  counted (`src/game/shared/jhl_hitch.h`). A frame that saved the game says so: an autosave (`trigger_autosave`) or a
+  quick save takes the engine 25-130 ms to write, in vanilla too (the three hitches of the 1.0 playthrough were
+  all autosaves).
 * Muzzle check: `jhl_debug_muzzle` (console) prints everything that keeps the muzzle light and smoke from being made:
   `jhl_fx_muzzleflash`, third person or a spectator state, a zoomed field of view against `default_fov`, the view
   model's muzzle point, `r_dynamic`, and whether a temporary entity can be had. For the rare times they've stopped.
