@@ -62,6 +62,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_visuals_softwarewater", "1"},
 	{"jhl_visuals_renderfixes", "1"},
 	{"jhl_weapons_smoothrecoil", "1"},
+	{"jhl_weapons_holster", "1"},
 	{"jhl_physics_fpsfix", "1"},
 	{"jhl_physics_wallfix", "1"},
 	{"jhl_input_walktoggle", "1"},

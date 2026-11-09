@@ -41,6 +41,18 @@ WEAPON* gpLastSel;	 // Last weapon menu selection
 
 int g_weaponselect = 0;
 
+// johnhalflife (jhl_weapons_holster): slot 8's holster, putting the weapon away (selectweapon jhl_holster). Not a
+// weapon: no sprites, drawn as an empty selection box.
+static const WeaponInfo JhlHolsterInfo = []()
+{
+	WeaponInfo info;
+	info.Name = "jhl_holster";
+	info.Slot = 7;
+	return info;
+}();
+
+static WEAPON JhlHolster{.Info = &JhlHolsterInfo};
+
 void WeaponsResource::InitializeWeapons()
 {
 	// Reload weapons based on current level's weapon data.
@@ -371,6 +383,7 @@ bool CHudAmmo::Init()
 	CVAR_CREATE("hud_drawhistory_time", HISTORY_DRAW_TIME, 0);
 	CVAR_CREATE("hud_fastswitch", "0", FCVAR_ARCHIVE); // controls whether or not weapons can be selected in one keypress
 	m_pCvarCrosshairScale = CVAR_CREATE("crosshair_scale", "0", FCVAR_ARCHIVE); // johnhalflife: 0, automatic (below)
+	m_pCvarHolster = CVAR_CREATE("jhl_weapons_holster", "1", FCVAR_ARCHIVE);
 
 	m_iFlags |= HUD_ACTIVE; //!!!
 
@@ -409,6 +422,9 @@ bool CHudAmmo::VidInit()
 	// Get weapon and ammo info from server info, load weapon sprites.
 	gWR.InitializeWeapons();
 
+	// johnhalflife: the holster's box, a weapon picture's size.
+	JhlHolster.rcActive = JhlHolster.rcInactive = gHUD.GetSpriteRect(m_HUD_selection);
+
 	return true;
 }
 
@@ -437,6 +453,19 @@ void CHudAmmo::Think()
 					gWR.DropWeapon(p);
 			}
 		}
+	}
+
+	// johnhalflife (jhl_weapons_holster): the holster, with any weapon to put away.
+	if (0 != m_pCvarHolster->value && gHUD.HasAnyWeapons())
+	{
+		gWR.PickupWeapon(&JhlHolster);
+	}
+	else
+	{
+		gWR.DropWeapon(&JhlHolster);
+
+		if (gpActiveSel == &JhlHolster)
+			gpActiveSel = nullptr;
 	}
 
 	if (!gpActiveSel)
@@ -1311,8 +1340,12 @@ bool CHudAmmo::DrawWList(float flTime)
 
 				if (gpActiveSel == p)
 				{
-					SPR_Set(p->hActive, color);
-					SPR_DrawAdditive(0, x, y, &p->rcActive);
+					// johnhalflife: the holster has no picture, only the selection box.
+					if (0 != p->hActive)
+					{
+						SPR_Set(p->hActive, color);
+						SPR_DrawAdditive(0, x, y, &p->rcActive);
+					}
 
 					SPR_Set(gHUD.GetSprite(m_HUD_selection), color);
 					SPR_DrawAdditive(0, x, y, &gHUD.GetSpriteRect(m_HUD_selection));
@@ -1323,8 +1356,11 @@ bool CHudAmmo::DrawWList(float flTime)
 
 					const auto inactiveColor = gWR.HasAmmo(p) ? gHUD.GetHudItemColor(color.Scale(192)) : RGB_REDISH.Scale(128);
 
-					SPR_Set(p->hInactive, inactiveColor);
-					SPR_DrawAdditive(0, x, y, &p->rcInactive);
+					if (0 != p->hInactive)
+					{
+						SPR_Set(p->hInactive, inactiveColor);
+						SPR_DrawAdditive(0, x, y, &p->rcInactive);
+					}
 				}
 
 				// Draw Ammo Bar

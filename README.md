@@ -49,6 +49,7 @@ All are client settings: in John Settings (below) or the console.
 | `jhl_input_walkfix` | 1 | Walking (`+speed`) diagonally no faster than straight (vanilla: 1.41 times as fast) | |
 | `jhl_input_walktoggle` | 1 | The walk key (`+speed`) toggles walking instead of walking while held; same binding | |
 | `jhl_weapons_smoothrecoil` | 1 | Spring-damped recoil (0 = original punches) | [Weapons](docs/weapons.md#recoil) |
+| `jhl_weapons_holster` | 1 | Slot 8 holsters: an empty box in the weapon menu that puts the weapon away (`lastinv` takes it out again) | |
 | `jhl_fx_bulletimpacts` | 1 | Bullet impact sparks/dust and water splashes | [Weapons](docs/weapons.md#bullet-impacts) |
 | `jhl_fx_muzzleflash` | 1 | Muzzle light and smoke, RPG backblast | [Weapons](docs/weapons.md#muzzle-light-and-smoke) |
 | `jhl_fx_particlesystem` | 1 | The particle system changes (gibs, blood, explosions, debris, beams, rings) | [Effects](docs/effects.md#gibs-done) |

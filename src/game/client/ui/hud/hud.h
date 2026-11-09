@@ -162,6 +162,7 @@ private:
 	Crosshair m_AutoaimCrosshair;
 
 	cvar_t* m_pCvarCrosshairScale = nullptr;
+	cvar_t* m_pCvarHolster = nullptr; // johnhalflife: jhl_weapons_holster.
 };
 
 

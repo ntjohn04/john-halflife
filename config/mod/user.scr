@@ -139,6 +139,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"jhl_weapons_holster"
+	{
+		"JHL | Weapons: holster on slot 8 (puts the weapon away)"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"jhl_physics_fpsfix"
 	{
 		"JHL | Physics: the same at any frame rate (as at 72 fps)"
