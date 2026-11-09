@@ -5,6 +5,8 @@
 // Quake is a trademark of Id Software, Inc., (c) 1996 Id Software, Inc. All
 // rights reserved.
 
+#include <algorithm>
+#include <cmath>
 #include <string>
 
 #include "hud.h"
@@ -387,6 +389,9 @@ void IN_MoverightUp()
 // johnhalflife (jhl_input_walktoggle): the walk key's press turns walking on or off, its release does nothing.
 static cvar_t* jhl_input_walktoggle;
 
+// johnhalflife (jhl_input_walkfix): walking diagonally no faster than straight.
+static cvar_t* jhl_input_walkfix;
+
 void IN_SpeedDown()
 {
 	if (jhl_input_walktoggle && 0 != jhl_input_walktoggle->value && (in_speed.state & 1) != 0)
@@ -652,6 +657,20 @@ void DLLEXPORT CL_CreateMove(float frametime, usercmd_t* cmd, int active)
 			cmd->forwardmove *= cl_movespeedkey->value;
 			cmd->sidemove *= cl_movespeedkey->value;
 			cmd->upmove *= cl_movespeedkey->value;
+
+			// johnhalflife (jhl_input_walkfix): the clip to maxspeed below only reaches running, so walking diagonally
+			// went 1.41 times as fast as straight (both at 120: 170). Held to the faster of the two.
+			if (0 != jhl_input_walkfix->value)
+			{
+				const float straight = std::max(std::abs(cmd->forwardmove), std::abs(cmd->sidemove));
+				const float diagonal = std::sqrt(cmd->forwardmove * cmd->forwardmove + cmd->sidemove * cmd->sidemove);
+
+				if (diagonal > straight)
+				{
+					cmd->forwardmove *= straight / diagonal;
+					cmd->sidemove *= straight / diagonal;
+				}
+			}
 		}
 
 		// clip to maxspeed
@@ -911,6 +930,7 @@ void InitInput()
 
 	lookstrafe = gEngfuncs.pfnRegisterVariable("lookstrafe", "0", FCVAR_ARCHIVE);
 	jhl_input_walktoggle = gEngfuncs.pfnRegisterVariable("jhl_input_walktoggle", "0", FCVAR_ARCHIVE);
+	jhl_input_walkfix = gEngfuncs.pfnRegisterVariable("jhl_input_walkfix", "1", FCVAR_ARCHIVE);
 	lookspring = gEngfuncs.pfnRegisterVariable("lookspring", "0", FCVAR_ARCHIVE);
 	cl_anglespeedkey = gEngfuncs.pfnRegisterVariable("cl_anglespeedkey", "0.67", 0);
 	cl_yawspeed = gEngfuncs.pfnRegisterVariable("cl_yawspeed", "210", 0);

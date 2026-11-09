@@ -160,6 +160,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "0" }
 	}
 
+	"jhl_input_walkfix"
+	{
+		"JHL | Controls: walking diagonally no faster than straight"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"jhl_fx_bulletimpacts"
 	{
 		"JHL | Effects: bullet impacts and water splashes"
