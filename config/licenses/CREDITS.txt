@@ -33,6 +33,13 @@ Community content
   under Creative Commons Attribution-NonCommercial 4.0 (CC BY-NC 4.0,
   https://creativecommons.org/licenses/by-nc/4.0/). Changed: the head put on the Unified SDK's low-definition
   scientist in place of Blue Shift's Rosenberg head, otherwise as made.
+* Blue Shift's armour vest (models/barney_vest.mdl): "Fixed LD Vest" by Evy Houstuvk
+  (https://gamebanana.com/mods/238591), built from Valve's low-definition Barney (and Gearbox's animations). Licensed
+  under Creative Commons Attribution-NonCommercial-NoDerivs 4.0 (CC BY-NC-ND 4.0,
+  https://creativecommons.org/licenses/by-nc-nd/4.0/). Unchanged.
+* Blue Shift's helmet (models/barney_helmet.mdl): "Low-Def Helmet" by Paynamia (https://gamebanana.com/mods/238646),
+  from Valve's model (and Gearbox's animations). Licensed under Creative Commons Attribution-NonCommercial-ShareAlike
+  4.0 (CC BY-NC-SA 4.0, https://creativecommons.org/licenses/by-nc-sa/4.0/). Unchanged.
 
 
 Libraries

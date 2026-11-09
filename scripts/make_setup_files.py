@@ -20,6 +20,8 @@ import zipfile
 
 H, ZIP, OUT = sys.argv[1:4]
 MOD = os.path.join(H, "johnhalflife")
+# John Half-Life's own files (installed over the Unified SDK's): never copied over from the games.
+OWN = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "mod")
 EXPANSIONS = ("gearbox", "bshift")
 
 # Each game folder's own versions of files the three games share names for (cmake/JhlInstallGameFiles.cmake
@@ -88,6 +90,8 @@ release = package_release.release_files(ZIP)
 with zipfile.ZipFile(ZIP) as z:
     for r, info in sorted(release.items()):
         if any(re.search(p, r, re.I) for p in package_release.DROP) or ("johnhalflife", r.lower()) in per_game:
+            continue
+        if os.path.isfile(os.path.join(OWN, *r.split("/"))):
             continue
         data = z.read(info)
         # The engine finds a file in valve by itself, at the same path only.

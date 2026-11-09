@@ -148,6 +148,11 @@ Force's ally grunts and black ops can take headshots, which Gearbox's models did
 * **Rosenberg:** the one character whose face was high-definition among low-definition ones (Blue Shift's own
   Rosenberg head, 128x128, kept by the Unified SDK). John Half-Life builds its own `models/rosenberg.mdl`: the
   Unified SDK's with a community low-definition head (Paynamia's, CC BY-NC 4.0; `assets/README.md`).
+* **Blue Shift's helmet and vest:** Gearbox made only one of each, high-definition beside Barney's low-definition
+  helmet and vest. John Half-Life ships community low-definition ones built from low-definition Barney, unchanged:
+  Evy Houstuvk's vest and Paynamia's helmet (`config/mod/models`, credited in `config/licenses/CREDITS.txt`). Files
+  John Half-Life ships itself are left out of the first start's copying (`scripts/make_setup_files.py`). Their HUD
+  pickup icons are Blue Shift's, as drawn.
 * **Left as is:** Blue Shift's scientists use Half-Life's `scientist.mdl` and its frame rates; vanilla Blue
   Shift's walked and ran slower (a run at 207 units/s, Half-Life's 293). The Unified SDK's
   `models/bshift/scientist.mdl` is unused and mixes the two games' rates, so restoring them would take another

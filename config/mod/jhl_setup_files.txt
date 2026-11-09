@@ -144,8 +144,6 @@ johnhalflife	models/ba_holo.mdl	bshift/models/ba_holo.mdl
 johnhalflife	models/baby_strooper.mdl	gearbox/models/baby_strooper.mdl
 johnhalflife	models/baby_voltigore.mdl	gearbox/models/baby_voltigore.mdl
 johnhalflife	models/ball.mdl	bshift/models/ball.mdl
-johnhalflife	models/barney_helmet.mdl	bshift/models/barney_helmet.mdl
-johnhalflife	models/barney_vest.mdl	bshift/models/barney_vest.mdl
 johnhalflife	models/base_flag.mdl	bshift/models/base_flag.mdl
 johnhalflife	models/blkop_apache.mdl	gearbox/models/blkop_apache.mdl
 johnhalflife	models/blkop_apachet.mdl	gearbox/models/blkop_apachet.mdl
