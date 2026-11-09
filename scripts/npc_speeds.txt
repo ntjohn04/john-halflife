@@ -74,6 +74,11 @@ models/player.mdl	crawl	100.023918 0 0
 models/player.mdl	long_jump	173.258957 0 0
 models/player.mdl	run	189.860886 0 0
 models/player.mdl	walk	56.5020447 0 0
+models/rosenberg.mdl	walk	46.9999466 0 0
+models/rosenberg.mdl	walk_scared	33.8238068 0 0
+models/rosenberg.mdl	run	198.252869 0 0
+models/rosenberg.mdl	run1	178.796631 0 0
+models/rosenberg.mdl	run2	178.796631 0 0
 models/scientist.mdl	walk	46.9999466 0 0
 models/scientist.mdl	walk_scared	33.8238068 0 0
 models/scientist.mdl	run	198.252869 0 0

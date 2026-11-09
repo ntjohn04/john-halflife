@@ -26,6 +26,9 @@ FPS = 32
 NUMFRAMES = 56
 LINEAR = 76
 TABLE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "npc_speeds.txt")
+# Models with no vanilla one of their name, compiled from another's animations: compared with that one's vanilla model.
+# Rosenberg was a head on Blue Shift's scientist; the Unified SDK's is its own model, on Half-Life's scientist animations.
+SAME_ANIMATIONS = {"models/rosenberg.mdl": "models/scientist.mdl"}
 
 
 def sequences(data):
@@ -58,7 +61,7 @@ def make_table(half_life, release_zip):
                 continue
             # A model in models/op4 or models/bshift is that game's; one in models/ is Half-Life's, or an expansion's
             # if Half-Life has none of that name.
-            parts = name.split("/")
+            parts = SAME_ANIMATIONS.get(name, name).split("/")
             if len(parts) == 3 and parts[1] in ("op4", "bshift"):
                 games = ("gearbox",) if parts[1] == "op4" else ("bshift",)
             elif len(parts) == 2:

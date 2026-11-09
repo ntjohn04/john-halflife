@@ -25,6 +25,16 @@ Built on
 Xash3D FWGS's engine source was a reference for how the engine's sound effects work; none of its code is used.
 
 
+Community content
+-----------------
+
+* Rosenberg's low-definition head (models/rosenberg.mdl): "Custom LD Rosenberg", from Improved LD Scientists +
+  Civilians by Paynamia (https://gamebanana.com/mods/238622), from Valve's and Gearbox's models and textures. Licensed
+  under Creative Commons Attribution-NonCommercial 4.0 (CC BY-NC 4.0,
+  https://creativecommons.org/licenses/by-nc/4.0/). Changed: the head put on the Unified SDK's low-definition
+  scientist in place of Blue Shift's Rosenberg head, otherwise as made.
+
+
 Libraries
 ---------
 
