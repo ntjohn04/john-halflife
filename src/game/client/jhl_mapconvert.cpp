@@ -1662,6 +1662,14 @@ void BaTram2FixScientistSkinColor(Context& context)
 
 // ---- John Half-Life's own ----
 
+// of3a1b's chapter title is Half-Life's C4A1TITLE (copied from c4a1's), which Opposing Force's titles don't have; with
+// Half-Life's in the same file it came up as "XEN". The chapter's title shows at of3a1, as ba_power2's (above).
+void Of3a1bRemoveChapterTitle(Context& context)
+{
+	if (context.MapName == "of3a1b" && context.Entities.Worldspawn().GetString("chaptertitle") == "C4A1TITLE")
+		context.Entities.Worldspawn().Remove("chaptertitle");
+}
+
 // ba_yard3's Harold, the wounded scientist (and his stand-in for his death), on his own models: the glasses scientist
 // made bald, without his glasses (assets/models/harold). He was the glasses scientist's head, like any other.
 void BaYard3HaroldModel(Context& context)
@@ -1743,6 +1751,7 @@ constexpr Upgrade Upgrades[] = {
 	BaTram1FixScientistHead,
 	BaTram2FixScientistSkinColor,
 	// John Half-Life's own.
+	Of3a1bRemoveChapterTitle,
 	BaYard3HaroldModel,
 };
 

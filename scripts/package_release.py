@@ -9,7 +9,8 @@ It holds:
   sprites, its models), and the Opposing Force and Blue Shift models and sprites the game code names (they must be
   there for Half-Life to load a map without the expansions; the rest of theirs comes from the player's own games on
   the first start, client jhl_setup.cpp). With the vanilla NPC speeds put back in its models
-  (restore_npc_speeds.py) and the hornet dart splats added to its decals.wad (make_hornet_decals.py).
+  (restore_npc_speeds.py), the hornet dart splats added to its decals.wad (make_hornet_decals.py), and Barney's arms at
+  low definition in its Blue Shift viewmodels (lowdef_arms.py).
 Nothing else of Valve's: the first start copies and converts that from the player's games.
 
 Usage:
@@ -162,6 +163,7 @@ def package(windows, linux, release_zip, out, install=None):
         python = [sys.executable, "-I"]
         subprocess.run(python + [os.path.join(HERE, "restore_npc_speeds.py"), base], check=True)
         subprocess.run(python + [os.path.join(HERE, "make_hornet_decals.py"), base], check=True)
+        subprocess.run(python + [os.path.join(HERE, "lowdef_arms.py"), base, release_zip], check=True)
         subprocess.run(python + [os.path.join(HERE, "make_half_hud.py"), "sprites", base], check=True)
         unified_decals = os.path.join(base, "decals_unified.wad")
         if os.path.exists(unified_decals):

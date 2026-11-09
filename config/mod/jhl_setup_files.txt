@@ -155,7 +155,6 @@ johnhalflife	models/blkop_ospreyt.mdl	gearbox/models/blkop_ospreyt.mdl
 johnhalflife	models/blkop_tailgibs.mdl	gearbox/models/blkop_tailgibs.mdl
 johnhalflife	models/bshift/v_chub.mdl	bshift/models/v_chub.mdl	valve/models/v_chub.mdl
 johnhalflife	models/bshift/v_hgun.mdl	bshift/models/v_hgun.mdl	valve/models/v_hgun.mdl
-johnhalflife	models/chair.mdl	bshift/models/chair.mdl
 johnhalflife	models/chumtoad.mdl	bshift/models/chumtoad.mdl
 johnhalflife	models/civ_stand.mdl	gearbox/models/civ_stand.mdl
 johnhalflife	models/crashed_osprey.mdl	gearbox/models/crashed_osprey.mdl

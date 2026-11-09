@@ -156,6 +156,18 @@ Force's ally grunts and black ops can take headshots, which Gearbox's models did
 * **Harold (Blue Shift, ba_yard3):** the wounded scientist was the glasses scientist, as any other. John Half-Life
   gives him his own head: that one bald and without glasses (`assets/README.md`), on two models of his own, pointed
   at by the first start's map conversion (`BaYard3HaroldModel`). Every other scientist is as before.
+* **Blue Shift's viewmodel arms:** Gearbox gave every low-definition viewmodel high-definition arm textures (260x247),
+  and its high-definition ones low-definition arms (68x62). The release packager swaps in the small pair, the same art
+  laid out alike, from the Unified SDK's own high-definition Blue Shift handgun (`scripts/lowdef_arms.py`, on the 23
+  viewmodels with arms).
+* **Blue Shift's chair:** the one chair model, used in one scene, was a high-definition one beside the brush-built
+  chairs everywhere else; John Half-Life ships Evy Houstuvk's, from the prefab those are made from (CC BY-NC-ND 4.0,
+  unchanged). The toolbox and flashlight props are left as Gearbox made them.
+* **Glass shards:** `glassgibs.mdl`'s texture is named `chome_glass`, so it never got the chrome flag a texture named
+  chrome gets; the first start writes a copy of the player's with the flag set (`jhl_setup.cpp`).
+* **Opposing Force's of3a1b:** its chapter title was Half-Life's `C4A1TITLE`, copied from c4a1 and shown as "XEN" (vanilla
+  Opposing Force has no such title); the first start's map conversion removes it (`Of3a1bRemoveChapterTitle`), the
+  chapter's title showing at of3a1.
 * **Left as is:** Blue Shift's scientists use Half-Life's `scientist.mdl` and its frame rates; vanilla Blue
   Shift's walked and ran slower (a run at 207 units/s, Half-Life's 293). The Unified SDK's
   `models/bshift/scientist.mdl` is unused and mixes the two games' rates, so restoring them would take another

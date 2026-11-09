@@ -40,6 +40,9 @@ Community content
 * Blue Shift's helmet (models/barney_helmet.mdl): "Low-Def Helmet" by Paynamia (https://gamebanana.com/mods/238646),
   from Valve's model (and Gearbox's animations). Licensed under Creative Commons Attribution-NonCommercial-ShareAlike
   4.0 (CC BY-NC-SA 4.0, https://creativecommons.org/licenses/by-nc-sa/4.0/). Unchanged.
+* Blue Shift's chair (models/chair.mdl): from "Low-Def Props" by Evy Houstuvk (https://gamebanana.com/mods/238647),
+  the chair of Valve's prefab Blue Shift's brush-built chairs are made from. Licensed under Creative Commons
+  Attribution-NonCommercial-NoDerivs 4.0 (CC BY-NC-ND 4.0, https://creativecommons.org/licenses/by-nc-nd/4.0/). Unchanged.
 
 
 Libraries

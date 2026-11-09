@@ -27,7 +27,7 @@ release zip `HalfLifeUnified-V1.0.0.zip`, its ContentInstaller, our build):
 | Half-Life's, Opposing Force's and Blue Shift's maps, converted (the Unified SDK's map upgrades) | 220 | 379 MB | Convert at first start |
 | Node graphs for them (the Unified SDK's) | 328 | 17 MB | Ship: without them each map builds its graph the first time it loads (a hitch vanilla, which ships its own, doesn't have); every start keeps them newer than the maps the first start writes |
 | Opposing Force's and Blue Shift's soundtracks (`media/`) | 38 | 66 MB | Copy at first start |
-| Made by our build from the player's games: Half-Life's shell, hornet splats in `decals.wad`, each game's own shared-name files, vanilla NPC speeds, the menu art | ~130 | | Make at first start |
+| Made by our build from the player's games: Half-Life's shell, hornet splats in `decals.wad`, each game's own shared-name files, vanilla NPC speeds, the menu art, the glass shards' chrome | ~130 | | Make at first start |
 | Uplink's maps (`hldemo1` to `3`), converted | 3 | | Ship: Uplink was a free demo and isn't in a player's install (other mods include it too) |
 | The Unified SDK's test maps (`test_*`, `zoo_*`, `hlu_technology_demonstration`) and the TFC WADs only `zoo_npcs` uses | 45 | 32 MB | Drop |
 | The Unified SDK's tools, installer files, FGD, `VC_redist.x86.exe` | ~100 | 20 MB | Drop (link the C++ runtime statically, as Valve's DLLs need nothing installed) |

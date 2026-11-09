@@ -10,7 +10,8 @@
  *	  files, their soundtracks, each folder's own versions of files the games share names for;
  *	* the menu: Half-Life's main menu without its hint text, its background, logo and icon, then each folder's own
  *	  Valve game's over them, so they match the player's version of the game;
- *	* the maps in jhl_setup_maps.txt, converted for the Unified SDK's game code (jhl_mapconvert.cpp).
+ *	* the maps in jhl_setup_maps.txt, converted for the Unified SDK's game code (jhl_mapconvert.cpp);
+ *	* Half-Life's glass shards with the chrome their texture's misspelt name kept from them.
  *
  *	It first works out every file it would write, then writes only those that differ from what's there, so running
  *	it again (jhl_setup) changes nothing on a folder set up before, and running it on a development install checks
@@ -22,6 +23,7 @@
 #include <chrono>
 #include <cctype>
 #include <cstdarg>
+#include <cstring>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -36,6 +38,7 @@
 #include "cl_util.h"
 #include "jhl_mapconvert.h"
 #include "jhl_setup.h"
+#include "studio.h"
 #include "utils/filesystem_utils.h"
 
 namespace fs = std::filesystem;
@@ -44,8 +47,8 @@ namespace
 {
 // Raise when what the setup makes changes, so installed folders are set up again. 8: Half-Life's shell.mdl, 640_logo.spr
 // and laserdot.spr back, which installing a release over a set-up folder replaced with the Unified SDK's. 9: ba_yard3's
-// Harold on his own models.
-constexpr int SetupVersion = 9;
+// Harold on his own models. 10: of3a1b without Half-Life's chapter title; the glass shards' chrome.
+constexpr int SetupVersion = 10;
 
 constexpr const char* BaseFolder = "johnhalflife";
 constexpr const char* StampFile = "jhl_setup.txt";
@@ -248,6 +251,43 @@ bool MakeGameMenu(const fs::path& valve, std::string& menu)
 	}
 
 	return true;
+}
+
+// Half-Life's glass shards (models/glassgibs.mdl) with their texture's chrome flag: it's named chome_glass, a typo
+// (studiomdl flags a texture named chrome), so they've always been drawn flat instead of shiny.
+void PlanGlassGibs(const fs::path& root, Plan& plan)
+{
+	std::string model;
+
+	if (!ReadFile(root / "valve" / "models" / "glassgibs.mdl", model) || model.size() < sizeof(studiohdr_t))
+	{
+		return;
+	}
+
+	auto* header = reinterpret_cast<studiohdr_t*>(model.data());
+
+	if (std::memcmp(model.data(), "IDST", 4) != 0 || header->textureindex <= 0 || header->numtextures < 0 ||
+		static_cast<std::size_t>(header->textureindex) + header->numtextures * sizeof(mstudiotexture_t) > model.size())
+	{
+		return;
+	}
+
+	auto* textures = reinterpret_cast<mstudiotexture_t*>(model.data() + header->textureindex);
+	bool fixed = false;
+
+	for (int i = 0; i < header->numtextures; ++i)
+	{
+		if (Lower(std::string(textures[i].name, strnlen(textures[i].name, sizeof(textures[i].name)))) == "chome_glass.bmp")
+		{
+			textures[i].flags |= STUDIO_NF_CHROME;
+			fixed = true;
+		}
+	}
+
+	if (fixed)
+	{
+		plan.Add(root / BaseFolder / "models" / "glassgibs.mdl", std::move(model));
+	}
 }
 
 // The menu art, Half-Life's first and then the folder's own game's over it.
@@ -479,6 +519,7 @@ void Setup(bool force)
 
 	PlanGameFiles(root, plan, stats);
 	PlanMenu(root, plan);
+	PlanGlassGibs(root, plan);
 
 	for (const auto& [key, file] : plan.Files())
 	{
