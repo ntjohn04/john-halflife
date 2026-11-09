@@ -15,16 +15,16 @@ OpenAL sound back. Each part below was checked against loopback recordings of va
 | Pitch | Off a sound's own pitch (nearly everything: voices 100-103 a line, guns 98-102), it is pitched as the engine pitches it: stepped through at its own rate without interpolating, then brought to 22050 Hz. The uneven steps are the faint grain of vanilla's sound. Made once per sound and pitch; dialogue words too. | `SoundCache::GetPitched`, `SentencesSystem::SetSentenceWord` |
 | Ear volumes | The engine's spatialization: each ear `(1 - distance × attenuation / 1000) × (1 ∓ side)`, the player's own sounds and sounds without attenuation full in both ears. Played through OpenAL's stereo panning inverted (measured on a loopback device), so each ear gets exactly that. | `ApplyVanillaSpatialization`, `StereoPanGains` |
 | Output | Plain stereo, no limiter (loud overlaps clip, as the engine's), no HRTF. | `BuildDeviceAttributes` |
-| Room types | The engine's software DSP presets (as in Xash3D's `s_dsp.c`) in place of the EAX ones: a reverb and an echo per room, on two effect sends, each room's level set to vanilla's as measured (every room within about 2 dB), feedback rounded as the engine stores it. The metal and tunnel rooms' (2-7) echoes 3-4 dB lower, matched band by band: OpenAL's echo damping can't take the highs off the way the engine's 22 kHz loop filter does, and the tunnels rang bright at 0.5-3 kHz. The water rooms (14-16; 14 under water) muffle the whole mix. | `HalfLifeSoundEffects.cpp` |
+| Room types | The engine's software DSP rooms (as in Xash3D's `s_dsp.c`, which matches the rooms measured in vanilla) in place of the EAX ones, played exactly: each room's whole response to a click, its two reverb lines and its echo with its recursive lowpass (at 22050 Hz, the echo loses about 3 dB at 1 kHz and 7 at 2 kHz each time round, so the tunnels' rings go dull within a tenth of a second), worked out at the device's rate and played through OpenAL Soft's convolution effect (experimental in 1.22, `AL_SOFTX_convolution_reverb`; checked on a loopback device against the engine's processing: the same to -36 dB). Up to 6 s of it, to where it's 60 dB down. Each sound goes into the room as into the engine's mono mix, `(left + right) / 2` of its ear volumes: OpenAL's send carries the source's gain, which the panning raises, up to twice for a sound to one side. The water rooms (14-16; 14 under water) muffle the whole mix. Without the convolution effect, an approximation: a reverb and an echo per room on two sends, levels set by measurement (`VanillaReverbTrim`, `VanillaEchoTrim`). | `HalfLifeSoundEffects.cpp` (`VanillaRoomResponse`), `GameSoundSystem::ReplaceRoomSlot` |
 
 Switching it live resets the audio device; sounds already loaded keep how they were loaded until the next
 map load.
 
-**Not reproduced** (OpenAL's limits):
-* The reverb's texture: OpenAL's reverb is smoother than the engine's two delay lines, at the same level.
-* Echoes longer than 0.207 s (outdoors and caverns, 0.3-0.38 s in vanilla) repeat at 0.207 s, dying away
-  as fast.
+**Not reproduced:**
 * The engine's left channel delay (2-40 ms in many rooms): an effect send can't delay the dry sound.
+* Room 26's loudness modulation.
+* The engine's integer rounding, which cuts its quietest tails off.
+* Changing room cuts the last room's tail off, as the engine reset its delay lines.
 
 ## Sound sources
 

@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include <AL/al.h>
 
 namespace sound
@@ -39,4 +41,12 @@ float VanillaEchoGain(unsigned int roomType);
  *	the one under water), the direct sound too.
  */
 bool VanillaLowpass(unsigned int roomType);
+
+/**
+ *	@brief johnhalflife: everything a room adds to a click, at the engine's 22050 Hz, as the engine's software DSP plays
+ *	it (its reverb and echo whole: the echo's lowpass, recursive, is what the echo effect can't do), for OpenAL's
+ *	convolution effect. Empty for rooms that add nothing. Its loudness modulation (room 26) isn't in it.
+ */
+constexpr int VanillaResponseRate = 22050;
+std::vector<float> VanillaRoomResponse(unsigned int roomType);
 }

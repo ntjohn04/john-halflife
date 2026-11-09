@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <numbers>
 
 #include <AL/al.h>
 #define AL_ALEXT_PROTOTYPES
@@ -350,5 +351,121 @@ float VanillaEchoGain(unsigned int roomType)
 	return GetVanillaRoom(roomType).Delay > 0
 			   ? 0.25f * 0.5f * VanillaEchoLevel * DecibelsToGain(VanillaEchoTrim[roomType < RoomEffectCount ? roomType : 0])
 			   : 0.f;
+}
+
+std::vector<float> VanillaRoomResponse(unsigned int roomType)
+{
+	// Long enough for every room's tail to fall 60 dB (the tunnels' hum, 7 and 27, takes longer: cut and faded here).
+	constexpr float MaxSeconds = 6;
+	constexpr float FadeSeconds = 0.25f;
+
+	const auto& room = GetVanillaRoom(roomType);
+	const int length = static_cast<int>(MaxSeconds * VanillaResponseRate);
+
+	// The engine's processing (Xash3D's SX_RoomFX, which matches Steam Half-Life's measured rooms) of a click, the
+	// whole mix in: its two reverb lines, then its delay line on the result. Both mix in mono, (left + right) / 2, and
+	// add to both channels alike. The click itself taken off: the effect send is only what the room adds.
+	struct Line
+	{
+		int Length;
+		std::vector<float> Buffer;
+		float Previous = 0;
+	};
+
+	std::vector<Line> lines;
+
+	if (const float size = std::min(room.Size, 0.1f); size > 0)
+	{
+		for (const float lineSize : {size, size * 0.71f})
+		{
+			lines.push_back({static_cast<int>(lineSize * VanillaResponseRate), std::vector<float>(length + VanillaResponseRate / 10 + 1)});
+		}
+	}
+
+	const float reverbFeedback = EngineFeedback(room.Reflectivity);
+	const float delayFeedback = EngineFeedback(room.Feedback);
+	const int delayLength = static_cast<int>(std::min(room.Delay, 0.4f) * VanillaResponseRate);
+	std::vector<float> delayLine(delayLength > 0 ? length + delayLength + 1 : 0);
+	float lowpass0 = 0, lowpass1 = 0;
+
+	std::vector<float> response(length);
+
+	for (int i = 0; i < length; ++i)
+	{
+		const float in = i == 0 ? 1.f : 0.f;
+		float mix = in;
+
+		if (!lines.empty())
+		{
+			float reverb = 0;
+
+			for (auto& line : lines)
+			{
+				const float value = in + reverbFeedback * line.Buffer[i];
+				const float filtered = room.ReverbLowpass != 0 ? (line.Previous + value) / 2 : value;
+				line.Previous = value;
+				line.Buffer[i + line.Length] = filtered;
+				reverb += filtered;
+			}
+
+			mix += reverb / 6;
+		}
+
+		if (delayLength > 0)
+		{
+			float value = mix + delayFeedback * delayLine[i];
+
+			// Its three-tap lowpass is recursive: it takes far more off each time round than the effects can.
+			if (room.DelayLowpass != 0)
+			{
+				value = (lowpass0 + lowpass1 + value) / 3;
+				lowpass0 = lowpass1;
+				lowpass1 = value;
+			}
+
+			delayLine[i + delayLength] = value;
+			mix += value / 4;
+		}
+
+		response[i] = mix - in;
+	}
+
+	// Cut where what's left is 60 dB down, faded out.
+	double total = 0;
+
+	for (const float sample : response)
+	{
+		total += sample * sample;
+	}
+
+	if (total <= 0)
+	{
+		return {};
+	}
+
+	double remaining = total;
+	int end = length;
+
+	for (int i = 0; i < length; ++i)
+	{
+		remaining -= response[i] * response[i];
+
+		if (remaining < total * 1e-6)
+		{
+			end = i + 1;
+			break;
+		}
+	}
+
+	response.resize(end);
+
+	const int fade = std::min(static_cast<int>(FadeSeconds * VanillaResponseRate), end);
+
+	for (int i = 0; i < fade; ++i)
+	{
+		response[end - fade + i] *= 0.5f * (1 + std::cos(std::numbers::pi_v<float> * (i + 1) / fade));
+	}
+
+	return response;
 }
 }

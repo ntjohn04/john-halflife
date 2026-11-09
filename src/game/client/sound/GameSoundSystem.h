@@ -153,7 +153,18 @@ private:
 
 	void UpdateRoomEffect();
 
-	void UpdateSourceEffect(OpenALSource& source);
+	void UpdateSourceEffect(Channel& channel);
+
+	/**
+	 *	@brief johnhalflife: a fresh effect slot for the room, with a room's response (0: none) on OpenAL's convolution
+	 *	effect, every source sent to it and the old one deleted (1.22 takes a response only on a new slot).
+	 */
+	bool ReplaceRoomSlot(ALuint response);
+
+	/**
+	 *	@brief johnhalflife: a room's response (VanillaRoomResponse) at the device's rate, made the first time (0: none).
+	 */
+	ALuint GetVanillaResponse(int roomType);
 
 	void SetDirectLowpass(bool lowpass);
 
@@ -192,6 +203,14 @@ private:
 	bool m_HasEchoSend{false};
 	bool m_VanillaRoomsWork{true};
 	bool m_PreviousVanilla{false};
+
+	// johnhalflife: the engine's rooms played exactly, through OpenAL Soft's convolution effect (experimental in 1.22,
+	// AL_SOFTX_convolution_reverb), each room's response made once at the device's rate; the reverb and echo above
+	// without it.
+	ALuint m_ConvolutionEffect{0};
+	std::array<ALuint, RoomEffectCount> m_VanillaResponses{};
+	ALCint m_VanillaResponsesRate{0};
+	bool m_ConvolutionRoom{false};
 
 	ALuint m_AuxiliaryEffectSlot{0};
 

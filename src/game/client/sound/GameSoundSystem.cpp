@@ -62,6 +62,21 @@ GameSoundSystem::~GameSoundSystem()
 		alDeleteAuxiliaryEffectSlots(1, &m_AuxiliaryEffectSlot);
 		m_AuxiliaryEffectSlot = 0;
 
+		for (auto& response : m_VanillaResponses)
+		{
+			if (response != 0)
+			{
+				alDeleteBuffers(1, &response);
+				response = 0;
+			}
+		}
+
+		if (m_ConvolutionEffect != 0)
+		{
+			alDeleteEffects(1, &m_ConvolutionEffect);
+			m_ConvolutionEffect = 0;
+		}
+
 		if (m_EchoEffectSlot != 0)
 		{
 			alDeleteAuxiliaryEffectSlots(1, &m_EchoEffectSlot);
@@ -295,6 +310,23 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 	{
 		m_Logger->error("Error setting up the engine's room effects ({:#x}): using the SDK's", error);
 		m_VanillaRoomsWork = false;
+	}
+
+	// johnhalflife: the engine's rooms exactly, if OpenAL has its convolution effect; else the reverb and echo above.
+	if (m_VanillaRoomsWork && alIsExtensionPresent("AL_SOFTX_convolution_reverb"))
+	{
+		constexpr ALenum EffectConvolutionReverb = 0xA000;
+
+		alGenEffects(1, &m_ConvolutionEffect);
+		alEffecti(m_ConvolutionEffect, AL_EFFECT_TYPE, EffectConvolutionReverb);
+
+		if (const ALenum error = alGetError(); error != AL_NO_ERROR)
+		{
+			m_Logger->error("Error setting up the convolution effect ({:#x}): the engine's rooms approximated", error);
+			alDeleteEffects(1, &m_ConvolutionEffect);
+			m_ConvolutionEffect = 0;
+			alGetError();
+		}
 	}
 
 	// Immediately initialize the slot to a valid effect.
@@ -878,7 +910,7 @@ Channel* GameSoundSystem::CreateChannel()
 		return StealChannel();
 	}
 
-	UpdateSourceEffect(channel.Source);
+	UpdateSourceEffect(channel);
 
 	// johnhalflife: its resampler now; its spatialization as it's set up.
 	if (m_SupportsResampler)
@@ -999,6 +1031,20 @@ void GameSoundSystem::ApplyVanillaSpatialization(Channel& channel)
 	alSourcef(channel.Source.Id, AL_ROLLOFF_FACTOR, 0);
 	alSourcef(channel.Source.Id, AL_MAX_GAIN, 4);
 	alSourcef(channel.Source.Id, AL_GAIN, gain);
+
+	// The engine's rooms take its mix in mono, (left + right) / 2, whatever the panning; the effect send carries the
+	// source's gain, which the panning has raised (a sound to one side, up to twice what goes into the engine's room).
+	const float sendGain = gain > 0 ? std::min((left + right) / 2 / gain, 1.f) : 0.f;
+
+	if (std::abs(sendGain - channel.SendGain) > 0.001f)
+	{
+		channel.SendGain = sendGain;
+
+		if (m_ConvolutionRoom)
+		{
+			UpdateSourceEffect(channel);
+		}
+	}
 }
 
 void GameSoundSystem::RestoreSpatialization(Channel& channel)
@@ -1009,6 +1055,8 @@ void GameSoundSystem::RestoreSpatialization(Channel& channel)
 	alSourcef(channel.Source.Id, AL_ROLLOFF_FACTOR, channel.Attenuation);
 	alSourcef(channel.Source.Id, AL_MAX_GAIN, 1);
 	alSourcef(channel.Source.Id, AL_GAIN, channel.Volume);
+
+	channel.SendGain = 1;
 }
 
 float GameSoundSystem::GetChannelAudibility(const Channel& channel) const
@@ -1569,14 +1617,36 @@ void GameSoundSystem::UpdateRoomEffect()
 			JhlHitchScope hitchScope{"sound.room", roomName.c_str()};
 
 			m_PreviousRoomType = roomType;
-			alAuxiliaryEffectSloti(m_AuxiliaryEffectSlot, AL_EFFECTSLOT_EFFECT,
-				static_cast<ALint>(vanilla ? m_VanillaReverbEffects[roomType] : m_RoomEffects[roomType]));
+
+			// johnhalflife: the engine's room exactly, all on the first send (the last room's tail cut off, as the engine
+			// cut its delay lines off changing room).
+			bool convolution = vanilla && m_ConvolutionEffect != 0;
+
+			if (convolution && !ReplaceRoomSlot(GetVanillaResponse(roomType)))
+			{
+				m_Logger->error("Error setting up room {} on the convolution effect: the engine's rooms approximated", roomType);
+				alDeleteEffects(1, &m_ConvolutionEffect);
+				m_ConvolutionEffect = 0;
+				convolution = false;
+			}
+
+			if (!convolution)
+			{
+				if (m_ConvolutionRoom)
+				{
+					ReplaceRoomSlot(0);
+				}
+
+				alAuxiliaryEffectSloti(m_AuxiliaryEffectSlot, AL_EFFECTSLOT_EFFECT,
+					static_cast<ALint>(vanilla ? m_VanillaReverbEffects[roomType] : m_RoomEffects[roomType]));
+			}
 
 			if (m_HasEchoSend)
 			{
+				const bool echo = vanilla && !convolution;
 				alAuxiliaryEffectSloti(m_EchoEffectSlot, AL_EFFECTSLOT_EFFECT,
-					vanilla ? static_cast<ALint>(m_VanillaEchoEffects[roomType]) : AL_EFFECT_NULL);
-				alAuxiliaryEffectSlotf(m_EchoEffectSlot, AL_EFFECTSLOT_GAIN, vanilla ? VanillaEchoGain(roomType) : 0.f);
+					echo ? static_cast<ALint>(m_VanillaEchoEffects[roomType]) : AL_EFFECT_NULL);
+				alAuxiliaryEffectSlotf(m_EchoEffectSlot, AL_EFFECTSLOT_GAIN, echo ? VanillaEchoGain(roomType) : 0.f);
 			}
 
 			SetDirectLowpass(vanilla && VanillaLowpass(roomType));
@@ -1590,7 +1660,7 @@ void GameSoundSystem::UpdateRoomEffect()
 			// Re-attach the filter to all active sources.
 			for (auto& channel : m_Channels)
 			{
-				UpdateSourceEffect(channel.Source);
+				UpdateSourceEffect(channel);
 			}
 		}
 	}
@@ -1623,16 +1693,126 @@ void GameSoundSystem::SetDirectLowpass(bool lowpass)
 	}
 }
 
-void GameSoundSystem::UpdateSourceEffect(OpenALSource& source)
+void GameSoundSystem::UpdateSourceEffect(Channel& channel)
 {
-	alSource3i(source.Id, AL_AUXILIARY_SEND_FILTER, static_cast<ALint>(m_AuxiliaryEffectSlot), 0, m_Filter);
+	// johnhalflife: on the engine's exact rooms, each sound in at its share of the engine's mono mix (a filter's
+	// settings are copied as it's attached).
+	alFilterf(m_Filter, AL_LOWPASS_GAIN, m_ConvolutionRoom ? channel.SendGain : 1.f);
+
+	alSource3i(channel.Source.Id, AL_AUXILIARY_SEND_FILTER, static_cast<ALint>(m_AuxiliaryEffectSlot), 0, m_Filter);
 
 	if (m_HasEchoSend)
 	{
-		alSource3i(source.Id, AL_AUXILIARY_SEND_FILTER, static_cast<ALint>(m_EchoEffectSlot), 1, m_Filter);
+		alSource3i(channel.Source.Id, AL_AUXILIARY_SEND_FILTER, static_cast<ALint>(m_EchoEffectSlot), 1, m_Filter);
 	}
 
-	alSourcei(source.Id, AL_DIRECT_FILTER, static_cast<ALint>(m_DirectLowpass ? m_DirectFilter : AL_FILTER_NULL));
+	alSourcei(channel.Source.Id, AL_DIRECT_FILTER, static_cast<ALint>(m_DirectLowpass ? m_DirectFilter : AL_FILTER_NULL));
+}
+
+bool GameSoundSystem::ReplaceRoomSlot(ALuint response)
+{
+	alGetError();
+
+	ALuint slot = 0;
+	alGenAuxiliaryEffectSlots(1, &slot);
+
+	if (alGetError() != AL_NO_ERROR)
+	{
+		return false;
+	}
+
+	if (response != 0)
+	{
+		// The response first: 1.22 refuses one on a slot already playing its effect.
+		alAuxiliaryEffectSloti(slot, AL_BUFFER, static_cast<ALint>(response));
+		alAuxiliaryEffectSloti(slot, AL_EFFECTSLOT_EFFECT, static_cast<ALint>(m_ConvolutionEffect));
+	}
+
+	if (alGetError() != AL_NO_ERROR)
+	{
+		alDeleteAuxiliaryEffectSlots(1, &slot);
+		return false;
+	}
+
+	std::swap(slot, m_AuxiliaryEffectSlot);
+	m_ConvolutionRoom = response != 0;
+
+	for (auto& channel : m_Channels)
+	{
+		UpdateSourceEffect(channel);
+	}
+
+	alDeleteAuxiliaryEffectSlots(1, &slot);
+
+	if (const ALenum error = alGetError(); error != AL_NO_ERROR)
+	{
+		m_Logger->warn("Error deleting the last room's effect slot ({:#x})", error);
+	}
+
+	return true;
+}
+
+ALuint GameSoundSystem::GetVanillaResponse(int roomType)
+{
+	ALCint rate = 0;
+	alcGetIntegerv(m_Device.get(), ALC_FREQUENCY, 1, &rate);
+
+	if (rate <= 0 || roomType < 0 || roomType >= RoomEffectCount)
+	{
+		return 0;
+	}
+
+	// Made at another rate: made again.
+	if (rate != m_VanillaResponsesRate)
+	{
+		for (auto& response : m_VanillaResponses)
+		{
+			if (response != 0)
+			{
+				alDeleteBuffers(1, &response);
+				response = 0;
+			}
+		}
+
+		m_VanillaResponsesRate = rate;
+	}
+
+	auto& buffer = m_VanillaResponses[roomType];
+
+	if (buffer == 0)
+	{
+		auto response = VanillaRoomResponse(roomType);
+
+		if (response.empty())
+		{
+			return 0;
+		}
+
+		// At the device's rate (OpenAL converting it takes a tenth of a second for the longest, each time it's set),
+		// scaled so the effect gives the engine's: a filter's response at the device's rate is 22050 / rate of it at
+		// 22050, and the effect pans its mono output to the front centre, at the gain a source there plays at.
+		m_SoundCache->SetDeviceRate(rate);
+		response = m_SoundCache->ToDeviceRate(response, 1, -1, -1);
+
+		const float scale = (static_cast<float>(VanillaResponseRate) / rate) / StereoPanGains[0][0];
+
+		for (auto& sample : response)
+		{
+			sample *= scale;
+		}
+
+		alGetError();
+		alGenBuffers(1, &buffer);
+		alBufferData(buffer, AL_FORMAT_MONO_FLOAT32, response.data(), static_cast<ALsizei>(response.size() * sizeof(float)), rate);
+
+		if (alGetError() != AL_NO_ERROR)
+		{
+			alDeleteBuffers(1, &buffer);
+			buffer = 0;
+		}
+	}
+
+	return buffer;
 }
 
 void GameSoundSystem::UpdateSounds()

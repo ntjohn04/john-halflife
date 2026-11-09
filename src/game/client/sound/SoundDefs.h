@@ -188,6 +188,9 @@ struct Channel
 	// johnhalflife (jhl_snd_vanilla): the pitch its buffer was made at (100: none; OpenAL pitches the rest).
 	int BufferPitch{PITCH_NORM};
 
+	// johnhalflife (jhl_snd_vanilla): its effect send's gain, so the room takes it in as the engine's mono mix did.
+	float SendGain{1};
+
 	OpenALSource Source;
 };
 }
