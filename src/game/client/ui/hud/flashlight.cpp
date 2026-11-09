@@ -111,11 +111,12 @@ bool CHudFlashlight::Draw(float flTime)
 	int a = m_fOn ? 225 : MIN_ALPHA;
 
 	// johnhalflife (jhl_hud_minimal): off and fully charged it has nothing to say, so after a moment it fades away;
-	// on, or charging, it's back at once.
+	// on, or charging, it's back at once. 99 counts as full: a new player starts on 99 (vanilla's Spawn), which
+	// brought it up at the start of a new game.
 	constexpr float IdleHold = 1.5f;
 	constexpr float IdleFade = 1.0f;
 
-	if (!m_fOn && m_iBat >= 100 && gHUD.m_pCvarHudMinimal && 0 != gHUD.m_pCvarHudMinimal->value)
+	if (!m_fOn && m_iBat >= 99 && gHUD.m_pCvarHudMinimal && 0 != gHUD.m_pCvarHudMinimal->value)
 	{
 		if (m_flIdleSince > flTime)
 		{

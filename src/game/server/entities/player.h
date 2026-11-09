@@ -290,6 +290,11 @@ public:
 	CBasePlayerWeapon* m_pClientActiveWeapon; // client version of the active weapon
 	CBasePlayerWeapon* m_pLastWeapon;
 
+	// johnhalflife (jhl_weapons_holster): the weapon put away with the HUD's holster, and the holster as the last
+	// weapon (what lastinv goes back to, there being no weapon to point at).
+	bool m_JhlHolstered = false;
+	bool m_JhlLastHolstered = false;
+
 	std::uint64_t m_WeaponBits;
 
 	// Not saved, used to update client.
@@ -456,6 +461,7 @@ public:
 
 private:
 	void DeployWeapon(CBasePlayerWeapon* weapon);
+	void JhlHolster();
 
 public:
 	/**

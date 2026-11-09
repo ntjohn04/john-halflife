@@ -42,8 +42,9 @@ namespace fs = std::filesystem;
 
 namespace
 {
-// Raise when what the setup makes changes, so installed folders are set up again.
-constexpr int SetupVersion = 7;
+// Raise when what the setup makes changes, so installed folders are set up again. 8: Half-Life's shell.mdl, 640_logo.spr
+// and laserdot.spr back, which installing a release over a set-up folder replaced with the Unified SDK's.
+constexpr int SetupVersion = 8;
 
 constexpr const char* BaseFolder = "johnhalflife";
 constexpr const char* StampFile = "jhl_setup.txt";

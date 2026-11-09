@@ -1340,11 +1340,16 @@ bool CHudAmmo::DrawWList(float flTime)
 
 				if (gpActiveSel == p)
 				{
-					// johnhalflife: the holster has no picture, only the selection box.
+					// johnhalflife: the holster has no picture, only the faint box a weapon's picture has behind it
+					// (Valve's are lines of 21 and 29 of 255, added: 25).
 					if (0 != p->hActive)
 					{
 						SPR_Set(p->hActive, color);
 						SPR_DrawAdditive(0, x, y, &p->rcActive);
+					}
+					else
+					{
+						FillRGBA(x, y, p->rcActive.right - p->rcActive.left, p->rcActive.bottom - p->rcActive.top, color, 25);
 					}
 
 					SPR_Set(gHUD.GetSprite(m_HUD_selection), color);

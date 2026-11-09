@@ -89,6 +89,8 @@ DEFINE_FIELD(m_SuitLightType, FIELD_INTEGER),
 	DEFINE_ARRAY(m_rgpPlayerWeapons, FIELD_CLASSPTR, MAX_WEAPON_SLOTS),
 	DEFINE_FIELD(m_pActiveWeapon, FIELD_CLASSPTR),
 	DEFINE_FIELD(m_pLastWeapon, FIELD_CLASSPTR),
+	DEFINE_FIELD(m_JhlHolstered, FIELD_BOOLEAN),
+	DEFINE_FIELD(m_JhlLastHolstered, FIELD_BOOLEAN),
 	DEFINE_FIELD(m_WeaponBits, FIELD_INT64),
 	DEFINE_FIELD(m_HudFlags, FIELD_INTEGER),
 
@@ -720,6 +722,7 @@ void CBasePlayer::RemoveAllItems(bool removeSuit)
 	}
 
 	m_pLastWeapon = nullptr;
+	m_JhlHolstered = m_JhlLastHolstered = false;
 
 	if (m_pTank != nullptr)
 	{
@@ -2860,6 +2863,7 @@ void CBasePlayer::Spawn()
 	m_fNoPlayerSound = false; // normal sound behavior.
 
 	m_pLastWeapon = nullptr;
+	m_JhlHolstered = m_JhlLastHolstered = false;
 	m_fInitHUD = true;
 	m_iClientHideHUD = -1; // force this to be recalculated
 	m_fWeapon = false;

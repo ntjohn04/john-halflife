@@ -36,6 +36,7 @@ import zipfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 LIST = os.path.join(HERE, "release_unified_files.txt")
+SETUP_FILES = os.path.join(REPO, "config", "mod", "jhl_setup_files.txt")
 FOLDERS = ("johnhalflife", "johnhalflife_op4", "johnhalflife_bs", "johnhalflife_uplink")
 
 # The Unified SDK's release files never shipped: its tools and installer, developer files, its test maps (and the TFC
@@ -67,6 +68,18 @@ def release_files(release_zip):
                 name = name[:-len(".install")]
             files[name] = info
     return files
+
+
+def from_half_life():
+    """The johnhalflife files the first start copies from Half-Life itself (every player has it): never shipped, or
+    installing over a set-up folder would put the Unified SDK's back over Half-Life's (its shell.mdl is Opposing
+    Force's) with nothing to set them right, the first start having run."""
+    names = set()
+    for line in open(SETUP_FILES, encoding="utf-8"):
+        parts = line.rstrip("\n").split("\t")
+        if len(parts) > 2 and parts[0] == "johnhalflife" and parts[2].lower().startswith("valve/"):
+            names.add(parts[1].lower())
+    return names
 
 
 def md5(data):
@@ -132,6 +145,8 @@ def package(windows, linux, release_zip, out, install=None):
     try:
         # 1. The Unified SDK's files, into johnhalflife.
         wanted = [l.strip() for l in open(LIST, encoding="utf-8") if l.strip() and not l.startswith("//")]
+        valve_own = from_half_life()
+        wanted = [n for n in wanted if n.lower() not in valve_own]
         files = release_files(release_zip)
         missing = [n for n in wanted if n not in files]
         if missing:
