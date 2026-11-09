@@ -140,6 +140,7 @@ johnhalflife	media/Opposing-ForceProspero02.mp3	bshift/media/Half-Life13.mp3	gea
 johnhalflife	media/Opposing-ForceSuspense01.mp3	bshift/media/Half-Life08.mp3	gearbox/media/Suspense01.mp3
 johnhalflife	media/Opposing-ForceSuspense02.mp3	bshift/media/Suspense03.mp3	gearbox/media/Suspense02.mp3
 johnhalflife	media/Opposing-ForceSuspense03.mp3	bshift/media/Prospero02.mp3	gearbox/media/Suspense03.mp3
+johnhalflife	media/valve.webm	valve/media/valve.webm
 johnhalflife	models/ba_holo.mdl	bshift/models/ba_holo.mdl
 johnhalflife	models/baby_strooper.mdl	gearbox/models/baby_strooper.mdl
 johnhalflife	models/baby_voltigore.mdl	gearbox/models/baby_voltigore.mdl
@@ -1448,3 +1449,4 @@ johnhalflife_op4	sound/scientist/survival.wav	gearbox/sound/scientist/survival.w
 johnhalflife_op4	sprites/320_logo.spr	gearbox/sprites/320_logo.spr
 johnhalflife_op4	sprites/640_logo.spr	gearbox/sprites/640_logo.spr
 johnhalflife_op4	sprites/laserdot.spr	gearbox/sprites/laserdot.spr
+johnhalflife_uplink	media/valve.webm	valve/media/valve.webm

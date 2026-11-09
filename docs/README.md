@@ -113,11 +113,22 @@ a copy of the game code.
 
 * The build installs the game code, `delta.lst` and the settings files into each folder.
 * Menu files used unchanged are copied from the player's own Valve install on the first start, so they match their
-  version of the game and are never shipped (`client/jhl_setup.cpp`): Half-Life's main menu,
-  without its hint text next to each button
+  version of the game and are never shipped (`client/jhl_setup.cpp`): Half-Life's main menu, with its hint beside
+  each button as WON had
   (`GameMenu.res`, shared by all four, so the Unified SDK's Campaign Select is gone; its map,
   `hlu_campaignselect`, still works from the console), background layouts and tiles, logo and icon, then the
   folder's own game's (`gearbox`, `bshift`) over them.
+* **The main menu's text, as the WON versions had it** (`scripts/make_menu_strings.py` writes each game's
+  `resource/gameui_english.txt`): labels in capitals (OPTIONS kept, not WON's CONFIGURATION), a hint beside each button,
+  Hazard Course for the Training Room; Opposing Force's drill sergeant ("You going AWOL on me, son?" to quit, its
+  hints, Boot Camp). From the community's WON menu restorations, which agree. English only.
+* **Intro videos:** the engine plays the list in each game folder's own `media/StartupVids.txt` (`-novid` skips
+  it, a key the video playing). Their sound isn't the video's: it plays `sound/UI/valve_sound.wav` as each starts,
+  so each game has one video and that file is its soundtrack. John Half-Life and Uplink play Half-Life's intro (the
+  first start copying the player's `valve/media/valve.webm`; Valve's sound is found in `valve`). Blue Shift plays its
+  WON intros, Sierra Studios then Gearbox Software and Valve, as one, and Opposing Force Gearbox's and Valve's, both
+  shipped (`config/expansions/*/media/intro.webm` and `sound/UI/valve_sound.wav`, made from Blue Shift's own AVIs), so
+  neither needs the other installed.
 * John Half-Life and Uplink use Half-Life's art and set the 25th anniversary `liblist.gam` keys
   `hd_background "1"` (the 21:9 background in `HD_BackgroundLayout.txt`: 105 tiles of 256x256 at
   `resolution 3840 1600`) and `animated_title "1"`, like Valve's `valve` folder. Opposing Force and Blue Shift

@@ -8,8 +8,8 @@
  *
  *	* the files in jhl_setup_files.txt (made by scripts/make_setup_files.py): Opposing Force's and Blue Shift's
  *	  files, their soundtracks, each folder's own versions of files the games share names for;
- *	* the menu: Half-Life's main menu without its hint text, its background, logo and icon, then each folder's own
- *	  Valve game's over them, so they match the player's version of the game;
+ *	* the menu: Half-Life's main menu (its hints beside the buttons, as WON had), its background, logo and icon,
+ *	  then each folder's own Valve game's over them, so they match the player's version of the game;
  *	* the maps in jhl_setup_maps.txt, converted for the Unified SDK's game code (jhl_mapconvert.cpp);
  *	* Half-Life's glass shards with the chrome their texture's misspelt name kept from them.
  *
@@ -47,8 +47,9 @@ namespace
 {
 // Raise when what the setup makes changes, so installed folders are set up again. 8: Half-Life's shell.mdl, 640_logo.spr
 // and laserdot.spr back, which installing a release over a set-up folder replaced with the Unified SDK's. 9: ba_yard3's
-// Harold on his own models. 10: of3a1b without Half-Life's chapter title; the glass shards' chrome.
-constexpr int SetupVersion = 10;
+// Harold on his own models. 10: of3a1b without Half-Life's chapter title; the glass shards' chrome. 11: the main
+// menu's hints back; Half-Life's intro for John Half-Life and Uplink.
+constexpr int SetupVersion = 11;
 
 constexpr const char* BaseFolder = "johnhalflife";
 constexpr const char* StampFile = "jhl_setup.txt";
@@ -222,37 +223,6 @@ void PlanGameFiles(const fs::path& root, Plan& plan, SetupStats& stats)
 	}
 }
 
-// Half-Life's main menu, shared by every folder, without the 25th anniversary's hint text next to each button.
-bool MakeGameMenu(const fs::path& valve, std::string& menu)
-{
-	std::string original;
-
-	if (!ReadFile(valve / "resource" / "GameMenu.res", original))
-	{
-		return false;
-	}
-
-	std::size_t start = 0;
-
-	while (start < original.size())
-	{
-		std::size_t end = original.find('\n', start);
-		end = end == std::string::npos ? original.size() : end + 1;
-
-		const std::string_view line(original.data() + start, end - start);
-		const std::size_t text = line.find_first_not_of(" \t");
-
-		if (text == std::string_view::npos || !line.substr(text).starts_with("\"HelpText\""))
-		{
-			menu += line;
-		}
-
-		start = end;
-	}
-
-	return true;
-}
-
 // Half-Life's glass shards (models/glassgibs.mdl) with their texture's chrome flag: it's named chome_glass, a typo
 // (studiomdl flags a texture named chrome), so they've always been drawn flat instead of shiny.
 void PlanGlassGibs(const fs::path& root, Plan& plan)
@@ -301,8 +271,10 @@ void PlanMenu(const fs::path& root, Plan& plan)
 		return;
 	}
 
-	std::string gameMenu;
-	const bool haveGameMenu = MakeGameMenu(valve, gameMenu);
+	// Half-Life's main menu, shared by every folder, with the hint beside each button (each game's text, from its own
+	// gameui_english.txt: scripts/make_menu_strings.py).
+	const fs::path gameMenu = valve / "resource" / "GameMenu.res";
+	const bool haveGameMenu = IsFile(gameMenu);
 
 	for (const auto& menu : MenuFolders)
 	{

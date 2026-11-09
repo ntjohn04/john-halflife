@@ -29,7 +29,10 @@ EXPANSIONS = ("gearbox", "bshift")
 PER_GAME = ["sound/barney/icanhear.wav", "sound/common/null.wav", "sound/misc/talk.wav",
             "sound/scientist/needsleep.wav", "sound/scientist/survival.wav", "sprites/640_logo.spr",
             "sprites/320_logo.spr", "sprites/laserdot.spr"]
-EXTRA = [("johnhalflife", "models/shell.mdl", ["valve/models/shell.mdl"]),
+# Half-Life's intro for the folders playing it (their media/StartupVids.txt; the engine reads each game folder's own).
+EXTRA = [("johnhalflife", "media/valve.webm", ["valve/media/valve.webm"]),
+         ("johnhalflife_uplink", "media/valve.webm", ["valve/media/valve.webm"]),
+         ("johnhalflife", "models/shell.mdl", ["valve/models/shell.mdl"]),
          ("johnhalflife", "models/shell_op4.mdl", ["gearbox/models/shell.mdl"])]
 # Opposing Force's half-size HUD sprites that differ from Half-Life's, for the half-size HUD (make_half_hud.py list).
 for name in ("320_pain", "320_train", "320hud2", "320hud3", "320hudof01"):

@@ -58,7 +58,7 @@ the folder up and writes a version stamp, so later starts skip it:
 3. Copies Opposing Force's and Blue Shift's files and soundtracks, and files Valve has under another name only
    (`jhl_setup_files.txt`: the engine finds a file in `valve` at the same path only; Opposing Force's
    `events/displacer.sc` is word for word `valve/violence.cfg`).
-4. Copies Half-Life's menu art (its main menu without the hint text, background, logo, icon) into each folder,
+4. Copies Half-Life's menu art (its main menu, background, logo, icon) into each folder,
    then the folder's own Valve game's over it.
 5. Writes key bindings for a folder with no `config.cfg` yet, the keyboard tab's "Use Defaults" ones (`kb_def.lst`).
    Not the Unified SDK's `default_config.cfg`, its ContentInstaller's choice, which is its author's own config (his
