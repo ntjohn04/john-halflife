@@ -9,7 +9,8 @@
  *	* the files in jhl_setup_files.txt (made by scripts/make_setup_files.py): Opposing Force's and Blue Shift's
  *	  files, their soundtracks, each folder's own versions of files the games share names for;
  *	* the menu: Half-Life's main menu (its hints beside the buttons, as WON had), its background, logo and icon,
- *	  then each folder's own Valve game's over them, so they match the player's version of the game;
+ *	  then each folder's own Valve game's over them, so they match the player's version of the game; Opposing
+ *	  Force's and Blue Shift's menu buttons in their own fonts and colours (Half-Life's TrackerScheme.res, changed);
  *	* the maps in jhl_setup_maps.txt, converted for the Unified SDK's game code (jhl_mapconvert.cpp);
  *	* Half-Life's glass shards with the chrome their texture's misspelt name kept from them.
  *
@@ -30,6 +31,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <variant>
 #include <vector>
@@ -49,7 +51,7 @@ namespace
 // and laserdot.spr back, which installing a release over a set-up folder replaced with the Unified SDK's. 9: ba_yard3's
 // Harold on his own models. 10: of3a1b without Half-Life's chapter title; the glass shards' chrome. 11: the main
 // menu's hints back; Half-Life's intro for John Half-Life and Uplink.
-constexpr int SetupVersion = 11;
+constexpr int SetupVersion = 12;
 
 constexpr const char* BaseFolder = "johnhalflife";
 constexpr const char* StampFile = "jhl_setup.txt";
@@ -92,6 +94,26 @@ constexpr MenuFolder MenuFolders[] = {
 	{"johnhalflife_op4", "gearbox", false},
 	{"johnhalflife_bs", "bshift", false},
 	{"johnhalflife_uplink", nullptr, true},
+};
+
+// A folder's main menu buttons in their own font (shipped in its resource/fonts) and colours, in Half-Life's
+// TrackerScheme.res: the buttons' font (MenuLarge) and their glow's (MenuBlurLarge), and their colours, normal,
+// highlighted and the glow's.
+struct MenuScheme
+{
+	const char* Folder;
+	const char* FontFile;
+	const char* FontName;
+	const char* Color;
+	const char* ArmedColor;
+	const char* BlurColor;
+};
+
+constexpr MenuScheme MenuSchemes[] = {
+	// The gold of its logo, in a military stencil.
+	{"johnhalflife_op4", "resource/fonts/StardosStencil-Bold.ttf", "Stardos Stencil", "226 178 84 255", "255 214 128 255", "230 170 70 255"},
+	// A typewriter's, as its logo, in ice blue.
+	{"johnhalflife_bs", "resource/fonts/CourierPrime-Bold.ttf", "Courier Prime", "150 190 255 255", "215 232 255 255", "90 150 255 255"},
 };
 
 // What a file is made from: another file, or contents worked out here.
@@ -261,6 +283,55 @@ void PlanGlassGibs(const fs::path& root, Plan& plan)
 	}
 }
 
+// Replaces the value of the first "key" "value" pair after from and before to, on one line.
+bool SetValue(std::string& text, const std::string& key, const std::string& value, std::size_t from = 0, std::size_t to = std::string::npos)
+{
+	const std::size_t at = text.find('"' + key + '"', from);
+	const std::size_t open = at == std::string::npos ? at : text.find('"', at + key.size() + 2);
+	const std::size_t close = open == std::string::npos ? open : text.find('"', open + 1);
+
+	if (close == std::string::npos || close > to || text.find('\n', at) < close)
+	{
+		return false;
+	}
+
+	text.replace(open + 1, close - open - 1, value);
+	return true;
+}
+
+// Half-Life's TrackerScheme.res with a folder's menu buttons' font and colours, its font file loaded with the others.
+bool MakeScheme(std::string& text, const MenuScheme& scheme)
+{
+	for (const char* font : {"MenuLarge", "MenuBlurLarge"})
+	{
+		// Within the font's block: "MenuLarge" { "1" { ... } }.
+		const std::size_t at = text.find('"' + std::string(font) + '"');
+		const std::size_t end = at == std::string::npos ? at : text.find('}', text.find('}', at) + 1);
+
+		if (end == std::string::npos || !SetValue(text, "name", scheme.FontName, at, end))
+		{
+			return false;
+		}
+	}
+
+	if (!SetValue(text, "MenuColor", scheme.Color) || !SetValue(text, "ArmedMenuColor", scheme.ArmedColor) ||
+		!SetValue(text, "BlurMenuColor", scheme.BlurColor))
+	{
+		return false;
+	}
+
+	const std::size_t files = text.find("CustomFontFiles");
+	const std::size_t end = files == std::string::npos ? files : text.find('}', files);
+
+	if (end == std::string::npos)
+	{
+		return false;
+	}
+
+	text.insert(end, std::string("\t\"100\"\t\t\"") + scheme.FontFile + "\"\n\t");
+	return true;
+}
+
 // The menu art, Half-Life's first and then the folder's own game's over it.
 void PlanMenu(const fs::path& root, Plan& plan)
 {
@@ -340,6 +411,25 @@ void PlanMenu(const fs::path& root, Plan& plan)
 				{
 					plan.Add(target / icon, game / icon);
 				}
+			}
+		}
+
+		for (const auto& scheme : MenuSchemes)
+		{
+			std::string text;
+
+			if (std::string_view(scheme.Folder) != menu.Folder || !ReadFile(valve / "resource" / "TrackerScheme.res", text))
+			{
+				continue;
+			}
+
+			if (MakeScheme(text, scheme))
+			{
+				plan.Add(target / "resource" / "TrackerScheme.res", std::move(text));
+			}
+			else
+			{
+				Log("jhl_setup: Half-Life's TrackerScheme.res not as expected; %s's menu keeps its font\n", menu.Folder);
 			}
 		}
 	}

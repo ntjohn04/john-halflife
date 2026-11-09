@@ -119,9 +119,17 @@ a copy of the game code.
   `hlu_campaignselect`, still works from the console), background layouts and tiles, logo and icon, then the
   folder's own game's (`gearbox`, `bshift`) over them.
 * **The main menu's text, as the WON versions had it** (`scripts/make_menu_strings.py` writes each game's
-  `resource/gameui_english.txt`): labels in capitals (OPTIONS kept, not WON's CONFIGURATION), a hint beside each button,
-  Hazard Course for the Training Room; Opposing Force's drill sergeant ("You going AWOL on me, son?" to quit, its
-  hints, Boot Camp). From the community's WON menu restorations, which agree. English only.
+  `resource/gameui_english.txt`): labels in Title Case in Half-Life and in capitals in the expansions (Options kept,
+  not WON's Configuration), a hint beside each button, Hazard Course for the Training Room; Opposing Force's drill
+  sergeant ("You going AWOL on me, son?" to quit, its hints, Boot Camp). From the community's WON menu restorations,
+  which agree. English only.
+* **The expansions' menu buttons in their own fonts and colours:** Opposing Force's in Stardos Stencil Bold, the gold
+  of its logo; Blue Shift's in Courier Prime Bold, a typewriter's like its logo, ice blue (both SIL Open Font
+  License, shipped in each folder's `resource/fonts`). WON's buttons were pictures, none of which survive, so these
+  are chosen by eye; Blue Shift's follows both restorations' Courier New. The first start writes each folder's
+  `resource/TrackerScheme.res` from Half-Life's with only the buttons' fonts (`MenuLarge` and its glow,
+  `MenuBlurLarge`), their colours (`InGameDesktop`) and the font file (`CustomFontFiles`) changed; the hints keep
+  Half-Life's.
 * **Intro videos:** the engine plays the list in each game folder's own `media/StartupVids.txt` (`-novid` skips
   it, a key the video playing). Their sound isn't the video's: it plays `sound/UI/valve_sound.wav` as each starts,
   so each game has one video and that file is its soundtrack. John Half-Life and Uplink play Half-Life's intro (the

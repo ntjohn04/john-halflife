@@ -65,3 +65,13 @@ Each one's licence is in this folder.
 * AngelScript, by Andreas Jonsson: zlib License (AngelScript.txt).
 * libnyquist, by Dimitri Diakopoulos: BSD 2-Clause License (libnyquist.txt), with the codecs it builds in: FLAC,
   Opus, Musepack, libogg, libvorbis, WavPack (BSD licences) and minimp3 (public domain) (libnyquist-codecs.txt).
+
+
+Fonts
+-----
+
+Opposing Force's and Blue Shift's main menu buttons, unchanged, under the SIL Open Font License 1.1 (in this folder):
+
+* Stardos Stencil Bold, by Vernon Adams (Opposing Force: johnhalflife_op4/resource/fonts): StardosStencil-OFL.txt.
+* Courier Prime Bold, by the Courier Prime Project Authors (Blue Shift: johnhalflife_bs/resource/fonts):
+  CourierPrime-OFL.txt.

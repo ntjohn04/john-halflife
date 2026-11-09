@@ -2,10 +2,10 @@
 and Uplink, which take it) in place, and Opposing Force's and Blue Shift's from it (config/expansions/<game>, installed
 over config/mod's). Running it again changes nothing.
 
-As WON had it, in all three: the menu's labels in capitals (OPTIONS kept, more readable than WON's CONFIGURATION), a
-hint beside each button (the first start keeps Half-Life's GameMenu.res's hints, jhl_setup.cpp), and Hazard Course
-for the Training Room. Opposing
-Force's drill sergeant: its hints, its quit question and its Boot Camp. From the community's restorations of the WON
+As WON had it: the menu's labels in Title Case in Half-Life and in capitals in Opposing Force and Blue Shift
+(Options kept, more readable than WON's Configuration), a hint beside each button (the first start keeps Half-Life's
+GameMenu.res's hints, jhl_setup.cpp), and Hazard Course for the Training Room. Opposing Force's drill sergeant: its
+hints, its quit question and its Boot Camp. From the community's restorations of the WON
 menus (GameBanana's "Opposing Force WON Menu restored", "More Accurate WON Menu", "Blue Shift WON Menu Restored!") and
 PCGamingWiki's menu text corrections, which agree. Labels for buttons John Half-Life's menu doesn't have stay as they are.
 
@@ -20,21 +20,21 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = os.path.join(REPO, "config", "mod", "resource", "gameui_english.txt")
 
 ALL = {
-    "GameUI_GameMenu_ResumeGame": "RESUME GAME",
-    "GameUI_GameMenu_PlayerList": "PLAYER LIST",
-    "GameUI_GameMenu_NewGame": "NEW GAME",
-    "GameUI_GameMenu_SaveGame": "SAVE GAME",
-    "GameUI_GameMenu_LoadGame": "LOAD GAME",
-    "GameUI_GameMenu_FindServers": "FIND SERVERS",
-    "GameUI_GameMenu_CreateServer": "CREATE SERVER",
-    "GameUI_GameMenu_ChangeGame": "CHANGE GAME",
-    "GameUI_GameMenu_Options": "OPTIONS",
-    "GameUI_GameMenu_Disconnect": "DISCONNECT",
-    "GameUI_GameMenu_LeaveGame": "LEAVE GAME",
-    "GameUI_GameMenu_Quit": "QUIT",
-    "GameUI_GameMenu_PlayDemo": "PLAY DEMO",
-    "GameUI_GameMenu_Multiplayer": "MULTIPLAYER",
-    "GameUI_GameMenu_Customize": "CUSTOMIZE",
+    "GameUI_GameMenu_ResumeGame": "Resume Game",
+    "GameUI_GameMenu_PlayerList": "Player List",
+    "GameUI_GameMenu_NewGame": "New Game",
+    "GameUI_GameMenu_SaveGame": "Save Game",
+    "GameUI_GameMenu_LoadGame": "Load Game",
+    "GameUI_GameMenu_FindServers": "Find Servers",
+    "GameUI_GameMenu_CreateServer": "Create Server",
+    "GameUI_GameMenu_ChangeGame": "Change Game",
+    "GameUI_GameMenu_Options": "Options",
+    "GameUI_GameMenu_Disconnect": "Disconnect",
+    "GameUI_GameMenu_LeaveGame": "Leave Game",
+    "GameUI_GameMenu_Quit": "Quit",
+    "GameUI_GameMenu_PlayDemo": "Play Demo",
+    "GameUI_GameMenu_Multiplayer": "Multiplayer",
+    "GameUI_GameMenu_Customize": "Customize",
     "GameUI_TrainingRoom": "Hazard Course",
     "GameUI_QuitConfirmationText": "Do you wish to stop playing now?",
     # Half-Life's own where WON's isn't known.
@@ -44,10 +44,10 @@ ALL = {
     "GameUI_MainMenu_Hint_Configuration": "Change game settings, configure controls.",
 }
 
-# The menu draws each hint beside its button, unwrapped, so with the labels in capitals a long one can run off the
-# screen at 640x480, the smallest mode and the one to check: FIND SERVERS with Half-Life's own hint ("Search for online
-# multiplayer servers.") and WON's ("View a list of Half-Life game servers and join the one of your choice.") did, so
-# Half-Life's and Blue Shift's server hints are short; Opposing Force's, and every other, fit.
+# The menu draws each hint beside its button, unwrapped, so a long one can run off the screen at 640x480, the smallest
+# mode and the one to check: FIND SERVERS with Half-Life's own hint ("Search for online multiplayer servers.") and WON's
+# ("View a list of Half-Life game servers and join the one of your choice.") did, so Half-Life's and Blue Shift's
+# server hints are short; Opposing Force's, and every other, fit.
 GAMES = {
     # Half-Life (config/mod).
     None: {
@@ -95,12 +95,17 @@ def write(path, text):
         f.write(text.encode("utf-16"))  # little-endian with its byte order mark, as GameUI's files
 
 
+# The expansions' labels in capitals (their buttons in their own fonts, jhl_setup.cpp).
+CAPITALS = {key: value.upper() for key, value in ALL.items() if key.startswith("GameUI_GameMenu_")}
+
+
 def main():
     base = open(BASE, "rb").read().decode("utf-16")
     base = apply(base, {**ALL, **GAMES[None]})
     write(BASE, base)
     for game in ("op4", "bs"):
-        write(os.path.join(REPO, "config", "expansions", game, "resource", "gameui_english.txt"), apply(base, GAMES[game]))
+        write(os.path.join(REPO, "config", "expansions", game, "resource", "gameui_english.txt"),
+              apply(base, {**CAPITALS, **GAMES[game]}))
     print("make_menu_strings: Half-Life's, Opposing Force's and Blue Shift's menu text written")
 
 
