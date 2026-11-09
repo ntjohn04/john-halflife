@@ -35,6 +35,10 @@ release zip `HalfLifeUnified-V1.0.0.zip`, its ContentInstaller, our build):
 
 So the zip is about 55 MB: our files, the Unified SDK's own and its models.
 
+The zip never carries a file the first start copies from Half-Life itself (`package_release.py`, `from_half_life`):
+the Unified SDK has its own `models/shell.mdl` (Opposing Force's), `sprites/640_logo.spr` and `sprites/laserdot.spr`,
+and installing over a folder already set up would put those back over Half-Life's with nothing to set them right.
+
 ## First start
 
 The client DLL loads before the main menu. On the first start, and after an update changes what it makes, it sets

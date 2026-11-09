@@ -77,6 +77,14 @@ is from the eye at any range: the shock rifle 9 right and 7 down, the RPG (ungui
 8 and 8, the hornet gun 8 and 12 (its rapid fire's volley keeps its spread, around the crosshair). The crossbow's
 bolt starts 2 below the eye and is left as it is, as are the spore launcher's lobbed spores.
 
+### Holster
+`jhl_weapons_holster` (on by default) adds slot 8 to the weapon menu once the player has a weapon. It isn't a weapon:
+picking it puts the weapon away, with no view model and no crosshair. Its box has no picture, only the faint fill Valve's
+weapon pictures have behind the gun (lines of 21 and 29 of 255, added: 25 in `FillRGBA`). `lastinv` goes back and forth
+between it and the weapon, saved with the game. A weapon that can't be put away (an armed grenade) stays out, as when
+switching. The client's menu entry is in `ammo.cpp` (`selectweapon jhl_holster`), the server's side `JhlHolster` in
+`player_shared.cpp`. Picking up a weapon while holstered draws it, as vanilla does with nothing in hand.
+
 ## Sounds
 
 ### Weapon switch
