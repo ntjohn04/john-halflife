@@ -929,7 +929,7 @@ void InitInput()
 	gEngfuncs.pfnAddCommand("-break", IN_BreakUp);
 
 	lookstrafe = gEngfuncs.pfnRegisterVariable("lookstrafe", "0", FCVAR_ARCHIVE);
-	jhl_input_walktoggle = gEngfuncs.pfnRegisterVariable("jhl_input_walktoggle", "0", FCVAR_ARCHIVE);
+	jhl_input_walktoggle = gEngfuncs.pfnRegisterVariable("jhl_input_walktoggle", "1", FCVAR_ARCHIVE);
 	jhl_input_walkfix = gEngfuncs.pfnRegisterVariable("jhl_input_walkfix", "1", FCVAR_ARCHIVE);
 	lookspring = gEngfuncs.pfnRegisterVariable("lookspring", "0", FCVAR_ARCHIVE);
 	cl_anglespeedkey = gEngfuncs.pfnRegisterVariable("cl_anglespeedkey", "0.67", 0);

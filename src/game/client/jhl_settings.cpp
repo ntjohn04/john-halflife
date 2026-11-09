@@ -64,6 +64,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_weapons_smoothrecoil", "1"},
 	{"jhl_physics_fpsfix", "1"},
 	{"jhl_physics_wallfix", "1"},
+	{"jhl_input_walktoggle", "1"},
 	{"jhl_input_walkfix", "1"},
 	{"jhl_fx_bulletimpacts", "1"},
 	{"jhl_fx_muzzleflash", "1"},
