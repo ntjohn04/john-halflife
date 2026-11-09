@@ -78,7 +78,8 @@ void Log(const char* format, ...)
 }
 
 // Each game folder's menu: its own Valve game's art over Half-Life's, and whether it has Half-Life's widescreen
-// background (hd_background in its liblist.gam).
+// background (hd_background in its liblist.gam). Opposing Force's and Blue Shift's widescreen backgrounds are their
+// own, shipped (scripts/make_menu_backgrounds.py), so they take only their games' 800x600 ones from here.
 struct MenuFolder
 {
 	const char* Folder;

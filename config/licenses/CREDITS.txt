@@ -43,6 +43,11 @@ Community content
 * Blue Shift's chair (models/chair.mdl): from "Low-Def Props" by Evy Houstuvk (https://gamebanana.com/mods/238647),
   the chair of Valve's prefab Blue Shift's brush-built chairs are made from. Licensed under Creative Commons
   Attribution-NonCommercial-NoDerivs 4.0 (CC BY-NC-ND 4.0, https://creativecommons.org/licenses/by-nc-nd/4.0/). Unchanged.
+* Opposing Force's and Blue Shift's main menu backgrounds (resource/background/jhl_21_9_*.tga): the WON versions' art,
+  by Gearbox Software, from "Opposing Force CD WON/Pre-Steam background" (https://gamebanana.com/mods/27967) and "Blue
+  Shift CD WON/Pre-Steam background" (https://gamebanana.com/mods/27344), both by Ghost1432802. Changed: widened to
+  21:9 with FLUX.1 [dev] Fill (Black Forest Labs) and upscaled with 4xNomos8kDAT by Philip Hofmann (CC BY 4.0), the
+  original picture unchanged in the middle.
 
 
 Libraries
