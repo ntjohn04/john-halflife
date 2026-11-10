@@ -49,9 +49,8 @@ constexpr float RunSpeed = 220;
 constexpr float StillSpeed = 5;
 constexpr float BackwardsTurn = 120;
 
-// The walk played at this of its speed (pm_shared.cpp's footsteps: 400 ms each walking); the others as made. In time,
-// not by how far it moves: the player's speeds aren't the models' strides.
-constexpr float WalkRate = 1.0f;
+// Crouched, it stands a little further back: its legs come forward.
+constexpr float CrouchedOffset = 4;
 
 // Off the ground this long, or going up (a jump), the legs take the jump's pose; less is a step down.
 constexpr float FallTime = 0.15f;
@@ -279,16 +278,20 @@ void JhlBody_CreateEntities()
 		}
 	}
 
-	// Through its loop in time (backwards walking backwards); a jump from leaving the ground, held at its end.
+	// Through its loop in time, walking and running as made (their strides far shorter than the player's speeds, their
+	// steps as the footsteps); crawling as far as it moves, its stride near a crouched player's (a third of the speed),
+	// slower in walk mode; backwards walking backwards. A jump from leaving the ground, held at its end.
+	const float stride = description.linearmovement.Length();
+
 	if (activity == ActHop)
-	{
 		g_Cycle = std::min(g_AirTime * description.fps / frames, 1.f);
-	}
+	else if (activity == ActCrouch && stride > 0)
+		g_Cycle += direction * speed * frameTime / stride;
 	else
-	{
-		g_Cycle += direction * description.fps * frameTime / frames * (activity == ActWalk ? WalkRate : 1);
+		g_Cycle += direction * description.fps * frameTime / frames;
+
+	if (activity != ActHop)
 		g_Cycle -= std::floor(g_Cycle);
-	}
 
 	std::memset(&g_Body, 0, sizeof(g_Body));
 	g_Body.model = model;
@@ -343,7 +346,7 @@ bool JhlBody_Place(cl_entity_t* entity, const float* viewOrigin)
 	// On the player's feet where the movement has them, whatever the camera's smoothing does (stairs, crouching, landing),
 	// behind the eyes by jhl_debug_body_offset along where the player looks.
 	const float yaw = entity->curstate.fuser2 * static_cast<float>(PI) / 180;
-	const float offset = g_Offset->value;
+	const float offset = g_Offset->value + (g_Movement.Crouched ? CrouchedOffset : 0);
 
 	entity->origin = Vector{origin.x - std::cos(yaw) * offset, origin.y - std::sin(yaw) * offset, origin.z + entity->curstate.fuser1};
 	entity->curstate.origin = entity->origin;
