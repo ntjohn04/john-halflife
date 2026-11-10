@@ -52,6 +52,10 @@ constexpr float BackwardsTurn = 120;
 // Crouched, it stands a little further back: its legs come forward.
 constexpr float CrouchedOffset = 4;
 
+// Crawling, a loop (two steps) in no more than this many seconds: crouched footsteps are 500 ms apart at their slowest
+// (pm_shared.cpp's PM_UpdateStepSound).
+constexpr float CrouchedSlowestLoop = 1.0f;
+
 // Off the ground this long, or going up (a jump), the legs take the jump's pose; less is a step down.
 constexpr float FallTime = 0.15f;
 
@@ -280,13 +284,14 @@ void JhlBody_CreateEntities()
 
 	// Through its loop in time, walking and running as made (their strides far shorter than the player's speeds, their
 	// steps as the footsteps); crawling as far as it moves, its stride near a crouched player's (a third of the speed),
-	// slower in walk mode; backwards walking backwards. A jump from leaving the ground, held at its end.
+	// slower in walk mode but no slower than its footsteps (CrouchedSlowestLoop); backwards walking backwards. A jump from
+	// leaving the ground, held at its end.
 	const float stride = description.linearmovement.Length();
 
 	if (activity == ActHop)
 		g_Cycle = std::min(g_AirTime * description.fps / frames, 1.f);
 	else if (activity == ActCrouch && stride > 0)
-		g_Cycle += direction * speed * frameTime / stride;
+		g_Cycle += direction * std::max(speed / stride, 1 / CrouchedSlowestLoop) * frameTime;
 	else
 		g_Cycle += direction * description.fps * frameTime / frames;
 
