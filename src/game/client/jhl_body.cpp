@@ -265,8 +265,8 @@ void JhlBody_CreateEntities()
 	const float frames = static_cast<float>(std::max(description.numframes - 1, 1));
 
 	// No view model (no weapon, holstered): its arms are drawn, nothing else being the player's. The player models' arms
-	// hold a weapon out in every pose; standing, walking and running, they take the lab coat's instead (his own poses,
-	// arms at his sides), where it's precached (W_Precache). Crouched, none: their crouching arms hold one out too.
+	// hold a weapon out in every pose; standing, walking and running, their upper bodies take the lab coat's instead (his
+	// own poses, arms at his sides), half a loop on (his loops start on the other foot), where it's precached (W_Precache). Crouched, none: their crouching arms hold one out too.
 	const cl_entity_t* viewModel = gEngfuncs.GetViewModel();
 	g_Arms = (!viewModel || !viewModel->model) && !move.Crouched;
 
@@ -339,8 +339,9 @@ void JhlBody_CreateEntities()
 		const int armsSequence = PickSequence(armsHeader, activity);
 		g_Body.curstate.iuser1 = armsIndex;
 		g_Body.curstate.iuser2 = armsSequence + 1;
-		g_Body.curstate.fuser3 = g_Cycle * std::max(Sequences(armsHeader)[armsSequence].numframes - 1, 1);
-		g_Body.curstate.playerclass = 1; // Only its arms.
+		const float armsCycle = activity == ActIdle ? g_Cycle : g_Cycle + 0.5f;
+		g_Body.curstate.fuser3 = (armsCycle - std::floor(armsCycle)) * std::max(Sequences(armsHeader)[armsSequence].numframes - 1, 1);
+		g_Body.curstate.playerclass = 1; // Only its upper body.
 	}
 
 	g_Body.curstate.animtime = static_cast<float>(time);

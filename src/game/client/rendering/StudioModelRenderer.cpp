@@ -1383,7 +1383,7 @@ void CStudioModelRenderer::JhlSetupCasingBones()
 void CStudioModelRenderer::JhlSetupBorrowedBones()
 {
 	// The pose's model, sequence and frame (its iuser1, iuser2 less one, fuser3), its origin fuser4 above the feet; with
-	// playerclass 1, only its arms (jhl_body.h).
+	// playerclass 1, only its upper body (jhl_body.h).
 	model_t* donor = IEngineStudio.GetModelByIndex(m_pCurrentEntity->curstate.iuser1);
 	auto donorHeader = donor ? static_cast<studiohdr_t*>(IEngineStudio.Mod_Extradata(donor)) : nullptr;
 	const int donorSequence = m_pCurrentEntity->curstate.iuser2 - 1;
@@ -1486,9 +1486,10 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	}
 	else
 	{
-		// Its arms turned as the lab coat's are against his neck (their collarbones aren't alike: his a dummy at the neck,
-		// the player models' out to the shoulder), so turned as his from the neck, not bone by bone. Its collarbones and
-		// fingers (he has none) as at rest, its fingers open, not gripping a weapon.
+		// Its upper body turned as the lab coat's is against his hips: its back, neck and arms (the player models' poses
+		// lunge and twist the back as they run with a weapon), measured from the hips, not bone by bone (their collarbones
+		// aren't alike: his a dummy at the neck, the player models' out to the shoulder). Its collarbones, fingers (he has
+		// none) and any back bone he hasn't as at rest, its fingers open, not gripping a weapon.
 		const auto multiply = [](const vec4_t a, const vec4_t b, vec4_t out)
 		{
 			const float x = a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1];
@@ -1511,7 +1512,7 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 
 		static vec4_t world[MAXSTUDIOBONES];
 		static vec4_t donorWorld[MAXSTUDIOBONES];
-		int donorNeck = -1;
+		int donorPelvis = -1;
 
 		for (int j = 0; j < donorHeader->numbones; ++j)
 		{
@@ -1522,32 +1523,31 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 			else
 				std::memcpy(donorWorld[j], donorQ[j], sizeof(donorWorld[j]));
 
-			if (endsWith(donorBones[j].name, "Neck"))
-				donorNeck = j;
+			if (endsWith(donorBones[j].name, "Pelvis"))
+				donorPelvis = j;
 		}
 
-		int neck = -1;
+		int pelvis = -1;
 
 		for (int i = 0; i < m_pStudioHeader->numbones; ++i)
 		{
 			const int parent = bones[i].parent >= 0 && bones[i].parent < i ? bones[i].parent : -1;
 			const char* name = bones[i].name;
+			const bool upper = std::strstr(name, "Spine") || std::strstr(name, "Neck") || std::strstr(name, " Arm") || std::strstr(name, " Hand");
+			const int j = upper ? donorBone(name) : -1;
 
-			if (endsWith(name, " L Arm") || endsWith(name, " R Arm") || std::strstr(name, "Finger"))
+			if (endsWith(name, " L Arm") || endsWith(name, " R Arm") || std::strstr(name, "Finger") || (upper && j < 0))
 			{
 				AngleQuaternion(Vector{bones[i].value[3], bones[i].value[4], bones[i].value[5]}, q[i]);
 			}
-			else if ((std::strstr(name, " Arm") || std::strstr(name, " Hand")) && parent >= 0 && neck >= 0 && donorNeck >= 0)
+			else if (j >= 0 && parent >= 0 && pelvis >= 0 && donorPelvis >= 0)
 			{
-				if (const int j = donorBone(name); j >= 0)
-				{
-					vec4_t turn, wanted, parentInverse;
-					inverse(donorWorld[donorNeck], turn);
-					multiply(turn, donorWorld[j], turn);
-					multiply(world[neck], turn, wanted);
-					inverse(world[parent], parentInverse);
-					multiply(parentInverse, wanted, q[i]);
-				}
+				vec4_t turn, wanted, parentInverse;
+				inverse(donorWorld[donorPelvis], turn);
+				multiply(turn, donorWorld[j], turn);
+				multiply(world[pelvis], turn, wanted);
+				inverse(world[parent], parentInverse);
+				multiply(parentInverse, wanted, q[i]);
 			}
 
 			if (parent >= 0)
@@ -1555,8 +1555,8 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 			else
 				std::memcpy(world[i], q[i], sizeof(world[i]));
 
-			if (endsWith(name, "Neck"))
-				neck = i;
+			if (endsWith(name, "Pelvis"))
+				pelvis = i;
 		}
 	}
 
