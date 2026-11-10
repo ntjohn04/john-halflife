@@ -415,14 +415,12 @@ void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*
 {
 	// Its head hidden, and its arms from the shoulders while there's a view model (its arms are the player's; the
 	// collarbones kept, Barney's vest hanging from them), and its spine above its iuser3 bones over the hips with all
-	// above but its arms while they're drawn (their collarbones shrunk alone: Barney's upper back hangs from them). Its
-	// bones come after their parents.
+	// above but its arms while they're drawn. Its bones come after their parents.
 	const auto* bone = reinterpret_cast<const mstudiobone_t*>(reinterpret_cast<const byte*>(header) + header->boneindex);
 	const int count = std::min(header->numbones, MAXSTUDIOBONES);
 	const int keptSpine = entity->curstate.iuser3;
 
 	int cut[MAXSTUDIOBONES];		  // The first hidden bone it's under (itself), -1 if shown.
-	bool alone[MAXSTUDIOBONES]{};	  // Hidden, but not the bones under it.
 	int spineDepth[MAXSTUDIOBONES]{}; // Its place up the spine: 1 its first bone above the hips.
 
 	for (int i = 0; i < count; ++i)
@@ -437,21 +435,10 @@ void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*
 
 		spineDepth[i] = spine && parent >= 0 ? spineDepth[parent] + 1 : 0;
 
-		const bool parentCut = parent >= 0 && cut[parent] >= 0 && !alone[parent];
-
-		if (parentCut && g_Arms && collarbone)
-		{
-			cut[i] = i;
-			alone[i] = true;
-		}
-		else if (parentCut)
-		{
+		if (parent >= 0 && cut[parent] >= 0 && !(g_Arms && collarbone))
 			cut[i] = cut[parent];
-		}
 		else
-		{
 			cut[i] = head || arm || (spine && spineDepth[i] > keptSpine) ? i : -1;
-		}
 
 		if (cut[i] < 0)
 			continue;
