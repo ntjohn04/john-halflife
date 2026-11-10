@@ -7,7 +7,7 @@ options are on the [front page](../README.md). The Unified SDK's own documentati
 * [Camera and movement](camera_movement.md)
 * [Weapons](weapons.md)
 * [Physics](physics.md): Half-Life's game code acting at any frame rate as it did at 72 fps
-* [Visuals](visuals.md): signs and panels flush with walls drawn steady; the software renderer's touches
+* [Visuals](visuals.md): the first-person body; signs and panels flush with walls drawn steady; the software renderer's touches
 * [Sound](sound.md): Half-Life's own mixing and room effects on the SDK's OpenAL sound system
 * [Effects](effects.md): every visual effect (gibs, blood, explosions, beams, sparks...): vanilla's and ours
 * [Changelog](CHANGELOG.md): every version and what it brought

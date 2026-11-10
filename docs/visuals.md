@@ -1,5 +1,41 @@
 # Visuals
 
+## First-person body (`jhl_visuals_firstpersonbody`, default 1)
+
+Looking down, you see your own body: Gordon in the HEV suit, Barney or Adrian, whichever player model the map's game
+gives you (Unified's model replacement), and Gordon in his lab coat before he has the suit. It's purely drawn: your
+movement picks its pose and nothing goes back. It stands 16 units behind your eyes (20 crouched), so it's only seen
+looking well down and never gets in the way.
+
+`jhl_body.cpp` draws it on the client, as its own entity:
+
+* **Each predicted move (`HUD_PlayerMove`):** the movement is read: speed and direction, crouching, on the ground or
+  not, in water or on a ladder.
+* **Each frame (`HUD_CreateEntities`):** the body is added, posed for that movement at once, with no blending, as
+  Half-Life's movement is: standing, walking, running, crouched, crouch-walking, jumping or falling, treading water.
+  The legs face the way you move (walking backwards past 120 degrees off), and the player model's back turns the rest of
+  the way to where you look, as the engine turns players in third person. Walking and running play at their own speed,
+  in step with the footsteps; crouch-walking goes as far as you move, in a loop of 1.8 seconds at the slowest.
+* **As it's drawn (the studio renderer):** it's put on your feet where the movement has them, whatever the camera's
+  smoothing does on stairs and landings; in the air it hangs from your eyes as in a standing jump, so a crouching jump
+  looks like one. Its head is hidden, and its arms while a weapon is out (the view model's arms are yours). Crouched,
+  only its legs are drawn; jumping, the lower part of its back too (two of its back bones for the HEV suit, one for the
+  others, whose backs lean further into view). Everything hidden together is shrunk to the one point where it's cut
+  off, so no stretched polygons are left floating.
+
+With no weapon (before you have one, or holstered on slot 8), its arms are drawn. The player models' own arms hold a
+weapon out in every pose, so standing, walking and running their upper body takes the lab coat Gordon's poses instead,
+measured from the hips and played half a loop on, his loops starting on the other foot. Crouched, no arms; jumping, the
+player model's own. The lab coat Gordon's model is a scientist's with only walking poses, so jumping, crouching and
+treading water he takes the player model's, bone for bone.
+
+The lab coat Gordon is Blue Shift's (`models/gordon_scientist.mdl`). The server precaches it with the body on, last
+and only while the map has room, like the effect sprites (W_Precache). Where it isn't, Gordon has no body before the
+suit and the other models' weaponless arms keep their own poses. With the body off, nothing is added or precached.
+
+**Left as it is:** a little of the HEV suit's and Barney's neck skin looking straight down while running (it would
+take edited copies of Valve's textures), and for a frame or two at the end of a jump, a little of Barney's back.
+
 ## Faces flush with walls (`jhl_visuals_flushfaces`, default 1)
 
 Many of Half-Life's signs, posters, panels, gears and rails are brush entities (`func_wall`, `func_illusionary`,

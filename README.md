@@ -40,6 +40,7 @@ All are client settings: in John Settings (below) or the console.
 | `jhl_camera_jumplandjolt` | 1 | Jump and landing view jolts, and a sound for the long jump module's jump | [Camera](docs/camera_movement.md#jump-and-landing-jolts) |
 | `jhl_visuals_weaponlag` | 1 | Weapon lags behind when turning | [Camera](docs/camera_movement.md#weapon-lag-and-wall-push) |
 | `jhl_visuals_weaponwallpush` | 1 | Weapon pulls back near walls | [Camera](docs/camera_movement.md#weapon-lag-and-wall-push) |
+| `jhl_visuals_firstpersonbody` | 1 | Your own body seen looking down: Gordon (in his lab coat before the suit), Barney or Adrian, posed by your movement | [Visuals](docs/visuals.md#first-person-body-jhl_visuals_firstpersonbody-default-1) |
 | `jhl_visuals_flushfaces` | 1 | Signs, posters and panels built flush with walls, and doors at rest open or closed, drawn steady (they flickered in OpenGL and vanished in software) | [Visuals](docs/visuals.md) |
 | `jhl_visuals_16bitcolor` | 1 | The software renderer's 16-bit color: every frame cut to 565, as it drew | [Visuals](docs/visuals.md#16-bit-color-jhl_visuals_16bitcolor) |
 | `jhl_visuals_softwarewater` | 1 | The software renderer's water: its ripple simulation in place of OpenGL's sine wobble, and under water its 320 x 200 view and fog by depth | [Visuals](docs/visuals.md#software-renderer-touches) |

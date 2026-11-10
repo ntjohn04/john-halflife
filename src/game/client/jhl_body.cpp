@@ -49,8 +49,13 @@ constexpr float RunSpeed = 220;
 constexpr float StillSpeed = 5;
 constexpr float BackwardsTurn = 120;
 
-// Crouched, it stands a little further back: its legs come forward.
+// How far behind the eyes it stands, so mostly its legs are seen looking down; crouched, a little further (its legs
+// come forward).
+constexpr float Offset = 16;
 constexpr float CrouchedOffset = 4;
+
+// How many of its spine's bones are kept above the hips: all of them (its neck and head hidden).
+constexpr int KeptSpine = 4;
 
 // Crawling, a loop (two steps) in no more than this many seconds: slow (walk mode's crouching alone is 2.5), not far
 // off its footsteps (500 ms apart at their slowest crouched, pm_shared.cpp's PM_UpdateStepSound).
@@ -84,8 +89,6 @@ struct Movement
 };
 
 cvar_t* g_Enabled = nullptr;
-cvar_t* g_Offset = nullptr; // How far behind the eyes it stands, so mostly the legs are seen looking down.
-cvar_t* g_Spine = nullptr;	// How many of its spine's bones are kept above the hips.
 
 Movement g_Movement;
 cl_entity_t g_Body;
@@ -188,8 +191,6 @@ model_t* PickModel(cl_entity_t* player, int& index, bool& monster)
 void JhlBody_Initialize()
 {
 	g_Enabled = gEngfuncs.pfnRegisterVariable("jhl_visuals_firstpersonbody", "1", FCVAR_ARCHIVE);
-	g_Offset = gEngfuncs.pfnRegisterVariable("jhl_debug_body_offset", "16", 0);
-	g_Spine = gEngfuncs.pfnRegisterVariable("jhl_debug_body_spine", "4", 0);
 }
 
 void JhlBody_Moved(const playermove_t* move)
@@ -369,7 +370,7 @@ void JhlBody_CreateEntities()
 	// torso: its landing bends the rest over into view. Only the first for all but the HEV suit: the rest of their backs
 	// (Barney's vest's lettering, Adrian's, the lab coat) leans into view too.
 	const int jumpSpine = 0 == std::strcmp(model->name, HalfLifePlayer) ? 2 : 1;
-	g_Body.curstate.iuser3 = g_Crouching ? 0 : activity == ActHop ? jumpSpine : static_cast<int>(g_Spine->value);
+	g_Body.curstate.iuser3 = g_Crouching ? 0 : activity == ActHop ? jumpSpine : KeptSpine;
 	g_Body.latched.prevsequence = g_Body.curstate.sequence;
 	g_Body.angles = g_Body.curstate.angles = g_Body.latched.prevangles = Vector{0, legYaw, 0};
 
@@ -402,9 +403,9 @@ bool JhlBody_Place(cl_entity_t* entity, const float* viewOrigin)
 		return false;
 
 	// On the player's feet where the movement has them, whatever the camera's smoothing does (stairs, crouching, landing),
-	// behind the eyes by jhl_debug_body_offset along where the player looks.
+	// behind the eyes (Offset) along where the player looks.
 	const float yaw = entity->curstate.fuser2 * static_cast<float>(PI) / 180;
-	const float offset = g_Offset->value + (g_Crouching ? CrouchedOffset : 0);
+	const float offset = Offset + (g_Crouching ? CrouchedOffset : 0);
 
 	entity->origin = Vector{origin.x - std::cos(yaw) * offset, origin.y - std::sin(yaw) * offset, origin.z + entity->curstate.fuser1};
 	entity->curstate.origin = entity->origin;
