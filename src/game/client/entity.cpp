@@ -30,6 +30,7 @@
 #include "jhl_shockbeams.h"
 #include "jhl_grapple.h"
 #include "jhl_blastring.h"
+#include "jhl_body.h"
 #include "jhl_gargantua.h"
 #include "jhl_flushfaces.h"
 #include "jhl_softwarewater.h"
@@ -332,6 +333,9 @@ void DLLEXPORT HUD_CreateEntities()
 
 	// Add in any game specific objects
 	Game_AddObjects();
+
+	// johnhalflife (jhl_visuals_firstpersonbody): the player's own body, seen looking down.
+	JhlBody_CreateEntities();
 
 	GetClientVoiceMgr()->CreateEntities();
 }

@@ -104,6 +104,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"jhl_visuals_firstpersonbody"
+	{
+		"JHL | Visuals: your own body seen looking down"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"jhl_visuals_flushfaces"
 	{
 		"JHL | Visuals: signs and panels flush with walls drawn steady"

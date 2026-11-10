@@ -22,6 +22,7 @@
 #include "client_gibs.h"
 #include "weapon_effects.h"
 #include "jhl_settings.h"
+#include "jhl_body.h"
 #include "jhl_setup.h"
 #include "jhl_flushfaces.h"
 #include "jhl_softwarelook.h"
@@ -72,6 +73,7 @@ bool ClientLibrary::Initialize()
 	WeaponEffects_Initialize();
 	JhlMusic_Initialize();
 	JhlSettings_Initialize();
+	JhlBody_Initialize();
 	JhlFlushFaces_Initialize();
 	JhlSoftwareLook_Initialize();
 	JhlSoftwareWater_Initialize();

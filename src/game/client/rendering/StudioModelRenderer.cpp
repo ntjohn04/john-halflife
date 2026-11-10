@@ -18,6 +18,7 @@
 
 #include "client_gibs.h"
 #include "event_api.h"
+#include "jhl_body.h"
 #include "jhl_gargantua.h"
 #include "jhl_settings.h"
 #include "view.h"
@@ -1572,6 +1573,10 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 		return result;
 	}
 
+	// johnhalflife (jhl_visuals_firstpersonbody): the player's body under the camera it's drawn from, or left out.
+	if (m_pCurrentEntity->curstate.iuser4 == JhlBodyMarker && !JhlBody_Place(m_pCurrentEntity, m_vRenderOrigin))
+		return false;
+
 	m_pRenderModel = m_pCurrentEntity->model;
 	m_pStudioHeader = (studiohdr_t*)IEngineStudio.Mod_Extradata(m_pRenderModel);
 	IEngineStudio.StudioSetHeader(m_pStudioHeader);
@@ -1616,6 +1621,11 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 				}
 			}
 		}
+	}
+	else if (m_pCurrentEntity->curstate.iuser4 == JhlBodyMarker)
+	{
+		StudioSetupBones();
+		JhlBody_Pose(m_pStudioHeader, *m_pbonetransform, *m_plighttransform);
 	}
 	else
 	{

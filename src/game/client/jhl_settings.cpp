@@ -57,6 +57,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_camera_jumplandjolt", "1"},
 	{"jhl_visuals_weaponlag", "1"},
 	{"jhl_visuals_weaponwallpush", "1"},
+	{"jhl_visuals_firstpersonbody", "1"},
 	{"jhl_visuals_flushfaces", "1"},
 	{"jhl_visuals_16bitcolor", "1"},
 	{"jhl_visuals_softwarewater", "1"},

@@ -47,6 +47,7 @@
 #include "jhl_shockbeams.h"
 #include "jhl_grapple.h"
 #include "jhl_blastring.h"
+#include "jhl_body.h"
 #include "jhl_gargantua.h"
 #include "jhl_flushfaces.h"
 #include "jhl_softwarelook.h"
@@ -108,6 +109,9 @@ char DLLEXPORT HUD_PlayerMoveTexture(char* name)
 void DLLEXPORT HUD_PlayerMove(playermove_t* ppmove, int server)
 {
 	PM_Move(ppmove, server);
+
+	// johnhalflife (jhl_visuals_firstpersonbody): the movement just predicted, read for the body's pose.
+	JhlBody_Moved(ppmove);
 }
 
 static bool CL_InitClient()
@@ -182,6 +186,7 @@ int DLLEXPORT HUD_VidInit()
 	JhlGrapple_Reset();
 	JhlGargantua_Reset();
 	JhlBlastRing_Reset();
+	JhlBody_Reset();
 	RpgLaser_Reset();
 
 	VGui_Startup();

@@ -120,6 +120,8 @@ target_sources(client PRIVATE
 	fx_test.cpp
 	fx_test.h
 	jhl_blastring.cpp
+	jhl_body.cpp
+	jhl_body.h
 	jhl_bsp.cpp
 	jhl_bsp.h
 	jhl_blastring.h
