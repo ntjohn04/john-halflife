@@ -50,8 +50,8 @@ void JhlBody_CreateEntities();
 bool JhlBody_Place(cl_entity_t* entity, const float* viewOrigin);
 
 /**
- *	@brief Hides its neck, head and arms once posed (the view model's arms are the player's), and its back above its
- *	iuser3 spine bones.
+ *	@brief Hides its head once posed, its arms while there's a view model (its arms are the player's), and its back
+ *	above its iuser3 spine bones.
  */
 void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*bones)[3][4], float (*lightBones)[3][4]);
 
