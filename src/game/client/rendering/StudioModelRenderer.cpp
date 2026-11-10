@@ -1380,6 +1380,121 @@ void CStudioModelRenderer::JhlSetupCasingBones()
 	}
 }
 
+void CStudioModelRenderer::JhlSetupBorrowedBones()
+{
+	// The pose's model, sequence and frame (its iuser1, iuser2 less one, fuser3), its origin fuser4 above the feet.
+	model_t* donor = IEngineStudio.GetModelByIndex(m_pCurrentEntity->curstate.iuser1);
+	auto donorHeader = donor ? static_cast<studiohdr_t*>(IEngineStudio.Mod_Extradata(donor)) : nullptr;
+	const int donorSequence = m_pCurrentEntity->curstate.iuser2 - 1;
+
+	if (!donorHeader || donorSequence < 0 || donorSequence >= donorHeader->numseq)
+	{
+		StudioSetupBones();
+		return;
+	}
+
+	static float pos[MAXSTUDIOBONES][3];
+	static vec4_t q[MAXSTUDIOBONES];
+	static float donorPos[MAXSTUDIOBONES][3];
+	static vec4_t donorQ[MAXSTUDIOBONES];
+	static float standingPos[MAXSTUDIOBONES][3];
+	static vec4_t standingQ[MAXSTUDIOBONES];
+
+	// Its own sequence (standing) for any bone the player model hasn't.
+	if (m_pCurrentEntity->curstate.sequence >= m_pStudioHeader->numseq)
+		m_pCurrentEntity->curstate.sequence = 0;
+
+	auto sequences = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(m_pStudioHeader) + m_pStudioHeader->seqindex);
+	mstudioseqdesc_t* own = &sequences[m_pCurrentEntity->curstate.sequence];
+	StudioCalcRotations(pos, q, own, StudioGetAnim(m_pRenderModel, own), StudioEstimateFrame(own));
+
+	// The player model's pose, and its standing one (deep_idle) to measure its hips' rise and fall from.
+	studiohdr_t* const ownHeader = m_pStudioHeader;
+	model_t* const ownModel = m_pRenderModel;
+	m_pStudioHeader = donorHeader;
+	m_pRenderModel = donor;
+
+	auto donorSequences = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(donorHeader) + donorHeader->seqindex);
+	mstudioseqdesc_t* pose = &donorSequences[donorSequence];
+	StudioCalcRotations(donorPos, donorQ, pose, StudioGetAnim(donor, pose), m_pCurrentEntity->curstate.fuser3);
+
+	mstudioseqdesc_t* standing = &donorSequences[0];
+
+	for (int i = 0; i < donorHeader->numseq; ++i)
+	{
+		if (0 == std::strcmp(donorSequences[i].label, "deep_idle"))
+			standing = &donorSequences[i];
+	}
+
+	StudioCalcRotations(standingPos, standingQ, standing, StudioGetAnim(donor, standing), 0);
+
+	m_pStudioHeader = ownHeader;
+	m_pRenderModel = ownModel;
+
+	// Bone for bone by name (their bipeds alike, Bip02 his, Bip01 the player model's): its turns, and its hips raised
+	// and lowered as the player model's (from its origin, the hull's middle, to the feet), to his size.
+	auto bones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(m_pStudioHeader) + m_pStudioHeader->boneindex);
+	auto donorBones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(donorHeader) + donorHeader->boneindex);
+
+	for (int i = 0; i < m_pStudioHeader->numbones; ++i)
+	{
+		char name[32];
+		std::strncpy(name, bones[i].name, sizeof(name) - 1);
+		name[sizeof(name) - 1] = '\0';
+
+		if (0 == std::strncmp(name, "Bip02", 5))
+			name[4] = '1';
+
+		for (int j = 0; j < donorHeader->numbones; ++j)
+		{
+			if (0 != std::strcmp(name, donorBones[j].name))
+				continue;
+
+			std::memcpy(q[i], donorQ[j], sizeof(q[i]));
+
+			if (bones[i].parent == -1 && donorBones[j].value[2] > 0)
+			{
+				const float scale = bones[i].value[2] / donorBones[j].value[2];
+				pos[i][2] += ((donorPos[j][2] + m_pCurrentEntity->curstate.fuser4) - (standingPos[j][2] + 36)) * scale;
+			}
+
+			break;
+		}
+	}
+
+	float bonematrix[3][4];
+
+	for (int i = 0; i < m_pStudioHeader->numbones; ++i)
+	{
+		const int parent = bones[i].parent;
+
+		QuaternionMatrix(q[i], bonematrix);
+
+		bonematrix[0][3] = pos[i][0];
+		bonematrix[1][3] = pos[i][1];
+		bonematrix[2][3] = pos[i][2];
+
+		if (parent == -1)
+		{
+			if (0 != IEngineStudio.IsHardware())
+			{
+				ConcatTransforms((*m_protationmatrix), bonematrix, (*m_pbonetransform)[i]);
+				MatrixCopy((*m_pbonetransform)[i], (*m_plighttransform)[i]);
+			}
+			else
+			{
+				ConcatTransforms((*m_paliastransform), bonematrix, (*m_pbonetransform)[i]);
+				ConcatTransforms((*m_protationmatrix), bonematrix, (*m_plighttransform)[i]);
+			}
+		}
+		else if (parent >= 0 && parent < m_pStudioHeader->numbones)
+		{
+			ConcatTransforms((*m_pbonetransform)[parent], bonematrix, (*m_pbonetransform)[i]);
+			ConcatTransforms((*m_plighttransform)[parent], bonematrix, (*m_plighttransform)[i]);
+		}
+	}
+}
+
 bool JhlViewModelPoint(const char* modelName, int bone, const Vector& local, Vector& world)
 {
 	// Drawn just now (last frame's, the view model being drawn after the effects), and the one asked about.
@@ -1624,7 +1739,11 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 	}
 	else if (m_pCurrentEntity->curstate.iuser4 == JhlBodyMarker)
 	{
-		StudioSetupBones();
+		if (m_pCurrentEntity->curstate.iuser2 > 0)
+			JhlSetupBorrowedBones();
+		else
+			StudioSetupBones();
+
 		JhlBody_Pose(m_pCurrentEntity, m_pStudioHeader, *m_pbonetransform, *m_plighttransform);
 	}
 	else

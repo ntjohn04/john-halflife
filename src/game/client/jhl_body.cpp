@@ -49,9 +49,9 @@ constexpr float RunSpeed = 220;
 constexpr float StillSpeed = 5;
 constexpr float BackwardsTurn = 120;
 
-// The walk played at half its speed, its steps as the footsteps' (pm_shared.cpp: 400 ms each walking); the others as
-// made. In time, not by how far it moves: the player's speeds aren't the models' strides.
-constexpr float WalkRate = 0.5f;
+// The walk played slower than made, nearer the footsteps (pm_shared.cpp: 400 ms each walking); the others as made. In
+// time, not by how far it moves: the player's speeds aren't the models' strides.
+constexpr float WalkRate = 0.7f;
 
 // Off the ground this long, or going up (a jump), the legs take the jump's pose; less is a step down.
 constexpr float FallTime = 0.15f;
@@ -148,9 +148,10 @@ int PickSequence(const studiohdr_t* header, int activity)
 	return std::max(sequence, 0);
 }
 
-model_t* PickModel(cl_entity_t* player, bool& monster)
+model_t* PickModel(cl_entity_t* player, int& index, bool& monster)
 {
-	model_t* model = gEngfuncs.hudGetModelByIndex(player->curstate.modelindex);
+	index = player->curstate.modelindex;
+	model_t* model = gEngfuncs.hudGetModelByIndex(index);
 	monster = false;
 
 	if (!model || model->type != mod_studio)
@@ -160,8 +161,8 @@ model_t* PickModel(cl_entity_t* player, bool& monster)
 	// before the suit; none if the lab coat isn't precached (the map had no room, or no Blue Shift).
 	if (0 == std::strcmp(model->name, HalfLifePlayer) && !gHUD.HasSuit())
 	{
-		const int labCoat = gEngfuncs.pEventAPI->EV_FindModelIndex(LabCoatGordon);
-		model = labCoat > 0 ? gEngfuncs.hudGetModelByIndex(labCoat) : nullptr;
+		index = gEngfuncs.pEventAPI->EV_FindModelIndex(LabCoatGordon);
+		model = index > 0 ? gEngfuncs.hudGetModelByIndex(index) : nullptr;
 		monster = true;
 
 		if (!model || model->type != mod_studio)
@@ -175,7 +176,7 @@ model_t* PickModel(cl_entity_t* player, bool& monster)
 void JhlBody_Initialize()
 {
 	g_Enabled = gEngfuncs.pfnRegisterVariable("jhl_visuals_firstpersonbody", "1", FCVAR_ARCHIVE);
-	g_Offset = gEngfuncs.pfnRegisterVariable("jhl_debug_body_offset", "18", 0);
+	g_Offset = gEngfuncs.pfnRegisterVariable("jhl_debug_body_offset", "17", 0);
 	g_Spine = gEngfuncs.pfnRegisterVariable("jhl_debug_body_spine", "4", 0);
 }
 
@@ -210,8 +211,9 @@ void JhlBody_CreateEntities()
 	if (!player || (player->curstate.effects & EF_NODRAW) != 0)
 		return;
 
+	int modelIndex = 0;
 	bool monster = false;
-	model_t* model = PickModel(player, monster);
+	model_t* model = PickModel(player, modelIndex, monster);
 
 	if (!model)
 		return;
@@ -242,8 +244,20 @@ void JhlBody_CreateEntities()
 	else if (speed > StillSpeed)
 		activity = ActWalk;
 
-	const int sequence = PickSequence(header, activity);
-	const auto& description = Sequences(header)[sequence];
+	// The lab coat's monster jumping, crouching or in water: the player model's pose (its poses are only walking ones),
+	// drawn on his bones (CStudioModelRenderer::JhlSetupBorrowedBones). The player model is his here (PickModel).
+	const studiohdr_t* poseHeader = header;
+
+	if (monster && (activity == ActHop || activity == ActCrouch || activity == ActCrouchIdle || activity == ActHover))
+	{
+		const auto* playerModel = static_cast<const studiohdr_t*>(IEngineStudio.Mod_Extradata(gEngfuncs.hudGetModelByIndex(player->curstate.modelindex)));
+
+		if (playerModel && playerModel->numseq > 0)
+			poseHeader = playerModel;
+	}
+
+	const int sequence = PickSequence(poseHeader, activity);
+	const auto& description = Sequences(poseHeader)[sequence];
 	const float frames = static_cast<float>(std::max(description.numframes - 1, 1));
 
 	// The legs turned the way it moves (backwards past BackwardsTurn), the player model's back turned the rest of the way
@@ -278,16 +292,26 @@ void JhlBody_CreateEntities()
 
 	std::memset(&g_Body, 0, sizeof(g_Body));
 	g_Body.model = model;
-	g_Body.curstate.modelindex = player->curstate.modelindex;
+	g_Body.curstate.modelindex = modelIndex;
 	g_Body.curstate.rendermode = kRenderNormal;
 	g_Body.curstate.renderamt = 255;
 	g_Body.curstate.sequence = sequence;
 	g_Body.curstate.frame = g_Cycle * 256;
+
+	if (poseHeader != header)
+	{
+		g_Body.curstate.sequence = PickSequence(header, ActIdle); // For any bone the player model hasn't.
+		g_Body.curstate.iuser1 = player->curstate.modelindex;
+		g_Body.curstate.iuser2 = sequence + 1;
+		g_Body.curstate.fuser3 = g_Cycle * frames;
+		g_Body.curstate.fuser4 = move.Crouched ? 18 : 36;
+	}
+
 	g_Body.curstate.animtime = static_cast<float>(time);
 	g_Body.curstate.framerate = 0;
 	g_Body.curstate.iuser4 = JhlBodyMarker;
 	g_Body.curstate.iuser3 = move.Crouched ? 0 : static_cast<int>(g_Spine->value); // Crouched, its back would be in view.
-	g_Body.latched.prevsequence = sequence;
+	g_Body.latched.prevsequence = g_Body.curstate.sequence;
 	g_Body.angles = g_Body.curstate.angles = g_Body.latched.prevangles = Vector{0, legYaw, 0};
 
 	const float twist = monster ? 127 : (AngleDifference(viewYaw, legYaw) / 4 + 30) / (60.f / 255);
@@ -327,8 +351,9 @@ bool JhlBody_Place(cl_entity_t* entity, const float* viewOrigin)
 
 void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*bones)[3][4], float (*lightBones)[3][4])
 {
-	// Its neck and all above it hidden (its head, its arms: the view model's are the player's), and its spine above its
-	// iuser3 bones over the hips. Its bones come after their parents.
+	// Its head and arms hidden from the shoulders (the view model's arms are the player's; its collarbones kept, Barney's
+	// vest hanging from them), and its spine above its iuser3 bones over the hips with all above. Its bones come after
+	// their parents.
 	const auto* bone = reinterpret_cast<const mstudiobone_t*>(reinterpret_cast<const byte*>(header) + header->boneindex);
 	const int count = std::min(header->numbones, MAXSTUDIOBONES);
 	const int keptSpine = entity->curstate.iuser3;
@@ -340,19 +365,21 @@ void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*
 	{
 		const int parent = bone[i].parent >= 0 && bone[i].parent < i ? bone[i].parent : -1;
 		const bool spine = std::strstr(bone[i].name, "Spine") != nullptr;
-		const bool neck = std::strstr(bone[i].name, "Neck") != nullptr;
+		const char* name = bone[i].name;
+		const std::size_t length = std::strlen(name);
+		const bool limb = std::strstr(name, "Head") != nullptr || (length >= 4 && 0 == std::strcmp(name + length - 4, "Arm1"));
 
 		spineDepth[i] = spine && parent >= 0 ? spineDepth[parent] + 1 : 0;
 
 		if (parent >= 0 && cut[parent] >= 0)
 			cut[i] = cut[parent];
 		else
-			cut[i] = neck || (spine && spineDepth[i] > keptSpine) ? i : -1;
+			cut[i] = limb || (spine && spineDepth[i] > keptSpine) ? i : -1;
 
 		if (cut[i] < 0)
 			continue;
 
-		// Every hidden bone shrunk to one point, where it's cut off: a triangle between hidden bones is nothing then, not
+		// Every bone hidden together shrunk to one point, where it's cut off: a triangle between them is nothing then, not
 		// one stretched between their joints (a hand's, the head's), and the shown body closes up to that point.
 		for (int row = 0; row < 3; ++row)
 		{

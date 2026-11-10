@@ -44,6 +44,9 @@ public:
 	// johnhalflife: a view model's casing thrown out as a shell (JhlViewModelCasings): only its bone drawn.
 	void JhlSetupCasingBones();
 
+	// johnhalflife: the first-person body's lab coat Gordon in a pose his model hasn't (jhl_body.cpp): the player model's.
+	void JhlSetupBorrowedBones();
+
 	// Find final attachment points
 	virtual void StudioCalcAttachments();
 
