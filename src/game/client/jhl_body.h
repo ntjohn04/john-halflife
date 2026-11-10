@@ -44,15 +44,16 @@ void JhlBody_Moved(const playermove_t* move);
 void JhlBody_CreateEntities();
 
 /**
- *	@brief Puts the body under the camera being drawn from (@p viewOrigin), before it's drawn; false to leave it out
- *	(the camera somewhere else: a cutscene's, third person).
+ *	@brief Puts the body on the player's feet, before it's drawn; false to leave it out, the camera it's drawn from
+ *	(@p viewOrigin) somewhere else (a cutscene's, third person).
  */
 bool JhlBody_Place(cl_entity_t* entity, const float* viewOrigin);
 
 /**
- *	@brief Shrinks its neck, head and arms to nothing once posed: the view model's arms are the player's.
+ *	@brief Hides its neck, head and arms once posed (the view model's arms are the player's), and its back above its
+ *	iuser3 spine bones.
  */
-void JhlBody_Pose(const studiohdr_t* header, float (*bones)[3][4], float (*lightBones)[3][4]);
+void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*bones)[3][4], float (*lightBones)[3][4]);
 
 /**
  *	@brief Forgets the last map's movement (HUD_VidInit).

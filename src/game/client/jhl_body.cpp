@@ -49,6 +49,10 @@ constexpr float RunSpeed = 220;
 constexpr float StillSpeed = 5;
 constexpr float BackwardsTurn = 120;
 
+// The walk played at half its speed, its steps as the footsteps' (pm_shared.cpp: 400 ms each walking); the others as
+// made. In time, not by how far it moves: the player's speeds aren't the models' strides.
+constexpr float WalkRate = 0.5f;
+
 // Off the ground this long, or going up (a jump), the legs take the jump's pose; less is a step down.
 constexpr float FallTime = 0.15f;
 
@@ -60,10 +64,11 @@ constexpr const char* LabCoatGordon = "models/gordon_scientist.mdl";
 struct Movement
 {
 	bool Valid = false;
+	Vector Origin;
 	Vector Velocity;
 	float EyeHeight = 0; // Above the origin (view_ofs).
 	float FeetDepth = 0; // Below it (the hull's bottom).
-	bool Crouched = false;
+	bool Crouched = false; // Fully: going down, the camera lowers first, the hull standing.
 	bool OnGround = false;
 	int WaterLevel = 0;
 	int MoveType = 0;
@@ -170,8 +175,8 @@ model_t* PickModel(cl_entity_t* player, bool& monster)
 void JhlBody_Initialize()
 {
 	g_Enabled = gEngfuncs.pfnRegisterVariable("jhl_visuals_firstpersonbody", "1", FCVAR_ARCHIVE);
-	g_Offset = gEngfuncs.pfnRegisterVariable("jhl_debug_body_offset", "6", 0);
-	g_Spine = gEngfuncs.pfnRegisterVariable("jhl_debug_body_spine", "2", 0);
+	g_Offset = gEngfuncs.pfnRegisterVariable("jhl_debug_body_offset", "18", 0);
+	g_Spine = gEngfuncs.pfnRegisterVariable("jhl_debug_body_spine", "4", 0);
 }
 
 void JhlBody_Moved(const playermove_t* move)
@@ -180,10 +185,11 @@ void JhlBody_Moved(const playermove_t* move)
 		return;
 
 	g_Movement.Valid = true;
+	g_Movement.Origin = move->origin;
 	g_Movement.Velocity = move->velocity;
 	g_Movement.EyeHeight = move->view_ofs.z;
 	g_Movement.FeetDepth = -move->player_mins[std::clamp(move->usehull, 0, 3)].z;
-	g_Movement.Crouched = (move->flags & FL_DUCKING) != 0 || 0 != move->bInDuck;
+	g_Movement.Crouched = (move->flags & FL_DUCKING) != 0;
 	g_Movement.OnGround = move->onground != -1;
 	g_Movement.WaterLevel = move->waterlevel;
 	g_Movement.MoveType = move->movetype;
@@ -259,19 +265,16 @@ void JhlBody_CreateEntities()
 		}
 	}
 
-	// Through its loop as far as it moved (its feet kept on the ground: its sequence's own move a loop), else in time; a
-	// jump from leaving the ground, held at its end.
+	// Through its loop in time (backwards walking backwards); a jump from leaving the ground, held at its end.
 	if (activity == ActHop)
 	{
 		g_Cycle = std::min(g_AirTime * description.fps / frames, 1.f);
 	}
 	else
 	{
-		const float loop = description.linearmovement[0];
-		g_Cycle += loop > 0 ? direction * speed * frameTime / loop : description.fps * frameTime / frames;
+		g_Cycle += direction * description.fps * frameTime / frames * (activity == ActWalk ? WalkRate : 1);
 		g_Cycle -= std::floor(g_Cycle);
 	}
-
 
 	std::memset(&g_Body, 0, sizeof(g_Body));
 	g_Body.model = model;
@@ -283,6 +286,7 @@ void JhlBody_CreateEntities()
 	g_Body.curstate.animtime = static_cast<float>(time);
 	g_Body.curstate.framerate = 0;
 	g_Body.curstate.iuser4 = JhlBodyMarker;
+	g_Body.curstate.iuser3 = move.Crouched ? 0 : static_cast<int>(g_Spine->value); // Crouched, its back would be in view.
 	g_Body.latched.prevsequence = sequence;
 	g_Body.angles = g_Body.curstate.angles = g_Body.latched.prevangles = Vector{0, legYaw, 0};
 
@@ -291,68 +295,72 @@ void JhlBody_CreateEntities()
 	for (int i = 0; i < 4; ++i)
 		g_Body.curstate.controller[i] = g_Body.latched.prevcontroller[i] = static_cast<byte>(std::clamp(twist, 0.f, 255.f));
 
-	// Its origin below the camera (JhlBody_Place): the player model's is the hull's middle as the engine draws players
-	// (its crouching poses made for the crouching hull's), the monster's its feet.
-	const float feetBelowEye = move.EyeHeight + move.FeetDepth;
-	g_Body.curstate.fuser1 = -feetBelowEye + (monster ? 0 : (move.Crouched ? 18 : 36));
+	// Its origin above the player's feet (JhlBody_Place): the player model's is the hull's middle as the engine draws
+	// players (its crouching poses made for the crouching hull's), the monster's its feet.
+	g_Body.curstate.fuser1 = -move.FeetDepth + (monster ? 0 : (move.Crouched ? 18 : 36));
 	g_Body.curstate.fuser2 = viewYaw;
-	g_Body.origin = player->origin;
+	g_Body.origin = move.Origin;
 
 	gEngfuncs.CL_CreateVisibleEntity(ET_TEMPENTITY, &g_Body);
 }
 
 bool JhlBody_Place(cl_entity_t* entity, const float* viewOrigin)
 {
-	cl_entity_t* player = gEngfuncs.GetLocalPlayer();
-
 	// Drawn only from the player's own eyes: not a camera elsewhere (a map's, third person).
-	if (!player)
-		return false;
-
-	const Vector eye = player->origin + Vector{0, 0, g_Movement.EyeHeight};
+	const Vector& origin = g_Movement.Origin;
+	const Vector eye = origin + Vector{0, 0, g_Movement.EyeHeight};
 	const Vector view{viewOrigin[0], viewOrigin[1], viewOrigin[2]};
 
 	if ((view - eye).Length() > 48)
 		return false;
 
-	// Hung under the camera, not the player's origin: the camera's smoothing (stairs, landing, bob) moves it too, so it
-	// never rises into the view. Behind the eyes by jhl_debug_body_offset along where the player looks.
+	// On the player's feet where the movement has them, whatever the camera's smoothing does (stairs, crouching, landing),
+	// behind the eyes by jhl_debug_body_offset along where the player looks.
 	const float yaw = entity->curstate.fuser2 * static_cast<float>(PI) / 180;
 	const float offset = g_Offset->value;
 
-	entity->origin = Vector{view.x - std::cos(yaw) * offset, view.y - std::sin(yaw) * offset, view.z + entity->curstate.fuser1};
+	entity->origin = Vector{origin.x - std::cos(yaw) * offset, origin.y - std::sin(yaw) * offset, origin.z + entity->curstate.fuser1};
 	entity->curstate.origin = entity->origin;
 
 	return true;
 }
 
-void JhlBody_Pose(const studiohdr_t* header, float (*bones)[3][4], float (*lightBones)[3][4])
+void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*bones)[3][4], float (*lightBones)[3][4])
 {
-	// Its neck and all above it shrunk to a point (its head, its arms: the view model's are the player's), and its spine
-	// from jhl_debug_body_spine bones above the hips. Its bones come after their parents.
+	// Its neck and all above it hidden (its head, its arms: the view model's are the player's), and its spine above its
+	// iuser3 bones over the hips. Its bones come after their parents.
 	const auto* bone = reinterpret_cast<const mstudiobone_t*>(reinterpret_cast<const byte*>(header) + header->boneindex);
 	const int count = std::min(header->numbones, MAXSTUDIOBONES);
-	const int keptSpine = static_cast<int>(g_Spine->value);
+	const int keptSpine = entity->curstate.iuser3;
 
-	bool hidden[MAXSTUDIOBONES]{};
+	int cut[MAXSTUDIOBONES];		  // The first hidden bone it's under (itself), -1 if shown.
 	int spineDepth[MAXSTUDIOBONES]{}; // Its place up the spine: 1 its first bone above the hips.
 
 	for (int i = 0; i < count; ++i)
 	{
-		const int parent = bone[i].parent;
+		const int parent = bone[i].parent >= 0 && bone[i].parent < i ? bone[i].parent : -1;
 		const bool spine = std::strstr(bone[i].name, "Spine") != nullptr;
 		const bool neck = std::strstr(bone[i].name, "Neck") != nullptr;
 
 		spineDepth[i] = spine && parent >= 0 ? spineDepth[parent] + 1 : 0;
-		hidden[i] = (parent >= 0 && parent < count && hidden[parent]) || neck || (spine && spineDepth[i] > keptSpine);
 
-		if (hidden[i])
+		if (parent >= 0 && cut[parent] >= 0)
+			cut[i] = cut[parent];
+		else
+			cut[i] = neck || (spine && spineDepth[i] > keptSpine) ? i : -1;
+
+		if (cut[i] < 0)
+			continue;
+
+		// Every hidden bone shrunk to one point, where it's cut off: a triangle between hidden bones is nothing then, not
+		// one stretched between their joints (a hand's, the head's), and the shown body closes up to that point.
+		for (int row = 0; row < 3; ++row)
 		{
-			for (int row = 0; row < 3; ++row)
-			{
-				for (int column = 0; column < 3; ++column)
-					bones[i][row][column] = lightBones[i][row][column] = 0;
-			}
+			for (int column = 0; column < 3; ++column)
+				bones[i][row][column] = lightBones[i][row][column] = 0;
+
+			bones[i][row][3] = bones[cut[i]][row][3];
+			lightBones[i][row][3] = lightBones[cut[i]][row][3];
 		}
 	}
 }

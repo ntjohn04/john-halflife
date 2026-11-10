@@ -1573,7 +1573,7 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 		return result;
 	}
 
-	// johnhalflife (jhl_visuals_firstpersonbody): the player's body under the camera it's drawn from, or left out.
+	// johnhalflife (jhl_visuals_firstpersonbody): the player's body on their feet, or left out (seen from elsewhere).
 	if (m_pCurrentEntity->curstate.iuser4 == JhlBodyMarker && !JhlBody_Place(m_pCurrentEntity, m_vRenderOrigin))
 		return false;
 
@@ -1625,7 +1625,7 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 	else if (m_pCurrentEntity->curstate.iuser4 == JhlBodyMarker)
 	{
 		StudioSetupBones();
-		JhlBody_Pose(m_pStudioHeader, *m_pbonetransform, *m_plighttransform);
+		JhlBody_Pose(m_pCurrentEntity, m_pStudioHeader, *m_pbonetransform, *m_plighttransform);
 	}
 	else
 	{
