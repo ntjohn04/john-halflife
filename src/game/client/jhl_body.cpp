@@ -51,7 +51,7 @@ constexpr float BackwardsTurn = 120;
 
 // The walk played slower than made, nearer the footsteps (pm_shared.cpp: 400 ms each walking); the others as made. In
 // time, not by how far it moves: the player's speeds aren't the models' strides.
-constexpr float WalkRate = 0.7f;
+constexpr float WalkRate = 0.85f;
 
 // Off the ground this long, or going up (a jump), the legs take the jump's pose; less is a step down.
 constexpr float FallTime = 0.15f;
@@ -310,7 +310,8 @@ void JhlBody_CreateEntities()
 	g_Body.curstate.animtime = static_cast<float>(time);
 	g_Body.curstate.framerate = 0;
 	g_Body.curstate.iuser4 = JhlBodyMarker;
-	g_Body.curstate.iuser3 = move.Crouched ? 0 : static_cast<int>(g_Spine->value); // Crouched, its back would be in view.
+	// Crouched or jumping (its landing bends it over), only its legs: its back would be in view.
+	g_Body.curstate.iuser3 = move.Crouched || activity == ActHop ? 0 : static_cast<int>(g_Spine->value);
 	g_Body.latched.prevsequence = g_Body.curstate.sequence;
 	g_Body.angles = g_Body.curstate.angles = g_Body.latched.prevangles = Vector{0, legYaw, 0};
 
