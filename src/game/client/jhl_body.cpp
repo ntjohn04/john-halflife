@@ -52,9 +52,9 @@ constexpr float BackwardsTurn = 120;
 // Crouched, it stands a little further back: its legs come forward.
 constexpr float CrouchedOffset = 4;
 
-// Crawling, a loop (two steps) in no more than this many seconds: crouched footsteps are 500 ms apart at their slowest
-// (pm_shared.cpp's PM_UpdateStepSound).
-constexpr float CrouchedSlowestLoop = 1.0f;
+// Crawling, a loop (two steps) in no more than this many seconds: slow (walk mode's crouching alone is 2.5), not far
+// off its footsteps (500 ms apart at their slowest crouched, pm_shared.cpp's PM_UpdateStepSound).
+constexpr float CrouchedSlowestLoop = 1.8f;
 
 // Off the ground this long, or going up (a jump), the legs take the jump's pose; less is a step down.
 constexpr float FallTime = 0.15f;
