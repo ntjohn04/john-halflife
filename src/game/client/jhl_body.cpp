@@ -266,9 +266,9 @@ void JhlBody_CreateEntities()
 
 	// No view model (no weapon, holstered): its arms are drawn, nothing else being the player's. The player models' arms
 	// hold a weapon out in every pose; standing, walking and running, they take the lab coat's instead (his own poses,
-	// arms at his sides), where it's precached (W_Precache).
+	// arms at his sides), where it's precached (W_Precache). Crouched, none: their crouching arms hold one out too.
 	const cl_entity_t* viewModel = gEngfuncs.GetViewModel();
-	g_Arms = !viewModel || !viewModel->model;
+	g_Arms = (!viewModel || !viewModel->model) && !move.Crouched;
 
 	const studiohdr_t* armsHeader = nullptr;
 	int armsIndex = 0;

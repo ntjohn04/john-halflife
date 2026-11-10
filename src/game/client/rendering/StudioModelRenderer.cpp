@@ -1434,16 +1434,14 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	m_pStudioHeader = ownHeader;
 	m_pRenderModel = ownModel;
 
-	// Bone for bone by name (their bipeds alike, Bip02 the lab coat's, Bip01 the player models'): its turns, and its hips
-	// raised and lowered as the player model's (from its origin, the hull's middle, to the feet), to his size. Only its
-	// arms: from the collarbones down.
+	// Bone for bone by name (their bipeds alike, Bip02 the lab coat's, Bip01 the player models').
 	auto bones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(m_pStudioHeader) + m_pStudioHeader->boneindex);
 	auto donorBones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(donorHeader) + donorHeader->boneindex);
 
-	for (int i = 0; i < m_pStudioHeader->numbones; ++i)
+	const auto donorBone = [&](const char* ownName)
 	{
 		char name[32];
-		std::strncpy(name, bones[i].name, sizeof(name) - 1);
+		std::strncpy(name, ownName, sizeof(name) - 1);
 		name[sizeof(name) - 1] = '\0';
 
 		if (0 == std::strncmp(name, "Bip02", 5))
@@ -1451,23 +1449,114 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 		else if (0 == std::strncmp(name, "Bip01", 5))
 			name[4] = '2';
 
-		if (armsOnly && !std::strstr(name, " Arm") && !std::strstr(name, " Hand"))
-			continue;
-
 		for (int j = 0; j < donorHeader->numbones; ++j)
 		{
-			if (0 != std::strcmp(name, donorBones[j].name))
+			if (0 == std::strcmp(name, donorBones[j].name))
+				return j;
+		}
+
+		return -1;
+	};
+
+	const auto endsWith = [](const char* name, const char* end)
+	{
+		const std::size_t length = std::strlen(name), endLength = std::strlen(end);
+		return length >= endLength && 0 == std::strcmp(name + length - endLength, end);
+	};
+
+	if (!armsOnly)
+	{
+		// Its turns, and its hips raised and lowered as the player model's (from its origin, the hull's middle, to the
+		// feet), to his size.
+		for (int i = 0; i < m_pStudioHeader->numbones; ++i)
+		{
+			const int j = donorBone(bones[i].name);
+
+			if (j < 0)
 				continue;
 
 			std::memcpy(q[i], donorQ[j], sizeof(q[i]));
 
-			if (!armsOnly && bones[i].parent == -1 && donorBones[j].value[2] > 0)
+			if (bones[i].parent == -1 && donorBones[j].value[2] > 0)
 			{
 				const float scale = bones[i].value[2] / donorBones[j].value[2];
 				pos[i][2] += ((donorPos[j][2] + m_pCurrentEntity->curstate.fuser4) - (standingPos[j][2] + 36)) * scale;
 			}
+		}
+	}
+	else
+	{
+		// Its arms turned as the lab coat's are against his neck (their collarbones aren't alike: his a dummy at the neck,
+		// the player models' out to the shoulder), so turned as his from the neck, not bone by bone. Its collarbones and
+		// fingers (he has none) as at rest, its fingers open, not gripping a weapon.
+		const auto multiply = [](const vec4_t a, const vec4_t b, vec4_t out)
+		{
+			const float x = a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1];
+			const float y = a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0];
+			const float z = a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3];
+			const float w = a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2];
+			out[0] = x;
+			out[1] = y;
+			out[2] = z;
+			out[3] = w;
+		};
 
-			break;
+		const auto inverse = [](const vec4_t a, vec4_t out)
+		{
+			out[0] = -a[0];
+			out[1] = -a[1];
+			out[2] = -a[2];
+			out[3] = a[3];
+		};
+
+		static vec4_t world[MAXSTUDIOBONES];
+		static vec4_t donorWorld[MAXSTUDIOBONES];
+		int donorNeck = -1;
+
+		for (int j = 0; j < donorHeader->numbones; ++j)
+		{
+			const int parent = donorBones[j].parent;
+
+			if (parent >= 0 && parent < j)
+				multiply(donorWorld[parent], donorQ[j], donorWorld[j]);
+			else
+				std::memcpy(donorWorld[j], donorQ[j], sizeof(donorWorld[j]));
+
+			if (endsWith(donorBones[j].name, "Neck"))
+				donorNeck = j;
+		}
+
+		int neck = -1;
+
+		for (int i = 0; i < m_pStudioHeader->numbones; ++i)
+		{
+			const int parent = bones[i].parent >= 0 && bones[i].parent < i ? bones[i].parent : -1;
+			const char* name = bones[i].name;
+
+			if (endsWith(name, " L Arm") || endsWith(name, " R Arm") || std::strstr(name, "Finger"))
+			{
+				AngleQuaternion(Vector{bones[i].value[3], bones[i].value[4], bones[i].value[5]}, q[i]);
+			}
+			else if ((std::strstr(name, " Arm") || std::strstr(name, " Hand")) && parent >= 0 && neck >= 0 && donorNeck >= 0)
+			{
+				if (const int j = donorBone(name); j >= 0)
+				{
+					vec4_t turn, wanted, parentInverse;
+					inverse(donorWorld[donorNeck], turn);
+					multiply(turn, donorWorld[j], turn);
+					multiply(world[neck], turn, wanted);
+					inverse(world[parent], parentInverse);
+					multiply(parentInverse, wanted, q[i]);
+				}
+			}
+
+			if (parent >= 0)
+				multiply(world[parent], q[i], world[i]);
+			else
+				std::memcpy(world[i], q[i], sizeof(world[i]));
+
+			if (endsWith(name, "Neck"))
+				neck = i;
 		}
 	}
 
