@@ -149,9 +149,10 @@ a copy of the game code.
   none, are made outside the repository.
 * **And Half-Life's animated title, with their names:** `animated_title "1"`, the engine (GameUI.dll) animating the
   pictures it finds in the folder, `resource/logo*.tga`, exactly as Half-Life's: OPPOSING FORCE in its buttons'
-  stencil and gold, BLUE SHIFT in its typewriter face and blue, each of Valve's ten pictures remade at its size, its
-  letters' place, blur and opacity (`scripts/make_menu_titles.py`). As in Half-Life, the title hides the small logo
-  above the buttons (`game_menu.tga`); it's always centred near the top, sized by its picture.
+  stencil and gold, blue shift in lower case as its logo, in its typewriter face and neon blue (the big blurred names
+  behind them paler, in capitals), each of Valve's ten pictures remade at its size, its letters' place, blur and
+  opacity (`scripts/make_menu_titles.py`). As in Half-Life, the title hides the small logo above the buttons
+  (`game_menu.tga`); it's always centred near the top, sized by its picture.
 * Blue Shift keeps multiplayer, unlike vanilla, so John Settings stays in the same place.
 * Each game's own skill values load after `skill.json` (Half-Life's): `cfg/skill_blueshift.json` (batteries
   give 20 armor, as in `bshift/skill.cfg`) and `cfg/skill_opposingforce.json` (`func_tank_target_allies 1`:

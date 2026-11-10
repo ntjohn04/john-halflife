@@ -11,6 +11,7 @@ Half-Life's ten pictures, matched picture for picture (measured from Valve's):
                           left of the title (each piece flashes on its own, so each cut falls between letters);
   logo_big_blurred_blip_N the same pieces at most 97% opaque, their flashes.
 Every picture is one colour with only its opacity varying, as Valve's are white.
+(The big name's letters line up with the small one's, so both need as many letters.)
 
 Usage:
   python make_menu_titles.py
@@ -22,11 +23,14 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Each game's name (as its logo writes it) and the big one behind it, the font, their colours and how opaque the
+# big one is at the most against Valve's.
 TITLES = {
-    # Its logo's gold: the name light, the big one behind it deeper.
-    "op4": ("OPPOSING FORCE", "resource/fonts/StardosStencil-Bold.ttf", (255, 222, 150), (232, 164, 64)),
-    # Its logo's glowing blue: the name ice blue, the big one behind it the logo's blue.
-    "bs": ("BLUE SHIFT", "resource/fonts/CourierPrime-Bold.ttf", (205, 225, 255), (80, 140, 255)),
+    # Its logo's gold, the big name behind it greyer and fainter.
+    "op4": ("OPPOSING FORCE", "OPPOSING FORCE", "resource/fonts/StardosStencil-Bold.ttf", (255, 222, 150),
+            (214, 196, 166), 0.85),
+    # Its logo's lower case in its neon blue, the big name behind it in capitals, a pale blue.
+    "bs": ("blue shift", "BLUE SHIFT", "resource/fonts/CourierPrime-Bold.ttf", (90, 160, 255), (180, 200, 230), 1.0),
 }
 
 SMALL = (800, 86)
@@ -98,7 +102,7 @@ def cuts(alpha):
     return result + [alpha.width]
 
 
-def write(game, text, font_file, color, big_color):
+def write(game, text, big_text, font_file, color, big_color, big_opacity):
     resource = os.path.join(REPO, "config", "expansions", game, "resource")
     font_file = os.path.join(REPO, "config", "expansions", game, font_file)
 
@@ -108,12 +112,12 @@ def write(game, text, font_file, color, big_color):
     save(os.path.join(resource, "logo_blip2.tga"), color, blur(small, 2.75, 1.02, grow=5))
 
     # The big name: each letter where the small one's is, scaled, at the big capitals' height, then made bolder.
-    big, _ = letters(text, font_file, *BIG_CAP, BIG, [c * BIG_SCALE + BIG_OFFSET * OVERSAMPLE for c in centres])
+    big, _ = letters(big_text, font_file, *BIG_CAP, BIG, [c * BIG_SCALE + BIG_OFFSET * OVERSAMPLE for c in centres])
     big = big.filter(ImageFilter.MaxFilter(2 * BIG_BOLDER + 1))
     # Blurred more than Valve's (sigma about 6.5 on letters with thinner strokes) to look as soft, and as opaque at
-    # the most as Valve's: 136, its flashes 248.
+    # the most as Valve's (136, its flashes 248), times big_opacity.
     soft = big.filter(ImageFilter.GaussianBlur(9))
-    peak = soft.getextrema()[1]
+    peak = soft.getextrema()[1] / big_opacity
     blurred = soft.point(lambda v: round(v * 136 / peak))
     blip = soft.point(lambda v: round(v * 248 / peak))
     edges = cuts(blurred)
