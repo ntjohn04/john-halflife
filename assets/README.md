@@ -15,6 +15,7 @@ python scripts/build_models.py ../halflife-unified-sdk-assets [folder ...]
 Each game folder's icon, `icons/<folder>.png` (square, 256x256 or more), written by `scripts/make_icons.py` into
 its config as `game.ico`, `game.tga` (16x16) and `game_big.tga` (32x32, Steam's library icon). A hand-made small
 version, `icons/<folder>_16.png` or `_32.png`, is used as it is for that size. The four must differ from each other.
+`icons/johnhalflife_icons.pdn` is the Paint.NET source, its layers the four pictures: export each as its PNG.
 
 ## rosenberg
 
