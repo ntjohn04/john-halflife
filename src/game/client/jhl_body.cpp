@@ -69,6 +69,7 @@ constexpr float StandingEyeHeight = 28;
 // Half-Life's own model. A monster's model: its origin at its feet, not the hull's middle.
 constexpr const char* HalfLifePlayer = "models/player.mdl";
 constexpr const char* LabCoatGordon = "models/gordon_scientist.mdl";
+constexpr const char* BarneyPlayer = "models/bshift/player.mdl"; // Blue Shift's (Unified's model replacement).
 
 struct Movement
 {
@@ -367,8 +368,9 @@ void JhlBody_CreateEntities()
 	g_Body.curstate.framerate = 0;
 	g_Body.curstate.iuser4 = JhlBodyMarker;
 	// Crouched, only its legs: its back would be in view. Jumping, its first two spine bones too, the lower half of its
-	// torso: its landing bends the rest over into view.
-	g_Body.curstate.iuser3 = g_Crouching ? 0 : activity == ActHop ? 2 : static_cast<int>(g_Spine->value);
+	// torso: its landing bends the rest over into view. Barney only the first: his vest's lettering is low on his back.
+	const int jumpSpine = 0 == std::strcmp(model->name, BarneyPlayer) ? 1 : 2;
+	g_Body.curstate.iuser3 = g_Crouching ? 0 : activity == ActHop ? jumpSpine : static_cast<int>(g_Spine->value);
 	g_Body.latched.prevsequence = g_Body.curstate.sequence;
 	g_Body.angles = g_Body.curstate.angles = g_Body.latched.prevangles = Vector{0, legYaw, 0};
 
