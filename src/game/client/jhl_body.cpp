@@ -369,7 +369,8 @@ void JhlBody_CreateEntities()
 	g_Body.curstate.iuser4 = JhlBodyMarker;
 	// Crouched, only its legs: its back would be in view. Jumping, its first two spine bones too, the lower half of its
 	// torso: its landing bends the rest over into view. Barney only the first: his vest's lettering is low on his back.
-	const int jumpSpine = 0 == std::strcmp(model->name, BarneyPlayer) ? 1 : 2;
+	// Trying the first only for all of them.
+	const int jumpSpine = 1;
 	g_Body.curstate.iuser3 = g_Crouching ? 0 : activity == ActHop ? jumpSpine : static_cast<int>(g_Spine->value);
 	g_Body.latched.prevsequence = g_Body.curstate.sequence;
 	g_Body.angles = g_Body.curstate.angles = g_Body.latched.prevangles = Vector{0, legYaw, 0};
