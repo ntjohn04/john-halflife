@@ -19,13 +19,26 @@ options are on the [front page](../README.md). The Unified SDK's own documentati
 
 Console commands for finding problems; none changes anything in play.
 
-* Hitch finder: `jhl_debug_hitch <ms>` (console, 0 off) reports every frame longer than that: the client's and the
-  server's time by part (each engine call into them, user messages, sound loading, resampling and reverb changes,
-  entity thinks and touches, by class), their slowest calls, and what the engine took beyond them. Printed to the
-  console and added to `jhl_hitches.txt` in the game's folder; the 2 seconds after a map loads, and pauses, aren't
-  counted (`src/game/shared/jhl_hitch.h`). A frame that saved the game says so: an autosave (`trigger_autosave`) or a
-  quick save takes the engine 25-130 ms to write, in vanilla too (the three hitches of the 1.0 playthrough were
-  all autosaves).
+* Hitch finder: `jhl_debug_hitch <ms>` (console, 0 off) reports every frame longer than that, one report per frame
+  (`src/game/shared/jhl_hitch.h`). Printed to the console and added to `jhl_hitches.txt` in the game's folder. The 2
+  seconds after a map loads, and pauses, aren't counted. Each report has:
+  * **The wall-clock time** (the log notes the date once a session), to find the frame in a frame-time capture
+    (PresentMon, CapFrameX), and the frame against the median of the last 240 ("usually").
+  * **A verdict:** what took the time beyond a usual frame. That's John Half-Life's and the Unified SDK's code (both
+    libraries: every engine call into them is timed), naming the slowest part. Or else the engine presenting the frame
+    (from `HUD_Redraw`, the frame drawn, to the next call: the driver's swap, vsync, `fps_max`'s wait, so the driver,
+    the GPU or Windows), or the engine's other work. Or a save: an autosave (`trigger_autosave`) or a quick save takes
+    the engine 25-130 ms to write, in vanilla too, and the report gives the entities' data (`DispatchSave`,
+    `SaveGlobalState`, our code) apart from the engine's writing.
+  * **The time split those ways**, the longest stretch outside both libraries, and each library's parts (each engine
+    call into them, user messages, sound loading, resampling and reverb changes, entity thinks and touches, by class)
+    and slowest calls.
+
+  On a listen server the client and the server run on one thread, so the client reports both in one frame. It finds
+  the server through the console variable `jhl_debug_hitch_link`, the server's timeline and parts following the
+  `cvar_t` the engine keeps (the console says so when it's found). A dedicated server reports alone. What the engine
+  draws or the GPU does for our effects shows as the engine's or the presenting time: a frame-time capture against
+  vanilla's tells that apart.
 * Muzzle check: `jhl_debug_muzzle` (console) prints everything that keeps the muzzle light and smoke from being made:
   `jhl_fx_muzzleflash`, third person or a spectator state, a zoomed field of view against `default_fov`, the view
   model's muzzle point, `r_dynamic`, and whether a temporary entity can be had. For the rare times they've stopped.

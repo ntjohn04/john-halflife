@@ -199,8 +199,11 @@ static cvar_t* g_JhlDebugHitch;
 
 static void JhlHitch_ClientFrame()
 {
+	// The server in this process (a listen server), reported with the client's frames.
+	JhlHitch_Link(gEngfuncs.pfnGetCvarPointer);
+
 	// Where the view last was: the local player's entity isn't there yet while a map or save loads.
-	JhlHitch_EndFrame("cl", g_JhlDebugHitch ? g_JhlDebugHitch->value : 0, []
+	JhlHitch_EndFrame(g_JhlDebugHitch ? g_JhlDebugHitch->value : 0, []
 		{
 			const char* level = gEngfuncs.pfnGetLevelName();
 			return fmt::format("{} at ({:.0f} {:.0f} {:.0f})", level ? level : "", v_origin.x, v_origin.y, v_origin.z);

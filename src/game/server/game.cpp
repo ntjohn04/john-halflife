@@ -15,6 +15,7 @@
 #include "cbase.h"
 #include "ServerLibrary.h"
 #include "UserMessages.h"
+#include "jhl_hitch.h"
 
 cvar_t displaysoundlist = {"displaysoundlist", "0"};
 
@@ -95,6 +96,9 @@ void GameDLLInit()
 		SERVER_COMMAND("quit\n");
 		return;
 	}
+
+	// johnhalflife (jhl_debug_hitch): how a client in this process finds the server, to report both as one.
+	CVAR_REGISTER(JhlHitch_ServerLink());
 
 	CVAR_REGISTER(&displaysoundlist);
 	CVAR_REGISTER(&allow_spectators);

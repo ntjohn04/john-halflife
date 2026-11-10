@@ -49,7 +49,7 @@ static DLL_FUNCTIONS gFunctionTable =
 		SaveWriteFields, // pfnSaveWriteFields
 		SaveReadFields,	 // pfnSaveReadFields
 
-		SaveGlobalState,	// pfnSaveGlobalState
+		JHL_TIMED(SaveGlobalState),	// pfnSaveGlobalState
 		RestoreGlobalState, // pfnRestoreGlobalState
 		ResetGlobalState,	// pfnResetGlobalState
 

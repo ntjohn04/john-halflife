@@ -20,10 +20,14 @@
 #include <cstddef>
 #include <string>
 
+struct cvar_t;
+
 // johnhalflife (jhl_debug_hitch, a debugging aid): what makes a frame slow. Each library times the calls the engine
 // makes into it and the parts of them that might be slow (JhlHitchScope, JHL_TIMED); a frame longer than
-// jhl_debug_hitch milliseconds has them printed to the console and added to jhl_hitches.txt in the game's folder. What
-// neither library's calls account for is the engine's own work. Off (0), a scope costs a test of a flag.
+// jhl_debug_hitch milliseconds is reported to the console and jhl_hitches.txt in the game's folder, with a verdict:
+// John Half-Life's and the Unified SDK's code (the two libraries), the engine presenting the frame (the driver), the
+// engine's other work, or a save. On a listen server the client reports both libraries' frame as one: they share a
+// thread, and the server's timeline is the client's (JhlHitch_Link). Off (0), a scope costs a test of a flag.
 
 extern bool g_JhlHitchOn;
 
@@ -64,11 +68,11 @@ private:
 };
 
 /**
- *	@brief Ends a frame: if it took longer than @p thresholdMs (0: off), what it was spent on is printed and logged,
- *	tagged @p side ("cl", "sv") and what @p where gives (map and position; asked only then, the frame being one that
- *	was played). Called as each frame starts.
+ *	@brief Ends a frame: if it took longer than @p thresholdMs (0: off), what it was spent on is printed and logged, with
+ *	what @p where gives (map and position; asked only then, the frame being one that was played). Called as each frame
+ *	starts. While the client's linked to the server (JhlHitch_Link), the server's frames are the client's.
  */
-void JhlHitch_EndFrame(const char* side, float thresholdMs, std::string (*where)());
+void JhlHitch_EndFrame(float thresholdMs, std::string (*where)());
 
 /**
  *	@brief Frames for the next 2 seconds aren't reported (a map loading).
@@ -80,6 +84,18 @@ void JhlHitch_Skip();
  *	frames meanwhile (it runs the player's moves, not frames, while the game is paused, e.g. by the console); a few are let through.
  */
 void JhlHitch_CountMove();
+
+/**
+ *	@brief The server's console variable through which the client finds it (registered in GameDLLInit): the engine
+ *	keeps the cvar_t it's given, the rest of what's shared following it.
+ */
+cvar_t* JhlHitch_ServerLink();
+
+/**
+ *	@brief The client finds the server running in its process (a listen server) through @p find (the engine's
+ *	pfnGetCvarPointer), once a second until found, while the hitch finder is on. Called before each JhlHitch_EndFrame.
+ */
+void JhlHitch_Link(cvar_t* (*find)(const char* name));
 
 template <std::size_t N>
 struct JhlHitchName

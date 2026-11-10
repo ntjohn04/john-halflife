@@ -1265,7 +1265,7 @@ static void JhlHitch_ServerFrame()
 		threshold = CVAR_GET_POINTER("jhl_debug_hitch");
 	}
 
-	JhlHitch_EndFrame("sv", threshold ? threshold->value : 0, []
+	JhlHitch_EndFrame(threshold ? threshold->value : 0, []
 		{
 			std::string where = STRING(gpGlobals->mapname);
 
