@@ -176,7 +176,7 @@ model_t* PickModel(cl_entity_t* player, int& index, bool& monster)
 void JhlBody_Initialize()
 {
 	g_Enabled = gEngfuncs.pfnRegisterVariable("jhl_visuals_firstpersonbody", "1", FCVAR_ARCHIVE);
-	g_Offset = gEngfuncs.pfnRegisterVariable("jhl_debug_body_offset", "17", 0);
+	g_Offset = gEngfuncs.pfnRegisterVariable("jhl_debug_body_offset", "16", 0);
 	g_Spine = gEngfuncs.pfnRegisterVariable("jhl_debug_body_spine", "4", 0);
 }
 
@@ -310,9 +310,9 @@ void JhlBody_CreateEntities()
 	g_Body.curstate.animtime = static_cast<float>(time);
 	g_Body.curstate.framerate = 0;
 	g_Body.curstate.iuser4 = JhlBodyMarker;
-	// Crouched, only its legs: its back would be in view. Jumping, its first spine bone too, the bottom of its torso:
-	// its landing bends the rest over into view.
-	g_Body.curstate.iuser3 = move.Crouched ? 0 : activity == ActHop ? 1 : static_cast<int>(g_Spine->value);
+	// Crouched, only its legs: its back would be in view. Jumping, its first two spine bones too, the lower half of its
+	// torso: its landing bends the rest over into view.
+	g_Body.curstate.iuser3 = move.Crouched ? 0 : activity == ActHop ? 2 : static_cast<int>(g_Spine->value);
 	g_Body.latched.prevsequence = g_Body.curstate.sequence;
 	g_Body.angles = g_Body.curstate.angles = g_Body.latched.prevangles = Vector{0, legYaw, 0};
 
