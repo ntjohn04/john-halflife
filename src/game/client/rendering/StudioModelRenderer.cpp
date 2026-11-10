@@ -1382,7 +1382,8 @@ void CStudioModelRenderer::JhlSetupCasingBones()
 
 void CStudioModelRenderer::JhlSetupBorrowedBones()
 {
-	// The pose's model, sequence and frame (its iuser1, iuser2 less one, fuser3), its origin fuser4 above the feet.
+	// The pose's model, sequence and frame (its iuser1, iuser2 less one, fuser3), its origin fuser4 above the feet; with
+	// playerclass 1, only its arms (jhl_body.h).
 	model_t* donor = IEngineStudio.GetModelByIndex(m_pCurrentEntity->curstate.iuser1);
 	auto donorHeader = donor ? static_cast<studiohdr_t*>(IEngineStudio.Mod_Extradata(donor)) : nullptr;
 	const int donorSequence = m_pCurrentEntity->curstate.iuser2 - 1;
@@ -1400,7 +1401,9 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	static float standingPos[MAXSTUDIOBONES][3];
 	static vec4_t standingQ[MAXSTUDIOBONES];
 
-	// Its own sequence (standing) for any bone the player model hasn't.
+	const bool armsOnly = m_pCurrentEntity->curstate.playerclass == 1;
+
+	// Its own sequence: for any bone the other hasn't (standing), or all but the arms.
 	if (m_pCurrentEntity->curstate.sequence >= m_pStudioHeader->numseq)
 		m_pCurrentEntity->curstate.sequence = 0;
 
@@ -1408,7 +1411,7 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	mstudioseqdesc_t* own = &sequences[m_pCurrentEntity->curstate.sequence];
 	StudioCalcRotations(pos, q, own, StudioGetAnim(m_pRenderModel, own), StudioEstimateFrame(own));
 
-	// The player model's pose, and its standing one (deep_idle) to measure its hips' rise and fall from.
+	// The other model's pose, and the player model's standing one (deep_idle) to measure its hips' rise and fall from.
 	studiohdr_t* const ownHeader = m_pStudioHeader;
 	model_t* const ownModel = m_pRenderModel;
 	m_pStudioHeader = donorHeader;
@@ -1431,8 +1434,9 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	m_pStudioHeader = ownHeader;
 	m_pRenderModel = ownModel;
 
-	// Bone for bone by name (their bipeds alike, Bip02 his, Bip01 the player model's): its turns, and its hips raised
-	// and lowered as the player model's (from its origin, the hull's middle, to the feet), to his size.
+	// Bone for bone by name (their bipeds alike, Bip02 the lab coat's, Bip01 the player models'): its turns, and its hips
+	// raised and lowered as the player model's (from its origin, the hull's middle, to the feet), to his size. Only its
+	// arms: from the collarbones down.
 	auto bones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(m_pStudioHeader) + m_pStudioHeader->boneindex);
 	auto donorBones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(donorHeader) + donorHeader->boneindex);
 
@@ -1444,6 +1448,11 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 
 		if (0 == std::strncmp(name, "Bip02", 5))
 			name[4] = '1';
+		else if (0 == std::strncmp(name, "Bip01", 5))
+			name[4] = '2';
+
+		if (armsOnly && !std::strstr(name, " Arm") && !std::strstr(name, " Hand"))
+			continue;
 
 		for (int j = 0; j < donorHeader->numbones; ++j)
 		{
@@ -1452,7 +1461,7 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 
 			std::memcpy(q[i], donorQ[j], sizeof(q[i]));
 
-			if (bones[i].parent == -1 && donorBones[j].value[2] > 0)
+			if (!armsOnly && bones[i].parent == -1 && donorBones[j].value[2] > 0)
 			{
 				const float scale = bones[i].value[2] / donorBones[j].value[2];
 				pos[i][2] += ((donorPos[j][2] + m_pCurrentEntity->curstate.fuser4) - (standingPos[j][2] + 36)) * scale;

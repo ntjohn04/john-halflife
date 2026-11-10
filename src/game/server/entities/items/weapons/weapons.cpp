@@ -458,13 +458,12 @@ void W_Precache()
 	}
 
 	// johnhalflife (jhl_visuals_firstpersonbody, the client's setting, read as it's loaded): the body seen looking down
-	// is Gordon's lab coat before the HEV suit (jhl_body.cpp), where the player is Half-Life's own model. Blue Shift's,
-	// installed from the player's game; like the effects above, only while the map has room. With the body off, nothing.
+	// is Gordon's lab coat before the HEV suit (jhl_body.cpp), and with no weapon every player model's arms take his
+	// poses. Blue Shift's, installed from the player's game; like the effects above, only while the map has room. With the
+	// body off, nothing.
 	constexpr const char* LabCoatGordon = "models/gordon_scientist.mdl";
 
-	if (0 != CVAR_GET_FLOAT("jhl_visuals_firstpersonbody") &&
-		FStrEq(UTIL_CheckForGlobalModelReplacement("models/player.mdl"), "models/player.mdl") &&
-		g_ModelPrecache->GetCount() + RoomForTheMapsOwnModels < EngineModels && g_pFileSystem->FileExists(LabCoatGordon))
+	if (0 != CVAR_GET_FLOAT("jhl_visuals_firstpersonbody") && g_ModelPrecache->GetCount() + RoomForTheMapsOwnModels < EngineModels && g_pFileSystem->FileExists(LabCoatGordon))
 	{
 		UTIL_PrecacheModel(LabCoatGordon);
 	}

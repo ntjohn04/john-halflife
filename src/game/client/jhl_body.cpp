@@ -264,6 +264,25 @@ void JhlBody_CreateEntities()
 	const auto& description = Sequences(poseHeader)[sequence];
 	const float frames = static_cast<float>(std::max(description.numframes - 1, 1));
 
+	// No view model (no weapon, holstered): its arms are drawn, nothing else being the player's. The player models' arms
+	// hold a weapon out in every pose; standing, walking and running, they take the lab coat's instead (his own poses,
+	// arms at his sides), where it's precached (W_Precache).
+	const cl_entity_t* viewModel = gEngfuncs.GetViewModel();
+	g_Arms = !viewModel || !viewModel->model;
+
+	const studiohdr_t* armsHeader = nullptr;
+	int armsIndex = 0;
+
+	if (g_Arms && !monster && (activity == ActIdle || activity == ActWalk || activity == ActRun))
+	{
+		armsIndex = gEngfuncs.pEventAPI->EV_FindModelIndex(LabCoatGordon);
+		model_t* labCoat = armsIndex > 0 ? gEngfuncs.hudGetModelByIndex(armsIndex) : nullptr;
+		armsHeader = labCoat && labCoat->type == mod_studio ? static_cast<const studiohdr_t*>(IEngineStudio.Mod_Extradata(labCoat)) : nullptr;
+
+		if (armsHeader && armsHeader->numseq <= 0)
+			armsHeader = nullptr;
+	}
+
 	// The legs turned the way it moves (backwards past BackwardsTurn), the player model's back turned the rest of the way
 	// to where it looks (its four spine controllers, as the engine's StudioProcessGait); still, the way it looks.
 	Vector viewAngles;
@@ -315,6 +334,14 @@ void JhlBody_CreateEntities()
 		g_Body.curstate.fuser3 = g_Cycle * frames;
 		g_Body.curstate.fuser4 = move.Crouched ? 18 : 36;
 	}
+	else if (armsHeader)
+	{
+		const int armsSequence = PickSequence(armsHeader, activity);
+		g_Body.curstate.iuser1 = armsIndex;
+		g_Body.curstate.iuser2 = armsSequence + 1;
+		g_Body.curstate.fuser3 = g_Cycle * std::max(Sequences(armsHeader)[armsSequence].numframes - 1, 1);
+		g_Body.curstate.playerclass = 1; // Only its arms.
+	}
 
 	g_Body.curstate.animtime = static_cast<float>(time);
 	g_Body.curstate.framerate = 0;
@@ -322,9 +349,6 @@ void JhlBody_CreateEntities()
 	// Crouched, only its legs: its back would be in view. Jumping, its first two spine bones too, the lower half of its
 	// torso: its landing bends the rest over into view.
 	g_Body.curstate.iuser3 = move.Crouched ? 0 : activity == ActHop ? 2 : static_cast<int>(g_Spine->value);
-
-	const cl_entity_t* viewModel = gEngfuncs.GetViewModel();
-	g_Arms = !viewModel || !viewModel->model;
 	g_Body.latched.prevsequence = g_Body.curstate.sequence;
 	g_Body.angles = g_Body.curstate.angles = g_Body.latched.prevangles = Vector{0, legYaw, 0};
 
@@ -367,13 +391,12 @@ void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*
 {
 	// Its head hidden, and its arms from the shoulders while there's a view model (its arms are the player's; the
 	// collarbones kept, Barney's vest hanging from them), and its spine above its iuser3 bones over the hips with all
-	// above. Its bones come after their parents.
+	// above but its arms while they're drawn. Its bones come after their parents.
 	const auto* bone = reinterpret_cast<const mstudiobone_t*>(reinterpret_cast<const byte*>(header) + header->boneindex);
 	const int count = std::min(header->numbones, MAXSTUDIOBONES);
 	const int keptSpine = entity->curstate.iuser3;
 
 	int cut[MAXSTUDIOBONES];		  // The first hidden bone it's under (itself), -1 if shown.
-	int point[MAXSTUDIOBONES];		  // The bone it's shrunk to.
 	int spineDepth[MAXSTUDIOBONES]{}; // Its place up the spine: 1 its first bone above the hips.
 
 	for (int i = 0; i < count; ++i)
@@ -384,22 +407,14 @@ void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*
 		const std::size_t length = std::strlen(name);
 		const bool head = std::strstr(name, "Head") != nullptr;
 		const bool arm = !g_Arms && length >= 4 && 0 == std::strcmp(name + length - 4, "Arm1");
+		const bool collarbone = length >= 6 && (0 == std::strcmp(name + length - 6, " L Arm") || 0 == std::strcmp(name + length - 6, " R Arm"));
 
 		spineDepth[i] = spine && parent >= 0 ? spineDepth[parent] + 1 : 0;
 
-		if (parent >= 0 && cut[parent] >= 0)
-		{
+		if (parent >= 0 && cut[parent] >= 0 && !(g_Arms && collarbone))
 			cut[i] = cut[parent];
-			point[i] = point[parent];
-		}
 		else
-		{
 			cut[i] = head || arm || (spine && spineDepth[i] > keptSpine) ? i : -1;
-
-			// The head shrunk into the chest (its neck's parent's joint), not at the neck's top: the skin of the neck, joined
-			// to the head, is drawn into the body then instead of up to a point above the collar.
-			point[i] = head && parent >= 0 && bone[parent].parent >= 0 ? bone[parent].parent : i;
-		}
 
 		if (cut[i] < 0)
 			continue;
@@ -411,8 +426,8 @@ void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*
 			for (int column = 0; column < 3; ++column)
 				bones[i][row][column] = lightBones[i][row][column] = 0;
 
-			bones[i][row][3] = bones[point[i]][row][3];
-			lightBones[i][row][3] = lightBones[point[i]][row][3];
+			bones[i][row][3] = bones[cut[i]][row][3];
+			lightBones[i][row][3] = lightBones[cut[i]][row][3];
 		}
 	}
 }
