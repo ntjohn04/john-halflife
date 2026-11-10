@@ -59,6 +59,12 @@ constexpr float CrouchedSlowestLoop = 1.8f;
 // Off the ground this long, or going up (a jump), the legs take the jump's pose; less is a step down.
 constexpr float FallTime = 0.15f;
 
+// Moving, it stays so until it's been still this long: walking along a wall, the speed can flicker to nothing and back.
+constexpr float StillTime = 0.1f;
+
+// The eyes' height above a standing player's origin (VEC_VIEW): in the air, it hangs from the eyes as a standing jump's.
+constexpr float StandingEyeHeight = 28;
+
 // Gordon before the HEV suit: Blue Shift's lab coat Gordon, precached by the server (W_Precache) where the player is
 // Half-Life's own model. A monster's model: its origin at its feet, not the hull's middle.
 constexpr const char* HalfLifePlayer = "models/player.mdl";
@@ -87,7 +93,10 @@ cl_entity_t g_Body;
 double g_LastTime = 0;
 float g_Cycle = 0;	 // Through the legs' loop, 0 to 1.
 float g_AirTime = 0; // Since leaving the ground.
-bool g_Arms = false;  // Its arms drawn: no view model (no weapon, holstered), so nothing else is the player's arms.
+float g_StillTime = 0; // Since it last moved.
+float g_LegYaw = 0;	   // The way its legs last went.
+bool g_Arms = false;   // Its arms drawn: no view model (no weapon, holstered), so nothing else is the player's arms.
+bool g_Crouching = false; // In a crouching pose (crouched, not in the air).
 
 float AngleDifference(float a, float b)
 {
@@ -234,6 +243,8 @@ void JhlBody_CreateEntities()
 	const bool inAir = !move.OnGround && !inWater && move.MoveType != MOVETYPE_FLY;
 
 	g_AirTime = inAir ? g_AirTime + frameTime : 0;
+	g_StillTime = speed > StillSpeed ? 0 : g_StillTime + frameTime;
+	const bool moving = g_StillTime < StillTime;
 
 	int activity = ActIdle;
 
@@ -242,11 +253,14 @@ void JhlBody_CreateEntities()
 	else if (inAir && (move.Velocity.z > 0 || g_AirTime > FallTime))
 		activity = ActHop;
 	else if (move.Crouched)
-		activity = speed > StillSpeed ? ActCrouch : ActCrouchIdle;
+		activity = moving ? ActCrouch : ActCrouchIdle;
 	else if (speed > RunSpeed && move.MoveType != MOVETYPE_FLY)
 		activity = ActRun;
-	else if (speed > StillSpeed)
+	else if (moving)
 		activity = ActWalk;
+
+	// A crouching jump jumps as a standing one: its pose, arms and back, hung from the eyes (StandingEyeHeight).
+	g_Crouching = move.Crouched && activity != ActHop;
 
 	// The lab coat's monster jumping, crouching or in water: the player model's pose (its poses are only walking ones),
 	// drawn on his bones (CStudioModelRenderer::JhlSetupBorrowedBones). The player model is his here (PickModel).
@@ -266,9 +280,10 @@ void JhlBody_CreateEntities()
 
 	// No view model (no weapon, holstered): its arms are drawn, nothing else being the player's. The player models' arms
 	// hold a weapon out in every pose; standing, walking and running, their upper bodies take the lab coat's instead (his
-	// own poses, arms at his sides), half a loop on (his loops start on the other foot), where it's precached (W_Precache). Crouched, none: their crouching arms hold one out too.
+	// own poses, arms at his sides), half a loop on (his loops start on the other foot), where it's precached
+	// (W_Precache). Crouching, none: their crouching arms hold one out too.
 	const cl_entity_t* viewModel = gEngfuncs.GetViewModel();
-	g_Arms = (!viewModel || !viewModel->model) && !move.Crouched;
+	g_Arms = (!viewModel || !viewModel->model) && !g_Crouching;
 
 	const studiohdr_t* armsHeader = nullptr;
 	int armsIndex = 0;
@@ -291,9 +306,13 @@ void JhlBody_CreateEntities()
 	float legYaw = viewYaw;
 	float direction = 1;
 
-	if (speed > StillSpeed && !inWater && move.MoveType != MOVETYPE_FLY)
+	if (moving && !inWater && move.MoveType != MOVETYPE_FLY)
 	{
-		legYaw = std::atan2(move.Velocity.y, move.Velocity.x) * 180 / static_cast<float>(PI);
+		// The way it goes; a moment still (StillTime), the way it last went.
+		if (speed > StillSpeed)
+			g_LegYaw = std::atan2(move.Velocity.y, move.Velocity.x) * 180 / static_cast<float>(PI);
+
+		legYaw = g_LegYaw;
 
 		if (std::abs(AngleDifference(legYaw, viewYaw)) > BackwardsTurn)
 		{
@@ -332,7 +351,7 @@ void JhlBody_CreateEntities()
 		g_Body.curstate.iuser1 = player->curstate.modelindex;
 		g_Body.curstate.iuser2 = sequence + 1;
 		g_Body.curstate.fuser3 = g_Cycle * frames;
-		g_Body.curstate.fuser4 = move.Crouched ? 18 : 36;
+		g_Body.curstate.fuser4 = g_Crouching ? 18 : 36;
 	}
 	else if (armsHeader)
 	{
@@ -349,7 +368,7 @@ void JhlBody_CreateEntities()
 	g_Body.curstate.iuser4 = JhlBodyMarker;
 	// Crouched, only its legs: its back would be in view. Jumping, its first two spine bones too, the lower half of its
 	// torso: its landing bends the rest over into view.
-	g_Body.curstate.iuser3 = move.Crouched ? 0 : activity == ActHop ? 2 : static_cast<int>(g_Spine->value);
+	g_Body.curstate.iuser3 = g_Crouching ? 0 : activity == ActHop ? 2 : static_cast<int>(g_Spine->value);
 	g_Body.latched.prevsequence = g_Body.curstate.sequence;
 	g_Body.angles = g_Body.curstate.angles = g_Body.latched.prevangles = Vector{0, legYaw, 0};
 
@@ -359,8 +378,12 @@ void JhlBody_CreateEntities()
 		g_Body.curstate.controller[i] = g_Body.latched.prevcontroller[i] = static_cast<byte>(std::clamp(twist, 0.f, 255.f));
 
 	// Its origin above the player's feet (JhlBody_Place): the player model's is the hull's middle as the engine draws
-	// players (its crouching poses made for the crouching hull's), the monster's its feet.
-	g_Body.curstate.fuser1 = -move.FeetDepth + (monster ? 0 : (move.Crouched ? 18 : 36));
+	// players (its crouching poses made for the crouching hull's), the monster's its feet. In the air, below the eyes as a
+	// standing player's: crouching in a jump tucks the hull's feet up, the camera low in it.
+	if (activity == ActHop)
+		g_Body.curstate.fuser1 = move.EyeHeight - StandingEyeHeight - (monster ? 36 : 0);
+	else
+		g_Body.curstate.fuser1 = -move.FeetDepth + (monster ? 0 : (g_Crouching ? 18 : 36));
 	g_Body.curstate.fuser2 = viewYaw;
 	g_Body.origin = move.Origin;
 
@@ -380,7 +403,7 @@ bool JhlBody_Place(cl_entity_t* entity, const float* viewOrigin)
 	// On the player's feet where the movement has them, whatever the camera's smoothing does (stairs, crouching, landing),
 	// behind the eyes by jhl_debug_body_offset along where the player looks.
 	const float yaw = entity->curstate.fuser2 * static_cast<float>(PI) / 180;
-	const float offset = g_Offset->value + (g_Movement.Crouched ? CrouchedOffset : 0);
+	const float offset = g_Offset->value + (g_Crouching ? CrouchedOffset : 0);
 
 	entity->origin = Vector{origin.x - std::cos(yaw) * offset, origin.y - std::sin(yaw) * offset, origin.z + entity->curstate.fuser1};
 	entity->curstate.origin = entity->origin;
@@ -392,12 +415,14 @@ void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*
 {
 	// Its head hidden, and its arms from the shoulders while there's a view model (its arms are the player's; the
 	// collarbones kept, Barney's vest hanging from them), and its spine above its iuser3 bones over the hips with all
-	// above but its arms while they're drawn. Its bones come after their parents.
+	// above but its arms while they're drawn (their collarbones shrunk alone: Barney's upper back hangs from them). Its
+	// bones come after their parents.
 	const auto* bone = reinterpret_cast<const mstudiobone_t*>(reinterpret_cast<const byte*>(header) + header->boneindex);
 	const int count = std::min(header->numbones, MAXSTUDIOBONES);
 	const int keptSpine = entity->curstate.iuser3;
 
 	int cut[MAXSTUDIOBONES];		  // The first hidden bone it's under (itself), -1 if shown.
+	bool alone[MAXSTUDIOBONES]{};	  // Hidden, but not the bones under it.
 	int spineDepth[MAXSTUDIOBONES]{}; // Its place up the spine: 1 its first bone above the hips.
 
 	for (int i = 0; i < count; ++i)
@@ -412,10 +437,21 @@ void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*
 
 		spineDepth[i] = spine && parent >= 0 ? spineDepth[parent] + 1 : 0;
 
-		if (parent >= 0 && cut[parent] >= 0 && !(g_Arms && collarbone))
+		const bool parentCut = parent >= 0 && cut[parent] >= 0 && !alone[parent];
+
+		if (parentCut && g_Arms && collarbone)
+		{
+			cut[i] = i;
+			alone[i] = true;
+		}
+		else if (parentCut)
+		{
 			cut[i] = cut[parent];
+		}
 		else
+		{
 			cut[i] = head || arm || (spine && spineDepth[i] > keptSpine) ? i : -1;
+		}
 
 		if (cut[i] < 0)
 			continue;
@@ -438,4 +474,5 @@ void JhlBody_Reset()
 	g_Movement = {};
 	g_Cycle = 0;
 	g_AirTime = 0;
+	g_StillTime = 0;
 }
