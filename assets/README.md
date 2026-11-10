@@ -10,6 +10,12 @@ models are committed, so the game's build and the packager don't.
 python scripts/build_models.py ../halflife-unified-sdk-assets [folder ...]
 ```
 
+## icons
+
+Each game folder's icon, `icons/<folder>.png` (square, 256x256 or more), written by `scripts/make_icons.py` into
+its config as `game.ico`, `game.tga` (16x16) and `game_big.tga` (32x32, Steam's library icon). A hand-made small
+version, `icons/<folder>_16.png` or `_32.png`, is used as it is for that size. The four must differ from each other.
+
 ## rosenberg
 
 The Unified SDK's Rosenberg (its `modelsrc/models/rosenberg/rosenberg_ld.qc`) with a low-definition head in place of

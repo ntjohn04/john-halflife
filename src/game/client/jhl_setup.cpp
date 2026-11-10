@@ -8,7 +8,7 @@
  *
  *	* the files in jhl_setup_files.txt (made by scripts/make_setup_files.py): Opposing Force's and Blue Shift's
  *	  files, their soundtracks, each folder's own versions of files the games share names for;
- *	* the menu: Half-Life's main menu (its hints beside the buttons, as WON had), its background, logo and icon,
+ *	* the menu: Half-Life's main menu (its hints beside the buttons, as WON had), its background and logo,
  *	  then each folder's own Valve game's over them, so they match the player's version of the game; Opposing
  *	  Force's and Blue Shift's menu buttons in their own fonts and colours (Half-Life's TrackerScheme.res, changed);
  *	* the maps in jhl_setup_maps.txt, converted for the Unified SDK's game code (jhl_mapconvert.cpp);
@@ -403,20 +403,6 @@ void PlanMenu(const fs::path& root, Plan& plan)
 			for (const auto& tile : Matching(resource / "background", widescreen ? "" : "800_"))
 			{
 				plan.Add(target / "resource" / "background" / tile.filename(), tile);
-			}
-
-			for (const char* icon : {"game.ico", "game.tga"})
-			{
-				if (IsFile(game / icon))
-				{
-					plan.Add(target / icon, game / icon);
-				}
-			}
-
-			// Steam's library shows a mod's game_big.tga (liblist.gam's icon "game"), 32x32 as the games' game.tga.
-			if (IsFile(game / "game.tga"))
-			{
-				plan.Add(target / "game_big.tga", game / "game.tga");
 			}
 		}
 
