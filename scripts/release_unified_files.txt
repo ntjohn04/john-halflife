@@ -249,7 +249,6 @@ cfg/skill_coop.json
 cfg/skill_multiplayer.json
 class_signs.wad
 decals.wad
-game_big.tga
 gfx/shell/kb_act.lst
 gfx/vgui/640_arrowlt.tga
 maps/graphs/ba_canal1.nod

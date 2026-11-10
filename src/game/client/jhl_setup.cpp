@@ -51,7 +51,7 @@ namespace
 // and laserdot.spr back, which installing a release over a set-up folder replaced with the Unified SDK's. 9: ba_yard3's
 // Harold on his own models. 10: of3a1b without Half-Life's chapter title; the glass shards' chrome. 11: the main
 // menu's hints back; Half-Life's intro for John Half-Life and Uplink.
-constexpr int SetupVersion = 12;
+constexpr int SetupVersion = 13;
 
 constexpr const char* BaseFolder = "johnhalflife";
 constexpr const char* StampFile = "jhl_setup.txt";
@@ -411,6 +411,12 @@ void PlanMenu(const fs::path& root, Plan& plan)
 				{
 					plan.Add(target / icon, game / icon);
 				}
+			}
+
+			// Steam's library shows a mod's game_big.tga (liblist.gam's icon "game"), 32x32 as the games' game.tga.
+			if (IsFile(game / "game.tga"))
+			{
+				plan.Add(target / "game_big.tga", game / "game.tga");
 			}
 		}
 

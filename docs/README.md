@@ -117,7 +117,9 @@ a copy of the game code.
   each button as WON had
   (`GameMenu.res`, shared by all four, so the Unified SDK's Campaign Select is gone; its map,
   `hlu_campaignselect`, still works from the console), background layouts and tiles, logo and icon, then the
-  folder's own game's (`gearbox`, `bshift`) over them.
+  folder's own game's (`gearbox`, `bshift`) over them. The icon is also each folder's `game_big.tga`, the one
+  Steam's library shows for a mod: Half-Life's red lambda for John Half-Life and Uplink, Opposing Force's green,
+  Blue Shift's blue (Steam reads it when it starts).
 * **The main menu's text, as the WON versions had it** (`scripts/make_menu_strings.py` writes each game's
   `resource/gameui_english.txt`): labels in Title Case in Half-Life and in capitals in the expansions (Options kept,
   not WON's Configuration), a hint beside each button, Hazard Course for the Training Room; Opposing Force's drill

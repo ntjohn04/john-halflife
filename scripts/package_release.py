@@ -49,7 +49,7 @@ FOLDERS = ("johnhalflife", "johnhalflife_op4", "johnhalflife_bs", "johnhalflife_
 DROP = [r"^tools/", r"^installer/", r"^redist/", r"^halflife-unified\.fgd$", r"^README\.txt$",
         r"^maps/(test_|zoo_|hlu_technology_demonstration)", r"^maps/graphs/(test_|zoo_|hlu_technology_demonstration)",
         r"^cfg/maps/(test_|zoo_)",
-        r"^game\.(ico|tga)$", r"^default_config\.cfg$",
+        r"^game(_big)?\.(ico|tga)$", r"^default_config\.cfg$",
         r"^tfc2?\.wad$", r"^liblist\.gam$", r"^delta\.lst$", r"^cl_dlls/", r"^dlls/", r"^user\.scr", r"^settings\.scr",
         r"^resource/GameMenu\.res$"]
 
