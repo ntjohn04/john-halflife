@@ -20,6 +20,7 @@
 
 #include "hud.h"
 #include "HudSpriteConfigSystem.h"
+#include "ui/hud/HudReplacementSystem.h"
 #include "pm_shared.h"
 #include "triangleapi.h"
 #include "com_model.h"
@@ -937,6 +938,33 @@ void AdjustSubRect(const int iWidth, const int iHeight, float& left, float& righ
 	bottom = (iBottom - 0.5) * flHeight;
 }
 
+// johnhalflife (jhl_weapons_holster): the box behind a weapon's selected picture, as the pictures have it, of 255 and
+// added: Half-Life's and Blue Shift's (640hud*.spr) lines of 21 and 29 by turns, from the top, the 29s' first column
+// 21; Opposing Force's the same with black for the 21s; the half-size pictures' (320hud*.spr) a flat 32.
+static void JhlDrawHolsterBox(int x, int y, int width, int height, const RGB24& color)
+{
+	if (gHUD.m_bHalfSizeHud)
+	{
+		FillRGBA(x, y, width, height, color, 32);
+		return;
+	}
+
+	const bool blackLines = g_HudReplacements.HudReplacementFileName.find("op4/") != std::string::npos;
+
+	for (int row = 0; row < height; ++row)
+	{
+		if (row % 2 == 1)
+		{
+			FillRGBA(x, y + row, 1, 1, color, 21);
+			FillRGBA(x + 1, y + row, width - 1, 1, color, 29);
+		}
+		else if (!blackLines)
+		{
+			FillRGBA(x, y + row, width, 1, color, 21);
+		}
+	}
+}
+
 void CHudAmmo::DrawCrosshair(int x, int y)
 {
 	auto renderer = [this](int x, int y, const Crosshair& crosshair, RGB24 color)
@@ -1340,8 +1368,7 @@ bool CHudAmmo::DrawWList(float flTime)
 
 				if (gpActiveSel == p)
 				{
-					// johnhalflife: the holster has no picture, only the faint box a weapon's picture has behind it
-					// (Valve's are lines of 21 and 29 of 255, added: 25).
+					// johnhalflife: the holster has no picture, only the faint box a weapon's picture has behind it.
 					if (0 != p->hActive)
 					{
 						SPR_Set(p->hActive, color);
@@ -1349,7 +1376,7 @@ bool CHudAmmo::DrawWList(float flTime)
 					}
 					else
 					{
-						FillRGBA(x, y, p->rcActive.right - p->rcActive.left, p->rcActive.bottom - p->rcActive.top, color, 25);
+						JhlDrawHolsterBox(x, y, p->rcActive.right - p->rcActive.left, p->rcActive.bottom - p->rcActive.top, color);
 					}
 
 					SPR_Set(gHUD.GetSprite(m_HUD_selection), color);
