@@ -153,7 +153,8 @@ On top of the stock decal, specks and ricochet:
 
 * **Metal, vents, grates, computers:** 3–5 spark streaks and a very short warm light.
 * **Concrete, tile, dirt, wood:** one small puff of the stock `steam1.spr`, tinted per material, played
-  once.
+  once. Every puff (bullets', melee's, the revolver's and the sniper rifle's) is drawn at 0.8 of the alpha given below
+  and 1-1.3x its size at random (`DustImpact`).
 * **Glass, liquids, snow, flesh, Xen:** stock effects only.
 
 The material comes from Valve's table (`sound/materials.json`, all three games' `materials.txt`), which lists only

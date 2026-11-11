@@ -1383,8 +1383,13 @@ static void DustImpact(const Vector& position, const Vector& normal, const color
 	// No FTENT_FADEOUT: fading keeps a finished sprite on screen while its animation wraps back to frame 0.
 	constexpr float PuffFrameRate = 24;
 
-	TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity * bigger, gEngfuncs.pfnRandomFloat(0.25f, 0.35f) * bigger,
-		modelIndex, kRenderTransAlpha, kRenderFxNone, alpha, 2.0f, FTENT_SPRANIMATE);
+	// Each a little fainter than its alpha and up to PuffMostBigger as big again, so they vary.
+	constexpr float PuffFainter = 0.8f;
+	constexpr float PuffMostBigger = 1.3f;
+
+	TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity * bigger,
+		gEngfuncs.pfnRandomFloat(0.25f, 0.35f) * gEngfuncs.pfnRandomFloat(1, PuffMostBigger) * bigger,
+		modelIndex, kRenderTransAlpha, kRenderFxNone, alpha * PuffFainter, 2.0f, FTENT_SPRANIMATE);
 
 	if (!puff)
 	{
