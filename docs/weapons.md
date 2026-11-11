@@ -126,21 +126,37 @@ With `jhl_fx_particlesystem`:
 * **Dot light:** the RPG's laser dot lights the surface around it faintly, as the tripmine's light (72 units, its red
   at 80%, (204,0,0)); not the Desert Eagle's, whose dot is the same drawn at half size (`RpgLaserDot`,
   `weapon_effects.cpp`). It goes out with the dot while it's hidden after a shot.
-* **Line when it comes on:** its player sees a thin red line (0.5 wide, 0.4) from the laser's housing to the dot,
-  holding 0.15 s and fading out by 1 s, following the dot: the targeting locking on, not a beam always on screen.
-  Whenever the laser comes on (turned on, or the RPG taken out with it on): the client watches the predicted RPG
-  (its current weapon, and `CRpg::m_fSpotActive` from the weapon data) and starts the line at the first dot seen
-  within 1 s of that. Not from the dot itself: it also goes out of sight on the sky, some entities and while
-  reloading, and coming back into sight once restarted the line. First person. (A server message when the dot was made was tried: quick toggles sometimes went without a line.)
-  Turned off before it's faded, it goes with the dot. The housing is the small cylinder alongside the front of the
-  tube; the view model has no attachments, so its front, found in the model's vertices (the middle of its front ring,
-  (3.37, -9.88, -3.39) in the launcher's bone, `Dummy22`), is placed from that bone as the view model was last drawn (`JhlViewModelPoint`,
-  `StudioModelRenderer.cpp`): where it was on the view model then, put where the view model is now, once the view's
-  placed for the frame (`V_CalcRefdef`), so it stays on the housing as the camera, the player and the gun's sway
-  move (set before, it was a frame behind them). Opposing Force and Blue Shift draw their own RPG view models
-  (`models/op4/v_rpg.mdl`, `models/bshift/v_rpg.mdl`: the same skeleton and gun, other arms), so view models are
-  matched by their file's name (`JhlSameViewModel`); matched by the full path, the line, the sniper rifle's barrel
-  smoke, the shotgun's ejection port and the revolver's and sniper rifle's casings worked only in Half-Life.
+* **The laser in first person** (the RPG's and the Desert Eagle's, `RpgLaserLine_Update`, `weapon_effects.cpp`): a
+  short stub out of the laser's housing, along it, tapering to a point: thin and red (0.5 wide, 0.4) with a hot core
+  as the other lasers have (a little under a third its width, (255,190,175), a little wider over its first 24 units),
+  thinning and dimming toward its tip in small steps. It flickers as the RPG rocket's motor does: each frame its width
+  0.75-1.25x, its core's 0.7-1.5x (the Desert Eagle's 1.6x), their brightness down to 0.75 and 0.7.
+  * **RPG:** 11 units, in 12 steps, its core at 85%. Coming on (turned on, or the RPG taken out with it on), a line
+    all the way to the dot first, holding 0.15 s, then drawing back into the stub by 1 s, turning from the dot to the
+    way the housing points: the targeting locking on. While it's on, a small light lights the launcher's little yellow
+    readout on the sight box (`M8CL.bmp`): an entity light (models only), (140,122,42), 4 units, at (5.45, 3.6, 2.6)
+    in the launcher's bone, placed by eye. Its key's low 12 bits are kept off any entity's index: the engine puts an
+    entity light whose key's low bits are an entity's index on that entity, and the view model's is 0.
+  * **Desert Eagle:** 5 units, in 8 steps, its core at 80%; no line, no light.
+  * **When:** while the gun's out with its laser on, from the predicted weapon (its current weapon, and
+    `CRpg::m_fSpotActive` or `CEagle::IsLaserActive` from the weapon data): from its dot's first coming into sight
+    within 1 s of the laser coming on (the dot comes as the gun's ready; after 1 s with none, on the sky, the stub
+    alone), so not while it's taken out; not while it reloads (the server's dot is out then too), back at once after.
+    Not from the dot itself: it also goes out of sight on the sky, some entities and, the Desert Eagle's, after each
+    shot. First person. (A server message when the dot was made was tried: quick toggles sometimes went without a
+    line.)
+  * **Where:** the housings' fronts and backs, found in the models' vertices (the middles of their front and back
+    rings): the RPG's small cylinder alongside the front of the tube ((3.37, -9.88, -3.39) and (3.16, -6.79, -3.31)
+    in the launcher's bone, `Dummy22`), the Desert Eagle's under its barrel ((12.35, 2.41, 2.21) and
+    (10.02, 1.89, 2.11) in the right hand). The view models have no attachments there, so each is placed from its bone
+    as the view model was last drawn (`JhlViewModelPoint`, `StudioModelRenderer.cpp`): where it was on the view model
+    then, put where the view model is now, once the view's placed for the frame (`V_CalcRefdef`), so it stays on the
+    housing as the camera, the player and the gun's sway move (set before, it was a frame behind them). The stub goes
+    the way the housing points, so it moves with the gun through recoil and its animations. Opposing Force and Blue
+    Shift draw their own RPG view models (`models/op4/v_rpg.mdl`, `models/bshift/v_rpg.mdl`: the same skeleton and
+    gun, other arms), so view models are matched by their file's name (`JhlSameViewModel`); matched by the full
+    path, the line, the sniper rifle's barrel smoke, the shotgun's ejection port and the revolver's and sniper rifle's
+    casings worked only in Half-Life.
 
 ## Effects
 

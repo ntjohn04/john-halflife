@@ -24,6 +24,7 @@
 #include "hud.h"
 #include "jhl_models.h"
 #include "cbase.h"
+#include "CEagle.h"
 #include "CRpg.h"
 #include "com_weapons.h"
 #include "prediction/ClientPredictionSystem.h"
@@ -843,50 +844,111 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance, float wisp
 	}
 }
 
-// The RPG's laser dot: where it is now (RpgLaserDot), and its line when it comes on (RpgLaserLine_Update); whether the
-// local player's laser is on, and when it last came on.
-static Vector g_RpgDot;
-static float g_RpgDotSeen = -1;
-static BEAM* g_RpgLine = nullptr;
-static float g_RpgLineStart = -1;
-static bool g_RpgLaserOn = false;
-static float g_RpgLaserCameOn = -100;
+// The RPG's and the Desert Eagle's lasers in first person (RpgLaserLine_Update), from their laser dots (RpgLaserDot): a
+// short stub out of the laser's housing, along it, tapering to a point, for as long as the laser's on and ready (not
+// while the gun's taken out or reloaded: the server's dot is out then too). The RPG's laser coming on shows a thin red
+// line all the way to its dot first, which draws back into the stub; it lights the launcher's little screen.
+struct LaserLook
+{
+	const char* Model;
+	int Bone;
+	Vector Front; // The middle of the front of the laser's housing in the view model, in that bone.
+	Vector Back;  // The middle of its back: the stub goes on from the front, as the housing points.
+	float StubLength;
+	int TaperPieces; // The stub's taper in this many pieces, each a little thinner.
+	float CoreBrightness;
+	// Flickering as the RPG rocket's motor does (RocketFlickerMin): each frame the line's width and its core's times
+	// between these (the line's evenly about its width, the core's mostly flaring wider), and their brightness down to
+	// the first.
+	float LineFlickerMin, LineFlickerMax;
+	float CoreFlickerMin, CoreFlickerMax;
+};
 
-// The line starts with the first dot seen within this of the laser coming on (the server places the dot a moment
-// after; none if the laser points at the sky meanwhile).
-constexpr float DotWait = 1;
+// The RPG's: its housing the small cylinder under the front of the tube (v_rpg.mdl's launcher bone, Dummy22, 12: the
+// middles of its front and back eight-sided rings, found in its vertices).
+constexpr LaserLook RpgLaser{"models/v_rpg.mdl", 12, {3.37f, -9.88f, -3.39f}, {3.16f, -6.79f, -3.31f}, 11, 12, 0.85f, 0.75f, 1.25f, 0.7f, 1.5f};
 
-// Its line: thin, red, as bright as this, holding LineHold then fading out by LineTime.
+// The Desert Eagle's: the cylinder under its barrel (v_desert_eagle.mdl's right hand, 10: the middles of its front and
+// back rings). A shorter stub, its core a little dimmer; flickering as the RPG's (smaller, it showed less, so no less).
+constexpr LaserLook EagleLaser{"models/v_desert_eagle.mdl", 10, {12.35f, 2.41f, 2.21f}, {10.02f, 1.89f, 2.11f}, 5, 8, 0.8f, 0.75f, 1.25f, 0.7f, 1.6f};
+
+// The line: thin, red, as bright as this; a hot core down its middle as on the other lasers (env_laser's,
+// func_tanklaser's): a little under a third its width, its color toward white, a little wider near the housing
+// (CoreNearWider over CoreNear units, fading off). The stub thins to a point over its length, dimming toward its tip.
 constexpr float LineWidth = 0.5f;
 constexpr float LineBrightness = 0.4f;
+constexpr color24 LineColor{255, 31, 31};
+constexpr float StubTipDimming = 0.6f;
+constexpr float CoreWidth = 0.85f / 3;
+constexpr color24 CoreColor{255, 190, 175};
+constexpr float CoreNearWider = 0.35f;
+constexpr float CoreNear = 24;
+
+// The RPG's line coming on: all the way to the dot for LineHold, then drawing back to the stub by LineTime (easing in
+// and out), turning from the dot to the way the housing points. It starts with the first dot seen within DotWait of
+// the laser coming on (the server places the dot a moment after; with none, the laser on the sky, the stub alone).
 constexpr float LineHold = 0.15f;
 constexpr float LineTime = 1;
+constexpr float DotWait = 1;
 
-// The front of the laser's housing in v_rpg.mdl, in its launcher's bone (Dummy22): the middle of the eight-sided ring
-// at the front of the small cylinder alongside the front of the tube, found in its vertices.
-constexpr int RpgLaserBone = 12;
-const Vector RpgLaserHousing{3.37f, -9.88f, -3.39f};
+// The line's pieces (each a beam, and one for its core): a few near the housing (the core's widening), its middle,
+// and the stub's taper (LaserLook::TaperPieces, at most MostTaperPieces).
+constexpr int NearPieces = 3;
+constexpr int MostTaperPieces = 12;
+constexpr int LinePieces = NearPieces + 1 + MostTaperPieces;
+
+// The RPG's little screen (M8CL.bmp's yellow readout on the sight box) lit while its laser's on: a small, dim light
+// its yellow, models only (an entity light), placed by eye. The key's low 12 bits aren't an entity's: the engine puts
+// an entity light whose key's low bits are an entity's index on that entity (at an attachment in the next 4 bits), and
+// the view model's index is 0.
+constexpr int RpgScreenLightKey = 49152 + 4095;
+const Vector RpgScreen{5.45f, 3.6f, 2.6f};
+constexpr float RpgScreenRadius = 4;
+constexpr color24 RpgScreenColor{140, 122, 42};
+
+struct LaserState
+{
+	BEAM* Beams[LinePieces][2]{};
+	bool On = false;
+	bool Reloading = false;
+	bool Shown = false;
+	float CameOn = -100;
+	float LineStart = -1;
+	Vector Dot;
+	float DotSeen = -1;
+};
+
+static LaserState g_RpgLaser;
+static LaserState g_EagleLaser;
 
 void RpgLaserDot(cl_entity_t* dot, const char* modelname)
 {
-	// The RPG's (the Desert Eagle's laser has the same dot, drawn at half size: CEagleLaser).
-	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "sprites/laserdot.spr") ||
-		(dot->curstate.scale > 0 && dot->curstate.scale < 0.75f))
+	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "sprites/laserdot.spr"))
 	{
 		return;
 	}
 
 	const float now = gEngfuncs.GetClientTime();
 
-	// Come on: its line, from now.
-	if (now >= g_RpgLaserCameOn && now - g_RpgLaserCameOn <= DotWait)
+	// The Desert Eagle's laser has the same dot, drawn at half size (CEagleLaser).
+	const bool eagle = dot->curstate.scale > 0 && dot->curstate.scale < 0.75f;
+	LaserState& laser = eagle ? g_EagleLaser : g_RpgLaser;
+
+	// Come on: shown from now on (the RPG's full line from now).
+	if (now >= laser.CameOn && now - laser.CameOn <= DotWait)
 	{
-		g_RpgLineStart = now;
-		g_RpgLaserCameOn = -100;
+		if (!eagle)
+			laser.LineStart = now;
+
+		laser.CameOn = -100;
+		laser.Shown = true;
 	}
 
-	g_RpgDot = dot->origin;
-	g_RpgDotSeen = now;
+	laser.Dot = dot->origin;
+	laser.DotSeen = now;
+
+	if (eagle)
+		return;
 
 	// As faint as the tripmine's (72 units, its color at 80%): the dot's red.
 	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(RpgDotLightKey + dot->index); light)
@@ -899,99 +961,213 @@ void RpgLaserDot(cl_entity_t* dot, const char* modelname)
 	}
 }
 
-void RpgLaserLine_Update(double time)
+static void LaserGone(LaserState& laser)
 {
-	const float now = static_cast<float>(time);
-
-	// Come on: the RPG taken out with its laser on, or its laser turned on. From the predicted weapon's state, not
-	// from the dot, which also goes out of sight on the sky and some entities, and while reloading.
-	const auto rpg = static_cast<CRpg*>(g_ClientPrediction.GetLocalWeapon(WEAPON_RPG));
-	const bool laserOn = g_CurrentWeaponId == WEAPON_RPG && rpg && rpg->m_fSpotActive;
-
-	if (laserOn && !g_RpgLaserOn)
-		g_RpgLaserCameOn = now;
-
-	g_RpgLaserOn = laserOn;
-
-	const float age = now - g_RpgLineStart;
-
-	// Done, or a new map (the clock restarted).
-	if (g_RpgLineStart < 0 || age > LineTime || age < 0 || 0 != CL_IsThirdPerson())
+	for (auto& piece : laser.Beams)
 	{
-		if (g_RpgLine)
+		for (BEAM*& beam : piece)
 		{
-			g_RpgLine->die = 0;
-			g_RpgLine->brightness = 0;
-			g_RpgLine = nullptr;
+			if (beam)
+			{
+				beam->die = 0;
+				beam->brightness = 0;
+				beam = nullptr;
+			}
+		}
+	}
+}
+
+// One piece of the line, from @p a to @p b: kept up from frame to frame (the engine frees a beam not kept up).
+static void LaserPiece(BEAM*& beam, Vector a, Vector b, float width, float brightness, const color24& color, float now)
+{
+	if (brightness <= 0 || width <= 0 || (b - a).Length() < 0.01f)
+	{
+		if (beam)
+		{
+			beam->die = 0;
+			beam->brightness = 0;
+			beam = nullptr;
 		}
 
-		if (age > LineTime || age < 0)
-			g_RpgLineStart = -1;
-
 		return;
 	}
 
-	const auto gone = []()
-	{
-		if (g_RpgLine)
-		{
-			g_RpgLine->die = 0;
-			g_RpgLine->brightness = 0;
-			g_RpgLine = nullptr;
-		}
-	};
-
-	// The dot's gone (the laser turned off): no line (the engine would free it if kept but not kept up).
-	if (now - g_RpgDotSeen > 0.05f)
-	{
-		gone();
-		return;
-	}
-
-	// From the laser's housing, the small cylinder under the front of the tube: the view model has no attachments, so
-	// its front (in the launcher's bone, Dummy22, 12) is placed from its bone as last drawn, moved with the view model
-	// since (JhlViewModelPoint; this is run once the view's placed, V_CalcRefdef).
-	Vector from;
-
-	if (!JhlViewModelPoint("models/v_rpg.mdl", RpgLaserBone, RpgLaserHousing, from))
-	{
-		gone();
-		return;
-	}
-
-	Vector to = g_RpgDot;
-
-	const float fade = age < LineHold ? 1 : 1 - (age - LineHold) / (LineTime - LineHold);
-	const float brightness = LineBrightness * fade * fade;
-
-	if (!g_RpgLine)
+	if (!beam)
 	{
 		const int sprite = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/laserbeam.spr");
 
 		if (sprite == 0)
 			return;
 
-		g_RpgLine = gEngfuncs.pEfxAPI->R_BeamPoints(from, to, sprite, 1, LineWidth, 0, brightness, 0, 0, 0, 1, 0.12f, 0.12f);
+		beam = gEngfuncs.pEfxAPI->R_BeamPoints(a, b, sprite, 1, width, 0, brightness, 0, 0, 0, color.r / 255.f, color.g / 255.f, color.b / 255.f);
 
-		if (!g_RpgLine)
+		if (!beam)
 			return;
 	}
 
-	g_RpgLine->source = from;
-	g_RpgLine->target = to;
-	g_RpgLine->delta = to - from;
-	g_RpgLine->brightness = brightness;
-	g_RpgLine->die = now + 0.2f;
-	g_RpgLine->flags |= FBEAM_ISACTIVE;
+	beam->source = a;
+	beam->target = b;
+	beam->delta = b - a;
+	beam->width = width;
+	beam->brightness = brightness;
+	beam->r = color.r / 255.f;
+	beam->g = color.g / 255.f;
+	beam->b = color.b / 255.f;
+	beam->die = now + 0.2f;
+	beam->flags |= FBEAM_ISACTIVE;
+}
+
+// @p laserOn: the gun's out with its laser on; @p reloading: and it's reloading.
+static void UpdateLaser(const LaserLook& look, LaserState& laser, bool laserOn, bool reloading, bool fullLine, float now)
+{
+	// Come on (taken out with its laser on, or turned on): shown once its dot's come; reloading, not shown, and shown
+	// again at once when done.
+	if (laserOn && !laser.On)
+	{
+		laser.CameOn = now;
+		laser.Shown = false;
+	}
+
+	const bool reloaded = laser.Reloading && !reloading && laserOn;
+
+	if (!laserOn || reloading)
+		laser.Shown = false;
+
+	// Its dot not seen since it came on (it's on the sky): shown anyway, without a full line.
+	if (laserOn && !reloading && !laser.Shown && laser.CameOn > 0 && now - laser.CameOn > DotWait)
+	{
+		laser.Shown = true;
+		laser.CameOn = -100;
+	}
+
+	if (reloaded)
+		laser.Shown = true;
+
+	laser.On = laserOn;
+	laser.Reloading = reloading;
+
+	const float age = now - laser.LineStart;
+
+	// Done, or a new map (the clock restarted).
+	if (age < 0 || age > LineTime)
+		laser.LineStart = -1;
+
+	if (!laserOn || !laser.Shown || !JhlParticleSystemEnabled() || 0 != CL_IsThirdPerson())
+	{
+		LaserGone(laser);
+		laser.LineStart = -1;
+		return;
+	}
+
+	// The housing, from its bone as last drawn, moved with the view model since (JhlViewModelPoint; the view models have
+	// no attachments there; this is run once the view's placed, V_CalcRefdef).
+	Vector from, back;
+
+	if (!JhlViewModelPoint(look.Model, look.Bone, look.Front, from) || !JhlViewModelPoint(look.Model, look.Bone, look.Back, back))
+	{
+		LaserGone(laser);
+		return;
+	}
+
+	Vector direction = (from - back).Normalize();
+	float length = look.StubLength;
+	float brightness = LineBrightness;
+
+	// The RPG's line coming on: to the dot, drawing back to the stub as it turns to the housing's way.
+	if (fullLine && laser.LineStart >= 0 && now - laser.DotSeen <= 0.05f)
+	{
+		Vector toDot = laser.Dot - from;
+		const float distance = toDot.Length();
+
+		if (distance > look.StubLength)
+		{
+			const float t = std::clamp((age - LineHold) / (LineTime - LineHold), 0.f, 1.f);
+			const float eased = t * t * (3 - 2 * t);
+			length = distance + (look.StubLength - distance) * eased;
+			direction = (toDot / distance * (1 - eased) + direction * eased).Normalize();
+		}
+	}
+
+	// This frame's flicker.
+	const float lineWidthFlicker = gEngfuncs.pfnRandomFloat(look.LineFlickerMin, look.LineFlickerMax);
+	const float lineFlicker = gEngfuncs.pfnRandomFloat(look.LineFlickerMin, 1);
+	const float coreWidthFlicker = gEngfuncs.pfnRandomFloat(look.CoreFlickerMin, look.CoreFlickerMax);
+	const float coreFlicker = gEngfuncs.pfnRandomFloat(look.CoreFlickerMin, 1);
+	const int pieces = NearPieces + 1 + std::min(look.TaperPieces, MostTaperPieces);
+
+	// Its pieces' ends, along it from the housing: the near pieces (as far as the core's widening reaches, and no
+	// further than where the taper starts), its middle, the taper.
+	const float taperStart = std::max(0.f, length - look.StubLength);
+	const float nearEnd = std::min(CoreNear, taperStart);
+	float ends[LinePieces + 1];
+	int n = 0;
+
+	for (int i = 0; i <= NearPieces; ++i)
+		ends[n++] = nearEnd * i / NearPieces;
+
+	ends[n++] = taperStart;
+
+	for (int i = 1; i <= pieces - NearPieces - 1; ++i)
+		ends[n++] = taperStart + (length - taperStart) * i / (pieces - NearPieces - 1);
+
+	for (int i = pieces; i < LinePieces; ++i)
+	{
+		LaserPiece(laser.Beams[i][0], from, from, 0, 0, LineColor, now);
+		LaserPiece(laser.Beams[i][1], from, from, 0, 0, CoreColor, now);
+	}
+
+	for (int i = 0; i < pieces; ++i)
+	{
+		const float a = ends[i];
+		const float b = ends[i + 1];
+		const float middle = (a + b) / 2;
+
+		// Thinning and dimming over the taper to a point at the tip (as at the piece's middle).
+		const float taper = middle <= taperStart ? 1 : 1 - (middle - taperStart) / (length - taperStart);
+		const float width = LineWidth * taper * lineWidthFlicker;
+		const float shine = brightness * (1 - StubTipDimming * (1 - taper));
+		const float coreWider = 1 + CoreNearWider * std::max(0.f, 1 - middle / CoreNear);
+
+		LaserPiece(laser.Beams[i][0], from + direction * a, from + direction * b, width, shine * lineFlicker, LineColor, now);
+		LaserPiece(laser.Beams[i][1], from + direction * a, from + direction * b, width * CoreWidth * coreWider * coreWidthFlicker,
+			shine * look.CoreBrightness * coreFlicker, CoreColor, now);
+	}
+}
+
+void RpgLaserLine_Update(double time)
+{
+	const float now = static_cast<float>(time);
+
+	// From the predicted weapons' state, not from the dots, which also go out of sight on the sky and some entities.
+	const auto rpg = static_cast<CRpg*>(g_ClientPrediction.GetLocalWeapon(WEAPON_RPG));
+	const bool rpgOn = g_CurrentWeaponId == WEAPON_RPG && rpg && rpg->m_fSpotActive;
+	UpdateLaser(RpgLaser, g_RpgLaser, rpgOn, rpgOn && rpg->m_fInReload, true, now);
+
+	const auto eagle = static_cast<CEagle*>(g_ClientPrediction.GetLocalWeapon(WEAPON_EAGLE));
+	const bool eagleOn = g_CurrentWeaponId == WEAPON_EAGLE && eagle && eagle->IsLaserActive();
+	UpdateLaser(EagleLaser, g_EagleLaser, eagleOn, eagleOn && eagle->m_fInReload, false, now);
+
+	// The RPG's screen.
+	if (g_RpgLaser.Shown && rpgOn && JhlParticleSystemEnabled() && 0 == CL_IsThirdPerson())
+	{
+		if (Vector screen; JhlViewModelPoint(RpgLaser.Model, RpgLaser.Bone, RpgScreen, screen))
+		{
+			if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocElight(RpgScreenLightKey); light)
+			{
+				light->origin = screen;
+				light->radius = RpgScreenRadius;
+				light->color = RpgScreenColor;
+				light->die = now + 0.05f;
+				light->decay = 0;
+			}
+		}
+	}
 }
 
 void RpgLaser_Reset()
 {
-	g_RpgLine = nullptr;
-	g_RpgLineStart = -1;
-	g_RpgLaserOn = false;
-	g_RpgLaserCameOn = -100;
-	g_RpgDotSeen = -1;
+	g_RpgLaser = {};
+	g_EagleLaser = {};
 }
 
 // An RPG rocket's motor: its glow (an orange glow, hotglow, with a white-hot core, glow02, on top), and its light, warm
