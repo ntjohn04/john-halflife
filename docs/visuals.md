@@ -25,16 +25,23 @@ looking well down and never gets in the way.
 **Jumping and falling:** the player model's jump has the jump's arc in it (the body rising 20 units, sinking 37 as it
 lands, leaning forward and folding over the hips), which brought its back and shoulders out under the eyes, far below
 them in a fall. It's drawn without it: hips and back upright as standing, only the legs and arms moving. The arms keep
-the jump's lean, hold its frame 21 (later they come back in to hold a weapon), and sit a little forward and up (7 and 2
-units, raised 45 degrees), close to the eyes like view models. Its back is drawn up to its 4th spine bone with the arms
+the jump's lean, hold its frame 21 (later they come back in to hold a weapon), and sit a little forward (4 units, 2
+down, raised 45 degrees), close to the eyes like view models; one arm alone (below) is swung back 90 degrees, 5 units
+forward, out of the weapon's way. Its back is drawn up to its 4th spine bone with the arms
 out; with a weapon out, as far as shows no shoulders moving without hands: the HEV suit's 3rd, Barney's 3rd, the lab
 coat's 2nd, Adrian's 4th.
 
 With no weapon (before you have one, or holstered on slot 8), its arms are drawn. The player models' own upper bodies
 hold a weapon out in every pose, so standing, walking and running they take the lab coat Gordon's poses instead, with a
 weapon out too (its arms hidden), measured from the hips and played half a loop on, his loops starting on the other
-foot. Crouched, no arms. The lab coat Gordon's model is a scientist's with only walking poses, so jumping and crouching
-he takes the player model's, bone for bone.
+foot. Running, the arms swing raised 25 degrees back and a unit forward, so at a near-level view more of the swing
+shows than fingertips popping up. Crouched, no arms. The lab coat Gordon's model is a scientist's with only walking
+poses, so jumping and crouching he takes the player model's, bone for bone.
+
+With a one-handed weapon its free arm is drawn: the left with the crowbar, wrench, knife, grapple, .357, satchel
+detonator, hornet gun, grenade (hidden while the view model's own left hand pulls the pin), snark, penguin and shock
+rifle; the right with the satchel itself. Chosen by the view model's file, any campaign's copy. Crouched and on
+ladders, none.
 
 On a ladder, no arms (none of the games has a climbing pose: the hazard course hologram's `ladder` is her pointing
 at one), and walking's pose stepping only as it climbs, up or down (a loop each 1.3 of its strides climbed), held

@@ -61,11 +61,18 @@ constexpr float Offset = 14;
 constexpr float CrouchedOffset = 4;
 
 // Jumping, its arms no further through the player model's jump than this frame (of its 34), raised JumpArmsRaise degrees
-// (negative: forward) and moved JumpArmsForward and JumpArmsUp units, closer to the eyes, as view models are.
+// (negative: forward) and moved JumpArmsForward and JumpArmsUp units, closer to the eyes, as view models are: [0] both
+// arms drawn (or none), [1] one (a one-handed weapon's free arm, swung back out of the weapon's way).
 constexpr float JumpArmsFrame = 21;
-constexpr float JumpArmsRaise = -45;
-constexpr float JumpArmsForward = 7;
-constexpr float JumpArmsUp = 2;
+constexpr float JumpArmsRaise[2] = {-45, 90};
+constexpr float JumpArmsForward[2] = {4, 5};
+constexpr float JumpArmsUp[2] = {-2, 0};
+
+// Running, its arms (the lab coat's swing) raised RunArmsRaise degrees (positive: back) and moved RunArmsForward and
+// RunArmsUp units: at a near-level view, more of the swing in sight than fingertips popping up.
+constexpr float RunArmsRaise = 25;
+constexpr float RunArmsForward = 1;
+constexpr float RunArmsUp = 0;
 
 // How many of its spine's bones are kept above the hips: all of them (its neck and head hidden).
 constexpr int KeptSpine = 4;
@@ -119,6 +126,8 @@ float g_AirTime = 0; // Since leaving the ground.
 float g_StillTime = 0; // Since it last moved.
 float g_LegYaw = 0;	   // The way its legs last went.
 bool g_Arms = false;   // Its arms drawn: no view model (no weapon, holstered), so nothing else is the player's arms.
+bool g_LeftArm = false;	 // Its left arm drawn: both drawn, or a weapon held in the right hand only (OneHanded).
+bool g_RightArm = false; // Its right arm drawn: both drawn, or the satchel itself (held in the left).
 bool g_Crouching = false; // In a crouching pose (crouched, not in the air).
 
 float AngleDifference(float a, float b)
@@ -207,6 +216,29 @@ model_t* PickModel(cl_entity_t* player, int& index, bool& monster)
 
 	return model;
 }
+
+// The view model's free hand, by its file (any campaign's copy): 'L' its left arm drawn (held in the right hand only),
+// 'R' its right (the satchel itself, held in the left), 0 none (both hands on it).
+char OneHanded(const model_t* viewModel, int sequence)
+{
+	static constexpr const char* RightHanded[] = {"v_crowbar.mdl", "v_pipe_wrench.mdl", "v_knife.mdl", "v_bgrap.mdl",
+		"v_357.mdl", "v_satchel_radio.mdl", "v_hgun.mdl", "v_grenade.mdl", "v_squeak.mdl", "v_penguin.mdl", "v_shock.mdl"};
+
+	const char* slash = std::strrchr(viewModel->name, '/');
+	const char* file = slash ? slash + 1 : viewModel->name;
+
+	// The grenade's pin pulled by its own left hand (pinpull, 2).
+	if (0 == stricmp(file, "v_grenade.mdl") && sequence == 2)
+		return 0;
+
+	for (const char* name : RightHanded)
+	{
+		if (0 == stricmp(file, name))
+			return 'L';
+	}
+
+	return 0 == stricmp(file, "v_satchel.mdl") ? 'R' : 0;
+}
 }
 
 void JhlBody_Initialize()
@@ -289,6 +321,9 @@ void JhlBody_CreateEntities()
 	// No view model (no weapon, holstered): its arms are drawn, nothing else being the player's (below).
 	const cl_entity_t* viewModel = gEngfuncs.GetViewModel();
 	g_Arms = (!viewModel || !viewModel->model) && !g_Crouching && activity != ActLadder;
+	const char freeHand = viewModel && viewModel->model && !g_Crouching && activity != ActLadder ? OneHanded(viewModel->model, viewModel->curstate.sequence) : 0;
+	g_LeftArm = g_Arms || freeHand == 'L';
+	g_RightArm = g_Arms || freeHand == 'R';
 
 	// The hologram's treading water, for its pose in water.
 	int waterArmsIndex = 0;
@@ -342,7 +377,8 @@ void JhlBody_CreateEntities()
 	int armsIndex = 0;
 	int armsSequence = -1;
 
-	if (!g_Crouching && !monster && (activity == ActIdle || activity == ActWalk || activity == ActRun))
+	// The lab coat himself, running, his own (for its arms moved, below).
+	if (!g_Crouching && (monster ? activity == ActRun : (activity == ActIdle || activity == ActWalk || activity == ActRun)))
 	{
 		armsIndex = gEngfuncs.pEventAPI->EV_FindModelIndex(LabCoatGordon);
 		model_t* labCoat = armsIndex > 0 ? gEngfuncs.hudGetModelByIndex(armsIndex) : nullptr;
@@ -420,9 +456,10 @@ void JhlBody_CreateEntities()
 		{
 			g_Body.curstate.playerclass = 2;
 			g_Body.curstate.vuser1[1] = JumpArmsFrame;
-			g_Body.curstate.vuser1[2] = JumpArmsRaise;
-			g_Body.curstate.vuser2[0] = JumpArmsForward;
-			g_Body.curstate.vuser2[1] = JumpArmsUp;
+			const int one = g_LeftArm != g_RightArm ? 1 : 0;
+			g_Body.curstate.vuser1[2] = JumpArmsRaise[one];
+			g_Body.curstate.vuser2[0] = JumpArmsForward[one];
+			g_Body.curstate.vuser2[1] = JumpArmsUp[one];
 		}
 	}
 	else if (armsHeader)
@@ -432,12 +469,19 @@ void JhlBody_CreateEntities()
 
 		const auto& arms = Sequences(armsHeader)[armsSequence];
 		const float armsFrames = static_cast<float>(std::max(arms.numframes - 1, 1));
-		const float armsCycle = activity == ActIdle ? g_Cycle : g_Cycle + 0.5f;
+		const float armsCycle = activity == ActIdle || monster ? g_Cycle : g_Cycle + 0.5f;
 
 		g_Body.curstate.iuser1 = armsIndex;
 		g_Body.curstate.iuser2 = armsSequence + 1;
 		g_Body.curstate.fuser3 = (armsCycle - std::floor(armsCycle)) * armsFrames;
 		g_Body.curstate.playerclass = 1; // Only its upper body.
+
+		if (activity == ActRun)
+		{
+			g_Body.curstate.vuser1[2] = RunArmsRaise;
+			g_Body.curstate.vuser2[0] = RunArmsForward;
+			g_Body.curstate.vuser2[1] = RunArmsUp;
+		}
 	}
 
 	g_Body.curstate.animtime = static_cast<float>(time);
@@ -525,12 +569,13 @@ void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*
 		const char* name = bone[i].name;
 		const std::size_t length = std::strlen(name);
 		const bool head = std::strstr(name, "Head") != nullptr;
-		const bool arm = !g_Arms && length >= 4 && 0 == std::strcmp(name + length - 4, "Arm1");
+		const bool shown = std::strstr(name, " L ") ? g_LeftArm : std::strstr(name, " R ") ? g_RightArm : g_Arms;
+		const bool arm = !shown && length >= 4 && 0 == std::strcmp(name + length - 4, "Arm1");
 		const bool collarbone = length >= 6 && (0 == std::strcmp(name + length - 6, " L Arm") || 0 == std::strcmp(name + length - 6, " R Arm"));
 
 		spineDepth[i] = spine && parent >= 0 ? spineDepth[parent] + 1 : 0;
 
-		if (parent >= 0 && cut[parent] >= 0 && !(g_Arms && collarbone))
+		if (parent >= 0 && cut[parent] >= 0 && !(shown && collarbone))
 			cut[i] = cut[parent];
 		else
 			cut[i] = head || arm || (spine && spineDepth[i] > keptSpine) ? i : -1;
