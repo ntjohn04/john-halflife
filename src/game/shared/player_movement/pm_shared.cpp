@@ -2135,6 +2135,17 @@ void PM_LadderMove(physent_t* pLadder)
 				// velocity through the face of the ladder -- by design.
 				tmp = CrossProduct(trace.plane.normal, perp);
 				pmove->velocity = lateral + (-normal * tmp);
+
+				// johnhalflife (jhl_physics_wallfix, sent by the server as "jwf"): each key asks for the full climbing
+				// speed, so two at once ask for 1.4 times it, and the speed into the ladder's face is turned into
+				// climbing on top of any already along it (looking up or down at an angle): turned 45 degrees with two
+				// keys held, it climbed 1.4 times as fast. Now no faster than the climbing speed, whatever's pressed.
+				if (atoi(pmove->PM_Info_ValueForKey(pmove->physinfo, "jwf")) == 1)
+				{
+					if (const float climbing = pmove->velocity.Length(); climbing > flSpeed)
+						pmove->velocity = pmove->velocity * (flSpeed / climbing);
+				}
+
 				if (onFloor && normal > 0) // On ground moving away from the ladder
 				{
 					pmove->velocity = pmove->velocity + (MAX_CLIMB_SPEED * trace.plane.normal);

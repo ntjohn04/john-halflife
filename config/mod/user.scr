@@ -162,7 +162,7 @@ DESCRIPTION INFO_OPTIONS
 
 	"jhl_physics_wallfix"
 	{
-		"JHL | Physics: no extra speed walking into a wall"
+		"JHL | Physics: no extra speed walking into a wall or up ladders"
 		{ BOOL }
 		{ "1" }
 	}

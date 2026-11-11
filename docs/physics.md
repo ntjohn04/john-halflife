@@ -37,7 +37,7 @@ The engine itself is fine:
 * Half-Life Updated and the Unified SDK already made NPC turning, the gargantua's stomp, trigger_camera
   rotation, ropes and electrified wire independent of frame rate.
 
-## No extra speed walking into a wall (`jhl_physics_wallfix`, default 1)
+## No extra speed walking into a wall or climbing (`jhl_physics_wallfix`, default 1)
 
 Walking at an angle into a wall, the wall takes away the speed going into it each frame and accelerating puts it
 back. So along the wall the speed builds until its part in the direction pressed is full walking speed: about
@@ -47,3 +47,9 @@ With the setting on, accelerating on the ground goes no faster than the speed as
 already going: a landing, a push or an explosion keeps its speed and loses it to friction as before. Air
 movement isn't touched, so bunny hopping and air strafing are as vanilla. `pm_shared.cpp`'s `PM_WalkMove`,
 through the `jwf` physics key so prediction agrees. Set it to 0 for vanilla's wall running.
+
+Ladders have the same kind of extra speed. Each movement key asks for the full climbing speed (200), so two at once
+ask for 1.4 times it, and the part going into the ladder's face is turned into climbing on top of any already along
+it. Turned about 45 degrees to the ladder with two keys held, or looking up or down at an angle, you climbed up to
+1.4 times as fast. With the setting on, climbing goes no faster than the climbing speed, whatever's pressed, its
+direction kept; jumping off and stepping away at the bottom are as before (`PM_LadderMove`).
