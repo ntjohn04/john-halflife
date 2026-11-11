@@ -32,7 +32,8 @@ Console commands for finding problems; none changes anything in play.
     `SaveGlobalState`, our code) apart from the engine's writing.
   * **The time split those ways**, the longest stretch outside both libraries, and each library's parts (each engine
     call into them, user messages, sound loading, resampling and reverb changes, entity thinks and touches, by class)
-    and slowest calls.
+    and slowest calls. The engine's model drawing, called from the client's renderer, counts as the engine's, and a
+    model's first draw on a map (the driver uploading its textures) is named.
 
   On a listen server the client and the server run on one thread, so the client reports both in one frame. It finds
   the server through the console variable `jhl_debug_hitch_link`, the server's timeline and parts following the
