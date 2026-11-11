@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <future>
 #include <memory>
 #include <optional>
 #include <set>
@@ -33,6 +34,36 @@
 
 namespace sound
 {
+/**
+ *	@brief johnhalflife: a sound read and converted, ready to be handed to OpenAL (SoundCache::Convert, Upload): the
+ *	work, apart from OpenAL, so it can be done on another thread.
+ */
+struct ConvertedSound
+{
+	bool Ok = false;
+	std::string Path;
+	ALenum Format = 0;
+	int Rate = 0;
+	std::vector<float> Samples;
+	std::optional<std::tuple<ALint, ALint>> Loop;
+	std::vector<float> NativeSamples;
+	int NativeRate = 0;
+	int ChannelCount = 1;
+	int NativeLoopStart = -1;
+	int NativeLoopEnd = -1;
+};
+
+/**
+ *	@brief johnhalflife: a sound at a pitch, converted (SoundCache::ConvertPitch, UploadPitch).
+ */
+struct ConvertedPitch
+{
+	bool Ok = false;
+	int Rate = 0;
+	std::vector<float> Samples;
+	std::optional<std::tuple<ALint, ALint>> Loop;
+};
+
 /**
  *	@brief Maintains a cache of sounds and provides a means of loading them.
  */
@@ -76,6 +107,22 @@ public:
 	Sound* GetSound(SoundIndex index);
 
 	bool LoadSound(Sound& sound);
+
+	/**
+	 *	@brief johnhalflife: whether a sound can start at once: loaded, and at @p pitch (jhl_snd_vanilla) made.
+	 */
+	bool IsReady(SoundIndex index, int pitch);
+
+	/**
+	 *	@brief johnhalflife: a sound not ready read and converted on another thread (a scripted speech's first play
+	 *	took 20-30 ms in the frame); Poll hands it to OpenAL when done.
+	 */
+	void Request(SoundIndex index, int pitch);
+
+	/**
+	 *	@brief johnhalflife: work Request started that's done, handed to OpenAL (each frame).
+	 */
+	void Poll();
 
 	/**
 	 *	@brief johnhalflife: loads a sound now, so its first play doesn't stall a frame reading and converting it (a
@@ -135,6 +182,30 @@ private:
 	std::optional<std::tuple<ALint, ALint>> TryLoadCuePoints(
 		const std::string& fileName, ALint sampleCount, int channelCount);
 
+	// johnhalflife: loading split so the work can be done on another thread: the file found (the engine's file system,
+	// the main thread), read and converted (any thread), handed to OpenAL (the main thread).
+	bool FindFile(const Sound& sound, std::string& absolutePath);
+	ConvertedSound Convert(const std::string& absolutePath, nqr::NyquistIO& loader);
+	bool Upload(Sound& sound, ConvertedSound&& converted);
+	ConvertedPitch ConvertPitch(const std::vector<float>& nativeSamples, int nativeRate, int channelCount,
+		int loopStart, int loopEnd, int pitch) const;
+	const PitchedSound* UploadPitch(Sound& sound, int pitch, ConvertedPitch&& converted);
+
+	struct Conversion
+	{
+		ConvertedSound Base;
+		bool HasBase = false;
+		ConvertedPitch Pitched;
+		bool HasPitch = false;
+	};
+
+	struct Job
+	{
+		SoundIndex Index;
+		int Pitch;
+		std::future<Conversion> Result;
+	};
+
 private:
 	std::shared_ptr<spdlog::logger> m_Logger;
 	std::vector<Sound> m_Sounds;
@@ -142,6 +213,7 @@ private:
 	std::set<std::size_t, LookupComparer> m_SoundLookup{LookupComparer{&m_Sounds}};
 
 	std::unique_ptr<nqr::NyquistIO> m_Loader;
+	std::vector<Job> m_Jobs;
 
 	bool m_EngineRate{false};
 	int m_DeviceRate{0};

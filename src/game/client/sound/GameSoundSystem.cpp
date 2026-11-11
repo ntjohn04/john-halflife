@@ -425,6 +425,10 @@ void GameSoundSystem::Update()
 
 	++m_CurrentGameFrame;
 
+	// johnhalflife: sounds converted on another thread, handed to OpenAL, and those waiting for them started.
+	m_SoundCache->Poll();
+	StartPendingSounds();
+
 	if (m_SupportsHRTF)
 	{
 		if (const bool hrtfEnabled = m_HRTFEnabled->value != 0; m_CachedHRTFEnabled != hrtfEnabled)
@@ -585,6 +589,37 @@ void GameSoundSystem::StartSound(int entityIndex, int channelIndex, SoundData&& 
 		return;
 	}
 
+	// johnhalflife: a sound or a sentence not ready (a sound or a word not loaded, or not yet at its pitch) started when
+	// its work on another thread is done, a frame or a few later (a scripted speech's first play took 20-30 ms in the
+	// frame); stopped meanwhile, not at all. Only playing is put off: the game goes on as it would.
+	if (pitch != 0)
+	{
+		PendingStart start{entityIndex, channelIndex, SoundIndex{}, SIZE_MAX, origin, volume, attenuation, pitch, flags,
+			std::chrono::steady_clock::now()};
+
+		if (const SoundIndex* index = std::get_if<SoundIndex>(&sound); index && index->IsValid())
+			start.Sound = *index;
+		else if (const SentenceChannel* sentence = std::get_if<SentenceChannel>(&sound); sentence && m_Sentences->GetSentence(sentence->Sentence))
+			start.Sentence = sentence->Sentence;
+
+		const auto same = [&](const PendingStart& pending)
+		{ return pending.EntityIndex == entityIndex && pending.ChannelIndex == channelIndex; };
+
+		if ((start.Sound.IsValid() || start.Sentence != SIZE_MAX) && (flags & SND_STOP) != 0)
+		{
+			std::erase_if(m_PendingStarts, same);
+		}
+		else if ((start.Sound.IsValid() || start.Sentence != SIZE_MAX) && (flags & (SND_CHANGE_VOL | SND_CHANGE_PITCH)) == 0 &&
+				 !IsReady(start, true))
+		{
+			if (channelIndex != CHAN_AUTO)
+				std::erase_if(m_PendingStarts, same);
+
+			m_PendingStarts.push_back(start);
+			return;
+		}
+	}
+
 	if (!std::visit([&, this](auto&& sound)
 			{
 			using T = std::decay_t<decltype(sound)>;
@@ -661,6 +696,71 @@ void GameSoundSystem::StartSound(int entityIndex, int channelIndex, SoundData&& 
 void GameSoundSystem::StopAllSounds()
 {
 	m_Channels.clear();
+	m_PendingStarts.clear();
+}
+
+void GameSoundSystem::StartPendingSounds()
+{
+	if (m_PendingStarts.empty())
+	{
+		return;
+	}
+
+	// Started once ready; given up after a few seconds (the file couldn't be read).
+	constexpr auto GiveUp = std::chrono::seconds(3);
+	const auto now = std::chrono::steady_clock::now();
+	std::vector<PendingStart> pendingStarts = std::move(m_PendingStarts);
+	m_PendingStarts.clear();
+
+	for (const PendingStart& pending : pendingStarts)
+	{
+		if (IsReady(pending, false))
+		{
+			SoundData sound = pending.Sentence != SIZE_MAX ? SoundData{SentenceChannel{pending.Sentence, 0}} : SoundData{pending.Sound};
+			StartSound(pending.EntityIndex, pending.ChannelIndex, std::move(sound), pending.Origin, pending.Volume,
+				pending.Attenuation, pending.Pitch, pending.Flags);
+		}
+		else if (now - pending.Since < GiveUp)
+		{
+			m_PendingStarts.push_back(pending);
+		}
+	}
+}
+
+bool GameSoundSystem::IsReady(const PendingStart& start, bool request)
+{
+	// As played: a sound at its pitch with the engine's mixing; a word at the sentence's pitch with its own added
+	// (SentencesSystem::SetSentenceWord).
+	const auto ready = [&](SoundIndex index, int pitch)
+	{
+		const int neededPitch = m_VanillaMix && pitch != PITCH_NORM ? pitch : PITCH_NORM;
+
+		if (m_SoundCache->IsReady(index, neededPitch))
+			return true;
+
+		if (request)
+			m_SoundCache->Request(index, neededPitch);
+
+		return false;
+	};
+
+	if (start.Sentence == SIZE_MAX)
+		return ready(start.Sound, start.Pitch);
+
+	const Sentence* sentence = m_Sentences->GetSentence(start.Sentence);
+
+	if (!sentence)
+		return true;
+
+	bool all = true;
+
+	for (const SentenceWord& word : sentence->Words)
+	{
+		if (word.Index.IsValid())
+			all = ready(word.Index, std::clamp(start.Pitch + (word.Parameters.Pitch - PITCH_NORM), 1, 255)) && all;
+	}
+
+	return all;
 }
 
 void GameSoundSystem::MsgFunc_EmitSound(const char* pszName, BufferReader& reader)

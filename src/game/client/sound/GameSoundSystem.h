@@ -16,6 +16,7 @@
 #pragma once
 
 #include <array>
+#include <chrono>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -258,5 +259,31 @@ private:
 	float m_ListenerRight[3]{};
 
 	std::vector<SoundIndex> m_PrecacheMap;
+
+	// johnhalflife: sounds started before they were ready, waiting for their work on another thread
+	// (SoundCache::Request), started as it's done (StartPendingSounds).
+	struct PendingStart
+	{
+		int EntityIndex;
+		int ChannelIndex;
+		SoundIndex Sound;			  // A sound,
+		std::size_t Sentence = SIZE_MAX; // or a sentence.
+		Vector Origin;
+		float Volume;
+		float Attenuation;
+		int Pitch;
+		int Flags;
+		std::chrono::steady_clock::time_point Since;
+	};
+
+	std::vector<PendingStart> m_PendingStarts;
+
+	void StartPendingSounds();
+
+	/**
+	 *	@brief johnhalflife: whether a sound or each word of a sentence can start at once at @p pitch; those that can't
+	 *	asked for (SoundCache::Request) if @p request.
+	 */
+	bool IsReady(const PendingStart& start, bool request);
 };
 }

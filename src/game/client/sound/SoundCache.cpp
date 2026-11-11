@@ -14,6 +14,7 @@
  ****/
 
 #include <algorithm>
+#include <chrono>
 #include <numbers>
 #include <optional>
 #include <thread>
@@ -79,17 +80,8 @@ Sound* SoundCache::GetSound(SoundIndex index)
 	return &m_Sounds[i];
 }
 
-bool SoundCache::LoadSound(Sound& sound)
+bool SoundCache::FindFile(const Sound& sound, std::string& absolutePath)
 {
-	if (sound.Buffer.IsValid())
-	{
-		return true;
-	}
-
-	JhlHitchScope hitchScope{"sound.load", sound.Name.c_str()};
-
-	m_Logger->trace("Loading sound {}", sound.Name.c_str());
-
 	if (sound.Name.empty())
 	{
 		m_Logger->error("Sound has no name");
@@ -105,7 +97,6 @@ bool SoundCache::LoadSound(Sound& sound)
 
 	completeFileName.append(sound.Name.begin(), sound.Name.end());
 
-	std::string absolutePath;
 	absolutePath.resize(MAX_PATH_LENGTH);
 
 	if (!g_pFileSystem->GetLocalPath(completeFileName.c_str(), absolutePath.data(), absolutePath.size()))
@@ -117,27 +108,44 @@ bool SoundCache::LoadSound(Sound& sound)
 
 	// Trim the size to the actual string's size.
 	absolutePath.resize(strlen(absolutePath.c_str()));
+	return true;
+}
 
+bool SoundCache::LoadSound(Sound& sound)
+{
+	if (sound.Buffer.IsValid())
+	{
+		return true;
+	}
+
+	JhlHitchScope hitchScope{"sound.load", sound.Name.c_str()};
+
+	m_Logger->trace("Loading sound {}", sound.Name.c_str());
+
+	std::string absolutePath;
+
+	if (!FindFile(sound, absolutePath))
+	{
+		return false;
+	}
+
+	return Upload(sound, Convert(absolutePath, *m_Loader));
+}
+
+ConvertedSound SoundCache::Convert(const std::string& absolutePath, nqr::NyquistIO& loader)
+{
+	ConvertedSound result;
 	nqr::AudioData data;
 
 	try
 	{
-		m_Loader->Load(&data, absolutePath);
+		loader.Load(&data, absolutePath);
 	}
 	catch (const std::exception& e)
 	{
-		m_Logger->error("Error loading sound file {}: {}", sound.Name.c_str(), e.what());
-		return false;
+		m_Logger->error("Error loading sound file {}: {}", absolutePath, e.what());
+		return result;
 	}
-
-	// Clear error state.
-	alGetError();
-
-	const ALenum format = data.channelCount == 1 ? AL_FORMAT_MONO_FLOAT32 : AL_FORMAT_STEREO_FLOAT32;
-
-	sound.Buffer = OpenALBuffer::Create();
-
-	m_Logger->trace("Loading sound {} into buffer {}", absolutePath, sound.Buffer.Id);
 
 	// See https://openal-soft.org/openal-extensions/SOFT_loop_points.txt
 	auto cuePoints = TryLoadCuePoints(absolutePath, data.samples.size(), data.channelCount);
@@ -148,14 +156,14 @@ bool SoundCache::LoadSound(Sound& sound)
 	// pitched versions (GetPitched).
 	if (m_EngineRate && data.sampleRate > 0 && data.channelCount > 0)
 	{
-		sound.NativeSamples = data.samples;
-		sound.NativeRate = data.sampleRate;
-		sound.ChannelCount = data.channelCount;
+		result.NativeSamples = data.samples;
+		result.NativeRate = data.sampleRate;
+		result.ChannelCount = data.channelCount;
 
 		if (cuePoints)
 		{
-			sound.NativeLoopStart = std::get<0>(*cuePoints);
-			sound.NativeLoopEnd = std::get<1>(*cuePoints);
+			result.NativeLoopStart = std::get<0>(*cuePoints);
+			result.NativeLoopEnd = std::get<1>(*cuePoints);
 		}
 
 		if (data.sampleRate != EngineMixRate)
@@ -190,27 +198,55 @@ bool SoundCache::LoadSound(Sound& sound)
 		}
 	}
 
-	alBufferData(sound.Buffer.Id, format,
-		data.samples.data(), data.samples.size() * sizeof(float), data.sampleRate);
+	result.Ok = true;
+	result.Format = data.channelCount == 1 ? AL_FORMAT_MONO_FLOAT32 : AL_FORMAT_STEREO_FLOAT32;
+	result.Rate = data.sampleRate;
+	result.Samples = std::move(data.samples);
+	result.Loop = cuePoints;
+	result.Path = absolutePath;
+	return result;
+}
 
-	if (cuePoints)
+bool SoundCache::Upload(Sound& sound, ConvertedSound&& converted)
+{
+	if (!converted.Ok)
 	{
-		const ALint loopPoints[2] = {std::get<0>(*cuePoints), std::get<1>(*cuePoints)};
+		return false;
+	}
+
+	// Clear error state.
+	alGetError();
+
+	sound.Buffer = OpenALBuffer::Create();
+
+	m_Logger->trace("Loading sound {} into buffer {}", converted.Path, sound.Buffer.Id);
+
+	alBufferData(sound.Buffer.Id, converted.Format,
+		converted.Samples.data(), converted.Samples.size() * sizeof(float), converted.Rate);
+
+	if (converted.Loop)
+	{
+		const ALint loopPoints[2] = {std::get<0>(*converted.Loop), std::get<1>(*converted.Loop)};
 		alBufferiv(sound.Buffer.Id, AL_LOOP_POINTS_SOFT, loopPoints);
 	}
 
 	if (const auto error = alGetError(); error != AL_NO_ERROR)
 	{
 		m_Logger->error("OpenAL error {} ({}) while initializing buffer for \"{}\"",
-			alGetString(error), error, absolutePath);
+			alGetString(error), error, converted.Path);
 		sound.Buffer.Delete();
 		return false;
 	}
 
-	sound.IsLooping = cuePoints.has_value();
-	sound.Format = format;
+	sound.IsLooping = converted.Loop.has_value();
+	sound.Format = converted.Format;
 	// Cache the samples for future use.
-	sound.Samples = std::move(data.samples);
+	sound.Samples = std::move(converted.Samples);
+	sound.NativeSamples = std::move(converted.NativeSamples);
+	sound.NativeRate = converted.NativeRate;
+	sound.ChannelCount = converted.ChannelCount;
+	sound.NativeLoopStart = converted.NativeLoopStart;
+	sound.NativeLoopEnd = converted.NativeLoopEnd;
 
 	return true;
 }
@@ -505,20 +541,34 @@ const PitchedSound* SoundCache::GetPitched(Sound& sound, int pitch)
 
 	JhlHitchScope hitchScope{"sound.pitch", sound.Name.c_str()};
 
+	return UploadPitch(sound, pitch,
+		ConvertPitch(sound.NativeSamples, sound.NativeRate, sound.ChannelCount, sound.NativeLoopStart, sound.NativeLoopEnd, pitch));
+}
+
+ConvertedPitch SoundCache::ConvertPitch(const std::vector<float>& nativeSamples, int nativeRate, int channelCount,
+	int loopStart, int loopEnd, int pitch) const
+{
+	ConvertedPitch result;
+
+	if (nativeSamples.empty() || nativeRate <= 0 || pitch <= 0)
+	{
+		return result;
+	}
+
 	// The engine pitches a sound by stepping through it at its own rate without interpolating (fixed point, truncated),
 	// and only then brings it to its 22050 Hz: off the sound's own pitch the uneven steps scatter a faint distortion
 	// through the whole band, the grain of vanilla's sound (nearly everything plays a little off pitch: voices 100-103,
 	// guns 98-102). A sound faster than 22050 Hz is pitched from its 22050 Hz version. Then, as the sound itself, on to
 	// the device's rate.
-	const std::size_t channels = static_cast<std::size_t>(sound.ChannelCount);
+	const std::size_t channels = static_cast<std::size_t>(channelCount);
 	const double pitchStep = pitch / 100.0;
-	const double toEngine = static_cast<double>(sound.NativeRate) / EngineMixRate;
-	const bool slower = sound.NativeRate <= EngineMixRate;
+	const double toEngine = static_cast<double>(nativeRate) / EngineMixRate;
+	const bool slower = nativeRate <= EngineMixRate;
 
-	std::vector<float> samples = slower ? Resample(sound.NativeSamples, channels, pitchStep, false)
-										: Resample(Resample(sound.NativeSamples, channels, toEngine, true), channels, pitchStep, false);
+	std::vector<float> samples = slower ? Resample(nativeSamples, channels, pitchStep, false)
+										: Resample(Resample(nativeSamples, channels, toEngine, true), channels, pitchStep, false);
 
-	if (slower && sound.NativeRate != EngineMixRate)
+	if (slower && nativeRate != EngineMixRate)
 	{
 		samples = Resample(samples, channels, toEngine, true);
 	}
@@ -526,9 +576,9 @@ const PitchedSound* SoundCache::GetPitched(Sound& sound, int pitch)
 	// Its loop, in these frames: through the pitch, at 22050 Hz.
 	std::optional<std::tuple<ALint, ALint>> loop;
 
-	if (sound.NativeLoopStart >= 0)
+	if (loopStart >= 0)
 	{
-		loop = ScaleLoop(sound.NativeLoopStart, sound.NativeLoopEnd, pitchStep * toEngine, samples.size() / channels);
+		loop = ScaleLoop(loopStart, loopEnd, pitchStep * toEngine, samples.size() / channels);
 	}
 
 	int rate = EngineMixRate;
@@ -546,16 +596,30 @@ const PitchedSound* SoundCache::GetPitched(Sound& sound, int pitch)
 		rate = m_DeviceRate;
 	}
 
+	result.Ok = true;
+	result.Samples = std::move(samples);
+	result.Rate = rate;
+	result.Loop = loop;
+	return result;
+}
+
+const PitchedSound* SoundCache::UploadPitch(Sound& sound, int pitch, ConvertedPitch&& converted)
+{
+	if (!converted.Ok)
+	{
+		return nullptr;
+	}
+
 	PitchedSound pitched;
 	pitched.Buffer = OpenALBuffer::Create();
 
 	alGetError();
 
-	alBufferData(pitched.Buffer.Id, sound.Format, samples.data(), samples.size() * sizeof(float), rate);
+	alBufferData(pitched.Buffer.Id, sound.Format, converted.Samples.data(), converted.Samples.size() * sizeof(float), converted.Rate);
 
-	if (loop)
+	if (converted.Loop)
 	{
-		const ALint loopPoints[2] = {std::get<0>(*loop), std::get<1>(*loop)};
+		const ALint loopPoints[2] = {std::get<0>(*converted.Loop), std::get<1>(*converted.Loop)};
 		alBufferiv(pitched.Buffer.Id, AL_LOOP_POINTS_SOFT, loopPoints);
 	}
 
@@ -565,9 +629,103 @@ const PitchedSound* SoundCache::GetPitched(Sound& sound, int pitch)
 		return nullptr;
 	}
 
-	pitched.Samples = std::move(samples);
+	pitched.Samples = std::move(converted.Samples);
 
 	return &sound.Pitched.emplace(pitch, std::move(pitched)).first->second;
+}
+
+bool SoundCache::IsReady(SoundIndex index, int pitch)
+{
+	Sound* sound = GetSound(index);
+
+	if (!sound)
+	{
+		return true;
+	}
+
+	if (!sound->Buffer.IsValid())
+	{
+		return false;
+	}
+
+	return pitch == PITCH_NORM || !m_EngineRate || sound->NativeSamples.empty() || sound->Pitched.contains(pitch);
+}
+
+void SoundCache::Request(SoundIndex index, int pitch)
+{
+	if (IsReady(index, pitch) || std::any_of(m_Jobs.begin(), m_Jobs.end(), [&](const Job& job)
+									 { return job.Index == index && job.Pitch == pitch; }))
+	{
+		return;
+	}
+
+	Sound* sound = GetSound(index);
+	const bool needBase = !sound->Buffer.IsValid();
+	const bool needPitch = pitch != PITCH_NORM && m_EngineRate;
+
+	// The file found here (the engine's file system is the main thread's); a pitch from the sound as loaded, copied.
+	std::string path;
+
+	if (needBase && !FindFile(*sound, path))
+	{
+		return;
+	}
+
+	std::vector<float> native = needBase ? std::vector<float>{} : sound->NativeSamples;
+	const int nativeRate = sound->NativeRate;
+	const int channels = sound->ChannelCount;
+	const int loopStart = sound->NativeLoopStart;
+	const int loopEnd = sound->NativeLoopEnd;
+
+	m_Jobs.push_back({index, pitch, std::async(std::launch::async, [=, this, path = std::move(path), native = std::move(native)]()
+										 {
+											 Conversion conversion;
+
+											 if (needBase)
+											 {
+												 nqr::NyquistIO loader;
+												 conversion.Base = Convert(path, loader);
+												 conversion.HasBase = true;
+
+												 if (!conversion.Base.Ok)
+													 return conversion;
+											 }
+
+											 if (needPitch)
+											 {
+												 const ConvertedSound& base = conversion.Base;
+												 conversion.Pitched = needBase
+																		  ? ConvertPitch(base.NativeSamples, base.NativeRate, base.ChannelCount, base.NativeLoopStart, base.NativeLoopEnd, pitch)
+																		  : ConvertPitch(native, nativeRate, channels, loopStart, loopEnd, pitch);
+												 conversion.HasPitch = true;
+											 }
+
+											 return conversion; })});
+}
+
+void SoundCache::Poll()
+{
+	for (auto job = m_Jobs.begin(); job != m_Jobs.end();)
+	{
+		if (job->Result.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
+		{
+			++job;
+			continue;
+		}
+
+		Conversion conversion = job->Result.get();
+
+		if (Sound* sound = GetSound(job->Index); sound)
+		{
+			if (conversion.HasBase && !sound->Buffer.IsValid())
+				Upload(*sound, std::move(conversion.Base));
+
+			if (conversion.HasPitch && sound->Buffer.IsValid() && !sound->Pitched.contains(job->Pitch))
+				UploadPitch(*sound, job->Pitch, std::move(conversion.Pitched));
+		}
+
+		job = m_Jobs.erase(job);
+	}
 }
 
 const std::vector<float>& SoundCache::GetSamples(const Sound& sound, int pitch)
@@ -585,6 +743,8 @@ const std::vector<float>& SoundCache::GetSamples(const Sound& sound, int pitch)
 
 void SoundCache::ClearBuffers()
 {
+	m_Jobs.clear(); // Each waits for its work to finish.
+
 	for (auto& sound : m_Sounds)
 	{
 		sound.Samples.clear();
@@ -596,6 +756,7 @@ void SoundCache::ClearBuffers()
 
 void SoundCache::Clear()
 {
+	m_Jobs.clear();
 	m_SoundLookup.clear();
 	m_Sounds.clear();
 }
