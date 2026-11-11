@@ -1558,8 +1558,14 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 					std::memcpy(donorWorld[j], jumpQ[j], sizeof(donorWorld[j]));
 			}
 
+			// Both about where the player looks, not where its legs go: moving sideways in the air its legs turn that way, its
+			// back twisted the rest of the way to the view (its controllers), and a raise about the legs' sideways axis rolled
+			// the arms across the view (fuser2 the view's yaw, angles the legs').
+			const float turn = std::remainder(m_pCurrentEntity->curstate.fuser2 - m_pCurrentEntity->curstate.angles[1], 360.f) *
+							   static_cast<float>(PI) / 180;
 			const float raise = m_pCurrentEntity->curstate.vuser1[2] * static_cast<float>(PI) / 360;
-			const vec4_t raiseQ = {0, std::sin(raise), 0, std::cos(raise)};
+			const vec4_t raiseQ = {-std::sin(turn) * std::sin(raise), std::cos(turn) * std::sin(raise), 0, std::cos(raise)};
+			const float forward = m_pCurrentEntity->curstate.vuser2[0];
 
 			for (int i = 0; i < m_pStudioHeader->numbones; ++i)
 			{
@@ -1576,7 +1582,7 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 					// The move, from the model's axes to its parent's.
 					float toParent[3][4];
 					QuaternionMatrix(parentInverse, toParent);
-					const float moved[3] = {m_pCurrentEntity->curstate.vuser2[0], 0, m_pCurrentEntity->curstate.vuser2[1]};
+					const float moved[3] = {forward * std::cos(turn), forward * std::sin(turn), m_pCurrentEntity->curstate.vuser2[1]};
 
 					for (int k = 0; k < 3; ++k)
 						pos[i][k] += toParent[k][0] * moved[0] + toParent[k][1] * moved[1] + toParent[k][2] * moved[2];
