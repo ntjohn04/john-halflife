@@ -383,10 +383,12 @@ a player it went straight into or a creature none, a wall one half the time).
   going with it, the sprite's yellow-green (140,190,40), 115 units, flickering ±8% (`jhl_displacer.cpp`: the
   sprite flying; the Lambda Core's portals, the same sprite, stand still).
 * Its charge seen at the muzzle, each shot, primary or secondary (`jhl_displacer.cpp`, from `EV_FireDisplacer`'s
-  spin-up, the local player): the ball's sprite at the view model's first attachment (`spinner`, 20 units ahead),
-  growing quickly then easing over the 1 s to the shot to 0.13 (10 units across, a little more than the Gauss
-  gun's full charge), 0.35 to 0.9 bright, and its light 30 to 125 units (the Gauss gun's to 110), flickering ±10%;
-  fading out over 0.1 s when it fires (the ball takes over), or gone after 1.5 s if the shot never comes.
+  spin-up, the local player): the ball's sprite between the prongs (the view model's attachments 1-3, averaged; the
+  first, `spinner`, turns with the spinning part), growing quickly then easing over the 1 s to the shot to 0.13
+  (10 units across, a little more than the Gauss gun's full charge), 0.35 to 0.9 bright, and its light 30 to 125
+  units (the Gauss gun's to 110), flickering ±10%; fading out over 0.1 s when it fires (the ball takes over: a
+  primary shot sends no event, `CDisplacer::FireThink`'s is commented out, so it's the ball appearing near the end
+  of the charge), or gone after 1.5 s if the shot never comes.
 * Its impact light (vanilla's 160 units, (255,180,96), 1 s) 15% bigger, 184.
 * The ball's sprite is the Lambda Core portals' (`exit1.spr`, 25 frames; c3a2b/c/f's `env_sprite`s play it at
   40 fps), but vanilla never steps its frame (the reconstructed Opposing Force code doesn't either), so it showed
@@ -400,6 +402,10 @@ a player it went straight into or a creature none, a wall one half the time).
 noise 0.75, brightness 0.75, cyan, 0.08 s) get a strand each, width 0.4, noise 1.8 ±25%, brightness 0.3.
 
 The displacer's victims get no blood pool (combat.cpp: its ball kills them without gibbing and takes them away).
+
+**Alien grunt** (`agrunt.cpp`): each hornet shot's flash (`muz4`, one frame, so nothing missing) had the engine's
+gun light (`EF_MUZZLEFLASH`, orange-white); with the particle system on, a reserved light in the hornets' violet
+(170,70,255), 200 units, shrinking away over 0.1 s.
 
 **Controller** (`controller.cpp`):
 

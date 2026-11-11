@@ -35,7 +35,7 @@ constexpr const char* BallSprite = "sprites/exit1.spr";
 constexpr color24 LightColor{140, 190, 40};
 
 // The charge: from the spin-up to the shot (CDisplacer: fired 0.9 s in, on its next think 0.1 s later), a ball of the
-// portal sprite at the muzzle (the view model's first attachment, "spinner", 20 units ahead of the gun) growing quickly
+// portal sprite at the muzzle (between its prongs, FindMuzzle) growing quickly
 // then easing (ChargeCurve), a little bigger and brighter at the end than the Gauss gun's full charge (its glow 0.144
 // of a 64-pixel sprite, 9 units; this 0.13 of an 80-pixel one, 10), and its light (the Gauss gun's to 110 units).
 // Flickering a little; going out over FadeTime when it fires (the ball takes over), or if the shot never comes
@@ -69,6 +69,8 @@ float Random(float low, float high)
 	return gEngfuncs.pfnRandomFloat(low, high);
 }
 
+// The middle of its three prongs (the view model's attachments 1-3, "reflector01-03"): its first, "spinner", is on the
+// bone that spins up, off its axis, so a glow there circled the muzzle.
 bool FindMuzzle(Vector& muzzle)
 {
 	if (0 != CL_IsThirdPerson())
@@ -76,10 +78,20 @@ bool FindMuzzle(Vector& muzzle)
 
 	cl_entity_t* viewModel = gEngfuncs.GetViewModel();
 
-	if (!viewModel || viewModel->attachment[0] == g_vecZero)
+	if (!viewModel)
 		return false;
 
-	muzzle = viewModel->attachment[0];
+	muzzle = g_vecZero;
+
+	for (int i = 1; i <= 3; ++i)
+	{
+		if (viewModel->attachment[i] == g_vecZero)
+			return false;
+
+		muzzle = muzzle + viewModel->attachment[i];
+	}
+
+	muzzle = muzzle / 3;
 	return true;
 }
 
@@ -123,6 +135,11 @@ void JhlDisplacer_Track(cl_entity_t* entity, const char* modelname)
 	{
 		return;
 	}
+
+	// The charge's shot: the server sends no event for a primary shot (CDisplacer::FireThink's is commented out), so a
+	// ball seen as the charge ends is it.
+	if (g_ChargeStart >= 0 && g_FiredAt < 0 && gEngfuncs.GetClientTime() - g_ChargeStart > ChargeTime * 0.8f)
+		JhlDisplacer_Fired();
 
 	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(BallLightKey + entity->index); light)
 	{
