@@ -250,7 +250,7 @@ static void ParallelFor(std::size_t count, const Work& work)
 	}
 }
 
-void SoundCache::PreloadIfLong(SoundIndex index)
+void SoundCache::Preload(SoundIndex index)
 {
 	Sound* sound = GetSound(index);
 
@@ -259,19 +259,7 @@ void SoundCache::PreloadIfLong(SoundIndex index)
 		return;
 	}
 
-	Filename fileName = SoundDirectoryName;
-
-	if (sound->Name.front() != '/')
-	{
-		fileName += '/';
-	}
-
-	fileName.append(sound->Name.begin(), sound->Name.end());
-
-	if (g_pFileSystem->Size(fileName.c_str()) >= static_cast<unsigned int>(PreloadBytes))
-	{
-		LoadSound(*sound);
-	}
+	LoadSound(*sound);
 }
 
 std::vector<float> SoundCache::Resample(const std::vector<float>& samples, std::size_t channels, double step, bool interpolate)

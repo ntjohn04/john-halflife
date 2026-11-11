@@ -396,13 +396,14 @@ void GameSoundSystem::HandleNetworkDataBlock(NetworkDataBlock& block)
 			m_PrecacheMap.push_back(m_SoundCache->FindName(fileName.get<std::string>().c_str()));
 		}
 
-		// johnhalflife: the map's long sounds (speeches, ambience) made ready while it loads, not the first time each
-		// plays (a scientist's 29 s speech stalled that frame).
+		// johnhalflife: the map's sounds made ready while it loads, as the engine loads its precached sounds, not the
+		// first time each plays (a scientist's 29 s speech stalled that frame; in a fight, several short ones in one
+		// frame, read from disk).
 		if (MakeCurrent())
 		{
 			for (const SoundIndex index : m_PrecacheMap)
 			{
-				m_SoundCache->PreloadIfLong(index);
+				m_SoundCache->Preload(index);
 			}
 		}
 	}
