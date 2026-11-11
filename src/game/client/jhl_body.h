@@ -26,7 +26,8 @@ struct studiohdr_t;
 /**
  *	@brief The body's entity's iuser4, for the studio renderer (JhlBody_Place, JhlBody_Pose). A pose taken from another
  *	model (CStudioModelRenderer::JhlSetupBorrowedBones): its model iuser1, its sequence iuser2 less one, its frame
- *	fuser3; the whole pose, its origin fuser4 above the feet, or with playerclass 1 only the upper body.
+ *	fuser3; the whole pose, its origin fuser4 above the feet (with playerclass 2 its root as standing, without its
+ *	motion), or with playerclass 1 only the upper body.
  */
 constexpr int JhlBodyMarker = 0x4A4842; // "JHB"
 

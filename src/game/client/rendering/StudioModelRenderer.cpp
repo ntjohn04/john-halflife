@@ -1421,6 +1421,15 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	mstudioseqdesc_t* pose = &donorSequences[donorSequence];
 	StudioCalcRotations(donorPos, donorQ, pose, StudioGetAnim(donor, pose), m_pCurrentEntity->curstate.fuser3);
 
+	// With playerclass 2 (a jump), its arms no further through it than vuser1[1] (they come back in to hold a weapon).
+	static float armsPos[MAXSTUDIOBONES][3];
+	static vec4_t armsQ[MAXSTUDIOBONES];
+	const float armsFrame = m_pCurrentEntity->curstate.vuser1[1];
+	const bool armsHeld = m_pCurrentEntity->curstate.playerclass == 2 && armsFrame > 0 && m_pCurrentEntity->curstate.fuser3 > armsFrame;
+
+	if (armsHeld)
+		StudioCalcRotations(armsPos, armsQ, pose, StudioGetAnim(donor, pose), armsFrame);
+
 	mstudioseqdesc_t* standing = &donorSequences[0];
 
 	for (int i = 0; i < donorHeader->numseq; ++i)
@@ -1475,23 +1484,106 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 		return length >= endLength && 0 == std::strcmp(name + length - endLength, end);
 	};
 
+	const auto multiply = [](const vec4_t a, const vec4_t b, vec4_t out)
+	{
+		const float x = a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1];
+		const float y = a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0];
+		const float z = a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3];
+		const float w = a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2];
+		out[0] = x;
+		out[1] = y;
+		out[2] = z;
+		out[3] = w;
+	};
+
+	const auto inverse = [](const vec4_t a, vec4_t out)
+	{
+		out[0] = -a[0];
+		out[1] = -a[1];
+		out[2] = -a[2];
+		out[3] = a[3];
+	};
+
+	static vec4_t world[MAXSTUDIOBONES];
+	static vec4_t donorWorld[MAXSTUDIOBONES];
+
 	if (!armsOnly)
 	{
 		// Its turns, and its hips raised and lowered as the player model's (from its origin, the hull's middle, to the
-		// feet), to his size.
+		// feet), to his size. With playerclass 2, without its root's motion: the root turned as standing, and placed as
+		// standing (none of its rise or sinking); its back and neck upright as standing (coming down
+		// the jump folds it forward over the hips, 70 degrees, its back and shoulders out under the eyes); its arms held
+		// (above), and turned as the jump's are, its whole lean in them (on the folded back's rotations an upright back
+		// swung them up behind it), raised forward vuser1[2] degrees more, and moved vuser2[0] forward and vuser2[1] up
+		// (the shoulders upright are further back).
+		const bool rootStill = m_pCurrentEntity->curstate.playerclass == 2;
+		bool arm[MAXSTUDIOBONES]{};
+
 		for (int i = 0; i < m_pStudioHeader->numbones; ++i)
 		{
 			const int j = donorBone(bones[i].name);
 
+			arm[i] = endsWith(bones[i].name, " L Arm") || endsWith(bones[i].name, " R Arm") || (bones[i].parent >= 0 && arm[bones[i].parent]);
+
 			if (j < 0)
 				continue;
 
-			std::memcpy(q[i], donorQ[j], sizeof(q[i]));
+			const bool root = bones[i].parent == -1;
+			const bool back = std::strstr(bones[i].name, " Spine") || std::strstr(bones[i].name, " Neck");
+			std::memcpy(q[i], rootStill && (root || back) ? standingQ[j] : armsHeld && arm[i] ? armsQ[j] : donorQ[j], sizeof(q[i]));
 
-			if (bones[i].parent == -1 && donorBones[j].value[2] > 0)
+			if (root && donorBones[j].value[2] > 0)
 			{
 				const float scale = bones[i].value[2] / donorBones[j].value[2];
-				pos[i][2] += ((donorPos[j][2] + m_pCurrentEntity->curstate.fuser4) - (standingPos[j][2] + 36)) * scale;
+				const float height = rootStill ? standingPos[j][2] : donorPos[j][2];
+				pos[i][2] += ((height + m_pCurrentEntity->curstate.fuser4) - (standingPos[j][2] + 36)) * scale;
+			}
+		}
+
+		if (rootStill)
+		{
+			// The jump's own turns (its arms' frame if held), its root's lean among them, to each collarbone; the extra
+			// raise about the model's sideways axis.
+			const vec4_t* jumpQ = armsHeld ? armsQ : donorQ;
+
+			for (int j = 0; j < donorHeader->numbones; ++j)
+			{
+				const int parent = donorBones[j].parent;
+
+				if (parent >= 0 && parent < j)
+					multiply(donorWorld[parent], jumpQ[j], donorWorld[j]);
+				else
+					std::memcpy(donorWorld[j], jumpQ[j], sizeof(donorWorld[j]));
+			}
+
+			const float raise = m_pCurrentEntity->curstate.vuser1[2] * static_cast<float>(PI) / 360;
+			const vec4_t raiseQ = {0, std::sin(raise), 0, std::cos(raise)};
+
+			for (int i = 0; i < m_pStudioHeader->numbones; ++i)
+			{
+				const int parent = bones[i].parent >= 0 && bones[i].parent < i ? bones[i].parent : -1;
+				const int j = endsWith(bones[i].name, " L Arm") || endsWith(bones[i].name, " R Arm") ? donorBone(bones[i].name) : -1;
+
+				if (j >= 0 && parent >= 0)
+				{
+					vec4_t wanted, parentInverse;
+					multiply(raiseQ, donorWorld[j], wanted);
+					inverse(world[parent], parentInverse);
+					multiply(parentInverse, wanted, q[i]);
+
+					// The move, from the model's axes to its parent's.
+					float toParent[3][4];
+					QuaternionMatrix(parentInverse, toParent);
+					const float moved[3] = {m_pCurrentEntity->curstate.vuser2[0], 0, m_pCurrentEntity->curstate.vuser2[1]};
+
+					for (int k = 0; k < 3; ++k)
+						pos[i][k] += toParent[k][0] * moved[0] + toParent[k][1] * moved[1] + toParent[k][2] * moved[2];
+				}
+
+				if (parent >= 0)
+					multiply(world[parent], q[i], world[i]);
+				else
+					std::memcpy(world[i], q[i], sizeof(world[i]));
 			}
 		}
 	}
@@ -1501,28 +1593,6 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 		// lunge and twist the back as they run with a weapon), measured from the hips, not bone by bone (their collarbones
 		// aren't alike: his a dummy at the neck, the player models' out to the shoulder). Its collarbones, fingers (he has
 		// none) and any back bone he hasn't as at rest, its fingers open, not gripping a weapon.
-		const auto multiply = [](const vec4_t a, const vec4_t b, vec4_t out)
-		{
-			const float x = a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1];
-			const float y = a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0];
-			const float z = a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3];
-			const float w = a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2];
-			out[0] = x;
-			out[1] = y;
-			out[2] = z;
-			out[3] = w;
-		};
-
-		const auto inverse = [](const vec4_t a, vec4_t out)
-		{
-			out[0] = -a[0];
-			out[1] = -a[1];
-			out[2] = -a[2];
-			out[3] = a[3];
-		};
-
-		static vec4_t world[MAXSTUDIOBONES];
-		static vec4_t donorWorld[MAXSTUDIOBONES];
 		int donorPelvis = -1;
 
 		for (int j = 0; j < donorHeader->numbones; ++j)

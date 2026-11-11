@@ -4,7 +4,7 @@
 
 Looking down, you see your own body: Gordon in the HEV suit, Barney or Adrian, whichever player model the map's game
 gives you (Unified's model replacement), and Gordon in his lab coat before he has the suit. It's purely drawn: your
-movement picks its pose and nothing goes back. It stands 16 units behind your eyes (20 crouched), so it's only seen
+movement picks its pose and nothing goes back. It stands 14 units behind your eyes (18 crouched), so it's only seen
 looking well down and never gets in the way.
 
 `jhl_body.cpp` draws it on the client, as its own entity:
@@ -19,15 +19,22 @@ looking well down and never gets in the way.
 * **As it's drawn (the studio renderer):** it's put on your feet where the movement has them, whatever the camera's
   smoothing does on stairs and landings; in the air it hangs from your eyes as in a standing jump, so a crouching jump
   looks like one. Its head is hidden, and its arms while a weapon is out (the view model's arms are yours). Crouched,
-  only its legs are drawn; jumping, the lower part of its back too (two of its back bones for the HEV suit, one for the
-  others, whose backs lean further into view). Everything hidden together is shrunk to the one point where it's cut
-  off, so no stretched polygons are left floating.
+  only its legs are drawn. Everything hidden together is shrunk to the one point where it's cut off, so no stretched
+  polygons are left floating.
 
-With no weapon (before you have one, or holstered on slot 8), its arms are drawn. The player models' own arms hold a
-weapon out in every pose, so standing, walking and running their upper body takes the lab coat Gordon's poses instead,
-measured from the hips and played half a loop on, his loops starting on the other foot. Crouched, no arms; jumping, the
-player model's own. The lab coat Gordon's model is a scientist's with only walking poses, so jumping, crouching and
-treading water he takes the player model's, bone for bone.
+**Jumping and falling:** the player model's jump has the jump's arc in it (the body rising 20 units, sinking 37 as it
+lands, leaning forward and folding over the hips), which brought its back and shoulders out under the eyes, far below
+them in a fall. It's drawn without it: hips and back upright as standing, only the legs and arms moving. The arms keep
+the jump's lean, hold its frame 21 (later they come back in to hold a weapon), and sit a little forward and up (7 and 2
+units, raised 45 degrees), close to the eyes like view models. Its back is drawn up to its 4th spine bone with the arms
+out; with a weapon out, as far as shows no shoulders moving without hands: the HEV suit's 3rd, Barney's 3rd, the lab
+coat's 2nd, Adrian's 4th.
+
+With no weapon (before you have one, or holstered on slot 8), its arms are drawn. The player models' own upper bodies
+hold a weapon out in every pose, so standing, walking and running they take the lab coat Gordon's poses instead, with a
+weapon out too (its arms hidden), measured from the hips and played half a loop on, his loops starting on the other
+foot. Crouched, no arms. The lab coat Gordon's model is a scientist's with only walking poses, so jumping and crouching
+he takes the player model's, bone for bone.
 
 On a ladder, no arms (none of the games has a climbing pose: the hazard course hologram's `ladder` is her pointing
 at one), and walking's pose stepping only as it climbs, up or down (a loop each 1.3 of its strides climbed), held
