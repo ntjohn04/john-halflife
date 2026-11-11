@@ -361,20 +361,33 @@ a player it went straight into or a creature none, a wall one half the time).
 **Voltigore** (Opposing Force, `voltigore.cpp`; `lgtning`, purple):
 
 * Charging (3 beams converging where its ball forms, width 50 noise 20): strands width 20 noise 100 brightness
-  102, and a faint purple light (90,10,130) of 72 units where they meet, about 1 s.
+  102, and the ball it holds lit until it throws it, its purple (150,15,215), already 90 units as it forms (the
+  charge is short) and growing to 150 over 0.5 s, easing, flickering ±10% (`JhlVoltigore_Track`, `jhl_gargantua.cpp`:
+  the server tags the held ball renderamt 254, invisible on an additive sprite, back to 255 when thrown).
 * The ball (`charged_bolt`, `blueflare2`), re-aiming 2 beams at what's near every 0.05 s (to surfaces width 30
   noise 80, to creatures noise 20, reused): strands width 12 noise 210 (100 to creatures) brightness 102 following
   them, and every other re-aim a faint purple light where they touch, 0.15 s.
 * Its impact (vanilla: a scorch, damage, silent): a purple light (200,60,255) of 200 units shrinking away over
   1.5 s, sparks as above, and Opposing Force's `weapons/shock_impact.wav` pitched down to 80-95.
 * Its death beams (to what's near, noise 128-192, 0.6 s): strands width 12 noise 210, faint lights 0.6 s.
+* Its death lit, for the dark tunnels it lives in: through its death throes a light in its body, its charge's
+  purple, growing with the animation from 100 to 240 units, flickering ±10%; as it bursts a flash its bolts'
+  impact's color, 300 units fading out over 1.5 s. Gibbed outright (no throes), a flash of 200 units over 1 s
+  (`DeathGibThink`, `GibMonster`).
 
 **Displacer** (Opposing Force):
 
 * The ball (`CDisplacerBall`, `exit1.spr`; re-aims 2 beams at what's near every 0.05 s, to surfaces dark green
   width 30 noise 80, to creatures white): strands width 12 noise 210 (100 to creatures) brightness 102 following
-  them, and every other re-aim a faint green light (80,170,30) of 72 units where they touch, 0.15 s. It already
-  has its own light and sounds.
+  them, and every other re-aim a faint green light (80,170,30) of 72 units where they touch, 0.15 s; and a light
+  going with it, the sprite's yellow-green (140,190,40), 115 units, flickering ±8% (`jhl_displacer.cpp`: the
+  sprite flying; the Lambda Core's portals, the same sprite, stand still).
+* Its charge seen at the muzzle, each shot, primary or secondary (`jhl_displacer.cpp`, from `EV_FireDisplacer`'s
+  spin-up, the local player): the ball's sprite at the view model's first attachment (`spinner`, 20 units ahead),
+  growing quickly then easing over the 1 s to the shot to 0.13 (10 units across, a little more than the Gauss
+  gun's full charge), 0.35 to 0.9 bright, and its light 30 to 125 units (the Gauss gun's to 110), flickering ±10%;
+  fading out over 0.1 s when it fires (the ball takes over), or gone after 1.5 s if the shot never comes.
+* Its impact light (vanilla's 160 units, (255,180,96), 1 s) 15% bigger, 184.
 * The ball's sprite is the Lambda Core portals' (`exit1.spr`, 25 frames; c3a2b/c/f's `env_sprite`s play it at
   40 fps), but vanilla never steps its frame (the reconstructed Opposing Force code doesn't either), so it showed
   frame 0 only. It now plays at 40 fps (`Animate`).

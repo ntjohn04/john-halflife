@@ -141,6 +141,8 @@ target_sources(client PRIVATE
 	jhl_softwarelook.h
 	jhl_softwarewater.cpp
 	jhl_softwarewater.h
+	jhl_displacer.cpp
+	jhl_displacer.h
 	jhl_gauss.cpp
 	jhl_gauss.h
 	jhl_hornets.cpp

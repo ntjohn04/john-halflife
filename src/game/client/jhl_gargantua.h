@@ -31,6 +31,11 @@ void JhlGargantua_ParseFlame(BufferReader& reader);
 void JhlGargantua_Track(cl_entity_t* ent, const char* modelname);
 
 /**
+ *	@brief johnhalflife: a voltigore's charge lit, growing on the bolt it holds until it throws it (HUD_AddEntity).
+ */
+void JhlVoltigore_Track(cl_entity_t* ent, const char* modelname);
+
+/**
  *	@brief Its flames' cores and hand lights onto its hands as just drawn, its attachments just worked out
  *	(CStudioModelRenderer::StudioDrawModel): they aren't yet when it's added (HUD_AddEntity).
  */

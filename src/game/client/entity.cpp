@@ -25,6 +25,7 @@
 #include "jhl_explosions.h"
 #include "jhl_rings.h"
 #include "jhl_tracers.h"
+#include "jhl_displacer.h"
 #include "jhl_gauss.h"
 #include "jhl_hornets.h"
 #include "jhl_shockbeams.h"
@@ -67,10 +68,12 @@ int DLLEXPORT HUD_AddEntity(int type, cl_entity_t* ent, const char* modelname)
 		JhlGrapple_Track(ent, modelname);
 		SporeLight(ent, modelname);
 		RpgLaserDot(ent, modelname);
+		JhlDisplacer_Track(ent, modelname);
 		RocketGlow(ent, modelname);
 		MortarShellTrail(ent, modelname);
 		GrenadePivot(ent, modelname);
 		JhlGargantua_Track(ent, modelname);
+		JhlVoltigore_Track(ent, modelname);
 		JhlGonarchSpit_Track(ent, modelname);
 		JhlFlushFaces_Add(ent);
 		break;
@@ -405,6 +408,7 @@ void DLLEXPORT HUD_TempEntUpdate(
 	JhlRings_Update(client_time);
 	JhlTracers_Update(client_time);
 	JhlGauss_Update(client_time);
+	JhlDisplacer_Update(client_time);
 	JhlHornets_Update(client_time);
 	JhlShockBeams_Update(client_time);
 	JhlGrapple_Update(client_time);

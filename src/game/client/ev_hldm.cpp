@@ -20,6 +20,7 @@
 #include "CCrossbow.h"
 #include "CCrowbar.h"
 #include "CDisplacer.h"
+#include "jhl_displacer.h"
 #include "CEagle.h"
 #include "CEgon.h"
 #include "CGauss.h"
@@ -2187,6 +2188,10 @@ void EV_FireDisplacer(event_args_t* args)
 	{
 	case DisplacerMode::SPINNING_UP:
 	{
+		// johnhalflife: its charge seen at the muzzle.
+		if (EV_IsLocal(args->entindex))
+			JhlDisplacer_SpinUp();
+
 		int iAttach = 0;
 
 		int iStartAttach, iEndAttach;
@@ -2247,6 +2252,7 @@ void EV_FireDisplacer(event_args_t* args)
 
 		if (EV_IsLocal(args->entindex))
 		{
+			JhlDisplacer_Fired();
 			gEngfuncs.pEventAPI->EV_WeaponAnimation(DISPLACER_FIRE, 0);
 			if (!EV_WeaponRecoil(RecoilDisplacer))
 				V_PunchAxis(0, -2);

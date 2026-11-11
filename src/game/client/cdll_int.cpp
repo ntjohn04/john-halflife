@@ -42,6 +42,7 @@
 #include "jhl_rings.h"
 #include "jhl_tracers.h"
 #include "jhl_egon.h"
+#include "jhl_displacer.h"
 #include "jhl_gauss.h"
 #include "jhl_hornets.h"
 #include "jhl_shockbeams.h"
@@ -181,6 +182,7 @@ int DLLEXPORT HUD_VidInit()
 	JhlTracers_Reset();
 	JhlEgon_Reset();
 	JhlGauss_Reset();
+	JhlDisplacer_Reset();
 	JhlHornets_Reset();
 	JhlShockBeams_Reset();
 	JhlGrapple_Reset();

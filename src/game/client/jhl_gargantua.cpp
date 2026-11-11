@@ -618,3 +618,61 @@ void JhlGargantua_Reset()
 	g_GonarchSpits.clear();
 	g_Stomps.clear();
 }
+
+// johnhalflife: a voltigore's charge: the bolt it holds between its arms as it charges (COFChargedBolt,
+// blueflare2.spr, tagged renderamt 254 until it's thrown) lit, its beams' purple, already sizable as it starts (the
+// charge is short) and growing quickly, easing, to VoltigoreLightMax over VoltigoreGrowTime, flickering a little.
+constexpr int VoltigoreLightKey = 61440; // + its index.
+constexpr float VoltigoreLightMin = 90;
+constexpr float VoltigoreLightMax = 150;
+constexpr float VoltigoreGrowTime = 0.5f;
+constexpr float VoltigoreFlicker = 0.1f;
+constexpr color24 VoltigoreLightColor{150, 15, 215};
+
+struct Charge
+{
+	int Index;
+	float Start;
+	float Last;
+};
+
+static std::vector<Charge> g_Charges;
+
+void JhlVoltigore_Track(cl_entity_t* ent, const char* modelname)
+{
+	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "sprites/blueflare2.spr") ||
+		ent->curstate.renderamt != 254)
+	{
+		return;
+	}
+
+	const float now = gEngfuncs.GetClientTime();
+
+	// Gone (thrown, or freed), or a new map's clock.
+	std::erase_if(g_Charges, [&](const Charge& c)
+		{ return now - c.Last > 0.2f || now < c.Last; });
+
+	auto charge = std::find_if(g_Charges.begin(), g_Charges.end(), [&](const Charge& c)
+		{ return c.Index == ent->index; });
+
+	if (charge == g_Charges.end())
+	{
+		g_Charges.push_back({ent->index, now, now});
+		charge = g_Charges.end() - 1;
+	}
+
+	charge->Last = now;
+
+	const float t = std::clamp((now - charge->Start) / VoltigoreGrowTime, 0.f, 1.f);
+	const float grown = 1 - (1 - t) * (1 - t);
+
+	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(VoltigoreLightKey + ent->index); light)
+	{
+		light->origin = ent->origin;
+		light->radius = (VoltigoreLightMin + (VoltigoreLightMax - VoltigoreLightMin) * grown) *
+						gEngfuncs.pfnRandomFloat(1 - VoltigoreFlicker, 1 + VoltigoreFlicker);
+		light->color = VoltigoreLightColor;
+		light->die = now + 0.05f;
+		light->decay = 0;
+	}
+}

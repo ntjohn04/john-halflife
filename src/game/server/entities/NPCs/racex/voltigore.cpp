@@ -160,6 +160,9 @@ void COFChargedBolt::LaunchChargedBolt(const Vector& vecAim, CBaseEntity* owner,
 	SetOwner(owner);
 	pev->velocity = vecAim * nSpeed;
 
+	// johnhalflife: thrown, no longer charging (its charge light, jhl_gargantua.cpp's JhlVoltigore_Track).
+	pev->renderamt = 255;
+
 	pev->speed = nSpeed;
 
 	SetTouch(&COFChargedBolt::ChargedBoltTouch);
@@ -899,15 +902,16 @@ void COFVoltigore::StartTask(const Task_t* pTask)
 			++m_iBeams;
 		}
 
-		// And a faint purple light where they meet, as the vortigaunt's charging beams.
-		if (UTIL_JhlParticleSystem())
-			UTIL_JhlDynamicLight(vecConverge, 72, 90, 10, 130, 1, 20);
-
 		if (CanUseRangeAttacks())
 		{
 			m_pChargedBolt = COFChargedBolt::ChargedBoltCreate();
 
 			m_pChargedBolt->SetOrigin(vecConverge);
+
+			// johnhalflife: tagged renderamt 254 while it's held, charging, for the client's light growing on it
+			// (jhl_gargantua.cpp's JhlVoltigore_Track; an additive sprite's 254 looks as its 255).
+			if (UTIL_JhlParticleSystem())
+				m_pChargedBolt->pev->renderamt = 254;
 		}
 
 		EmitAmbientSound(pev->origin, "debris/beamstart2.wav", 0.5, ATTN_NORM, 0, RANDOM_LONG(140, 160));
@@ -1121,6 +1125,17 @@ void COFVoltigore::CallDeathGibThink()
 	DeathGibThink();
 }
 
+// johnhalflife: its death lit, for the dark tunnels it lives in: a light in its body as its charge, growing through its
+// death throes with the animation (DeathLightMin to DeathLightMax, its charge's purple, flickering), then as it bursts
+// a bigger flash its bolts' impact's color, fading out over DeathFlashTime as their impact does (GibMonster). Gibbed
+// outright, without the throes, a smaller flash (GibbedFlashRadius, over GibbedFlashTime).
+constexpr float DeathLightMin = 100;
+constexpr float DeathLightMax = 240;
+constexpr float DeathFlashRadius = 300;
+constexpr float DeathFlashTime = 1.5f;
+constexpr float GibbedFlashRadius = 200;
+constexpr float GibbedFlashTime = 1;
+
 void COFVoltigore::DeathGibThink()
 {
 	pev->nextthink = gpGlobals->time + 0.1;
@@ -1133,6 +1148,13 @@ void COFVoltigore::DeathGibThink()
 	}
 	else
 	{
+		if (UTIL_JhlParticleSystem())
+		{
+			const float throes = std::clamp(pev->frame / 255.f, 0.f, 1.f);
+			UTIL_JhlDynamicLight(pev->origin + Vector(0, 0, 32), (DeathLightMin + (DeathLightMax - DeathLightMin) * throes) * RANDOM_FLOAT(0.9f, 1.1f),
+				150, 15, 215, 0.2f, 0);
+		}
+
 		for (auto i = 0; i < 2; ++i)
 		{
 			const int side = i == 0 ? -1 : 1;
@@ -1212,6 +1234,15 @@ void COFVoltigore::DeathGibThink()
 
 void COFVoltigore::GibMonster()
 {
+	// johnhalflife: its burst lit (DeathGibThink): after its death throes, or gibbed outright.
+	if (UTIL_JhlParticleSystem())
+	{
+		const bool throes = m_pfnThink == static_cast<void (CBaseEntity::*)()>(&COFVoltigore::CallDeathGibThink);
+		const float radius = throes ? DeathFlashRadius : GibbedFlashRadius;
+		const float time = throes ? DeathFlashTime : GibbedFlashTime;
+		UTIL_JhlDynamicLight(pev->origin + Vector(0, 0, 32), radius, 200, 60, 255, time, radius / time);
+	}
+
 	pev->renderfx = kRenderFxExplode;
 
 	pev->rendercolor.x = 255;

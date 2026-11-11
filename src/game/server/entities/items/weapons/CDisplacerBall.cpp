@@ -87,6 +87,9 @@ void CDisplacerBall::Precache()
 	PrecacheSound("weapons/displacer_teleport.wav");
 }
 
+// johnhalflife: its impact light (vanilla's 160 units) 15% bigger, in 10s: 184.
+constexpr int JhlImpactLightRadius = 18;
+
 void CDisplacerBall::Spawn()
 {
 	Precache();
@@ -143,7 +146,7 @@ void CDisplacerBall::BallTouch(CBaseEntity* pOther)
 	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
 	WRITE_BYTE(TE_DLIGHT);
 	WRITE_COORD_VECTOR(pev->origin); // coord, coord, coord (pos)
-	WRITE_BYTE(16);					 // byte (radius in 10's)
+	WRITE_BYTE(UTIL_JhlParticleSystem() ? JhlImpactLightRadius : 16); // byte (radius in 10's)
 	WRITE_BYTE(255);				 // byte byte byte (color)
 	WRITE_BYTE(180);
 	WRITE_BYTE(96);
@@ -303,7 +306,7 @@ void CDisplacerBall::FizzleThink()
 	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
 	WRITE_BYTE(TE_DLIGHT);
 	WRITE_COORD_VECTOR(pev->origin);
-	WRITE_BYTE(16);
+	WRITE_BYTE(UTIL_JhlParticleSystem() ? JhlImpactLightRadius : 16);
 	WRITE_BYTE(255);
 	WRITE_BYTE(180);
 	WRITE_BYTE(96);
