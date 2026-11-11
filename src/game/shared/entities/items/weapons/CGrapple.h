@@ -74,6 +74,9 @@ public:
 #endif
 	}
 
+	// johnhalflife: the tip it's firing, for the tip to tell it's been left behind (CGrappleTip::IsOrphaned).
+	const CGrappleTip* GetTip() const { return m_pTip; }
+
 private:
 	void Fire(const Vector& vecOrigin, const Vector& vecDir);
 	void EndAttack();

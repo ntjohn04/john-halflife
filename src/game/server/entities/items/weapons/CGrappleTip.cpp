@@ -17,6 +17,7 @@
 #include "com_model.h"
 
 #include "CGrappleTip.h"
+#include "CGrapple.h"
 #include "jhl_effects.h"
 
 BEGIN_DATAMAP(CGrappleTip)
@@ -128,8 +129,24 @@ void CGrappleTip::Spawn()
 	m_bMissed = false;
 }
 
+bool CGrappleTip::IsOrphaned()
+{
+	CBasePlayer* player = ToBasePlayer(pev->owner);
+
+	if (!player || !player->m_pActiveWeapon || !player->m_pActiveWeapon->ClassnameIs("weapon_grapple"))
+		return true;
+
+	return static_cast<CGrapple*>(player->m_pActiveWeapon)->GetTip() != this;
+}
+
 void CGrappleTip::FlyThink()
 {
+	if (IsOrphaned())
+	{
+		UTIL_Remove(this);
+		return;
+	}
+
 	UTIL_MakeAimVectors(pev->angles);
 
 	pev->angles = UTIL_VecToAngles(gpGlobals->v_forward);
@@ -151,7 +168,14 @@ void CGrappleTip::FlyThink()
 
 void CGrappleTip::OffsetThink()
 {
-	// Nothing
+	// johnhalflife: latched on, it checks now and then that it's still its grapple's (Valve's did nothing).
+	if (IsOrphaned())
+	{
+		UTIL_Remove(this);
+		return;
+	}
+
+	pev->nextthink = gpGlobals->time + 0.5;
 }
 
 void CGrappleTip::TongueTouch(CBaseEntity* pOther)
