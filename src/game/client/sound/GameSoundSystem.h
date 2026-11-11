@@ -245,6 +245,7 @@ private:
 
 	// johnhalflife: the engine's mixing (jhl_snd_vanilla).
 	static constexpr ALCint VanillaMixFrequency = 22050;
+	cvar_t* m_PreloadAllCvar = nullptr; // johnhalflife: jhl_perf_preloadsounds.
 	cvar_t* m_VanillaCvar{};
 	bool m_VanillaMix{false};
 	ALCint m_DefaultFrequency{0};

@@ -79,9 +79,13 @@ public:
 
 	/**
 	 *	@brief johnhalflife: loads a sound now, so its first play doesn't stall a frame reading and converting it (a
-	 *	map's sounds, as the map loads, as the engine loads its precached sounds).
+	 *	map's sounds, as the map loads): with @p all every one (jhl_perf_preloadsounds, as the engine loads its
+	 *	precached sounds), else only a long one (PreloadBytes or more: a long one took several milliseconds).
 	 */
-	void Preload(SoundIndex index);
+	void Preload(SoundIndex index, bool all);
+
+	// About 3 seconds of a 16-bit 11025 Hz sound.
+	static constexpr int PreloadBytes = 64 * 1024;
 
 	void ClearBuffers();
 

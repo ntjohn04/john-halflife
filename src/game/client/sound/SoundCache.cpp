@@ -250,13 +250,28 @@ static void ParallelFor(std::size_t count, const Work& work)
 	}
 }
 
-void SoundCache::Preload(SoundIndex index)
+void SoundCache::Preload(SoundIndex index, bool all)
 {
 	Sound* sound = GetSound(index);
 
 	if (!sound || sound->Name.empty() || sound->Buffer.IsValid())
 	{
 		return;
+	}
+
+	if (!all)
+	{
+		Filename fileName = SoundDirectoryName;
+
+		if (sound->Name.front() != '/')
+		{
+			fileName += '/';
+		}
+
+		fileName.append(sound->Name.begin(), sound->Name.end());
+
+		if (g_pFileSystem->Size(fileName.c_str()) < static_cast<unsigned int>(PreloadBytes))
+			return;
 	}
 
 	LoadSound(*sound);

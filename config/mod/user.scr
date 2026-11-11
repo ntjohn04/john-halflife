@@ -251,6 +251,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"jhl_perf_preloadsounds"
+	{
+		"JHL | Performance: load every sound with the map (fewer first-play hitches, longer loads)"
+		{ BOOL }
+		{ "0" }
+	}
+
 	"crosshair"
 	{
 		"Vanilla | Crosshair"

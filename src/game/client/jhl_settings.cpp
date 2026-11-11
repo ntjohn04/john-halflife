@@ -78,6 +78,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_hud_campaigncrosshair", "1"},
 	{"jhl_snd_vanilla", "1"},
 	{"jhl_snd_musicsaves", "1"},
+	{"jhl_perf_preloadsounds", "0"},
 	{"crosshair", "1"},
 	{"crosshair_scale", "0"},
 	{"default_fov", "100"},

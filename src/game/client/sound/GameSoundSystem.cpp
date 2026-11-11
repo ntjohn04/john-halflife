@@ -152,6 +152,7 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 	// johnhalflife: Steam Half-Life's own mixing and room effects (jhl_snd_vanilla), from the start; the device's own
 	// rate to go back to.
 	m_VanillaCvar = gEngfuncs.pfnRegisterVariable("jhl_snd_vanilla", "1", FCVAR_ARCHIVE);
+	m_PreloadAllCvar = gEngfuncs.pfnRegisterVariable("jhl_perf_preloadsounds", "0", FCVAR_ARCHIVE);
 	m_VanillaMix = m_VanillaCvar->value != 0;
 	m_SupportsOutputMode = alcIsExtensionPresent(m_Device.get(), "ALC_SOFT_output_mode") != ALC_FALSE;
 	m_SupportsLimiter = alcIsExtensionPresent(m_Device.get(), "ALC_SOFT_output_limiter") != ALC_FALSE;
@@ -396,14 +397,16 @@ void GameSoundSystem::HandleNetworkDataBlock(NetworkDataBlock& block)
 			m_PrecacheMap.push_back(m_SoundCache->FindName(fileName.get<std::string>().c_str()));
 		}
 
-		// johnhalflife: the map's sounds made ready while it loads, as the engine loads its precached sounds, not the
-		// first time each plays (a scientist's 29 s speech stalled that frame; in a fight, several short ones in one
-		// frame, read from disk).
+		// johnhalflife: the map's long sounds (speeches, ambience) made ready while it loads, not the first time each
+		// plays (a scientist's 29 s speech stalled that frame); with jhl_perf_preloadsounds all of them, as the engine
+		// loads its precached sounds (in a fight, several short ones in one frame, read from disk).
 		if (MakeCurrent())
 		{
+			const bool all = m_PreloadAllCvar && m_PreloadAllCvar->value != 0;
+
 			for (const SoundIndex index : m_PrecacheMap)
 			{
-				m_SoundCache->Preload(index);
+				m_SoundCache->Preload(index, all);
 			}
 		}
 	}
