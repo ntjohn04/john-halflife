@@ -58,6 +58,7 @@ All are client settings: in John Settings (below) or the console.
 | `jhl_fx_keepcorpses` | 1 | Corpses vanilla fades a few seconds after death (monsters from a spawner, such as Race X portals and grunt drop-offs, and those the map flags to fade) stay like any other body. Up to 40 at once, the oldest fading past that; a spawner whose spot a kept corpse lies on fades it and spawns anyway | [Effects](docs/effects.md#kept-corpses) |
 | `jhl_hud_scale` | 0 | Sprite HUD scale: 0 automatic (Valve's half-size HUD at 800x600 and below, 1 up to 1439 tall, 2 from 1440, 3 from 2160), 0.5 half size, 1, 2, 3... that size | [HUD](#hud-scale) |
 | `jhl_hud_minimal` | 1 | A minimal HUD: the weapon menu without its ammo bars (the small green, red when empty, bars under each weapon), and the flashlight icon fading away while it's off and fully charged (back at once when on or charging) | [HUD](#hud-scale) |
+| `jhl_hud_campaigncrosshair` | 1 | The crosshair in the campaign's HUD colour: Blue Shift's blue (vanilla Blue Shift kept Half-Life's orange with its blue HUD); Half-Life's, Uplink's and Opposing Force's already match | [HUD](#hud-scale) |
 | `jhl_snd_vanilla` | 1 | Half-Life's own mixing (22 kHz, its pitch grain, ear volumes, clipping) and room effects, in place of the SDK's OpenAL sound | [Sound](docs/sound.md) |
 | `jhl_snd_musicsaves` | 1 | Loading a save plays the music that was playing when it was saved, from that point (0: loading stops the music, as vanilla) | [Sound](docs/sound.md#music-in-saves) |
 

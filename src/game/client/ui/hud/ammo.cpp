@@ -385,6 +385,7 @@ bool CHudAmmo::Init()
 	CVAR_CREATE("hud_fastswitch", "0", FCVAR_ARCHIVE); // controls whether or not weapons can be selected in one keypress
 	m_pCvarCrosshairScale = CVAR_CREATE("crosshair_scale", "0", FCVAR_ARCHIVE); // johnhalflife: 0, automatic (below)
 	m_pCvarHolster = CVAR_CREATE("jhl_weapons_holster", "1", FCVAR_ARCHIVE);
+	m_pCvarCampaignCrosshair = CVAR_CREATE("jhl_hud_campaigncrosshair", "1", FCVAR_ARCHIVE);
 
 	m_iFlags |= HUD_ACTIVE; //!!!
 
@@ -1051,7 +1052,9 @@ void CHudAmmo::DrawCrosshair(int x, int y)
 		}
 	};
 
-	renderer(x, y, m_Crosshair, gHUD.m_CrosshairColor);
+	// johnhalflife (jhl_hud_campaigncrosshair): the crosshair in the HUD's colour. Half-Life's, Uplink's and Opposing
+	// Force's already are; Blue Shift's goes blue (vanilla Blue Shift kept Half-Life's orange with its blue HUD).
+	renderer(x, y, m_Crosshair, 0 != m_pCvarCampaignCrosshair->value ? gHUD.m_HudColor : gHUD.m_CrosshairColor);
 	renderer(x, y, m_AutoaimCrosshair, RGB_REDISH);
 }
 

@@ -230,6 +230,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"jhl_hud_campaigncrosshair"
+	{
+		"JHL | HUD: crosshair in the campaign's HUD colour (Blue Shift's blue)"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"jhl_snd_vanilla"
 	{
 		"JHL | Sound: Half-Life's own mixing and room effects"

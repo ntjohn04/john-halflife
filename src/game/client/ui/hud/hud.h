@@ -163,6 +163,7 @@ private:
 
 	cvar_t* m_pCvarCrosshairScale = nullptr;
 	cvar_t* m_pCvarHolster = nullptr; // johnhalflife: jhl_weapons_holster.
+	cvar_t* m_pCvarCampaignCrosshair = nullptr; // johnhalflife: jhl_hud_campaigncrosshair.
 };
 
 

@@ -75,6 +75,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_fx_keepcorpses", "1"},
 	{"jhl_hud_scale", "0"},
 	{"jhl_hud_minimal", "1"},
+	{"jhl_hud_campaigncrosshair", "1"},
 	{"jhl_snd_vanilla", "1"},
 	{"jhl_snd_musicsaves", "1"},
 	{"crosshair", "1"},
