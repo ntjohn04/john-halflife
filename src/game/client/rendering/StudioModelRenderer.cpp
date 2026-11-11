@@ -1434,12 +1434,27 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	m_pStudioHeader = ownHeader;
 	m_pRenderModel = ownModel;
 
-	// Bone for bone by name (their bipeds alike, Bip02 the lab coat's, Bip01 the player models').
+	// Bone for bone by name (their bipeds alike, Bip02 the lab coat's, Bip01 the player models' and the hologram's): its
+	// own name, else the other biped's.
 	auto bones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(m_pStudioHeader) + m_pStudioHeader->boneindex);
 	auto donorBones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(donorHeader) + donorHeader->boneindex);
 
 	const auto donorBone = [&](const char* ownName)
 	{
+		const auto find = [&](const char* name)
+		{
+			for (int j = 0; j < donorHeader->numbones; ++j)
+			{
+				if (0 == std::strcmp(name, donorBones[j].name))
+					return j;
+			}
+
+			return -1;
+		};
+
+		if (const int j = find(ownName); j >= 0)
+			return j;
+
 		char name[32];
 		std::strncpy(name, ownName, sizeof(name) - 1);
 		name[sizeof(name) - 1] = '\0';
@@ -1448,14 +1463,10 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 			name[4] = '1';
 		else if (0 == std::strncmp(name, "Bip01", 5))
 			name[4] = '2';
+		else
+			return -1;
 
-		for (int j = 0; j < donorHeader->numbones; ++j)
-		{
-			if (0 == std::strcmp(name, donorBones[j].name))
-				return j;
-		}
-
-		return -1;
+		return find(name);
 	};
 
 	const auto endsWith = [](const char* name, const char* end)

@@ -74,6 +74,12 @@ constexpr float StandingEyeHeight = 28;
 // Half-Life's own model. A monster's model: its origin at its feet, not the hull's middle.
 constexpr const char* HalfLifePlayer = "models/player.mdl";
 constexpr const char* LabCoatGordon = "models/gordon_scientist.mdl";
+
+// Treading water, the pose the hazard course's hologram's as she treads water (holo.mdl's treadwater, both arms
+// sculling; the player models' hold a weapon out, and with one out their back leaned into view), where it's precached
+// (W_Precache).
+constexpr const char* WaterArms = "models/holo.mdl";
+constexpr const char* WaterArmsSequence = "treadwater";
 struct Movement
 {
 	bool Valid = false;
@@ -262,11 +268,41 @@ void JhlBody_CreateEntities()
 	// A crouching jump jumps as a standing one: its pose, arms and back, hung from the eyes (StandingEyeHeight).
 	g_Crouching = move.Crouched && activity != ActHop;
 
-	// The lab coat's monster jumping, crouching or in water: the player model's pose (its poses are only walking ones),
-	// drawn on his bones (CStudioModelRenderer::JhlSetupBorrowedBones). The player model is his here (PickModel).
-	const studiohdr_t* poseHeader = header;
+	// No view model (no weapon, holstered): its arms are drawn, nothing else being the player's (below).
+	const cl_entity_t* viewModel = gEngfuncs.GetViewModel();
+	g_Arms = (!viewModel || !viewModel->model) && !g_Crouching;
 
-	if (monster && (activity == ActHop || activity == ActCrouch || activity == ActCrouchIdle || activity == ActHover))
+	// The hologram's treading water, for its pose in water.
+	int waterArmsIndex = 0;
+	const studiohdr_t* waterArms = nullptr;
+	int waterArmsSequence = -1;
+
+	if (activity == ActHover)
+	{
+		waterArmsIndex = gEngfuncs.pEventAPI->EV_FindModelIndex(WaterArms);
+		model_t* holo = waterArmsIndex > 0 ? gEngfuncs.hudGetModelByIndex(waterArmsIndex) : nullptr;
+		waterArms = holo && holo->type == mod_studio ? static_cast<const studiohdr_t*>(IEngineStudio.Mod_Extradata(holo)) : nullptr;
+		waterArmsSequence = waterArms ? FindSequence(waterArms, WaterArmsSequence) : -1;
+
+		if (waterArmsSequence < 0)
+			waterArms = nullptr;
+	}
+
+	// The lab coat's monster jumping, crouching or in water: the player model's pose (its poses are only walking ones),
+	// drawn on his bones (CStudioModelRenderer::JhlSetupBorrowedBones). The player model is his here (PickModel). In
+	// water every model takes the hologram's whole pose, her legs too, its arms drawn or not (one pose is borrowed at a
+	// time; her arms over the player models' own treading legs looked worse).
+	const studiohdr_t* poseHeader = header;
+	int poseIndex = player->curstate.modelindex;
+	int sequence = -1;
+
+	if (waterArms)
+	{
+		poseHeader = waterArms;
+		poseIndex = waterArmsIndex;
+		sequence = waterArmsSequence;
+	}
+	else if (monster && (activity == ActHop || activity == ActCrouch || activity == ActCrouchIdle || activity == ActHover))
 	{
 		const auto* playerModel = static_cast<const studiohdr_t*>(IEngineStudio.Mod_Extradata(gEngfuncs.hudGetModelByIndex(player->curstate.modelindex)));
 
@@ -274,19 +310,19 @@ void JhlBody_CreateEntities()
 			poseHeader = playerModel;
 	}
 
-	const int sequence = PickSequence(poseHeader, activity);
+	if (sequence < 0)
+		sequence = PickSequence(poseHeader, activity);
+
 	const auto& description = Sequences(poseHeader)[sequence];
 	const float frames = static_cast<float>(std::max(description.numframes - 1, 1));
 
-	// No view model (no weapon, holstered): its arms are drawn, nothing else being the player's. The player models' arms
-	// hold a weapon out in every pose; standing, walking and running, their upper bodies take the lab coat's instead (his
-	// own poses, arms at his sides), half a loop on (his loops start on the other foot), where it's precached
-	// (W_Precache). Crouching, none: their crouching arms hold one out too.
-	const cl_entity_t* viewModel = gEngfuncs.GetViewModel();
-	g_Arms = (!viewModel || !viewModel->model) && !g_Crouching;
-
+	// Its arms drawn: the player models' arms hold a weapon out in every pose; standing, walking and running, their upper
+	// bodies take the lab coat's instead (his own poses, arms at his sides), half a loop on (his loops start on the other
+	// foot), where it's precached (W_Precache). Crouching, none: their crouching arms hold one out too; treading water,
+	// the hologram's whole pose (above).
 	const studiohdr_t* armsHeader = nullptr;
 	int armsIndex = 0;
+	int armsSequence = -1;
 
 	if (g_Arms && !monster && (activity == ActIdle || activity == ActWalk || activity == ActRun))
 	{
@@ -348,18 +384,23 @@ void JhlBody_CreateEntities()
 	if (poseHeader != header)
 	{
 		g_Body.curstate.sequence = PickSequence(header, ActIdle); // For any bone the player model hasn't.
-		g_Body.curstate.iuser1 = player->curstate.modelindex;
+		g_Body.curstate.iuser1 = poseIndex;
 		g_Body.curstate.iuser2 = sequence + 1;
 		g_Body.curstate.fuser3 = g_Cycle * frames;
 		g_Body.curstate.fuser4 = g_Crouching ? 18 : 36;
 	}
 	else if (armsHeader)
 	{
-		const int armsSequence = PickSequence(armsHeader, activity);
+		if (armsSequence < 0)
+			armsSequence = PickSequence(armsHeader, activity);
+
+		const auto& arms = Sequences(armsHeader)[armsSequence];
+		const float armsFrames = static_cast<float>(std::max(arms.numframes - 1, 1));
+		const float armsCycle = activity == ActIdle ? g_Cycle : g_Cycle + 0.5f;
+
 		g_Body.curstate.iuser1 = armsIndex;
 		g_Body.curstate.iuser2 = armsSequence + 1;
-		const float armsCycle = activity == ActIdle ? g_Cycle : g_Cycle + 0.5f;
-		g_Body.curstate.fuser3 = (armsCycle - std::floor(armsCycle)) * std::max(Sequences(armsHeader)[armsSequence].numframes - 1, 1);
+		g_Body.curstate.fuser3 = (armsCycle - std::floor(armsCycle)) * armsFrames;
 		g_Body.curstate.playerclass = 1; // Only its upper body.
 	}
 

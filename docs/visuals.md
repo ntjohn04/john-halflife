@@ -29,9 +29,15 @@ measured from the hips and played half a loop on, his loops starting on the othe
 player model's own. The lab coat Gordon's model is a scientist's with only walking poses, so jumping, crouching and
 treading water he takes the player model's, bone for bone.
 
-The lab coat Gordon is Blue Shift's (`models/gordon_scientist.mdl`). The server precaches it with the body on, last
-and only while the map has room, like the effect sprites (W_Precache). Where it isn't, Gordon has no body before the
-suit and the other models' weaponless arms keep their own poses. With the body off, nothing is added or precached.
+Treading water, every body takes the hazard course hologram's pose as she treads water (`models/holo.mdl`'s
+`treadwater`), legs, back and arms, with a weapon out or not (its arms hidden then): the player models' own hold a
+weapon out, and lean their back into view. Bones are matched by name, the same biped's first (the hologram's and the
+player models' are Bip01, the lab coat's Bip02).
+
+The lab coat Gordon is Blue Shift's (`models/gordon_scientist.mdl`). The server precaches it and the hologram with the
+body on, last and only while the map has room, like the effect sprites (W_Precache). Where they aren't, Gordon has no
+body before the suit, the other models' weaponless arms keep their own poses, and in water each its own treading. With
+the body off, nothing is added or precached.
 
 **Left as it is:** a little of the HEV suit's and Barney's neck skin looking straight down while running (it would
 take edited copies of Valve's textures), and for a frame or two at the end of a jump, a little of Barney's back.

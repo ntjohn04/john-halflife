@@ -459,13 +459,18 @@ void W_Precache()
 
 	// johnhalflife (jhl_visuals_firstpersonbody, the client's setting, read as it's loaded): the body seen looking down
 	// is Gordon's lab coat before the HEV suit (jhl_body.cpp), and with no weapon every player model's arms take his
-	// poses. Blue Shift's, installed from the player's game; like the effects above, only while the map has room. With the
-	// body off, nothing.
+	// poses. Blue Shift's, installed from the player's game; like the effects above, only while the map has room. Treading
+	// water, the arms are the hazard course's hologram's (holo.mdl). With the body off, nothing.
 	constexpr const char* LabCoatGordon = "models/gordon_scientist.mdl";
+	constexpr const char* WaterArms = "models/holo.mdl";
 
-	if (0 != CVAR_GET_FLOAT("jhl_visuals_firstpersonbody") && g_ModelPrecache->GetCount() + RoomForTheMapsOwnModels < EngineModels && g_pFileSystem->FileExists(LabCoatGordon))
+	if (0 != CVAR_GET_FLOAT("jhl_visuals_firstpersonbody"))
 	{
-		UTIL_PrecacheModel(LabCoatGordon);
+		for (const char* model : {LabCoatGordon, WaterArms})
+		{
+			if (g_ModelPrecache->GetCount() + RoomForTheMapsOwnModels < EngineModels && g_pFileSystem->FileExists(model))
+				UTIL_PrecacheModel(model);
+		}
 	}
 }
 
