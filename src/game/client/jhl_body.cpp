@@ -42,6 +42,12 @@ constexpr int ActHop = 7;
 constexpr int ActCrouch = 17;
 constexpr int ActCrouchIdle = 18;
 constexpr int ActHover = 50;
+// None of the engine's: on a ladder, walking's pose stepping as it climbs, up or down (a loop each LadderSteps strides
+// climbed, LadderStride if the pose has none: a little slower than walking), held where it is while still; no arms
+// (none of the games has a climbing pose: the hazard course hologram's "ladder" is her pointing at one).
+constexpr int ActLadder = -2;
+constexpr float LadderStride = 64;
+constexpr float LadderSteps = 1.3f;
 
 // As the server's CBasePlayer::SetAnimation: running above this speed, walking above nothing, the legs' turn flipped to
 // walking backwards past this far from where the player looks (the engine's StudioProcessGait).
@@ -256,6 +262,8 @@ void JhlBody_CreateEntities()
 
 	if (inWater)
 		activity = ActHover; // Treading water, upright: swimming's pose lies along the view.
+	else if (move.MoveType == MOVETYPE_FLY)
+		activity = ActLadder;
 	else if (inAir && (move.Velocity.z > 0 || g_AirTime > FallTime))
 		activity = ActHop;
 	else if (move.Crouched)
@@ -270,7 +278,7 @@ void JhlBody_CreateEntities()
 
 	// No view model (no weapon, holstered): its arms are drawn, nothing else being the player's (below).
 	const cl_entity_t* viewModel = gEngfuncs.GetViewModel();
-	g_Arms = (!viewModel || !viewModel->model) && !g_Crouching;
+	g_Arms = (!viewModel || !viewModel->model) && !g_Crouching && activity != ActLadder;
 
 	// The hologram's treading water, for its pose in water.
 	int waterArmsIndex = 0;
@@ -311,7 +319,7 @@ void JhlBody_CreateEntities()
 	}
 
 	if (sequence < 0)
-		sequence = PickSequence(poseHeader, activity);
+		sequence = PickSequence(poseHeader, activity == ActLadder ? ActWalk : activity);
 
 	const auto& description = Sequences(poseHeader)[sequence];
 	const float frames = static_cast<float>(std::max(description.numframes - 1, 1));
@@ -365,6 +373,8 @@ void JhlBody_CreateEntities()
 
 	if (activity == ActHop)
 		g_Cycle = std::min(g_AirTime * description.fps / frames, 1.f);
+	else if (activity == ActLadder)
+		g_Cycle += move.Velocity.z / ((stride > 0 ? stride : LadderStride) * LadderSteps) * frameTime;
 	else if (activity == ActCrouch && stride > 0)
 		g_Cycle += direction * std::max(speed / stride, 1 / CrouchedSlowestLoop) * frameTime;
 	else

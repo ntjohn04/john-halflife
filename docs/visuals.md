@@ -29,6 +29,10 @@ measured from the hips and played half a loop on, his loops starting on the othe
 player model's own. The lab coat Gordon's model is a scientist's with only walking poses, so jumping, crouching and
 treading water he takes the player model's, bone for bone.
 
+On a ladder, no arms (none of the games has a climbing pose: the hazard course hologram's `ladder` is her pointing
+at one), and walking's pose stepping only as it climbs, up or down (a loop each 1.3 of its strides climbed), held
+mid-step when it stops.
+
 Treading water, every body takes the hazard course hologram's pose as she treads water (`models/holo.mdl`'s
 `treadwater`), legs, back and arms, with a weapon out or not (its arms hidden then): the player models' own hold a
 weapon out, and lean their back into view. Bones are matched by name, the same biped's first (the hologram's and the
