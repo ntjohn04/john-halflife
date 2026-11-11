@@ -497,7 +497,9 @@ void CGrapple::CreateEffect()
 		gpGlobals->v_right * 8.0 +
 		gpGlobals->v_up * -8.0;
 
-	Vector vecAngles = m_pPlayer->pev->v_angle;
+	// johnhalflife: aimed at the crosshair (UTIL_JhlAimAtCrosshair; Valve's flew parallel to the aim, landing 8 units
+	// right of it and 8 below at any range).
+	Vector vecAngles = UTIL_JhlAimAtCrosshair(m_pPlayer, vecOrigin, m_pPlayer->pev->v_angle);
 
 	vecAngles.x = -vecAngles.x;
 
