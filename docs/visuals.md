@@ -38,7 +38,8 @@ foot. Running, the arms swing raised 25 degrees back and a unit forward, so at a
 shows than fingertips popping up. Crouched, no arms. The lab coat Gordon's model is a scientist's with only walking
 poses, so jumping and crouching he takes the player model's, bone for bone.
 
-With a one-handed weapon its free arm is drawn: the left with the crowbar, wrench, knife, grapple, .357, satchel
+With a one-handed weapon its free arm is drawn: the left with the crowbar, wrench, knife, grapple, .357 (hidden
+while its reload uses both hands), satchel
 detonator, hornet gun, grenade (hidden while the view model's own left hand pulls the pin), snark, penguin and shock
 rifle; the right with the satchel itself. Chosen by the view model's file, any campaign's copy. Crouched and on
 ladders, none.

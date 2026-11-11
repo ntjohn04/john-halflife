@@ -227,8 +227,8 @@ char OneHanded(const model_t* viewModel, int sequence)
 	const char* slash = std::strrchr(viewModel->name, '/');
 	const char* file = slash ? slash + 1 : viewModel->name;
 
-	// The grenade's pin pulled by its own left hand (pinpull, 2).
-	if (0 == stricmp(file, "v_grenade.mdl") && sequence == 2)
+	// The grenade's pin pulled by its own left hand (pinpull, 2); the .357 reloaded with both (reload, 3).
+	if ((0 == stricmp(file, "v_grenade.mdl") && sequence == 2) || (0 == stricmp(file, "v_357.mdl") && sequence == 3))
 		return 0;
 
 	for (const char* name : RightHanded)
