@@ -79,6 +79,7 @@ struct Timeline
 	char LastCallName[NameSize]{};
 	bool LastWasRedraw = false; // The client's HUD_Redraw, the frame drawn: the engine presents it next.
 	double CodeMs[2]{};			// The client's, the server's.
+	double EngineMs[2]{};		// Of that, the engine's work they call (JhlHitchScope names starting "engine").
 	double PresentMs = 0;		// From HUD_Redraw's end to the next call.
 	double GapMs = 0;			// The longest stretch outside both, and the calls either side.
 	char GapAfter[NameSize]{};
@@ -336,7 +337,8 @@ void AppendParts(std::string& text, const char* label, const Entry* entries, int
 void Report(double frameMs, const std::string& where, const Summary* client, const Summary* server)
 {
 	const Timeline& frame = *g_Frame;
-	const double codeMs = frame.CodeMs[0] + frame.CodeMs[1];
+	const double engineInCode = frame.EngineMs[0] + frame.EngineMs[1];
+	const double codeMs = frame.CodeMs[0] + frame.CodeMs[1] - engineInCode;
 	const double presentMs = frame.PresentMs;
 	const double otherMs = std::max(0.0, frameMs - codeMs - presentMs);
 	const double usualFrame = Median(&Recent::FrameMs);
@@ -393,13 +395,14 @@ void Report(double frameMs, const std::string& where, const Summary* client, con
 	}
 	else
 	{
-		text += fmt::format("  verdict: not John Half-Life or the Unified SDK ({}): the engine's own work {:.1f} ms, usually {:.1f}\n",
-			ours, otherMs, usualOther);
+		text += fmt::format("  verdict: not John Half-Life or the Unified SDK ({}): the engine's own work {:.1f} ms, usually {:.1f}{}\n",
+			ours, otherMs, usualOther,
+			engineInCode >= 1 ? fmt::format(", {:.1f} of it drawing models (a model's first draw this map is named below)", engineInCode) : "");
 	}
 
 	// Where all of it went.
 	text += fmt::format("  time: John Half-Life and the Unified SDK {:.1f} ms (client {:.1f}, server {:.1f})", codeMs,
-		frame.CodeMs[0], frame.CodeMs[1]);
+		frame.CodeMs[0] - frame.EngineMs[0], frame.CodeMs[1] - frame.EngineMs[1]);
 
 	if (client)
 	{
@@ -497,6 +500,9 @@ void JhlHitchScope::End()
 	part.Ms += ms;
 	++part.Calls;
 
+	if (std::strncmp(m_Name, "engine", 6) == 0)
+		g_Frame->EngineMs[Side] += ms;
+
 	if (m_Detail && *m_Detail)
 	{
 		std::string what = m_Name;
@@ -570,7 +576,7 @@ void JhlHitch_EndFrame(float thresholdMs, std::string (*where)())
 		const Summary* serverSummary = Side == 1 ? &own : g_Linked ? &server : nullptr;
 		const int moves = serverSummary ? serverSummary->Moves : 0;
 		const Timeline& frame = *g_Frame;
-		const double codeMs = frame.CodeMs[0] + frame.CodeMs[1];
+		const double codeMs = frame.CodeMs[0] + frame.CodeMs[1] - frame.EngineMs[0] - frame.EngineMs[1];
 
 		if (frameMs > thresholdMs && frameMs < PauseMs && moves <= MostMoves && now >= frame.SkipUntil)
 		{

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <unordered_set>
 
 #include "hud.h"
 #include "const.h"
@@ -19,6 +20,7 @@
 #include "client_gibs.h"
 #include "event_api.h"
 #include "jhl_body.h"
+#include "jhl_hitch.h"
 #include "jhl_gargantua.h"
 #include "jhl_settings.h"
 #include "view.h"
@@ -2482,6 +2484,19 @@ StudioRenderFinal
 */
 void CStudioModelRenderer::StudioRenderFinal()
 {
+	// johnhalflife (jhl_debug_hitch): the engine's drawing, counted as the engine's, not the client's; a model's first
+	// draw this map named (the driver uploading its textures, the engine loading its data).
+	static std::unordered_set<const model_t*> drawn;
+	static double lastTime = 0;
+
+	if (m_clTime < lastTime)
+		drawn.clear();
+
+	lastTime = m_clTime;
+
+	const bool first = g_JhlHitchOn && drawn.insert(m_pRenderModel).second;
+	JhlHitchScope hitchScope{"engine: drawing models", first ? m_pRenderModel->name : nullptr};
+
 	if (0 != IEngineStudio.IsHardware())
 	{
 		StudioRenderFinal_Hardware();
