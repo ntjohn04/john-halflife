@@ -62,18 +62,16 @@ constexpr int RenderTransAdd = 5;
 // under it (the engine's LightAtPoint: the lightmap below, the floor under the water, its styles as they are) is at
 // least LitLight, darkening smoothly below that to DarkestWater with none. Sampled on a grid (LightGrid units, the
 // faces cut up for it), each point the average of the light around it LightSpread apart (smoother), leaving out any in
-// a wall (water brushes run into the walls; light taken in one is black), a point with all of them in one taking the
-// light found stepping in toward its face's middle (LightStep, at most LightSteps). Taken once a map, no more than
-// LightBudget points a frame (a face not yet taken drawn as bright as ever), again where a water entity has moved (as
-// slowly, its old light kept meanwhile); lights
-// switched later aren't followed. Light from the flashlight and flashes isn't taken: dark water stays dark under them.
+// a wall (water brushes run into the walls; light taken in one is black); all in one, the light further out (LightRings).
+// By where a point is alone, so faces in the same place (a water entity's brushes' tops and bottoms, drawn together) are
+// lit alike, not fighting. Taken once a map, no more than LightBudget points a frame (a face not yet taken drawn as
+// bright as ever), again where a water entity has moved (as slowly, its old light kept meanwhile); lights switched later
+// aren't followed. Light from the flashlight and flashes isn't taken: dark water stays dark under them.
 constexpr float LitLight = 32;
 constexpr float DarkestWater = 0.25f;
 constexpr float LightSpread = 24;
 constexpr float LightGrid = 32;
-constexpr float LightInset = 4; // A face's edge sampled this far in (its corner touches walls).
-constexpr float LightStep = 16;
-constexpr int LightSteps = 8;
+constexpr float LightRings[] = {48, 80};
 constexpr int LightBudget = 300;
 int g_LightBudget = 0; // Points still to be taken this frame.
 
@@ -127,10 +125,8 @@ struct WaterEntity
 struct LitFace
 {
 	std::vector<Vector> Points;		  // Every piece's, one after another.
-	std::vector<Vector> SamplePoints; // Each point moved in from the face's edge (LightInset), where light is taken.
 	std::vector<int> Counts;		  // Each piece's number of points.
 	std::vector<float> Light;		  // Each point's brightness, 0 to 1 (Brightness).
-	Vector Middle;					  // The face's.
 	std::size_t Next = 0;			  // The next point to take (a face taken over several frames).
 	Vector SampledOrigin;
 	Vector SampledAngles;
@@ -335,14 +331,6 @@ void LightFace(const JhlBspFace& face, LitFace& lit)
 	std::vector<std::vector<Vector>> pieces;
 	CutOnGrid(face.Points, pieces);
 
-	Vector middle = g_vecZero;
-
-	for (const auto& point : face.Points)
-		middle = middle + point;
-
-	middle = middle * (1.0f / face.Points.size());
-	lit.Middle = middle;
-
 	for (const auto& piece : pieces)
 	{
 		lit.Counts.push_back(static_cast<int>(piece.size()));
@@ -350,10 +338,6 @@ void LightFace(const JhlBspFace& face, LitFace& lit)
 		for (const auto& point : piece)
 		{
 			lit.Points.push_back(point);
-
-			const Vector in = middle - point;
-			const float length = in.Length();
-			lit.SamplePoints.push_back(length > LightInset ? point + in * (LightInset / length) : middle);
 		}
 	}
 
@@ -587,11 +571,6 @@ Vector Turn(const Vector& point, int axis, float degrees)
 	return turned;
 }
 
-// Draws a model's water faces, placed as the engine places a brush model (R_RotateForEntity: moved to its origin,
-// turned by yaw about z, pitch (negated) about y, roll about x). The world's: those that face the view. An entity's: as
-// the engine's R_DrawBrushModel (hw.dll) has them, only its level ones (any, gl_watersides 1) higher than a unit above
-// its bottom (the entity's origin and its model's lowest point; turned, its origin less its radius), from either side:
-// its top, seen from above and from under it, not its sides and floor.
 // The light under a point (the brightest of its colours), averaged with the light around it (LightSpread), any in a
 // wall left out; -1 if all are.
 float LightUnder(const Vector& point)
@@ -616,6 +595,44 @@ float LightUnder(const Vector& point)
 	}
 
 	return count > 0 ? total / count : -1;
+}
+
+// The light at a point in the world (LightUnder), all in a wall: further out around it, the nearest ring with any;
+// none: as bright as ever.
+float LightAt(const Vector& point)
+{
+	float light = LightUnder(point);
+
+	for (const float radius : LightRings)
+	{
+		if (light >= 0)
+		{
+			break;
+		}
+
+		float total = 0;
+		int count = 0;
+
+		for (int i = 0; i < 8; ++i)
+		{
+			const float angle = i * static_cast<float>(std::numbers::pi / 4);
+			const Vector at = point + Vector(std::cos(angle) * radius, std::sin(angle) * radius, 0);
+
+			if (gEngfuncs.PM_PointContents(const_cast<float*>(&at.x), nullptr) == CONTENTS_SOLID)
+			{
+				continue;
+			}
+
+			Vector tap;
+			gEngfuncs.pTriAPI->LightAtPoint(const_cast<float*>(&at.x), tap);
+			total += std::max({tap.x, tap.y, tap.z});
+			++count;
+		}
+
+		light = count > 0 ? total / count : -1;
+	}
+
+	return light < 0 ? LitLight : light;
 }
 
 // The water's brightness for the light under it (jhl_visuals_waterlight): 1 from LitLight up, eased down below it.
@@ -654,24 +671,12 @@ void Relight(LitFace& lit, const Vector& origin, const Vector& angles)
 		return point + origin + Vector(0, 0, 1);
 	};
 
-	for (; lit.Next < lit.SamplePoints.size() && g_LightBudget > 0; ++lit.Next, --g_LightBudget)
+	for (; lit.Next < lit.Points.size() && g_LightBudget > 0; ++lit.Next, --g_LightBudget)
 	{
-		const std::size_t i = lit.Next;
-		float light = LightUnder(place(lit.SamplePoints[i]));
-
-		// All in a wall: stepping in toward the face's middle (none found: as bright as ever).
-		const Vector in = lit.Middle - lit.SamplePoints[i];
-		const float length = in.Length();
-
-		for (int step = 1; light < 0 && step <= LightSteps && step * LightStep < length; ++step)
-		{
-			light = LightUnder(place(lit.SamplePoints[i] + in * (step * LightStep / length)));
-		}
-
-		lit.Light[i] = Brightness(light < 0 ? LitLight : light);
+		lit.Light[lit.Next] = Brightness(LightAt(place(lit.Points[lit.Next])));
 	}
 
-	if (lit.Next < lit.SamplePoints.size())
+	if (lit.Next < lit.Points.size())
 	{
 		return;
 	}
@@ -681,6 +686,11 @@ void Relight(LitFace& lit, const Vector& origin, const Vector& angles)
 	lit.SampledAngles = angles;
 }
 
+// Draws a model's water faces, placed as the engine places a brush model (R_RotateForEntity: moved to its origin,
+// turned by yaw about z, pitch (negated) about y, roll about x). The world's: those that face the view. An entity's: as
+// the engine's R_DrawBrushModel (hw.dll) has them, only its level ones (any, gl_watersides 1) higher than a unit above
+// its bottom (the entity's origin and its model's lowest point; turned, its origin less its radius), from either side:
+// its top, seen from above and from under it, not its sides and floor.
 void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Vector& angles, float bottom = 0, const std::array<float, 4>& color = {1, 1, 1, 1})
 {
 	const auto& model = g_Models[modelIndex];
@@ -845,9 +855,9 @@ void JhlSoftwareWater_Initialize()
 	// The light under the player's eyes and the water's brightness for it there, for tuning the curve (LitLight).
 	gEngfuncs.pfnAddCommand("jhl_debug_waterlight", []
 		{
-			const float light = LightUnder(v_origin);
-			gEngfuncs.Con_Printf("jhl_debug_waterlight: light %.0f under the view (averaged around it; -1: all in walls), water %.2f (full from %.0f, %.2f at the darkest)\n",
-				light, Brightness(light < 0 ? LitLight : light), LitLight, DarkestWater);
+			const float light = LightAt(v_origin);
+			gEngfuncs.Con_Printf("jhl_debug_waterlight: light %.0f under the view (averaged around it), water %.2f (full from %.0f, %.2f at the darkest)\n",
+				light, Brightness(light), LitLight, DarkestWater);
 		});
 }
 
