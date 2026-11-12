@@ -35,6 +35,8 @@ struct JhlBspFace
 	float Dist = 0;
 	int Texinfo = -1;
 	std::vector<Vector> Points; // Its polygon, in its model's coordinates; empty if the face was unreadable.
+	unsigned char Styles[4]{255, 255, 255, 255}; // Its light styles, 255 none; its lightmaps one after another.
+	int LightOffset = -1;						  // Its first lightmap in Lighting, -1 none.
 };
 
 struct JhlBspModel
@@ -49,6 +51,7 @@ struct JhlBsp
 	std::vector<JhlBspFace> Faces;
 	std::vector<JhlBspTexinfo> Texinfo;
 	std::vector<std::string> TextureNames; // By miptex.
+	std::vector<unsigned char> Lighting;  // The lightmaps: red, green, blue, a sample each 16 texels.
 	std::vector<JhlBspModel> Models;	   // 0 is the world, then *1 ...
 	std::vector<std::unordered_map<std::string, std::string>> Entities;
 

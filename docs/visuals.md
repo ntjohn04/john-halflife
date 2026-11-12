@@ -206,18 +206,18 @@ so gamma and filtering match). Water is what the engine treats as water: names s
 ### Water in the dark (`jhl_visuals_waterlight`, default 1)
 
 The map compiler gives water no lightmap, so both renderers draw it full bright: in a pitch-black corner (c1a1b's
-tunnel) the water stood out of the dark. With the software water on, the water drawn here takes the light under it
-(the engine's `LightAtPoint`: the lightmap of the floor below, its light styles as they are) on a 32-unit grid, each
-point averaged with the light 24 units around it. Water brushes run into the walls, and light taken inside a wall is
-black, so those samples are left out (a point all in a wall takes the light further out around it). The light depends only
-on where a point is, so surfaces in the same place (a water entity's stacked brushes) are lit alike instead of flickering
-against each other. From a light of 32 up
-(c1a1b's lit tunnel is about 94) it's exactly as before; below that it darkens smoothly, to 0.25 with no light. The light is
-taken once a map, at most 300 points a frame (water not yet taken is as bright as ever), and again
-where a water entity moves (as gradually, its old light kept meanwhile); lights switched later aren't followed. The
-flashlight and flashes aren't taken: dark water stays dark under them. `jhl_debug_waterlight` prints the light under
-the view and the water's brightness for it, for tuning. With the software water off (or `-soft`) water is the engine's,
-full bright as ever.
+tunnel) the water stood out of the dark. With the software water on, the water drawn here takes the light of what's
+around it, on a 32-unit grid: from 12 units above each point, 8 level traces out to 192 units and one down to the
+floor, each surface hit read from the map's own lightmaps where it was hit (the map's base light, its first style),
+nearer ones counting more (weight 1 / (1 + distance / 48)). So water by dark walls darkens and water by lit walls stays
+bright, whatever the floor under it. With nothing hit (open water, or only entities), the engine's `LightAtPoint`
+under it instead. A point inside a wall (water brushes run into the walls) looks from just beside it. The light
+depends only on where a point is, so surfaces in the same place (a water entity's stacked brushes) are lit alike. From
+a light of 32 up it's exactly as before; below that it darkens smoothly, to 0.25 with no light. The light is taken
+once a map, at most 100 points a frame (water not yet taken is as bright as ever), and again where a water entity
+moves (as gradually, its old light kept meanwhile); lights switched later aren't followed, nor the flashlight and
+flashes. `jhl_debug_waterlight` prints the light around the view, how many of the 9 traces found a lit surface, and
+the water's brightness for it. With the software water off (or `-soft`) water is the engine's, full bright as ever.
 
 For the display (the stretch to the desktop, anti-aliasing), see the [front page](../README.md#recommended-launch-options-and-display).
 

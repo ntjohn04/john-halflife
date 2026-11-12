@@ -36,6 +36,7 @@ enum BspLump
 	LumpVertexes = 3,
 	LumpTexinfo = 6,
 	LumpFaces = 7,
+	LumpLighting = 8,
 	LumpEdges = 12,
 	LumpSurfedges = 13,
 	LumpModels = 14,
@@ -175,6 +176,9 @@ std::unique_ptr<JhlBsp> Load(const char* mapName)
 		return nullptr;
 	}
 
+	// The lightmaps (none in a map compiled without light: faces then point past the end).
+	ReadLump(data, lumps, LumpLighting, bsp->Lighting);
+
 	// Texture names, from the texture lump's headers.
 	const int texturesOffset = lumps[LumpTextures][0];
 	int textureCount = 0;
@@ -223,6 +227,8 @@ std::unique_ptr<JhlBsp> Load(const char* mapName)
 		face.Normal = Vector(plane.Normal[0], plane.Normal[1], plane.Normal[2]) * sign;
 		face.Dist = plane.Dist * sign;
 		face.Texinfo = source.Texinfo < bsp->Texinfo.size() ? source.Texinfo : -1;
+		std::copy(std::begin(source.Styles), std::end(source.Styles), std::begin(face.Styles));
+		face.LightOffset = source.LightOffset;
 		face.Points.reserve(source.NumEdges);
 
 		for (int i = 0; i < source.NumEdges; ++i)

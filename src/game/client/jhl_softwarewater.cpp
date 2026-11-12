@@ -21,10 +21,13 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "hud.h"
 #include "com_model.h"
+#include "pm_defs.h"
+#include "pmtrace.h"
 #include "triangleapi.h"
 #include "view.h"
 #include "jhl_bsp.h"
@@ -58,21 +61,28 @@ constexpr int RenderTransTexture = 2;
 constexpr int RenderTransAdd = 5;
 
 // jhl_visuals_waterlight: the map has no light on water (its compiler gives water no lightmap; both renderers draw it
-// full bright), so a pitch-black corner's water stood out of the dark. Here it's as bright as ever wherever the light
-// under it (the engine's LightAtPoint: the lightmap below, the floor under the water, its styles as they are) is at
-// least LitLight, darkening smoothly below that to DarkestWater with none. Sampled on a grid (LightGrid units, the
-// faces cut up for it), each point the average of the light around it LightSpread apart (smoother), leaving out any in
-// a wall (water brushes run into the walls; light taken in one is black); all in one, the light further out (LightRings).
-// By where a point is alone, so faces in the same place (a water entity's brushes' tops and bottoms, drawn together) are
-// lit alike, not fighting. Taken once a map, no more than LightBudget points a frame (a face not yet taken drawn as
-// bright as ever), again where a water entity has moved (as slowly, its old light kept meanwhile); lights switched later
-// aren't followed. Light from the flashlight and flashes isn't taken: dark water stays dark under them.
+// full bright), so a pitch-black corner's water stood out of the dark. Here it takes the light of what's around it, as
+// seen from just above it (LightAbove): the walls level with it (LightRays traces out to LightReach) and the floor
+// under it, each where its trace hits it as the map's lightmaps have it there (the map's own light, its first style),
+// the nearer counting more (LightFalloff); with none hit, the engine's LightAtPoint (the lightmap below, averaged
+// LightSpread around, leaving out any in a wall, further out if all are: LightRings). As bright as ever from LitLight
+// up, darkening smoothly below that to DarkestWater. On a grid (LightGrid units, the faces cut up for it), by where a
+// point is alone, so faces in the same place (a water entity's brushes' tops and bottoms) are lit alike, not fighting.
+// Taken once a map, no more than LightBudget points a frame (a face not yet taken drawn as bright as ever), again where
+// a water entity has moved (as slowly, its old light kept meanwhile); lights switched later aren't followed, nor the
+// flashlight and flashes.
 constexpr float LitLight = 32;
 constexpr float DarkestWater = 0.25f;
+constexpr float LightAbove = 12;
+constexpr int LightRays = 8;
+constexpr float LightReach = 192;
+constexpr float LightDepth = 512; // The floor's furthest under it.
+constexpr float LightFalloff = 48;
 constexpr float LightSpread = 24;
 constexpr float LightGrid = 32;
 constexpr float LightRings[] = {48, 80};
-constexpr int LightBudget = 300;
+constexpr int LightBudget = 100;
+constexpr float SurfaceCell = 128; // The world's lit faces kept by cells this size (IndexSurfaces).
 int g_LightBudget = 0; // Points still to be taken this frame.
 
 JhlGL& gl = g_JhlGL;
@@ -137,6 +147,20 @@ struct LitFace
 std::string g_MapName;
 bool g_MapReady = false;
 std::vector<LitFace> g_LitFaces; // By face in the map; only water faces filled.
+
+// A world face with a lightmap of the map's own light (its first style 0): where its samples start, in 16 texels, and
+// how many across and down.
+struct LitSurface
+{
+	int Face = 0;
+	int MinS = 0;
+	int MinT = 0;
+	int Width = 0;
+	int Height = 0;
+};
+
+std::vector<LitSurface> g_Surfaces;
+std::unordered_map<std::int64_t, std::vector<int>> g_SurfaceCells; // By cell (SurfaceCell), into g_Surfaces.
 std::vector<WaterTexture> g_Textures;
 std::vector<WaterModel> g_Models;
 std::vector<WaterEntity> g_Entities; // This frame's, until the see-through ones are drawn.
@@ -345,6 +369,8 @@ void LightFace(const JhlBspFace& face, LitFace& lit)
 	lit.Light.assign(lit.Points.size(), 1.0f);
 }
 
+void IndexSurfaces(const JhlBsp& bsp);
+
 // The map's water: its textures (read from the engine's) and every model's water faces.
 void LoadMap(const char* mapName)
 {
@@ -387,6 +413,7 @@ void LoadMap(const char* mapName)
 
 	g_Models.resize(bsp->Models.size());
 	g_LitFaces.resize(bsp->Faces.size());
+	IndexSurfaces(*bsp);
 
 	for (std::size_t m = 0; m < bsp->Models.size(); ++m)
 	{
@@ -643,8 +670,217 @@ float Brightness(float light)
 	return DarkestWater + (1 - DarkestWater) * x * x * (3 - 2 * x);
 }
 
+std::int64_t CellKey(int x, int y, int z)
+{
+	return ((static_cast<std::int64_t>(x) & 0x1FFFFF) << 42) | ((static_cast<std::int64_t>(y) & 0x1FFFFF) << 21) | (static_cast<std::int64_t>(z) & 0x1FFFFF);
+}
+
+int CellOf(float value)
+{
+	return static_cast<int>(std::floor(value / SurfaceCell));
+}
+
+// The world's faces with the map's own light, by the cells they're in.
+void IndexSurfaces(const JhlBsp& bsp)
+{
+	g_Surfaces.clear();
+	g_SurfaceCells.clear();
+
+	if (bsp.Models.empty())
+	{
+		return;
+	}
+
+	for (int i = 0; i < bsp.Models[0].NumFaces; ++i)
+	{
+		const int index = bsp.Models[0].FirstFace + i;
+		const auto& face = bsp.Faces[index];
+
+		if (face.Points.empty() || face.LightOffset < 0 || face.Styles[0] != 0 || face.Texinfo < 0)
+		{
+			continue;
+		}
+
+		const auto& texinfo = bsp.Texinfo[face.Texinfo];
+		float mins[2]{1e9f, 1e9f};
+		float maxs[2]{-1e9f, -1e9f};
+		Vector low = face.Points[0];
+		Vector high = face.Points[0];
+
+		for (const auto& point : face.Points)
+		{
+			for (int axis = 0; axis < 2; ++axis)
+			{
+				const float value = DotProduct(point, Vector(texinfo.Vecs[axis][0], texinfo.Vecs[axis][1], texinfo.Vecs[axis][2])) + texinfo.Vecs[axis][3];
+				mins[axis] = std::min(mins[axis], value);
+				maxs[axis] = std::max(maxs[axis], value);
+			}
+
+			for (int axis = 0; axis < 3; ++axis)
+			{
+				low[axis] = std::min(low[axis], point[axis]);
+				high[axis] = std::max(high[axis], point[axis]);
+			}
+		}
+
+		LitSurface surface;
+		surface.Face = index;
+		surface.MinS = static_cast<int>(std::floor(mins[0] / 16));
+		surface.MinT = static_cast<int>(std::floor(mins[1] / 16));
+		surface.Width = static_cast<int>(std::ceil(maxs[0] / 16)) - surface.MinS + 1;
+		surface.Height = static_cast<int>(std::ceil(maxs[1] / 16)) - surface.MinT + 1;
+
+		if (surface.Width <= 0 || surface.Height <= 0 ||
+			static_cast<std::size_t>(face.LightOffset) + static_cast<std::size_t>(surface.Width) * surface.Height * 3 > bsp.Lighting.size())
+		{
+			continue;
+		}
+
+		const int number = static_cast<int>(g_Surfaces.size());
+		g_Surfaces.push_back(surface);
+
+		// In every cell its bounds touch, a unit around.
+		for (int x = CellOf(low.x - 1); x <= CellOf(high.x + 1); ++x)
+		{
+			for (int y = CellOf(low.y - 1); y <= CellOf(high.y + 1); ++y)
+			{
+				for (int z = CellOf(low.z - 1); z <= CellOf(high.z + 1); ++z)
+				{
+					g_SurfaceCells[CellKey(x, y, z)].push_back(number);
+				}
+			}
+		}
+	}
+}
+
+// The map's own light (the brightest of its colours) of the world's face at a point a trace hit, facing back along it
+// (normal); -1 if none there has it.
+float SurfaceLight(const JhlBsp& bsp, const Vector& hit, const Vector& normal)
+{
+	const auto found = g_SurfaceCells.find(CellKey(CellOf(hit.x), CellOf(hit.y), CellOf(hit.z)));
+
+	if (found == g_SurfaceCells.end())
+	{
+		return -1;
+	}
+
+	for (const int number : found->second)
+	{
+		const auto& surface = g_Surfaces[number];
+		const auto& face = bsp.Faces[surface.Face];
+
+		if (DotProduct(face.Normal, normal) < 0.99f || std::abs(DotProduct(face.Normal, hit) - face.Dist) > 1)
+		{
+			continue;
+		}
+
+		// Within its polygon (a unit's leeway), whichever way it winds.
+		bool front = true;
+		bool back = true;
+
+		for (std::size_t i = 0; i < face.Points.size(); ++i)
+		{
+			const Vector edge = face.Points[(i + 1) % face.Points.size()] - face.Points[i];
+			const float length = edge.Length();
+			const float side = length > 0 ? DotProduct(CrossProduct(edge, hit - face.Points[i]), face.Normal) / length : 0;
+			front = front && side >= -1;
+			back = back && side <= 1;
+		}
+
+		if (!front && !back)
+		{
+			continue;
+		}
+
+		// Its lightmap there, between its four nearest samples.
+		const auto& texinfo = bsp.Texinfo[face.Texinfo];
+		const float s = std::clamp((DotProduct(hit, Vector(texinfo.Vecs[0][0], texinfo.Vecs[0][1], texinfo.Vecs[0][2])) + texinfo.Vecs[0][3]) / 16 - surface.MinS,
+			0.0f, surface.Width - 1.0f);
+		const float t = std::clamp((DotProduct(hit, Vector(texinfo.Vecs[1][0], texinfo.Vecs[1][1], texinfo.Vecs[1][2])) + texinfo.Vecs[1][3]) / 16 - surface.MinT,
+			0.0f, surface.Height - 1.0f);
+		const int s0 = static_cast<int>(s);
+		const int t0 = static_cast<int>(t);
+		const int s1 = std::min(s0 + 1, surface.Width - 1);
+		const int t1 = std::min(t0 + 1, surface.Height - 1);
+
+		const auto sample = [&](int column, int row)
+		{
+			const unsigned char* rgb = &bsp.Lighting[face.LightOffset + (static_cast<std::size_t>(row) * surface.Width + column) * 3];
+			return static_cast<float>(std::max({rgb[0], rgb[1], rgb[2]}));
+		};
+
+		const float fs = s - s0;
+		const float ft = t - t0;
+		return (sample(s0, t0) * (1 - fs) + sample(s1, t0) * fs) * (1 - ft) + (sample(s0, t1) * (1 - fs) + sample(s1, t1) * fs) * ft;
+	}
+
+	return -1;
+}
+
+// The light of what's around a point on the water as seen from just above it (see LitLight).
+float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
+{
+	Vector start = point + Vector(0, 0, LightAbove);
+
+	// In a wall (the water runs into it): from just beside it.
+	for (int i = 0; gEngfuncs.PM_PointContents(start, nullptr) == CONTENTS_SOLID; ++i)
+	{
+		if (i == LightRays)
+		{
+			return LightAt(point);
+		}
+
+		const float angle = i * 2 * static_cast<float>(std::numbers::pi) / LightRays;
+		start = point + Vector(std::cos(angle) * LightSpread, std::sin(angle) * LightSpread, LightAbove);
+	}
+
+	float total = 0;
+	float weight = 0;
+
+	for (int i = 0; i <= LightRays; ++i)
+	{
+		Vector end;
+
+		if (i == LightRays)
+		{
+			end = point - Vector(0, 0, LightDepth);
+		}
+		else
+		{
+			const float angle = i * 2 * static_cast<float>(std::numbers::pi) / LightRays;
+			end = start + Vector(std::cos(angle) * LightReach, std::sin(angle) * LightReach, 0);
+		}
+
+		const pmtrace_t trace = *gEngfuncs.PM_TraceLine(start, end, PM_TRACELINE_PHYSENTSONLY, 2, -1);
+
+		if (trace.startsolid || trace.allsolid || trace.fraction >= 1)
+		{
+			continue;
+		}
+
+		const float light = SurfaceLight(bsp, trace.endpos, trace.plane.normal);
+
+		if (light < 0)
+		{
+			continue;
+		}
+
+		const float distance = trace.fraction * (end - start).Length();
+		const float share = 1 / (1 + distance / LightFalloff);
+		total += light * share;
+		weight += share;
+
+		if (hits)
+		{
+			++*hits;
+		}
+	}
+
+	return weight > 0 ? total / weight : LightAt(point);
+}
+
 // A face's light, taken the first time it's drawn (budget allowing) and again if its entity has moved (see LitLight).
-void Relight(LitFace& lit, const Vector& origin, const Vector& angles)
+void Relight(const JhlBsp& bsp, LitFace& lit, const Vector& origin, const Vector& angles)
 {
 	const bool taken = lit.SampledTime >= 0;
 	const bool moved = taken && ((lit.SampledOrigin - origin).Length() > 0.5f || (lit.SampledAngles - angles).Length() > 0.5f);
@@ -674,7 +910,7 @@ void Relight(LitFace& lit, const Vector& origin, const Vector& angles)
 
 	for (; lit.Next < lit.Points.size() && g_LightBudget > 0; ++lit.Next, --g_LightBudget)
 	{
-		lit.Light[lit.Next] = Brightness(LightAt(place(lit.Points[lit.Next])));
+		lit.Light[lit.Next] = Brightness(SeenLight(bsp, place(lit.Points[lit.Next])));
 	}
 
 	if (lit.Next < lit.Points.size())
@@ -782,7 +1018,7 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 
 			if (lit)
 			{
-				Relight(litFace, origin, angles);
+				Relight(bsp, litFace, origin, angles);
 			}
 
 			// Waves lowered seen from under the face (the view no higher than its first point, as the engine compares them).
@@ -890,9 +1126,11 @@ void JhlSoftwareWater_Initialize()
 	// The light under the player's eyes and the water's brightness for it there, for tuning the curve (LitLight).
 	gEngfuncs.pfnAddCommand("jhl_debug_waterlight", []
 		{
-			const float light = LightAt(v_origin);
-			gEngfuncs.Con_Printf("jhl_debug_waterlight: light %.0f under the view (averaged around it), water %.2f (full from %.0f, %.2f at the darkest)\n",
-				light, Brightness(light), LitLight, DarkestWater);
+			const JhlBsp* bsp = JhlBsp_Get(g_MapName.c_str());
+			int hits = 0;
+			const float light = bsp ? SeenLight(*bsp, v_origin - Vector(0, 0, LightAbove), &hits) : LightAt(v_origin);
+			gEngfuncs.Con_Printf("jhl_debug_waterlight: light %.0f around the view (%d of %d surfaces seen; 0: the floor below instead), water %.2f (full from %.0f, %.2f at the darkest)\n",
+				light, hits, LightRays + 1, Brightness(light), LitLight, DarkestWater);
 		});
 }
 
