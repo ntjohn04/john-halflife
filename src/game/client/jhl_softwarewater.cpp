@@ -64,7 +64,8 @@ constexpr int RenderTransAdd = 5;
 // faces cut up for it), each point the average of the light around it LightSpread apart (smoother), leaving out any in
 // a wall (water brushes run into the walls; light taken in one is black), a point with all of them in one taking the
 // light found stepping in toward its face's middle (LightStep, at most LightSteps). Taken once a map, no more than
-// LightBudget points a frame (a face not yet taken drawn as bright as ever), again where a water entity has moved; lights
+// LightBudget points a frame (a face not yet taken drawn as bright as ever), again where a water entity has moved (as
+// slowly, its old light kept meanwhile); lights
 // switched later aren't followed. Light from the flashlight and flashes isn't taken: dark water stays dark under them.
 constexpr float LitLight = 32;
 constexpr float DarkestWater = 0.25f;
@@ -73,7 +74,7 @@ constexpr float LightGrid = 32;
 constexpr float LightInset = 4; // A face's edge sampled this far in (its corner touches walls).
 constexpr float LightStep = 16;
 constexpr int LightSteps = 8;
-constexpr int LightBudget = 1500;
+constexpr int LightBudget = 300;
 int g_LightBudget = 0; // Points still to be taken this frame.
 
 JhlGL& gl = g_JhlGL;
@@ -630,14 +631,15 @@ void Relight(LitFace& lit, const Vector& origin, const Vector& angles)
 	const bool taken = lit.SampledTime >= 0;
 	const bool moved = taken && ((lit.SampledOrigin - origin).Length() > 0.5f || (lit.SampledAngles - angles).Length() > 0.5f);
 
-	if ((taken && !moved) || (!moved && g_LightBudget <= 0))
+	if ((taken && !moved) || g_LightBudget <= 0)
 	{
 		return;
 	}
 
-	// Moved: all taken again at once, where it is now.
+	// Moved: taken again within the budget as any face is, its old light kept meanwhile (a little behind while it moves).
 	if (moved)
 	{
+		lit.SampledTime = -1;
 		lit.Next = 0;
 	}
 
@@ -652,7 +654,7 @@ void Relight(LitFace& lit, const Vector& origin, const Vector& angles)
 		return point + origin + Vector(0, 0, 1);
 	};
 
-	for (; lit.Next < lit.SamplePoints.size() && (moved || g_LightBudget > 0); ++lit.Next, --g_LightBudget)
+	for (; lit.Next < lit.SamplePoints.size() && g_LightBudget > 0; ++lit.Next, --g_LightBudget)
 	{
 		const std::size_t i = lit.Next;
 		float light = LightUnder(place(lit.SamplePoints[i]));
