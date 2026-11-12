@@ -132,6 +132,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"jhl_visuals_waterlight"
+	{
+		"JHL | Visuals: water darkened in the darkest places (with the software water)"
+		{ BOOL }
+		{ "1" }
+	}
+
 	"jhl_visuals_renderfixes"
 	{
 		"JHL | Visuals: models, sky and textures lit and sampled as the world is"

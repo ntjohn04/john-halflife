@@ -199,6 +199,17 @@ so gamma and filtering match). Water is what the engine treats as water: names s
   (render modes normal, texture and additive). Opaque entities partly water have their water drawn over the engine's;
   see-through ones partly water are left to the engine.
 
+### Water in the dark (`jhl_visuals_waterlight`, default 1)
+
+The map compiler gives water no lightmap, so both renderers draw it full bright: in a pitch-black corner (c1a1b's
+tunnel) the water stood out of the dark. With the software water on, the water drawn here takes the light under it
+(the engine's `LightAtPoint`: the lightmap of the floor below, its light styles as they are) on a 32-unit grid. From a
+light of 48 up it's exactly as before; below that it darkens smoothly, to 0.15 with no light at all. The light is
+taken again every second (lights switched on or off catch up within one) and at once where a water entity moves. The
+flashlight and flashes aren't taken: dark water stays dark under them. `jhl_debug_waterlight` prints the light under
+the view and the water's brightness for it, for tuning. With the software water off (or `-soft`) water is the engine's,
+full bright as ever.
+
 For the display (the stretch to the desktop, anti-aliasing), see the [front page](../README.md#recommended-launch-options-and-display).
 
 ## Known engine quirks, left as they are

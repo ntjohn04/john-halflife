@@ -25,6 +25,7 @@
 
 #include "hud.h"
 #include "com_model.h"
+#include "triangleapi.h"
 #include "view.h"
 #include "jhl_bsp.h"
 #include "jhl_gl.h"
@@ -56,9 +57,22 @@ constexpr int RenderNormal = 0;
 constexpr int RenderTransTexture = 2;
 constexpr int RenderTransAdd = 5;
 
+// jhl_visuals_waterlight: the map has no light on water (its compiler gives water no lightmap; both renderers draw it
+// full bright), so a pitch-black corner's water stood out of the dark. Here it's as bright as ever wherever the light
+// under it (the engine's LightAtPoint: the lightmap below, the floor under the water, its styles as they are) is at
+// least LitLight, darkening smoothly below that to DarkestWater with none. Sampled on a grid (LightGrid units, the
+// faces cut up for it), again every LightRefreshTime (switched lights, a little behind), at once where a water entity
+// has moved. Light from the flashlight and flashes isn't taken: dark water stays dark under them.
+constexpr float LitLight = 48;
+constexpr float DarkestWater = 0.15f;
+constexpr float LightGrid = 32;
+constexpr float LightInset = 4; // A face's edge sampled this far in (its corner touches walls).
+constexpr float LightRefreshTime = 1;
+
 JhlGL& gl = g_JhlGL;
 cvar_t* g_SoftwareWater = nullptr;
 cvar_t* g_WaterSides = nullptr;
+cvar_t* g_WaterLight = nullptr;
 
 using Field = std::array<std::int16_t, FieldCells>;
 Field g_Fields[2]{};
@@ -101,8 +115,21 @@ struct WaterEntity
 	float Bottom = 0; // Its lowest point as the engine reckons it (see DrawModel).
 };
 
+// A water face cut up on the light's grid, and the light under each of its points.
+struct LitFace
+{
+	std::vector<Vector> Points;		  // Every piece's, one after another.
+	std::vector<Vector> SamplePoints; // Each point moved in from the face's edge (LightInset), where light is taken.
+	std::vector<int> Counts;		  // Each piece's number of points.
+	std::vector<float> Light;		  // Each point's brightness, 0 to 1 (Brightness).
+	Vector SampledOrigin;
+	Vector SampledAngles;
+	float SampledTime = -1;
+};
+
 std::string g_MapName;
 bool g_MapReady = false;
+std::vector<LitFace> g_LitFaces; // By face in the map; only water faces filled.
 std::vector<WaterTexture> g_Textures;
 std::vector<WaterModel> g_Models;
 std::vector<WaterEntity> g_Entities; // This frame's, until the see-through ones are drawn.
@@ -234,11 +261,100 @@ bool LoadTexture(WaterTexture& water, int engineTexture, std::string& why)
 	return ok;
 }
 
+// A convex polygon cut on the light's grid (as Quake's GL_SubdivideSurface cuts water: across its middle, at a grid
+// line, while it's longer than a cell along an axis; no sliver under 8 units).
+void CutOnGrid(const std::vector<Vector>& polygon, std::vector<std::vector<Vector>>& pieces, int depth = 0)
+{
+	Vector mins = polygon[0];
+	Vector maxs = polygon[0];
+
+	for (const auto& point : polygon)
+	{
+		for (int axis = 0; axis < 3; ++axis)
+		{
+			mins[axis] = std::min(mins[axis], point[axis]);
+			maxs[axis] = std::max(maxs[axis], point[axis]);
+		}
+	}
+
+	for (int axis = 0; axis < 3 && depth < 64; ++axis)
+	{
+		const float cut = LightGrid * std::floor((mins[axis] + maxs[axis]) * 0.5f / LightGrid + 0.5f);
+
+		if (maxs[axis] - cut < 8 || cut - mins[axis] < 8)
+		{
+			continue;
+		}
+
+		std::vector<Vector> front;
+		std::vector<Vector> back;
+
+		for (std::size_t i = 0; i < polygon.size(); ++i)
+		{
+			const Vector& a = polygon[i];
+			const Vector& b = polygon[(i + 1) % polygon.size()];
+			const float da = a[axis] - cut;
+			const float db = b[axis] - cut;
+
+			if (da >= 0)
+				front.push_back(a);
+			if (da <= 0)
+				back.push_back(a);
+
+			if ((da > 0 && db < 0) || (da < 0 && db > 0))
+			{
+				const Vector crossing = a + (b - a) * (da / (da - db));
+				front.push_back(crossing);
+				back.push_back(crossing);
+			}
+		}
+
+		if (front.size() >= 3 && back.size() >= 3)
+		{
+			CutOnGrid(front, pieces, depth + 1);
+			CutOnGrid(back, pieces, depth + 1);
+			return;
+		}
+	}
+
+	pieces.push_back(polygon);
+}
+
+void LightFace(const JhlBspFace& face, LitFace& lit)
+{
+	std::vector<std::vector<Vector>> pieces;
+	CutOnGrid(face.Points, pieces);
+
+	Vector middle = g_vecZero;
+
+	for (const auto& point : face.Points)
+		middle = middle + point;
+
+	middle = middle * (1.0f / face.Points.size());
+
+	for (const auto& piece : pieces)
+	{
+		lit.Counts.push_back(static_cast<int>(piece.size()));
+
+		for (const auto& point : piece)
+		{
+			lit.Points.push_back(point);
+
+			const Vector in = middle - point;
+			const float length = in.Length();
+			lit.SamplePoints.push_back(length > LightInset ? point + in * (LightInset / length) : middle);
+		}
+	}
+
+	lit.Light.assign(lit.Points.size(), 1.0f);
+}
+
 // The map's water: its textures (read from the engine's) and every model's water faces.
 void LoadMap(const char* mapName)
 {
 	FreeTextures();
 	g_Models.clear();
+	g_LitFaces.clear();
 	g_MapReady = false;
 
 	const JhlBsp* bsp = JhlBsp_Get(mapName);
@@ -274,6 +390,7 @@ void LoadMap(const char* mapName)
 	}
 
 	g_Models.resize(bsp->Models.size());
+	g_LitFaces.resize(bsp->Faces.size());
 
 	for (std::size_t m = 0; m < bsp->Models.size(); ++m)
 	{
@@ -301,6 +418,7 @@ void LoadMap(const char* mapName)
 
 			model.FacesByTexture[texture].push_back(index);
 			model.HasWater = true;
+			LightFace(face, g_LitFaces[index]);
 		}
 
 		model.AllWater = model.AllWater && model.HasWater;
@@ -463,10 +581,51 @@ Vector Turn(const Vector& point, int axis, float degrees)
 // the engine's R_DrawBrushModel (hw.dll) has them, only its level ones (any, gl_watersides 1) higher than a unit above
 // its bottom (the entity's origin and its model's lowest point; turned, its origin less its radius), from either side:
 // its top, seen from above and from under it, not its sides and floor.
-void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Vector& angles, float bottom = 0)
+// The water's brightness for the light under it (jhl_visuals_waterlight): 1 from LitLight up, eased down below it.
+float Brightness(const Vector& point)
+{
+	Vector light;
+	gEngfuncs.pTriAPI->LightAtPoint(const_cast<float*>(&point.x), light);
+	const float x = std::clamp(std::max({light.x, light.y, light.z}) / LitLight, 0.0f, 1.0f);
+	return DarkestWater + (1 - DarkestWater) * x * x * (3 - 2 * x);
+}
+
+// A face's light, taken again if it's old or its entity has moved (see LitLight).
+void Relight(LitFace& lit, const Vector& origin, const Vector& angles)
+{
+	const float time = gEngfuncs.GetClientTime();
+	const bool moved = (lit.SampledOrigin - origin).Length() > 0.5f || (lit.SampledAngles - angles).Length() > 0.5f;
+
+	if (lit.SampledTime >= 0 && !moved && time >= lit.SampledTime && time - lit.SampledTime < LightRefreshTime)
+	{
+		return;
+	}
+
+	for (std::size_t i = 0; i < lit.SamplePoints.size(); ++i)
+	{
+		// Placed as the engine places its model (DrawModel), a unit above the water.
+		Vector point = lit.SamplePoints[i];
+
+		if (angles != g_vecZero)
+		{
+			point = Turn(Turn(Turn(point, 0, angles[2]), 1, -angles[0]), 2, angles[1]);
+		}
+
+		lit.Light[i] = Brightness(point + origin + Vector(0, 0, 1));
+	}
+
+	// The first time, its next taken at some point in the next LightRefreshTime, so faces don't all take theirs at once.
+	const bool first = lit.SampledTime < 0;
+	lit.SampledTime = first ? time - LightRefreshTime * (std::rand() / static_cast<float>(RAND_MAX)) : time;
+	lit.SampledOrigin = origin;
+	lit.SampledAngles = angles;
+}
+
+void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Vector& angles, float bottom = 0, const std::array<float, 4>& color = {1, 1, 1, 1})
 {
 	const auto& model = g_Models[modelIndex];
 	const bool turned = angles != g_vecZero;
+	const bool lit = g_WaterLight && g_WaterLight->value != 0;
 
 	// The view in the model's own coordinates, to tell which faces face it.
 	Vector view = v_origin - origin;
@@ -525,18 +684,32 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 			}
 
 			const auto& texinfo = bsp.Texinfo[face.Texinfo];
+			auto& litFace = g_LitFaces[index];
 
-			gl.Begin(GL_POLYGON);
-
-			for (const auto& point : face.Points)
+			if (lit)
 			{
-				const float s = DotProduct(point, Vector(texinfo.Vecs[0][0], texinfo.Vecs[0][1], texinfo.Vecs[0][2])) + texinfo.Vecs[0][3];
-				const float t2 = DotProduct(point, Vector(texinfo.Vecs[1][0], texinfo.Vecs[1][1], texinfo.Vecs[1][2])) + texinfo.Vecs[1][3];
-				gl.TexCoord2f(s / TileSize, t2 / TileSize);
-				gl.Vertex3fv(point);
+				Relight(litFace, origin, angles);
 			}
 
-			gl.End();
+			std::size_t next = 0;
+
+			for (const int count : litFace.Counts)
+			{
+				gl.Begin(GL_POLYGON);
+
+				for (int i = 0; i < count; ++i, ++next)
+				{
+					const Vector& point = litFace.Points[next];
+					const float light = lit ? litFace.Light[next] : 1.0f;
+					const float s = DotProduct(point, Vector(texinfo.Vecs[0][0], texinfo.Vecs[0][1], texinfo.Vecs[0][2])) + texinfo.Vecs[0][3];
+					const float t2 = DotProduct(point, Vector(texinfo.Vecs[1][0], texinfo.Vecs[1][1], texinfo.Vecs[1][2])) + texinfo.Vecs[1][3];
+					gl.Color4f(color[0] * light, color[1] * light, color[2] * light, color[3]);
+					gl.TexCoord2f(s / TileSize, t2 / TileSize);
+					gl.Vertex3fv(point);
+				}
+
+				gl.End();
+			}
 		}
 	}
 
@@ -607,6 +780,17 @@ void JhlSoftwareWater_Initialize()
 {
 	g_SoftwareWater = gEngfuncs.pfnRegisterVariable("jhl_visuals_softwarewater", "1", FCVAR_ARCHIVE);
 	g_WaterSides = gEngfuncs.pfnGetCvarPointer("gl_watersides");
+	g_WaterLight = gEngfuncs.pfnRegisterVariable("jhl_visuals_waterlight", "1", FCVAR_ARCHIVE);
+
+	// The light under the player's eyes and the water's brightness for it there, for tuning the curve (LitLight).
+	gEngfuncs.pfnAddCommand("jhl_debug_waterlight", []
+		{
+			Vector light;
+			Vector point = v_origin;
+			gEngfuncs.pTriAPI->LightAtPoint(point, light);
+			gEngfuncs.Con_Printf("jhl_debug_waterlight: light %.0f %.0f %.0f under the view, water %.2f (full from %.0f, %.2f at the darkest)\n",
+				light.x, light.y, light.z, Brightness(point), LitLight, DarkestWater);
+		});
 }
 
 bool JhlSoftwareWater_Add(cl_entity_t* ent)
@@ -745,17 +929,18 @@ void JhlSoftwareWater_DrawTransparent()
 
 	for (const auto* water : seeThrough)
 	{
+		std::array<float, 4> color{1, 1, 1, water->Alpha};
+
 		if (water->RenderMode == RenderTransAdd)
 		{
 			gl.BlendFunc(GL_ONE, GL_ONE);
-			gl.Color4f(water->Alpha, water->Alpha, water->Alpha, 1);
+			color = {water->Alpha, water->Alpha, water->Alpha, 1};
 		}
 		else
 		{
 			gl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			gl.Color4f(1, 1, 1, water->Alpha);
 		}
 
-		DrawModel(*bsp, water->Model, water->Origin, water->Angles, water->Bottom);
+		DrawModel(*bsp, water->Model, water->Origin, water->Angles, water->Bottom, color);
 	}
 }

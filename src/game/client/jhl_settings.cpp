@@ -61,6 +61,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_visuals_flushfaces", "1"},
 	{"jhl_visuals_16bitcolor", "1"},
 	{"jhl_visuals_softwarewater", "1"},
+	{"jhl_visuals_waterlight", "1"},
 	{"jhl_visuals_renderfixes", "1"},
 	{"jhl_weapons_smoothrecoil", "1"},
 	{"jhl_weapons_holster", "1"},
