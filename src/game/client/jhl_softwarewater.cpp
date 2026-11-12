@@ -62,15 +62,19 @@ constexpr int RenderTransAdd = 5;
 // under it (the engine's LightAtPoint: the lightmap below, the floor under the water, its styles as they are) is at
 // least LitLight, darkening smoothly below that to DarkestWater with none. Sampled on a grid (LightGrid units, the
 // faces cut up for it), each point the average of the light around it LightSpread apart (smoother), leaving out any in
-// a wall (water brushes run into the walls; light taken in one is black), a point with all of them in one taking its
-// face's nearest point's; again every LightRefreshTime (switched lights, a little behind), at once where a water entity
-// has moved. Light from the flashlight and flashes isn't taken: dark water stays dark under them.
+// a wall (water brushes run into the walls; light taken in one is black), a point with all of them in one taking the
+// light found stepping in toward its face's middle (LightStep, at most LightSteps). Taken once a map, no more than
+// LightBudget points a frame (a face not yet taken drawn as bright as ever), again where a water entity has moved; lights
+// switched later aren't followed. Light from the flashlight and flashes isn't taken: dark water stays dark under them.
 constexpr float LitLight = 32;
 constexpr float DarkestWater = 0.25f;
 constexpr float LightSpread = 24;
 constexpr float LightGrid = 32;
 constexpr float LightInset = 4; // A face's edge sampled this far in (its corner touches walls).
-constexpr float LightRefreshTime = 1;
+constexpr float LightStep = 16;
+constexpr int LightSteps = 8;
+constexpr int LightBudget = 1500;
+int g_LightBudget = 0; // Points still to be taken this frame.
 
 JhlGL& gl = g_JhlGL;
 cvar_t* g_SoftwareWater = nullptr;
@@ -125,6 +129,8 @@ struct LitFace
 	std::vector<Vector> SamplePoints; // Each point moved in from the face's edge (LightInset), where light is taken.
 	std::vector<int> Counts;		  // Each piece's number of points.
 	std::vector<float> Light;		  // Each point's brightness, 0 to 1 (Brightness).
+	Vector Middle;					  // The face's.
+	std::size_t Next = 0;			  // The next point to take (a face taken over several frames).
 	Vector SampledOrigin;
 	Vector SampledAngles;
 	float SampledTime = -1;
@@ -334,6 +340,7 @@ void LightFace(const JhlBspFace& face, LitFace& lit)
 		middle = middle + point;
 
 	middle = middle * (1.0f / face.Points.size());
+	lit.Middle = middle;
 
 	for (const auto& piece : pieces)
 	{
@@ -617,67 +624,57 @@ float Brightness(float light)
 	return DarkestWater + (1 - DarkestWater) * x * x * (3 - 2 * x);
 }
 
-// A face's light, taken again if it's old or its entity has moved (see LitLight).
+// A face's light, taken the first time it's drawn (budget allowing) and again if its entity has moved (see LitLight).
 void Relight(LitFace& lit, const Vector& origin, const Vector& angles)
 {
-	const float time = gEngfuncs.GetClientTime();
-	const bool moved = (lit.SampledOrigin - origin).Length() > 0.5f || (lit.SampledAngles - angles).Length() > 0.5f;
+	const bool taken = lit.SampledTime >= 0;
+	const bool moved = taken && ((lit.SampledOrigin - origin).Length() > 0.5f || (lit.SampledAngles - angles).Length() > 0.5f);
 
-	if (lit.SampledTime >= 0 && !moved && time >= lit.SampledTime && time - lit.SampledTime < LightRefreshTime)
+	if ((taken && !moved) || (!moved && g_LightBudget <= 0))
 	{
 		return;
 	}
 
-	for (std::size_t i = 0; i < lit.SamplePoints.size(); ++i)
+	// Moved: all taken again at once, where it is now.
+	if (moved)
 	{
-		// Placed as the engine places its model (DrawModel), a unit above the water.
-		Vector point = lit.SamplePoints[i];
+		lit.Next = 0;
+	}
 
+	// Placed as the engine places its model (DrawModel), a unit above the water.
+	const auto place = [&](Vector point)
+	{
 		if (angles != g_vecZero)
 		{
 			point = Turn(Turn(Turn(point, 0, angles[2]), 1, -angles[0]), 2, angles[1]);
 		}
 
-		lit.Light[i] = LightUnder(point + origin + Vector(0, 0, 1));
-	}
+		return point + origin + Vector(0, 0, 1);
+	};
 
-	// A point all in a wall: its face's nearest point's light (none: as bright as ever).
-	std::vector<float> light = lit.Light;
-
-	for (std::size_t i = 0; i < light.size(); ++i)
+	for (; lit.Next < lit.SamplePoints.size() && (moved || g_LightBudget > 0); ++lit.Next, --g_LightBudget)
 	{
-		if (lit.Light[i] >= 0)
+		const std::size_t i = lit.Next;
+		float light = LightUnder(place(lit.SamplePoints[i]));
+
+		// All in a wall: stepping in toward the face's middle (none found: as bright as ever).
+		const Vector in = lit.Middle - lit.SamplePoints[i];
+		const float length = in.Length();
+
+		for (int step = 1; light < 0 && step <= LightSteps && step * LightStep < length; ++step)
 		{
-			continue;
+			light = LightUnder(place(lit.SamplePoints[i] + in * (step * LightStep / length)));
 		}
 
-		float nearest = -1;
-
-		for (std::size_t j = 0; j < light.size(); ++j)
-		{
-			const float distance = (lit.SamplePoints[j] - lit.SamplePoints[i]).Length();
-
-			if (lit.Light[j] >= 0 && (nearest < 0 || distance < nearest))
-			{
-				nearest = distance;
-				light[i] = lit.Light[j];
-			}
-		}
-
-		if (nearest < 0)
-		{
-			light[i] = LitLight;
-		}
+		lit.Light[i] = Brightness(light < 0 ? LitLight : light);
 	}
 
-	for (std::size_t i = 0; i < light.size(); ++i)
+	if (lit.Next < lit.SamplePoints.size())
 	{
-		lit.Light[i] = Brightness(light[i]);
+		return;
 	}
 
-	// The first time, its next taken at some point in the next LightRefreshTime, so faces don't all take theirs at once.
-	const bool first = lit.SampledTime < 0;
-	lit.SampledTime = first ? time - LightRefreshTime * (std::rand() / static_cast<float>(RAND_MAX)) : time;
+	lit.SampledTime = gEngfuncs.GetClientTime();
 	lit.SampledOrigin = origin;
 	lit.SampledAngles = angles;
 }
@@ -911,6 +908,7 @@ void JhlSoftwareWater_DrawOpaque()
 
 	Advance();
 	UpdateTiles();
+	g_LightBudget = LightBudget;
 
 	WaterDrawState state;
 	gl.Color4f(1, 1, 1, 1);
