@@ -203,15 +203,16 @@ so gamma and filtering match). Water is what the engine treats as water: names s
   (8 sin(2 pi i / 256), indices wrapping at 256), t the client's time, scale the entity's (the map's WaveHeight / 8),
   lowered instead when seen from below. So both renderers' 1998 water at once: software's ripples on OpenGL's waves.
   The world's water waves too where the map gives worldspawn a WaveHeight (Blue Shift's do; the world entity's scale),
-  as the engine waves it. Drawn on the engine's own 64-unit pieces, so the waves match the engine's (drawn over it)
-  exactly. A water brush has each surface twice, facing up and facing down; of an entity's two only the one facing the
+  as the engine waves it. Where it's drawn over the engine's waved water (that world water, and wavy entities the engine
+  still draws), it's cut as the engine cuts water (`GL_SubdivideSurface`: 64-unit pieces, vertex for vertex), so the
+  waves match the engine's exactly; everywhere else on the finer 32-unit grid, for smoother light. A water brush has each surface twice, facing up and facing down; of an entity's two only the one facing the
   view is drawn (waved, the two were cut into triangles differently and fought).
 
 ### Water in the dark (`jhl_visuals_waterlight`, default 1)
 
 The map compiler gives water no lightmap, so both renderers draw it full bright: in a pitch-black corner (c1a1b's
 tunnel) the water stood out of the dark. With the software water on, the water drawn here takes the light of what's
-around it, on the engine's own 64-unit cut of the water (`GL_SubdivideSurface`'s pieces, vertex for vertex): from 12 units above each point, 8 level traces out to 192 units and one down to the
+around it, on a 32-unit grid: from 12 units above each point, 8 level traces out to 192 units and one down to the
 floor, each surface hit read from the map's own lightmaps where it was hit (the map's base light, its first style),
 nearer ones counting more (weight 1 / (1 + distance / 48)). So water by dark walls darkens and water by lit walls stays
 bright, whatever the floor under it. Water under the open sky (straight up, the first thing there is the sky) is

@@ -66,7 +66,7 @@ constexpr int RenderTransAdd = 5;
 // under it, each where its trace hits it as the map's lightmaps have it there (the map's own light, its first style),
 // the nearer counting more (LightFalloff); with none hit, the engine's LightAtPoint (the lightmap below, averaged
 // LightSpread around, leaving out any in a wall, further out if all are: LightRings). As bright as ever from LitLight
-// up, darkening smoothly below that to DarkestWater; under the open sky (straight up, SkyReach), always as bright. On a grid (LightGrid units, the faces cut up for it), by where a
+// up, darkening smoothly below that to DarkestWater; under the open sky (straight up, SkyReach), always as bright. On a grid (LightGrid units, the faces cut up for it; EngineGrid over the engine's waved water), by where a
 // point is alone, so faces in the same place (a water entity's brushes' tops and bottoms) are lit alike, not fighting.
 // Taken once a map, no more than LightBudget points a frame (a face not yet taken drawn as bright as ever), again where
 // a water entity has moved (as slowly, its old light kept meanwhile); lights switched later aren't followed, nor the
@@ -80,7 +80,10 @@ constexpr float LightReach = 192;
 constexpr float LightDepth = 512; // The floor's furthest under it.
 constexpr float LightFalloff = 48;
 constexpr float LightSpread = 24;
-constexpr float LightGrid = 64; // As the engine cuts water (hw.dll's GL_SubdivideSurface): its pieces, its waves, exactly.
+constexpr float LightGrid = 32;
+// Where it's drawn over the engine's water as the engine waves it, on the engine's own cut instead (hw.dll's
+// GL_SubdivideSurface, the same rule at 64 units): its pieces vertex for vertex, so its waves exactly.
+constexpr float EngineGrid = 64;
 constexpr float LightRings[] = {48, 80};
 constexpr int LightBudget = 100;
 constexpr float SurfaceCell = 128; // The world's lit faces kept by cells this size (IndexSurfaces).
@@ -148,7 +151,8 @@ struct LitFace
 
 std::string g_MapName;
 bool g_MapReady = false;
-std::vector<LitFace> g_LitFaces; // By face in the map; only water faces filled.
+std::vector<LitFace> g_LitFaces;	 // By face in the map; only water faces filled.
+std::vector<LitFace> g_EngineFaces; // The same on the engine's cut (EngineGrid), lit likewise.
 
 // A world face with a lightmap of the map's own light (its first style 0): where its samples start, in 16 texels, and
 // how many across and down.
@@ -296,7 +300,7 @@ bool LoadTexture(WaterTexture& water, int engineTexture, std::string& why)
 
 // A convex polygon cut on the light's grid (as Quake's GL_SubdivideSurface cuts water: across its middle, at a grid
 // line, while it's longer than a cell along an axis; no sliver under 8 units).
-void CutOnGrid(const std::vector<Vector>& polygon, std::vector<std::vector<Vector>>& pieces, int depth = 0)
+void CutOnGrid(const std::vector<Vector>& polygon, std::vector<std::vector<Vector>>& pieces, float grid, int depth = 0)
 {
 	Vector mins = polygon[0];
 	Vector maxs = polygon[0];
@@ -312,7 +316,7 @@ void CutOnGrid(const std::vector<Vector>& polygon, std::vector<std::vector<Vecto
 
 	for (int axis = 0; axis < 3 && depth < 64; ++axis)
 	{
-		const float cut = LightGrid * std::floor((mins[axis] + maxs[axis]) * 0.5f / LightGrid + 0.5f);
+		const float cut = grid * std::floor((mins[axis] + maxs[axis]) * 0.5f / grid + 0.5f);
 
 		if (maxs[axis] - cut < 8 || cut - mins[axis] < 8)
 		{
@@ -344,8 +348,8 @@ void CutOnGrid(const std::vector<Vector>& polygon, std::vector<std::vector<Vecto
 
 		if (front.size() >= 3 && back.size() >= 3)
 		{
-			CutOnGrid(front, pieces, depth + 1);
-			CutOnGrid(back, pieces, depth + 1);
+			CutOnGrid(front, pieces, grid, depth + 1);
+			CutOnGrid(back, pieces, grid, depth + 1);
 			return;
 		}
 	}
@@ -353,10 +357,10 @@ void CutOnGrid(const std::vector<Vector>& polygon, std::vector<std::vector<Vecto
 	pieces.push_back(polygon);
 }
 
-void LightFace(const JhlBspFace& face, LitFace& lit)
+void LightFace(const JhlBspFace& face, LitFace& lit, float grid)
 {
 	std::vector<std::vector<Vector>> pieces;
-	CutOnGrid(face.Points, pieces);
+	CutOnGrid(face.Points, pieces, grid);
 
 	for (const auto& piece : pieces)
 	{
@@ -379,6 +383,7 @@ void LoadMap(const char* mapName)
 	FreeTextures();
 	g_Models.clear();
 	g_LitFaces.clear();
+	g_EngineFaces.clear();
 	g_MapReady = false;
 
 	const JhlBsp* bsp = JhlBsp_Get(mapName);
@@ -415,6 +420,7 @@ void LoadMap(const char* mapName)
 
 	g_Models.resize(bsp->Models.size());
 	g_LitFaces.resize(bsp->Faces.size());
+	g_EngineFaces.resize(bsp->Faces.size());
 	IndexSurfaces(*bsp);
 
 	for (std::size_t m = 0; m < bsp->Models.size(); ++m)
@@ -443,7 +449,8 @@ void LoadMap(const char* mapName)
 
 			model.FacesByTexture[texture].push_back(index);
 			model.HasWater = true;
-			LightFace(face, g_LitFaces[index]);
+			LightFace(face, g_LitFaces[index], LightGrid);
+			LightFace(face, g_EngineFaces[index], EngineGrid);
 		}
 
 		model.AllWater = model.AllWater && model.HasWater;
@@ -996,7 +1003,7 @@ float WaveHeight(float x, float y, double time)
 // its bottom (the entity's origin and its model's lowest point; turned, its origin less its radius), from either side:
 // its top, seen from above and from under it, not its sides and floor.
 void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Vector& angles, float bottom = 0, float waves = 0,
-	const std::array<float, 4>& color = {1, 1, 1, 1})
+	const std::array<float, 4>& color = {1, 1, 1, 1}, bool overEngine = false)
 {
 	const double time = gEngfuncs.GetClientTime();
 	const auto& model = g_Models[modelIndex];
@@ -1061,7 +1068,8 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 			}
 
 			const auto& texinfo = bsp.Texinfo[face.Texinfo];
-			auto& litFace = g_LitFaces[index];
+			// Over the engine's waved water: on its cut. Else the finer one (the light's gradients smoother).
+			auto& litFace = overEngine && waves != 0 ? g_EngineFaces[index] : g_LitFaces[index];
 
 			if (lit)
 			{
@@ -1253,13 +1261,13 @@ void JhlSoftwareWater_DrawOpaque()
 	gl.PolygonOffset(OverdrawOffsetFactor, OverdrawOffsetUnits);
 	// The world's waves: its scale (worldspawn's WaveHeight / 8, Blue Shift's maps have them), as the engine waves it.
 	const cl_entity_t* world = gEngfuncs.GetEntityByIndex(0);
-	DrawModel(*bsp, 0, g_vecZero, g_vecZero, 0, world ? world->curstate.scale : 0);
+	DrawModel(*bsp, 0, g_vecZero, g_vecZero, 0, world ? world->curstate.scale : 0, {1, 1, 1, 1}, true);
 
 	for (const auto& water : g_Entities)
 	{
 		if (!water.Hidden && water.RenderMode == RenderNormal)
 		{
-			DrawModel(*bsp, water.Model, water.Origin, water.Angles, water.Bottom, water.Waves);
+			DrawModel(*bsp, water.Model, water.Origin, water.Angles, water.Bottom, water.Waves, {1, 1, 1, 1}, true);
 		}
 	}
 
