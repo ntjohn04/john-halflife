@@ -119,6 +119,7 @@ struct WaterEntity
 	bool Hidden = false; // The engine isn't drawing it.
 	float Distance = 0;
 	float Bottom = 0; // Its lowest point as the engine reckons it (see DrawModel).
+	float Waves = 0;  // Its waves' height (curstate.scale: the map's WaveHeight / 8), as OpenGL draws them (WaveHeight).
 };
 
 // A water face cut up on the light's grid, and the light under each of its points.
@@ -686,13 +687,36 @@ void Relight(LitFace& lit, const Vector& origin, const Vector& angles)
 	lit.SampledAngles = angles;
 }
 
+// The water's waves where OpenGL drew them (hw.dll's EmitWaterPolys): a water entity's surface raised at each point by
+// two waves from its turbulence table (8 sin(2 pi i / 256)), times its scale (the map's WaveHeight / 8), lowered seen
+// from under it; in its model's coordinates at the client's time. The software renderer drew none: here both, its
+// ripples on OpenGL's waves.
+float WaveHeight(float x, float y, double time)
+{
+	static const auto turbulence = []
+	{
+		std::array<float, 256> table{};
+
+		for (int i = 0; i < 256; ++i)
+			table[i] = static_cast<float>(8 * std::sin(i * 2 * std::numbers::pi / 256));
+
+		return table;
+	}();
+
+	const int along = static_cast<int>(static_cast<double>(x * 5.0f) + time * 171.0 - y) & 0xFF;
+	const int across = static_cast<int>(time * 160.0 + x + y) & 0xFF;
+	return static_cast<float>((turbulence[along] + 8.0) * 0.8 + (turbulence[across] + 8.0));
+}
+
 // Draws a model's water faces, placed as the engine places a brush model (R_RotateForEntity: moved to its origin,
 // turned by yaw about z, pitch (negated) about y, roll about x). The world's: those that face the view. An entity's: as
 // the engine's R_DrawBrushModel (hw.dll) has them, only its level ones (any, gl_watersides 1) higher than a unit above
 // its bottom (the entity's origin and its model's lowest point; turned, its origin less its radius), from either side:
 // its top, seen from above and from under it, not its sides and floor.
-void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Vector& angles, float bottom = 0, const std::array<float, 4>& color = {1, 1, 1, 1})
+void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Vector& angles, float bottom = 0, float waves = 0,
+	const std::array<float, 4>& color = {1, 1, 1, 1})
 {
+	const double time = gEngfuncs.GetClientTime();
 	const auto& model = g_Models[modelIndex];
 	const bool turned = angles != g_vecZero;
 	const bool lit = g_WaterLight && g_WaterLight->value != 0;
@@ -761,6 +785,8 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 				Relight(litFace, origin, angles);
 			}
 
+			// Waves lowered seen from under the face (the view no higher than its first point, as the engine compares them).
+			const float waveScale = waves != 0 && v_origin.z <= face.Points[0].z ? -waves : waves;
 			std::size_t next = 0;
 
 			for (const int count : litFace.Counts)
@@ -775,7 +801,16 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 					const float t2 = DotProduct(point, Vector(texinfo.Vecs[1][0], texinfo.Vecs[1][1], texinfo.Vecs[1][2])) + texinfo.Vecs[1][3];
 					gl.Color4f(color[0] * light, color[1] * light, color[2] * light, color[3]);
 					gl.TexCoord2f(s / TileSize, t2 / TileSize);
-					gl.Vertex3fv(point);
+
+					if (waveScale != 0)
+					{
+						const Vector raised(point.x, point.y, static_cast<float>(WaveHeight(point.x, point.y, time) * waveScale + point.z));
+						gl.Vertex3fv(raised);
+					}
+					else
+					{
+						gl.Vertex3fv(point);
+					}
 				}
 
 				gl.End();
@@ -887,6 +922,7 @@ bool JhlSoftwareWater_Add(cl_entity_t* ent)
 	water.RenderMode = renderMode;
 	water.Alpha = renderMode == RenderNormal ? 1.0f : std::clamp(ent->curstate.renderamt / 255.0f, 0.0f, 1.0f);
 	water.Distance = (ent->origin + (ent->model->mins + ent->model->maxs) * 0.5f - v_origin).Length();
+	water.Waves = ent->curstate.scale;
 	water.Bottom = ent->angles != g_vecZero ? ent->origin.z - ent->model->radius : ent->origin.z + ent->model->mins.z;
 
 	if (model.AllWater && knownMode)
@@ -936,7 +972,7 @@ void JhlSoftwareWater_DrawOpaque()
 	{
 		if (!water.Hidden && water.RenderMode == RenderNormal)
 		{
-			DrawModel(*bsp, water.Model, water.Origin, water.Angles, water.Bottom);
+			DrawModel(*bsp, water.Model, water.Origin, water.Angles, water.Bottom, water.Waves);
 		}
 	}
 
@@ -948,7 +984,7 @@ void JhlSoftwareWater_DrawOpaque()
 	{
 		if (water.Hidden && water.RenderMode == RenderNormal)
 		{
-			DrawModel(*bsp, water.Model, water.Origin, water.Angles, water.Bottom);
+			DrawModel(*bsp, water.Model, water.Origin, water.Angles, water.Bottom, water.Waves);
 		}
 	}
 }
@@ -1010,6 +1046,6 @@ void JhlSoftwareWater_DrawTransparent()
 			gl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		}
 
-		DrawModel(*bsp, water->Model, water->Origin, water->Angles, water->Bottom, color);
+		DrawModel(*bsp, water->Model, water->Origin, water->Angles, water->Bottom, water->Waves, color);
 	}
 }

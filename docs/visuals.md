@@ -198,6 +198,10 @@ so gamma and filtering match). Water is what the engine treats as water: names s
   (`HUD_AddEntity` returns 0) and drawn here, turned and moved as the engine places them, as see-through as they were
   (render modes normal, texture and additive). Opaque entities partly water have their water drawn over the engine's;
   see-through ones partly water are left to the engine.
+* OpenGL's waves on water entities are kept, exactly as `hw.dll`'s `EmitWaterPolys` draws them (software drew none): each
+  point raised by `((T[x*5 + t*171 - y] + 8) * 0.8 + T[t*160 + x + y] + 8) * scale`, T the engine's turbulence table
+  (8 sin(2 pi i / 256), indices wrapping at 256), t the client's time, scale the entity's (the map's WaveHeight / 8),
+  lowered instead when seen from below. So both renderers' 1998 water at once: software's ripples on OpenGL's waves.
 
 ### Water in the dark (`jhl_visuals_waterlight`, default 1)
 
