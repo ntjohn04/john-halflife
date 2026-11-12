@@ -80,7 +80,7 @@ constexpr float LightReach = 192;
 constexpr float LightDepth = 512; // The floor's furthest under it.
 constexpr float LightFalloff = 48;
 constexpr float LightSpread = 24;
-constexpr float LightGrid = 32;
+constexpr float LightGrid = 64; // As the engine cuts water (hw.dll's GL_SubdivideSurface): its pieces, its waves, exactly.
 constexpr float LightRings[] = {48, 80};
 constexpr int LightBudget = 100;
 constexpr float SurfaceCell = 128; // The world's lit faces kept by cells this size (IndexSurfaces).
@@ -140,6 +140,7 @@ struct LitFace
 	std::vector<int> Counts;		  // Each piece's number of points.
 	std::vector<float> Light;		  // Each point's brightness, 0 to 1 (Brightness).
 	std::size_t Next = 0;			  // The next point to take (a face taken over several frames).
+	bool HasTwin = false;			  // Its model has the same surface facing the other way (a water brush's top, seen from under it).
 	Vector SampledOrigin;
 	Vector SampledAngles;
 	float SampledTime = -1;
@@ -446,6 +447,26 @@ void LoadMap(const char* mapName)
 		}
 
 		model.AllWater = model.AllWater && model.HasWater;
+
+		// Each surface's twin facing the other way, if it has one: of the two only the one facing the view is drawn (both
+		// drawn, flat they were the same; waved, cut into triangles differently, they fought).
+		for (const auto& faces : model.FacesByTexture)
+		{
+			for (const int a : faces)
+			{
+				for (const int b : faces)
+				{
+					const auto& one = bsp->Faces[a];
+					const auto& other = bsp->Faces[b];
+
+					if (a != b && DotProduct(one.Normal, other.Normal) < -0.999f && std::abs(one.Dist + other.Dist) < 0.1f)
+					{
+						g_LitFaces[a].HasTwin = true;
+						break;
+					}
+				}
+			}
+		}
 	}
 
 	g_MapReady = true;
@@ -1026,7 +1047,8 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 				const bool level = face.Normal.x == 0 && face.Normal.y == 0;
 				const float height = face.Normal.z < 0 ? -face.Dist : face.Dist;
 
-				if ((!level && (!g_WaterSides || g_WaterSides->value == 0)) || bottom + 1 >= height)
+				if ((!level && (!g_WaterSides || g_WaterSides->value == 0)) || bottom + 1 >= height ||
+					(g_LitFaces[index].HasTwin && DotProduct(face.Normal, view) - face.Dist <= 0))
 				{
 					continue;
 				}
@@ -1229,7 +1251,9 @@ void JhlSoftwareWater_DrawOpaque()
 	gl.DepthMask(GL_FALSE);
 	gl.Enable(GL_POLYGON_OFFSET_FILL);
 	gl.PolygonOffset(OverdrawOffsetFactor, OverdrawOffsetUnits);
-	DrawModel(*bsp, 0, g_vecZero, g_vecZero);
+	// The world's waves: its scale (worldspawn's WaveHeight / 8, Blue Shift's maps have them), as the engine waves it.
+	const cl_entity_t* world = gEngfuncs.GetEntityByIndex(0);
+	DrawModel(*bsp, 0, g_vecZero, g_vecZero, 0, world ? world->curstate.scale : 0);
 
 	for (const auto& water : g_Entities)
 	{
