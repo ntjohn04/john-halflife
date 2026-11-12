@@ -155,8 +155,6 @@ int g_LastArmor = -1;
 // Standing at ease (AtEaseMap): decided on a map's first frame (g_AtEaseUndecided), ended by moving.
 bool g_AtEase = false;
 bool g_AtEaseUndecided = true;
-float g_AtEaseYaw = 0; // The way it faces at ease: the view's on its first frame drawn (g_AtEaseYawSet).
-bool g_AtEaseYawSet = false;
 
 float AngleDifference(float a, float b)
 {
@@ -463,21 +461,7 @@ void JhlBody_CreateEntities()
 	// to where it looks (its four spine controllers, as the engine's StudioProcessGait); still, the way it looks.
 	Vector viewAngles;
 	gEngfuncs.GetViewAngles(viewAngles);
-	float viewYaw = viewAngles[YAW];
-
-	// At ease (lined up at boot camp's start, facing ahead), the body facing where it first did, however the view turns
-	// (its head hidden, the view its head turning), until it moves.
-	if (dressed && g_AtEase)
-	{
-		if (!g_AtEaseYawSet)
-		{
-			g_AtEaseYaw = viewYaw;
-			g_AtEaseYawSet = true;
-		}
-
-		viewYaw = g_AtEaseYaw;
-	}
-
+	const float viewYaw = viewAngles[YAW];
 	float legYaw = viewYaw;
 	float direction = 1;
 
@@ -700,7 +684,6 @@ void JhlBody_Reset()
 	g_StillTime = 0;
 	g_ArmorKnown = false;
 	g_AtEaseUndecided = true;
-	g_AtEaseYawSet = false;
 }
 
 void JhlBody_Armor(int armor)
