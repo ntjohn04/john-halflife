@@ -215,7 +215,8 @@ tunnel) the water stood out of the dark. With the software water on, the water d
 around it, on a 32-unit grid: from 12 units above each point, 8 level traces out to 192 units and one down to the
 floor, each surface hit read from the map's own lightmaps where it was hit (the map's base light, its first style),
 nearer ones counting more (weight 1 / (1 + distance / 48)). So water by dark walls darkens and water by lit walls stays
-bright, whatever the floor under it. Water under the open sky (straight up, the first thing there is the sky) is
+bright, whatever the floor under it. Water under the open sky (straight up or tilted 45° four ways, the first thing there is the sky; a fence overhead
+blocks one, a roof all) is
 outdoors and stays full bright. With nothing hit (open water, or only entities), the engine's `LightAtPoint`
 under it instead. A point inside a wall (water brushes run into the walls) looks from just beside it. The light
 depends only on where a point is, so surfaces in the same place (a water entity's stacked brushes) are lit alike. From

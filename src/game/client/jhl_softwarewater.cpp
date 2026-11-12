@@ -863,27 +863,34 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 		start = point + Vector(std::cos(angle) * LightSpread, std::sin(angle) * LightSpread, LightAbove);
 	}
 
-	// Under the open sky (straight up, the first thing there is the sky): outdoors, as bright as ever, whatever's around.
+	// Under the open sky (straight up or tilted 45 degrees four ways, the first thing there is the sky: a fence or a rail
+	// overhead blocks one, a roof all): outdoors, as bright as ever, whatever's around.
+	static constexpr float Tilt = 0.7071f;
+	static const Vector SkyDirections[] = {{0, 0, 1}, {Tilt, 0, Tilt}, {-Tilt, 0, Tilt}, {0, Tilt, Tilt}, {0, -Tilt, Tilt}};
+
+	for (const auto& direction : SkyDirections)
 	{
-		const Vector up = start + Vector(0, 0, SkyReach);
+		const Vector up = start + direction * SkyReach;
 		const pmtrace_t trace = *gEngfuncs.PM_TraceLine(start, up, PM_TRACELINE_PHYSENTSONLY, 2, -1);
 
-		if (!trace.startsolid && trace.fraction < 1)
+		if (trace.startsolid || trace.fraction >= 1)
 		{
-			// A point trace passes through the sky (not solid to it) to the void beyond: in the sky just short of where it
-			// stopped, or just past it.
-			Vector before = Vector(trace.endpos) - Vector(0, 0, 2);
-			Vector beyond = Vector(trace.endpos) + Vector(0, 0, 2);
+			continue;
+		}
 
-			if (gEngfuncs.PM_PointContents(before, nullptr) == CONTENTS_SKY || gEngfuncs.PM_PointContents(beyond, nullptr) == CONTENTS_SKY)
+		// A point trace passes through the sky (not solid to it) to the void beyond: in the sky just short of where it
+		// stopped, or just past it.
+		Vector before = Vector(trace.endpos) - direction * 2;
+		Vector beyond = Vector(trace.endpos) + direction * 2;
+
+		if (gEngfuncs.PM_PointContents(before, nullptr) == CONTENTS_SKY || gEngfuncs.PM_PointContents(beyond, nullptr) == CONTENTS_SKY)
+		{
+			if (hits)
 			{
-				if (hits)
-				{
-					*hits = -1;
-				}
-
-				return LitLight;
+				*hits = -1;
 			}
+
+			return LitLight;
 		}
 	}
 
