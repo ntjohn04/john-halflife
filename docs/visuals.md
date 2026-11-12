@@ -65,7 +65,8 @@ the player model's jumping, crouching and treading water. Blue Shift starts with
 he's in his shirt from the moment his armor reaches 0 until he picks up a vest (`item_armorvest`); a helmet alone or a
 charger doesn't put it on. A level change keeps it as it was; a loaded save shows the vest if there's any armor. The
 server precaches him only in maps where the player is Barney, under the same room rule; where he isn't, Barney keeps
-his vest.
+his vest. His hands are the vested model's: dead_barney's own are pale, low-poly blocks, so they're hidden and the
+player model's hands and fingers are drawn on his wrists, bone for bone by name (the sleeves are the same in both).
 
 Adrian in boot camp before he puts on his vest (its suit, picked up in ofboot2) wears the recruits' training clothes
 (Opposing Force's `models/recruit.mdl`). He starts ofboot0 standing at ease as the other recruits do (the recruit's own

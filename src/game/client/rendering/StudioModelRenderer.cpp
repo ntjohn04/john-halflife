@@ -1773,6 +1773,148 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	}
 }
 
+// johnhalflife: the first-person body's bones as posed, its hands not yet hidden (JhlKeepWrists), for the hands drawn on
+// them (JhlDrawBorrowedHands), in one biped naming (JhlBoneName).
+static int g_JhlBodyBoneCount = 0;
+static char g_JhlBodyBoneNames[MAXSTUDIOBONES][32];
+static float g_JhlBodyBones[MAXSTUDIOBONES][3][4];
+static float g_JhlBodyLightBones[MAXSTUDIOBONES][3][4];
+
+static bool JhlIsHandBone(const char* name)
+{
+	return std::strstr(name, " Hand") || std::strstr(name, "Finger");
+}
+
+void CStudioModelRenderer::JhlKeepWrists()
+{
+	auto bones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(m_pStudioHeader) + m_pStudioHeader->boneindex);
+	g_JhlBodyBoneCount = std::min(m_pStudioHeader->numbones, MAXSTUDIOBONES);
+	std::memcpy(g_JhlBodyBones, *m_pbonetransform, sizeof(float[3][4]) * g_JhlBodyBoneCount);
+	std::memcpy(g_JhlBodyLightBones, *m_plighttransform, sizeof(float[3][4]) * g_JhlBodyBoneCount);
+
+	// Its own hands hidden, shrunk to their wrists (each hand bone to the first hand bone it's under, itself).
+	int wrist[MAXSTUDIOBONES];
+
+	for (int i = 0; i < g_JhlBodyBoneCount; ++i)
+	{
+		char buffer[32];
+		const char* name = JhlBoneName(bones[i].name, buffer);
+		std::strncpy(g_JhlBodyBoneNames[i], name, sizeof(g_JhlBodyBoneNames[i]) - 1);
+		g_JhlBodyBoneNames[i][sizeof(g_JhlBodyBoneNames[i]) - 1] = '\0';
+
+		const int parent = bones[i].parent >= 0 && bones[i].parent < i ? bones[i].parent : -1;
+		wrist[i] = !JhlIsHandBone(name) ? -1 : parent >= 0 && wrist[parent] >= 0 ? wrist[parent] : i;
+
+		if (wrist[i] < 0)
+			continue;
+
+		for (int row = 0; row < 3; ++row)
+		{
+			for (int column = 0; column < 3; ++column)
+				(*m_pbonetransform)[i][row][column] = (*m_plighttransform)[i][row][column] = 0;
+
+			(*m_pbonetransform)[i][row][3] = (*m_pbonetransform)[wrist[i]][row][3];
+			(*m_plighttransform)[i][row][3] = (*m_plighttransform)[wrist[i]][row][3];
+		}
+	}
+}
+
+void CStudioModelRenderer::JhlDrawBorrowedHands(alight_t* lighting)
+{
+	const int index = JhlBody_HandsModel();
+	model_t* hands = index > 0 ? IEngineStudio.GetModelByIndex(index) : nullptr;
+	auto header = hands && hands->type == mod_studio ? static_cast<studiohdr_t*>(IEngineStudio.Mod_Extradata(hands)) : nullptr;
+
+	if (!header || header->numbodyparts == 0 || g_JhlBodyBoneCount == 0)
+		return;
+
+	studiohdr_t* const ownHeader = m_pStudioHeader;
+	model_t* const ownModel = m_pRenderModel;
+	m_pStudioHeader = header;
+	m_pRenderModel = hands;
+	IEngineStudio.StudioSetHeader(header);
+	IEngineStudio.SetRenderModel(hands);
+
+	auto bones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(header) + header->boneindex);
+	const int count = std::min(header->numbones, MAXSTUDIOBONES);
+	bool hand[MAXSTUDIOBONES];
+
+	// Bone for bone by name the body's as posed (its hands' too, hidden with its arms or not); any it hasn't (fingers) as
+	// their model has them at rest on the bone they're under, as the borrowed poses do.
+	for (int i = 0; i < count; ++i)
+	{
+		char buffer[32];
+		const char* name = JhlBoneName(bones[i].name, buffer);
+		const int parent = bones[i].parent >= 0 && bones[i].parent < i ? bones[i].parent : -1;
+		hand[i] = JhlIsHandBone(name);
+
+		int same = -1;
+
+		for (int j = 0; j < g_JhlBodyBoneCount && same < 0; ++j)
+		{
+			if (0 == std::strcmp(name, g_JhlBodyBoneNames[j]))
+				same = j;
+		}
+
+		if (same < 0 && parent >= 0)
+		{
+			vec4_t q;
+			float bonematrix[3][4];
+			AngleQuaternion(Vector{bones[i].value[3], bones[i].value[4], bones[i].value[5]}, q);
+			QuaternionMatrix(q, bonematrix);
+			bonematrix[0][3] = bones[i].value[0];
+			bonematrix[1][3] = bones[i].value[1];
+			bonematrix[2][3] = bones[i].value[2];
+			ConcatTransforms((*m_pbonetransform)[parent], bonematrix, (*m_pbonetransform)[i]);
+			ConcatTransforms((*m_plighttransform)[parent], bonematrix, (*m_plighttransform)[i]);
+		}
+		else
+		{
+			same = std::max(same, 0);
+			MatrixCopy(g_JhlBodyBones[same], (*m_pbonetransform)[i]);
+			MatrixCopy(g_JhlBodyLightBones[same], (*m_plighttransform)[i]);
+		}
+	}
+
+	// All but its hands hidden: a forearm shrunk to its wrist (the hand's skin closing over it), everything else to one
+	// point, each triangle between them nothing.
+	const Vector common{(*m_pbonetransform)[0][0][3], (*m_pbonetransform)[0][1][3], (*m_pbonetransform)[0][2][3]};
+	const Vector commonLight{(*m_plighttransform)[0][0][3], (*m_plighttransform)[0][1][3], (*m_plighttransform)[0][2][3]};
+
+	for (int i = 0; i < count; ++i)
+	{
+		if (hand[i])
+			continue;
+
+		int wrist = -1;
+
+		for (int j = i + 1; j < count && wrist < 0; ++j)
+		{
+			if (bones[j].parent == i && hand[j])
+				wrist = j;
+		}
+
+		for (int row = 0; row < 3; ++row)
+		{
+			for (int column = 0; column < 3; ++column)
+				(*m_pbonetransform)[i][row][column] = (*m_plighttransform)[i][row][column] = 0;
+
+			(*m_pbonetransform)[i][row][3] = wrist >= 0 ? (*m_pbonetransform)[wrist][row][3] : common[row];
+			(*m_plighttransform)[i][row][3] = wrist >= 0 ? (*m_plighttransform)[wrist][row][3] : commonLight[row];
+		}
+	}
+
+	IEngineStudio.StudioEntityLight(lighting);
+	IEngineStudio.StudioSetupLighting(lighting);
+	(*m_pStudioModelCount)++;
+	StudioRenderModel();
+
+	m_pStudioHeader = ownHeader;
+	m_pRenderModel = ownModel;
+	IEngineStudio.StudioSetHeader(ownHeader);
+	IEngineStudio.SetRenderModel(ownModel);
+}
+
 bool JhlViewModelPoint(const char* modelName, int bone, const Vector& local, Vector& world)
 {
 	// Drawn just now (last frame's, the view model being drawn after the effects), and the one asked about.
@@ -2023,6 +2165,9 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 			StudioSetupBones();
 
 		JhlBody_Pose(m_pCurrentEntity, m_pStudioHeader, *m_pbonetransform, *m_plighttransform);
+
+		if (JhlBody_HandsModel() > 0)
+			JhlKeepWrists();
 	}
 	else
 	{
@@ -2067,6 +2212,10 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 		IEngineStudio.StudioSetRemapColors(m_nTopColor, m_nBottomColor);
 
 		StudioRenderModel();
+
+		// johnhalflife: the first-person body's hands as another model's (Barney's shirt's as his vest's).
+		if (m_pCurrentEntity->curstate.iuser4 == JhlBodyMarker && JhlBody_HandsModel() > 0)
+			JhlDrawBorrowedHands(&lighting);
 	}
 
 	return true;

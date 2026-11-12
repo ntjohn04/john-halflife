@@ -89,6 +89,12 @@ bool JhlBody_Place(cl_entity_t* entity, const float* viewOrigin);
 void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*bones)[3][4], float (*lightBones)[3][4]);
 
 /**
+ *	@brief The model whose hands the body is drawn with this frame, 0 its own (CStudioModelRenderer::JhlDrawBorrowedHands):
+ *	Barney's shirt's (dead_barney.mdl's pale, blocky hands) drawn with his vest's.
+ */
+int JhlBody_HandsModel();
+
+/**
  *	@brief Forgets the last map's movement (HUD_VidInit).
  */
 void JhlBody_Reset();

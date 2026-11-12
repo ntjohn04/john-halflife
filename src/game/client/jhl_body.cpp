@@ -145,6 +145,7 @@ bool g_Arms = false;   // Its arms drawn: no view model (no weapon, holstered), 
 bool g_LeftArm = false;	 // Its left arm drawn: both drawn, or a weapon held in the right hand only (OneHanded).
 bool g_RightArm = false; // Its right arm drawn: both drawn, or the satchel itself (held in the left).
 bool g_Crouching = false; // In a crouching pose (crouched, not in the air).
+int g_HandsIndex = 0;	   // The model whose hands it's drawn with (JhlBody_HandsModel), 0 its own.
 
 // Barney's vest (JhlBody_Armor). A map loaded, the first armor told decides: the same as before it, a level change, the
 // vest as it was; otherwise (a save loaded) worn with any armor.
@@ -315,6 +316,7 @@ void JhlBody_CreateEntities()
 	const double time = gEngfuncs.GetClientTime();
 	const float frameTime = static_cast<float>(std::clamp(time - g_LastTime, 0.0, 0.1));
 	g_LastTime = time;
+	g_HandsIndex = 0;
 
 	if (0 == g_Enabled->value || !g_Movement.Valid || g_Movement.Hidden || 0 != CL_IsThirdPerson())
 		return;
@@ -336,6 +338,10 @@ void JhlBody_CreateEntities()
 
 	if (!header || header->numseq <= 0)
 		return;
+
+	// Barney in his shirt with his vest's hands (the shirt's are pale, blocky ones, its sleeves the same).
+	if (0 == std::strcmp(model->name, VestlessBarney))
+		g_HandsIndex = player->curstate.modelindex;
 
 	// The pose: the movement as just predicted, changed at once (no blend), as Half-Life's movement is.
 	const Movement& move = g_Movement;
@@ -674,6 +680,11 @@ void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*
 			lightBones[i][row][3] = lightBones[cut[i]][row][3];
 		}
 	}
+}
+
+int JhlBody_HandsModel()
+{
+	return g_HandsIndex;
 }
 
 void JhlBody_Reset()
