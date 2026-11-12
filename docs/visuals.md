@@ -194,3 +194,14 @@ For the display (the stretch to the desktop, anti-aliasing), see the [front page
 * **A strip of water surface at the mouth of c3a2a/c3a2b's coolant tunnels.** The water brush's top (z -408) is just
   above the tunnel's ceiling (-416), so where the mouth's frame rises above it there's a real air gap, and its surface
   is drawn. The map's geometry, drawn correctly.
+
+## Engine crash fixed
+
+* **"AllocBlock: full" on a map change late in a long session** (`jhl_enginefixes.cpp`, Windows). The engine keeps
+  every model loaded in a session in a table of 1024; full, it reuses an unused slot (an old map's brush models first)
+  and copies in only the new name, so a sprite loaded there keeps the old map's surface count. Building lightmaps, the
+  engine takes every model in the map's list with a surface count, walks the old map's freed surfaces, and overruns
+  its 64 lightmap blocks with their garbage sizes. johnhalflife loads far more models than vanilla, so a session
+  reaches 1024 sooner (seen at c2a3a; the map itself needs 10 blocks). Patched in memory as the client starts: those
+  two engine loops take models of brush type instead, the same models as before minus the stale ones; only where the
+  engine's code is byte for byte as expected (the developer console says so either way). Not yet on Linux.

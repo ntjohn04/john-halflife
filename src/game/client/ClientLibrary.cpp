@@ -29,6 +29,7 @@
 #include "jhl_softwarewater.h"
 #include "jhl_skyboxes.h"
 #include "jhl_egon.h"
+#include "jhl_enginefixes.h"
 #include "jhl_music.h"
 #include "jhl_hitch.h"
 #include "fx_test.h"
@@ -71,6 +72,7 @@ bool ClientLibrary::Initialize()
 	TempEntity_Initialize();
 	ClientGibs_Initialize();
 	WeaponEffects_Initialize();
+	JhlEngineFixes_Initialize();
 	JhlMusic_Initialize();
 	JhlSettings_Initialize();
 	JhlBody_Initialize();
