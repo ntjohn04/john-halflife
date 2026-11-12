@@ -375,8 +375,16 @@ void JhlBody_CreateEntities()
 		g_AtEaseUndecided = false;
 	}
 
-	if (activity != ActIdle)
+	// Ended by moving itself: going along, crouching, jumping, a ladder or water (not the moment a map starts counted as
+	// moving, StillTime, nor settling onto the floor), standing till then.
+	if (speed > StillSpeed || move.Crouched || (inAir && move.Velocity.z > 0) || inWater || move.MoveType == MOVETYPE_FLY)
 		g_AtEase = false;
+
+	if (g_AtEase)
+	{
+		activity = ActIdle;
+		g_Crouching = false;
+	}
 
 	// Posed as the player model, its legs, the lab coat's arms over them: the player models, and the recruit but at ease.
 	const bool playerPoses = !monster || (dressed && !g_AtEase);
