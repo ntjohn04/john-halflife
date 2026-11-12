@@ -61,10 +61,13 @@ constexpr int RenderTransAdd = 5;
 // full bright), so a pitch-black corner's water stood out of the dark. Here it's as bright as ever wherever the light
 // under it (the engine's LightAtPoint: the lightmap below, the floor under the water, its styles as they are) is at
 // least LitLight, darkening smoothly below that to DarkestWater with none. Sampled on a grid (LightGrid units, the
-// faces cut up for it), again every LightRefreshTime (switched lights, a little behind), at once where a water entity
+// faces cut up for it), each point the average of the light around it LightSpread apart (smoother), leaving out any in
+// a wall (water brushes run into the walls; light taken in one is black), a point with all of them in one taking its
+// face's nearest point's; again every LightRefreshTime (switched lights, a little behind), at once where a water entity
 // has moved. Light from the flashlight and flashes isn't taken: dark water stays dark under them.
-constexpr float LitLight = 48;
-constexpr float DarkestWater = 0.15f;
+constexpr float LitLight = 32;
+constexpr float DarkestWater = 0.25f;
+constexpr float LightSpread = 24;
 constexpr float LightGrid = 32;
 constexpr float LightInset = 4; // A face's edge sampled this far in (its corner touches walls).
 constexpr float LightRefreshTime = 1;
@@ -581,12 +584,36 @@ Vector Turn(const Vector& point, int axis, float degrees)
 // the engine's R_DrawBrushModel (hw.dll) has them, only its level ones (any, gl_watersides 1) higher than a unit above
 // its bottom (the entity's origin and its model's lowest point; turned, its origin less its radius), from either side:
 // its top, seen from above and from under it, not its sides and floor.
-// The water's brightness for the light under it (jhl_visuals_waterlight): 1 from LitLight up, eased down below it.
-float Brightness(const Vector& point)
+// The light under a point (the brightest of its colours), averaged with the light around it (LightSpread), any in a
+// wall left out; -1 if all are.
+float LightUnder(const Vector& point)
 {
-	Vector light;
-	gEngfuncs.pTriAPI->LightAtPoint(const_cast<float*>(&point.x), light);
-	const float x = std::clamp(std::max({light.x, light.y, light.z}) / LitLight, 0.0f, 1.0f);
+	static constexpr float Taps[][2] = {{0, 0}, {LightSpread, 0}, {-LightSpread, 0}, {0, LightSpread}, {0, -LightSpread}};
+	float total = 0;
+	int count = 0;
+
+	for (const auto& tap : Taps)
+	{
+		Vector at = point + Vector(tap[0], tap[1], 0);
+
+		if (gEngfuncs.PM_PointContents(at, nullptr) == CONTENTS_SOLID)
+		{
+			continue;
+		}
+
+		Vector light;
+		gEngfuncs.pTriAPI->LightAtPoint(at, light);
+		total += std::max({light.x, light.y, light.z});
+		++count;
+	}
+
+	return count > 0 ? total / count : -1;
+}
+
+// The water's brightness for the light under it (jhl_visuals_waterlight): 1 from LitLight up, eased down below it.
+float Brightness(float light)
+{
+	const float x = std::clamp(light / LitLight, 0.0f, 1.0f);
 	return DarkestWater + (1 - DarkestWater) * x * x * (3 - 2 * x);
 }
 
@@ -611,7 +638,41 @@ void Relight(LitFace& lit, const Vector& origin, const Vector& angles)
 			point = Turn(Turn(Turn(point, 0, angles[2]), 1, -angles[0]), 2, angles[1]);
 		}
 
-		lit.Light[i] = Brightness(point + origin + Vector(0, 0, 1));
+		lit.Light[i] = LightUnder(point + origin + Vector(0, 0, 1));
+	}
+
+	// A point all in a wall: its face's nearest point's light (none: as bright as ever).
+	std::vector<float> light = lit.Light;
+
+	for (std::size_t i = 0; i < light.size(); ++i)
+	{
+		if (lit.Light[i] >= 0)
+		{
+			continue;
+		}
+
+		float nearest = -1;
+
+		for (std::size_t j = 0; j < light.size(); ++j)
+		{
+			const float distance = (lit.SamplePoints[j] - lit.SamplePoints[i]).Length();
+
+			if (lit.Light[j] >= 0 && (nearest < 0 || distance < nearest))
+			{
+				nearest = distance;
+				light[i] = lit.Light[j];
+			}
+		}
+
+		if (nearest < 0)
+		{
+			light[i] = LitLight;
+		}
+	}
+
+	for (std::size_t i = 0; i < light.size(); ++i)
+	{
+		lit.Light[i] = Brightness(light[i]);
 	}
 
 	// The first time, its next taken at some point in the next LightRefreshTime, so faces don't all take theirs at once.
@@ -785,11 +846,9 @@ void JhlSoftwareWater_Initialize()
 	// The light under the player's eyes and the water's brightness for it there, for tuning the curve (LitLight).
 	gEngfuncs.pfnAddCommand("jhl_debug_waterlight", []
 		{
-			Vector light;
-			Vector point = v_origin;
-			gEngfuncs.pTriAPI->LightAtPoint(point, light);
-			gEngfuncs.Con_Printf("jhl_debug_waterlight: light %.0f %.0f %.0f under the view, water %.2f (full from %.0f, %.2f at the darkest)\n",
-				light.x, light.y, light.z, Brightness(point), LitLight, DarkestWater);
+			const float light = LightUnder(v_origin);
+			gEngfuncs.Con_Printf("jhl_debug_waterlight: light %.0f under the view (averaged around it; -1: all in walls), water %.2f (full from %.0f, %.2f at the darkest)\n",
+				light, Brightness(light < 0 ? LitLight : light), LitLight, DarkestWater);
 		});
 }
 

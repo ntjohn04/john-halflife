@@ -203,8 +203,10 @@ so gamma and filtering match). Water is what the engine treats as water: names s
 
 The map compiler gives water no lightmap, so both renderers draw it full bright: in a pitch-black corner (c1a1b's
 tunnel) the water stood out of the dark. With the software water on, the water drawn here takes the light under it
-(the engine's `LightAtPoint`: the lightmap of the floor below, its light styles as they are) on a 32-unit grid. From a
-light of 48 up it's exactly as before; below that it darkens smoothly, to 0.15 with no light at all. The light is
+(the engine's `LightAtPoint`: the lightmap of the floor below, its light styles as they are) on a 32-unit grid, each
+point averaged with the light 24 units around it. Water brushes run into the walls, and light taken inside a wall is
+black, so those samples are left out (a point all in a wall takes its face's nearest point's). From a light of 32 up
+(c1a1b's lit tunnel is about 94) it's exactly as before; below that it darkens smoothly, to 0.25 with no light. The light is
 taken again every second (lights switched on or off catch up within one) and at once where a water entity moves. The
 flashlight and flashes aren't taken: dark water stays dark under them. `jhl_debug_waterlight` prints the light under
 the view and the water's brightness for it, for tuning. With the software water off (or `-soft`) water is the engine's,
