@@ -3,7 +3,8 @@
 ## First-person body (`jhl_visuals_firstpersonbody`, default 1)
 
 Looking down, you see your own body: Gordon in the HEV suit, Barney or Adrian, whichever player model the map's game
-gives you (Unified's model replacement), and Gordon in his lab coat before he has the suit. It's purely drawn: your
+gives you (Unified's model replacement), Gordon in his lab coat before he has the suit, and Barney in his shirt and tie
+before his vest (Blue Shift's suit). It's purely drawn: your
 movement picks its pose and nothing goes back. It stands 14 units behind your eyes (18 crouched), so it's only seen
 looking well down and never gets in the way.
 
@@ -57,6 +58,11 @@ The lab coat Gordon is Blue Shift's (`models/gordon_scientist.mdl`). The server 
 body on, last and only while the map has room, like the effect sprites (W_Precache). Where they aren't, Gordon has no
 body before the suit, the other models' weaponless arms keep their own poses, and in water each its own treading. With
 the body off, nothing is added or precached.
+
+Barney before his vest is Blue Shift's guard with no vest or helmet (Unified's `models/dead_barney.mdl`: despite the
+name a full model with idles, a walk and a jog), drawn the way the lab coat is: his own standing, walking and running,
+the player model's jumping, crouching and treading water. The server precaches him only in maps where the player is
+Barney, under the same room rule; where he isn't, Barney has no body before the vest.
 
 **Left as it is:** a little of the HEV suit's and Barney's neck skin looking straight down while running (it would
 take edited copies of Valve's textures), and for a frame or two at the end of a jump, a little of Barney's back.

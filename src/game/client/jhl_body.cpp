@@ -97,6 +97,10 @@ constexpr const char* BlueShiftPlayer = "models/bshift/player.mdl"; // Barney.
 constexpr const char* OpposingForcePlayer = "models/op4/player.mdl"; // Adrian.
 constexpr const char* LabCoatGordon = "models/gordon_scientist.mdl";
 
+// Calhoun before his vest (Blue Shift's suit): Blue Shift's guard in his shirt and tie, no vest or helmet (Unified's
+// dead_barney.mdl, despite its name with a walk, a jog and idles), likewise a monster's model.
+constexpr const char* VestlessBarney = "models/dead_barney.mdl";
+
 // Treading water, the pose the hazard course's hologram's as she treads water (holo.mdl's treadwater, both arms
 // sculling; the player models' hold a weapon out, and with one out their back leaned into view), where it's precached
 // (W_Precache).
@@ -202,11 +206,15 @@ model_t* PickModel(cl_entity_t* player, int& index, bool& monster)
 	if (!model || model->type != mod_studio)
 		return nullptr;
 
-	// The player's model as the map's game has it (Unified's model replacement: Barney, Adrian), Gordon's lab coat
-	// before the suit; none if the lab coat isn't precached (the map had no room, or no Blue Shift).
-	if (0 == std::strcmp(model->name, HalfLifePlayer) && !gHUD.HasSuit())
+	// The player's model as the map's game has it (Unified's model replacement: Barney, Adrian), before the suit Gordon's
+	// lab coat and Barney's shirt; none if that isn't precached (the map had no room, or no Blue Shift for the lab coat).
+	const char* const beforeSuit = 0 == std::strcmp(model->name, HalfLifePlayer) ? LabCoatGordon
+								   : 0 == std::strcmp(model->name, BlueShiftPlayer) ? VestlessBarney
+																					 : nullptr;
+
+	if (beforeSuit && !gHUD.HasSuit())
 	{
-		index = gEngfuncs.pEventAPI->EV_FindModelIndex(LabCoatGordon);
+		index = gEngfuncs.pEventAPI->EV_FindModelIndex(beforeSuit);
 		model = index > 0 ? gEngfuncs.hudGetModelByIndex(index) : nullptr;
 		monster = true;
 
@@ -377,10 +385,10 @@ void JhlBody_CreateEntities()
 	int armsIndex = 0;
 	int armsSequence = -1;
 
-	// The lab coat himself, running, his own (for its arms moved, below).
+	// A monster's model (the lab coat, Barney's shirt), running, its own (for its arms moved, below).
 	if (!g_Crouching && (monster ? activity == ActRun : (activity == ActIdle || activity == ActWalk || activity == ActRun)))
 	{
-		armsIndex = gEngfuncs.pEventAPI->EV_FindModelIndex(LabCoatGordon);
+		armsIndex = monster ? modelIndex : gEngfuncs.pEventAPI->EV_FindModelIndex(LabCoatGordon);
 		model_t* labCoat = armsIndex > 0 ? gEngfuncs.hudGetModelByIndex(armsIndex) : nullptr;
 		armsHeader = labCoat && labCoat->type == mod_studio ? static_cast<const studiohdr_t*>(IEngineStudio.Mod_Extradata(labCoat)) : nullptr;
 
