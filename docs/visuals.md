@@ -208,3 +208,9 @@ byte as expected; the developer console says which were applied.
   its 64 lightmap blocks with their garbage sizes. johnhalflife loads far more models than vanilla, so a session
   reaches 1024 sooner (seen at c2a3a; the map itself needs 10 blocks). Now those two engine loops take models of
   brush type instead, the same models as before minus the stale ones. Not yet on Linux.
+
+* **A hang on a map change late in a long session.** The same reused slots also kept the old model's claim on a block
+  of the model cache. The engine then freed the wrong block for it, and a map's loading could go round forever moving
+  the old one (seen loading of6a4b after 184 maps in one `sv_load_all_maps` sweep). Now a reused slot starts clean:
+  the old model's cache block is freed and the rest of it cleared before the new name goes in (Mod_FindName's name
+  copy goes through the client). With `-dev` the console names each reuse. Both renderers; not yet on Linux.
