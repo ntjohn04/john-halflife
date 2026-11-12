@@ -1462,6 +1462,60 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	for (int i = 0; i < std::min(donorHeader->numbones, MAXSTUDIOBONES); ++i)
 		donorNames[i] = JhlBoneName(donorBones[i].name, donorNameBuffers[i]);
 
+	// With vuser3 (a model's index, its sequence plus one, its frame), its own pose that model's instead, bone for bone by
+	// name: its turns, and its hips raised and lowered as that model's from its standing, to its size (Opposing Force's
+	// recruit walking as Adrian does, the arms over it the lab coat's as on Adrian).
+	if (const int baseIndex = static_cast<int>(m_pCurrentEntity->curstate.vuser3[0]); baseIndex > 0)
+	{
+		model_t* base = IEngineStudio.GetModelByIndex(baseIndex);
+		auto baseHeader = base ? static_cast<studiohdr_t*>(IEngineStudio.Mod_Extradata(base)) : nullptr;
+		const int baseSequence = static_cast<int>(m_pCurrentEntity->curstate.vuser3[1]) - 1;
+
+		if (baseHeader && baseSequence >= 0 && baseSequence < baseHeader->numseq)
+		{
+			static float basePos[MAXSTUDIOBONES][3];
+			static vec4_t baseQ[MAXSTUDIOBONES];
+			static float baseStandingPos[MAXSTUDIOBONES][3];
+			static vec4_t baseStandingQ[MAXSTUDIOBONES];
+			static char baseNameBuffer[32];
+
+			auto baseSequences = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(baseHeader) + baseHeader->seqindex);
+			mstudioseqdesc_t* basePose = &baseSequences[baseSequence];
+			mstudioseqdesc_t* baseStanding = &baseSequences[0];
+
+			for (int i = 0; i < baseHeader->numseq; ++i)
+			{
+				if (0 == std::strcmp(baseSequences[i].label, "deep_idle"))
+					baseStanding = &baseSequences[i];
+			}
+
+			m_pStudioHeader = baseHeader;
+			m_pRenderModel = base;
+			StudioCalcRotations(basePos, baseQ, basePose, StudioGetAnim(base, basePose), m_pCurrentEntity->curstate.vuser3[2]);
+			StudioCalcRotations(baseStandingPos, baseStandingQ, baseStanding, StudioGetAnim(base, baseStanding), 0);
+			m_pStudioHeader = ownHeader;
+			m_pRenderModel = ownModel;
+
+			auto baseBones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(baseHeader) + baseHeader->boneindex);
+
+			for (int i = 0; i < std::min(m_pStudioHeader->numbones, MAXSTUDIOBONES); ++i)
+			{
+				for (int j = 0; j < std::min(baseHeader->numbones, MAXSTUDIOBONES); ++j)
+				{
+					if (0 != std::strcmp(ownNames[i], JhlBoneName(baseBones[j].name, baseNameBuffer)))
+						continue;
+
+					std::memcpy(q[i], baseQ[j], sizeof(q[i]));
+
+					if (bones[i].parent == -1 && baseBones[j].value[2] > 0)
+						pos[i][2] += (basePos[j][2] - baseStandingPos[j][2]) * bones[i].value[2] / baseBones[j].value[2];
+
+					break;
+				}
+			}
+		}
+	}
+
 	const auto donorBone = [&](const char* ownName)
 	{
 		const auto find = [&](const char* name)

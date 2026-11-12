@@ -68,7 +68,10 @@ server precaches him only in maps where the player is Barney, under the same roo
 his vest.
 
 Adrian in boot camp before he puts on his vest (its suit, picked up in ofboot2) wears the recruits' training clothes
-(Opposing Force's `models/recruit.mdl`), drawn the same way. Only in boot camp's maps: the campaign's Osprey ride and
+(Opposing Force's `models/recruit.mdl`). He starts ofboot0 standing at ease as the other recruits do (the recruit's own
+standing, hands behind his back) until he first moves; from then on he stands, walks and runs exactly as Adrian does,
+Adrian's legs and the lab coat's arms over them (the recruit's own walk has its hips 17 units ahead of its standing,
+and its run twists them), and jumps, crouches and treads water as the others. Only in boot camp's maps: the campaign's Osprey ride and
 its crash, before the vest is found again, have no suit either, but there he's in his fatigues. The recruit's skeleton
 uses 3ds Max Biped's newer bone names (Thigh, Calf, Clavicle, UpperArm, Forearm); they're read as the player models'
 older ones (Leg, Leg1, Arm, Arm1, Arm2), so the borrowed poses and the hidden arms find the same bones.

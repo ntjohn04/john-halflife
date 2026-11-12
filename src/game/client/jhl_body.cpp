@@ -109,6 +109,10 @@ constexpr const char* ArmorVest = "item_armorvest";
 constexpr const char* Recruit = "models/recruit.mdl";
 constexpr const char* BootCampMaps = "maps/ofboot";
 
+// Boot camp's first map: he starts it standing at ease as the other recruits do (the recruit's own standing, hands
+// behind his back), until he first moves.
+constexpr const char* AtEaseMap = "maps/ofboot0.bsp";
+
 // Treading water, the pose the hazard course's hologram's as she treads water (holo.mdl's treadwater, both arms
 // sculling; the player models' hold a weapon out, and with one out their back leaned into view), where it's precached
 // (W_Precache).
@@ -147,6 +151,10 @@ bool g_Crouching = false; // In a crouching pose (crouched, not in the air).
 bool g_Vest = true;
 bool g_ArmorKnown = false;
 int g_LastArmor = -1;
+
+// Standing at ease (AtEaseMap): decided on a map's first frame (g_AtEaseUndecided), ended by moving.
+bool g_AtEase = false;
+bool g_AtEaseUndecided = true;
 
 float AngleDifference(float a, float b)
 {
@@ -211,11 +219,15 @@ int PickSequence(const studiohdr_t* header, int activity)
 	return std::max(sequence, 0);
 }
 
-model_t* PickModel(cl_entity_t* player, int& index, bool& monster)
+// dressed: a monster's model posed as the player model (the recruit: its own walk and run unusable, its walk's hips 17
+// units ahead of its standing ones), standing, walking and running the player model's legs and the lab coat's arms over
+// them, as Adrian himself is (CStudioModelRenderer::JhlSetupBorrowedBones, vuser3).
+model_t* PickModel(cl_entity_t* player, int& index, bool& monster, bool& dressed)
 {
 	index = player->curstate.modelindex;
 	model_t* model = gEngfuncs.hudGetModelByIndex(index);
 	monster = false;
+	dressed = false;
 
 	if (!model || model->type != mod_studio)
 		return nullptr;
@@ -242,6 +254,7 @@ model_t* PickModel(cl_entity_t* player, int& index, bool& monster)
 		index = gEngfuncs.pEventAPI->EV_FindModelIndex(other);
 		model = index > 0 ? gEngfuncs.hudGetModelByIndex(index) : nullptr;
 		monster = true;
+		dressed = other == Recruit;
 
 		if (!model || model->type != mod_studio)
 			return nullptr;
@@ -313,7 +326,8 @@ void JhlBody_CreateEntities()
 
 	int modelIndex = 0;
 	bool monster = false;
-	model_t* model = PickModel(player, modelIndex, monster);
+	bool dressed = false;
+	model_t* model = PickModel(player, modelIndex, monster, dressed);
 
 	if (!model)
 		return;
@@ -350,6 +364,20 @@ void JhlBody_CreateEntities()
 
 	// A crouching jump jumps as a standing one: its pose, arms and back, hung from the eyes (StandingEyeHeight).
 	g_Crouching = move.Crouched && activity != ActHop;
+
+	// Boot camp's first map started standing at ease, until it first moves; the recruit's own standing then.
+	if (g_AtEaseUndecided)
+	{
+		const char* level = gEngfuncs.pfnGetLevelName();
+		g_AtEase = level && 0 == stricmp(level, AtEaseMap);
+		g_AtEaseUndecided = false;
+	}
+
+	if (activity != ActIdle)
+		g_AtEase = false;
+
+	// Posed as the player model, its legs, the lab coat's arms over them: the player models, and the recruit but at ease.
+	const bool playerPoses = !monster || (dressed && !g_AtEase);
 
 	// No view model (no weapon, holstered): its arms are drawn, nothing else being the player's (below).
 	const cl_entity_t* viewModel = gEngfuncs.GetViewModel();
@@ -388,7 +416,7 @@ void JhlBody_CreateEntities()
 		poseIndex = waterArmsIndex;
 		sequence = waterArmsSequence;
 	}
-	else if (monster && (activity == ActHop || activity == ActCrouch || activity == ActCrouchIdle || activity == ActHover))
+	else if (monster && (playerPoses || activity == ActHop || activity == ActCrouch || activity == ActCrouchIdle || activity == ActHover))
 	{
 		const auto* playerModel = static_cast<const studiohdr_t*>(IEngineStudio.Mod_Extradata(gEngfuncs.hudGetModelByIndex(player->curstate.modelindex)));
 
@@ -411,9 +439,9 @@ void JhlBody_CreateEntities()
 	int armsSequence = -1;
 
 	// A monster's model (the lab coat, Barney's shirt), running, its own (for its arms moved, below).
-	if (!g_Crouching && (monster ? activity == ActRun : (activity == ActIdle || activity == ActWalk || activity == ActRun)))
+	if (!g_Crouching && (playerPoses ? (activity == ActIdle || activity == ActWalk || activity == ActRun) : activity == ActRun))
 	{
-		armsIndex = monster ? modelIndex : gEngfuncs.pEventAPI->EV_FindModelIndex(LabCoatGordon);
+		armsIndex = playerPoses ? gEngfuncs.pEventAPI->EV_FindModelIndex(LabCoatGordon) : modelIndex;
 		model_t* labCoat = armsIndex > 0 ? gEngfuncs.hudGetModelByIndex(armsIndex) : nullptr;
 		armsHeader = labCoat && labCoat->type == mod_studio ? static_cast<const studiohdr_t*>(IEngineStudio.Mod_Extradata(labCoat)) : nullptr;
 
@@ -473,7 +501,11 @@ void JhlBody_CreateEntities()
 	// Jumping, the player model's pose without its root's motion (playerclass 2), its own drawn as the lab coat's is: the
 	// jump has its arc in it, the whole body rising 20 units, sinking 37 below standing as it lands, and leaning 29 degrees
 	// forward, its neck and shoulders brought under the eyes and far below them (a fall's wide view of its back).
-	if (poseHeader != header || activity == ActHop)
+	// Dressed (the recruit) standing, walking or running, the player model's pose its own (vuser3), the lab coat's arms
+	// over it (below).
+	const bool dressedBase = dressed && poseHeader != header && armsHeader && activity != ActHop;
+
+	if ((poseHeader != header && !dressedBase) || activity == ActHop)
 	{
 		g_Body.curstate.sequence = PickSequence(header, ActIdle); // For any bone the player model hasn't.
 		g_Body.curstate.iuser1 = poseIndex;
@@ -502,7 +534,13 @@ void JhlBody_CreateEntities()
 
 		const auto& arms = Sequences(armsHeader)[armsSequence];
 		const float armsFrames = static_cast<float>(std::max(arms.numframes - 1, 1));
-		const float armsCycle = activity == ActIdle || monster ? g_Cycle : g_Cycle + 0.5f;
+		const float armsCycle = activity == ActIdle || !playerPoses ? g_Cycle : g_Cycle + 0.5f;
+
+		if (dressedBase)
+		{
+			g_Body.curstate.sequence = PickSequence(header, ActIdle); // For any bone the player model hasn't.
+			g_Body.curstate.vuser3 = Vector{static_cast<float>(poseIndex), static_cast<float>(sequence + 1), g_Cycle * frames};
+		}
 
 		g_Body.curstate.iuser1 = armsIndex;
 		g_Body.curstate.iuser2 = armsSequence + 1;
@@ -637,6 +675,7 @@ void JhlBody_Reset()
 	g_AirTime = 0;
 	g_StillTime = 0;
 	g_ArmorKnown = false;
+	g_AtEaseUndecided = true;
 }
 
 void JhlBody_Armor(int armor)
