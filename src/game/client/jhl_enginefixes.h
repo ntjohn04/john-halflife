@@ -15,8 +15,9 @@
 
 #pragma once
 
-// johnhalflife: fixes for bugs in the engine itself (hw.dll), patched in memory as the client starts; each only where
-// the engine's code is exactly as expected, otherwise left alone (logged).
+// johnhalflife: fixes for bugs in the engine itself (hw.dll/hw.so, and sw for the last), patched in memory as the client
+// starts; each only where the engine's code is exactly as expected, otherwise left alone (logged). Windows finds the
+// places by their code; Linux by the engine's symbol table (kept in hw.so), then their code.
 //
 // A sprite drawn bright white and opaque after a brush entity in rendermode 1 (Color): the brush leaves the second
 // texture unit on and selected, and R_DrawSpriteModel sets its texture mode before turning it off, so on the wrong
@@ -29,5 +30,10 @@
 // (GL_BuildLightmaps), taking every model in the map's list with a surface count, walks the freed surfaces: garbage
 // sizes, the 64 lightmap blocks overrun. Fixed: it takes those of brush type instead (type 0; sprites 1, studio
 // models 3), real brush models as before.
+//
+// A hang on a map change late in a long session: the same reused slot kept the old model's claim on a block of the
+// model cache, so the engine later freed the wrong block and Hunk_AllocName could move the old one forever. Fixed:
+// Mod_FindName's copy of the name goes through ours, which frees the old block (if still the slot's) and clears the
+// slot first.
 
 void JhlEngineFixes_Initialize();

@@ -190,8 +190,10 @@ For the display (the stretch to the desktop, anti-aliasing), see the [front page
 
 ## Engine bugs fixed
 
-Patched in memory as the client starts (`jhl_enginefixes.cpp`, Windows), each only where the engine's code is byte for
-byte as expected; the developer console says which were applied.
+Patched in memory as the client starts (`jhl_enginefixes.cpp`), on Windows and Linux, each only where the engine's code
+is byte for byte as expected; the developer console says which were applied. Windows finds the places by their code;
+Linux finds the engine's functions by name in hw.so's symbol table, then the places in them (checked against the real
+hw.so and sw.so, not yet in a game on Linux).
 
 * **A bright white, opaque sprite next to a colour-mode brush.** A brush entity drawn in rendermode 1 (Color) leaves the
   engine's second texture unit on and active. The next sprite drawn then set its texture mode on that unit just before
@@ -199,7 +201,7 @@ byte as expected; the developer console says which were applied.
   R_DrawBrushModel and R_DrawSpriteModel). Vanilla has the same bug but few sprites to show it; johnhalflife's impact
   puffs and smoke showed it beside c3a1b's green goo, and could in the 9 other maps with such brushes (c1a2, c1a2b,
   c1a2c, c1a4b, c1a4d, c3a2b, of2a4, of2a6, of3a6). Now the sprite's drawing starts by turning that unit off (its first
-  call goes through the client, which calls the engine's own GL_DisableMultitexture). Not yet on Linux.
+  call goes through the client, which calls the engine's own GL_DisableMultitexture).
 
 * **"AllocBlock: full" on a map change late in a long session.** The engine keeps
   every model loaded in a session in a table of 1024; full, it reuses an unused slot (an old map's brush models first)
@@ -207,10 +209,10 @@ byte as expected; the developer console says which were applied.
   engine takes every model in the map's list with a surface count, walks the old map's freed surfaces, and overruns
   its 64 lightmap blocks with their garbage sizes. johnhalflife loads far more models than vanilla, so a session
   reaches 1024 sooner (seen at c2a3a; the map itself needs 10 blocks). Now those two engine loops take models of
-  brush type instead, the same models as before minus the stale ones. Not yet on Linux.
+  brush type instead, the same models as before minus the stale ones.
 
 * **A hang on a map change late in a long session.** The same reused slots also kept the old model's claim on a block
   of the model cache. The engine then freed the wrong block for it, and a map's loading could go round forever moving
   the old one (seen loading of6a4b after 184 maps in one `sv_load_all_maps` sweep). Now a reused slot starts clean:
   the old model's cache block is freed and the rest of it cleared before the new name goes in (Mod_FindName's name
-  copy goes through the client). With `-dev` the console names each reuse. Both renderers; not yet on Linux.
+  copy goes through the client). With `-dev` the console names each reuse. Both renderers.
