@@ -1450,13 +1450,25 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	auto bones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(m_pStudioHeader) + m_pStudioHeader->boneindex);
 	auto donorBones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(donorHeader) + donorHeader->boneindex);
 
+	// Their names in one biped naming (JhlBoneName: Opposing Force's recruit's as the player models').
+	static char ownNameBuffers[MAXSTUDIOBONES][32];
+	static char donorNameBuffers[MAXSTUDIOBONES][32];
+	static const char* ownNames[MAXSTUDIOBONES];
+	static const char* donorNames[MAXSTUDIOBONES];
+
+	for (int i = 0; i < std::min(m_pStudioHeader->numbones, MAXSTUDIOBONES); ++i)
+		ownNames[i] = JhlBoneName(bones[i].name, ownNameBuffers[i]);
+
+	for (int i = 0; i < std::min(donorHeader->numbones, MAXSTUDIOBONES); ++i)
+		donorNames[i] = JhlBoneName(donorBones[i].name, donorNameBuffers[i]);
+
 	const auto donorBone = [&](const char* ownName)
 	{
 		const auto find = [&](const char* name)
 		{
 			for (int j = 0; j < donorHeader->numbones; ++j)
 			{
-				if (0 == std::strcmp(name, donorBones[j].name))
+				if (0 == std::strcmp(name, donorNames[j]))
 					return j;
 			}
 
@@ -1523,15 +1535,15 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 
 		for (int i = 0; i < m_pStudioHeader->numbones; ++i)
 		{
-			const int j = donorBone(bones[i].name);
+			const int j = donorBone(ownNames[i]);
 
-			arm[i] = endsWith(bones[i].name, " L Arm") || endsWith(bones[i].name, " R Arm") || (bones[i].parent >= 0 && arm[bones[i].parent]);
+			arm[i] = endsWith(ownNames[i], " L Arm") || endsWith(ownNames[i], " R Arm") || (bones[i].parent >= 0 && arm[bones[i].parent]);
 
 			if (j < 0)
 				continue;
 
 			const bool root = bones[i].parent == -1;
-			const bool back = std::strstr(bones[i].name, " Spine") || std::strstr(bones[i].name, " Neck");
+			const bool back = std::strstr(ownNames[i], " Spine") || std::strstr(ownNames[i], " Neck");
 			std::memcpy(q[i], rootStill && (root || back) ? standingQ[j] : armsHeld && arm[i] ? armsQ[j] : donorQ[j], sizeof(q[i]));
 
 			if (root && donorBones[j].value[2] > 0)
@@ -1570,7 +1582,7 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 			for (int i = 0; i < m_pStudioHeader->numbones; ++i)
 			{
 				const int parent = bones[i].parent >= 0 && bones[i].parent < i ? bones[i].parent : -1;
-				const int j = endsWith(bones[i].name, " L Arm") || endsWith(bones[i].name, " R Arm") ? donorBone(bones[i].name) : -1;
+				const int j = endsWith(ownNames[i], " L Arm") || endsWith(ownNames[i], " R Arm") ? donorBone(ownNames[i]) : -1;
 
 				if (j >= 0 && parent >= 0)
 				{
@@ -1616,7 +1628,7 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 			else
 				std::memcpy(donorWorld[j], donorQ[j], sizeof(donorWorld[j]));
 
-			if (endsWith(donorBones[j].name, "Pelvis"))
+			if (endsWith(donorNames[j], "Pelvis"))
 				donorPelvis = j;
 		}
 
@@ -1625,7 +1637,7 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 		for (int i = 0; i < m_pStudioHeader->numbones; ++i)
 		{
 			const int parent = bones[i].parent >= 0 && bones[i].parent < i ? bones[i].parent : -1;
-			const char* name = bones[i].name;
+			const char* name = ownNames[i];
 			const bool upper = std::strstr(name, "Spine") || std::strstr(name, "Neck") || std::strstr(name, " Arm") || std::strstr(name, " Hand");
 			const int j = upper ? donorBone(name) : -1;
 

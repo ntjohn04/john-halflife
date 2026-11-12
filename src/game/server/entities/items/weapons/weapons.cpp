@@ -467,12 +467,15 @@ void W_Precache()
 	constexpr const char* WaterArms = "models/holo.mdl";
 	constexpr const char* VestlessBarney = "models/dead_barney.mdl";
 	const bool barney = 0 == stricmp(UTIL_CheckForGlobalModelReplacement("models/player.mdl"), "models/bshift/player.mdl");
+	// Adrian in boot camp before his vest, in the recruits' training clothes: boot camp's maps only.
+	constexpr const char* Recruit = "models/recruit.mdl";
+	const bool bootCamp = 0 == strnicmp(STRING(gpGlobals->mapname), "ofboot", 6);
 
 	if (0 != CVAR_GET_FLOAT("jhl_visuals_firstpersonbody"))
 	{
-		for (const char* model : {LabCoatGordon, WaterArms, VestlessBarney})
+		for (const char* model : {LabCoatGordon, WaterArms, VestlessBarney, Recruit})
 		{
-			if (model == VestlessBarney && !barney)
+			if ((model == VestlessBarney && !barney) || (model == Recruit && !bootCamp))
 				continue;
 
 			if (g_ModelPrecache->GetCount() + RoomForTheMapsOwnModels < EngineModels && g_pFileSystem->FileExists(model))

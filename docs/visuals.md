@@ -67,6 +67,12 @@ charger doesn't put it on. A level change keeps it as it was; a loaded save show
 server precaches him only in maps where the player is Barney, under the same room rule; where he isn't, Barney keeps
 his vest.
 
+Adrian in boot camp before he puts on his vest (its suit, picked up in ofboot2) wears the recruits' training clothes
+(Opposing Force's `models/recruit.mdl`), drawn the same way. Only in boot camp's maps: the campaign's Osprey ride and
+its crash, before the vest is found again, have no suit either, but there he's in his fatigues. The recruit's skeleton
+uses 3ds Max Biped's newer bone names (Thigh, Calf, Clavicle, UpperArm, Forearm); they're read as the player models'
+older ones (Leg, Leg1, Arm, Arm1, Arm2), so the borrowed poses and the hidden arms find the same bones.
+
 **Left as it is:** a little of the HEV suit's and Barney's neck skin looking straight down while running (it would
 take edited copies of Valve's textures), and for a frame or two at the end of a jump, a little of Barney's back.
 

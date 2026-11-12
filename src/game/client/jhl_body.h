@@ -15,6 +15,9 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstring>
+
 // johnhalflife's first-person body (jhl_visuals_firstpersonbody): the player's own model seen looking down, purely
 // drawn: the player's movement (as just predicted) picks its pose, nothing goes back. Its own entity, added each frame;
 // with the setting off it's never added, and nothing else changes.
@@ -30,6 +33,33 @@ struct studiohdr_t;
  *	motion), or with playerclass 1 only the upper body.
  */
 constexpr int JhlBodyMarker = 0x4A4842; // "JHB"
+
+/**
+ *	@brief A biped bone's name in the older of 3ds Max Biped's two namings, the player models': the newer's Thigh, Calf,
+ *	Clavicle, UpperArm and Forearm (Opposing Force's recruit) are their Leg, Leg1, Arm, Arm1 and Arm2. Others as they are.
+ */
+inline const char* JhlBoneName(const char* name, char (&out)[32])
+{
+	static constexpr const char* Names[][2] = {{"Thigh", "Leg"}, {"Calf", "Leg1"}, {"Clavicle", "Arm"}, {"UpperArm", "Arm1"}, {"Forearm", "Arm2"}};
+	const char* last = std::strrchr(name, ' ');
+
+	if (!last)
+		return name;
+
+	for (const auto& names : Names)
+	{
+		const std::size_t prefix = static_cast<std::size_t>(last + 1 - name);
+
+		if (0 == std::strcmp(last + 1, names[0]) && prefix + std::strlen(names[1]) < sizeof(out))
+		{
+			std::memcpy(out, name, prefix);
+			std::strcpy(out + prefix, names[1]);
+			return out;
+		}
+	}
+
+	return name;
+}
 
 /**
  *	@brief Registers jhl_visuals_firstpersonbody.

@@ -103,6 +103,12 @@ constexpr const char* LabCoatGordon = "models/gordon_scientist.mdl";
 constexpr const char* VestlessBarney = "models/dead_barney.mdl";
 constexpr const char* ArmorVest = "item_armorvest";
 
+// Adrian in boot camp before his vest (its suit, ofboot2): the recruits' training clothes (Opposing Force's recruit.mdl,
+// its biped's newer names: JhlBoneName), likewise a monster's model. Only in boot camp: the campaign's Osprey (of0a0)
+// and its crash (of1a1, before the suit's found again) have no suit either, but he's in his fatigues there.
+constexpr const char* Recruit = "models/recruit.mdl";
+constexpr const char* BootCampMaps = "maps/ofboot";
+
 // Treading water, the pose the hazard course's hologram's as she treads water (holo.mdl's treadwater, both arms
 // sculling; the player models' hold a weapon out, and with one out their back leaned into view), where it's precached
 // (W_Precache).
@@ -223,6 +229,13 @@ model_t* PickModel(cl_entity_t* player, int& index, bool& monster)
 		other = LabCoatGordon;
 	else if (0 == std::strcmp(model->name, BlueShiftPlayer) && !g_Vest)
 		other = VestlessBarney;
+	else if (0 == std::strcmp(model->name, OpposingForcePlayer) && !gHUD.HasSuit())
+	{
+		const char* level = gEngfuncs.pfnGetLevelName();
+
+		if (level && 0 == strnicmp(level, BootCampMaps, std::strlen(BootCampMaps)))
+			other = Recruit;
+	}
 
 	if (other)
 	{
@@ -586,7 +599,8 @@ void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*
 	{
 		const int parent = bone[i].parent >= 0 && bone[i].parent < i ? bone[i].parent : -1;
 		const bool spine = std::strstr(bone[i].name, "Spine") != nullptr;
-		const char* name = bone[i].name;
+		char nameBuffer[32];
+		const char* name = JhlBoneName(bone[i].name, nameBuffer); // The recruit's as the player models'.
 		const std::size_t length = std::strlen(name);
 		const bool head = std::strstr(name, "Head") != nullptr;
 		const bool shown = std::strstr(name, " L ") ? g_LeftArm : std::strstr(name, " R ") ? g_RightArm : g_Arms;
