@@ -15,8 +15,13 @@
 
 #pragma once
 
-// johnhalflife: fixes for crashes in the engine itself (hw.dll), patched in memory as the client starts; each only where
+// johnhalflife: fixes for bugs in the engine itself (hw.dll), patched in memory as the client starts; each only where
 // the engine's code is exactly as expected, otherwise left alone (logged).
+//
+// A sprite drawn bright white and opaque after a brush entity in rendermode 1 (Color): the brush leaves the second
+// texture unit on and selected, and R_DrawSpriteModel sets its texture mode before turning it off, so on the wrong
+// unit. Fixed: its first call (R_GetSpriteFrame) goes through ours, which turns the unit off first (the engine's own
+// GL_DisableMultitexture, nothing if it's off).
 //
 // "AllocBlock: full" on a map change late in a long session: the engine keeps every model loaded this session in a
 // table of 1024; full, it gives a new model the slot of an unused one (an old map's brush models first), copying in only
