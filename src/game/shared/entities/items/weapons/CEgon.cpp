@@ -367,7 +367,9 @@ void CEgon::UpdateEffect(const Vector& startPoint, const Vector& endPoint, float
 
 	m_pSprite->SetOrigin(endPoint);
 	m_pSprite->pev->frame += 8 * gpGlobals->frametime;
-	if (m_pSprite->pev->frame > m_pSprite->Frames())
+	// johnhalflife: >=, its last frame Frames() - 1 (vanilla's > reached frame 11 of XSpark1's 0-10 each loop: the engine
+	// drew frame 0 instead, "Sprite: no such frame 11" with -dev).
+	if (m_pSprite->pev->frame >= m_pSprite->Frames())
 		m_pSprite->pev->frame = 0;
 
 	m_pNoise->SetStartPos(endPoint);
