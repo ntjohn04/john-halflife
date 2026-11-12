@@ -19,6 +19,7 @@
 //
 
 #include "hud.h"
+#include "jhl_body.h"
 
 int giDmgHeight, giDmgWidth;
 
@@ -129,6 +130,9 @@ void CHudHealth::MsgFunc_Battery(const char* pszName, BufferReader& reader)
 	m_iFlags |= HUD_ACTIVE;
 
 	int x = reader.ReadShort();
+
+	// johnhalflife: Barney's vest drawn while he has armor (jhl_body.cpp).
+	JhlBody_Armor(x);
 
 	if (x != m_iBat)
 	{

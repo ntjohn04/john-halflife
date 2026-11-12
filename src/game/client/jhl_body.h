@@ -62,3 +62,10 @@ void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*
  *	@brief Forgets the last map's movement (HUD_VidInit).
  */
 void JhlBody_Reset();
+
+/**
+ *	@brief The armor the HUD was just told (its Battery message), and an item just picked up (ItemPickup's class name):
+ *	whether Barney wears his vest (Blue Shift's armor), drawn in it or in his shirt.
+ */
+void JhlBody_Armor(int armor);
+void JhlBody_ItemPickedUp(const char* className);

@@ -19,6 +19,7 @@
 //
 
 #include "hud.h"
+#include "jhl_body.h"
 #include "HudSpriteConfigSystem.h"
 #include "ui/hud/HudReplacementSystem.h"
 #include "pm_shared.h"
@@ -617,6 +618,9 @@ void CHudAmmo::MsgFunc_WeapPickup(const char* pszName, BufferReader& reader)
 void CHudAmmo::MsgFunc_ItemPickup(const char* pszName, BufferReader& reader)
 {
 	const char* szName = reader.ReadString();
+
+	// johnhalflife: a vest picked up puts Barney's on (jhl_body.cpp).
+	JhlBody_ItemPickedUp(szName);
 
 	// Add the weapon to the history
 	gHR.AddToHistory(HISTSLOT_ITEM, szName);

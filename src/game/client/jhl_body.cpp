@@ -97,9 +97,11 @@ constexpr const char* BlueShiftPlayer = "models/bshift/player.mdl"; // Barney.
 constexpr const char* OpposingForcePlayer = "models/op4/player.mdl"; // Adrian.
 constexpr const char* LabCoatGordon = "models/gordon_scientist.mdl";
 
-// Calhoun before his vest (Blue Shift's suit): Blue Shift's guard in his shirt and tie, no vest or helmet (Unified's
-// dead_barney.mdl, despite its name with a walk, a jog and idles), likewise a monster's model.
+// Barney without his vest: Blue Shift's guard in his shirt and tie, no vest or helmet (Unified's dead_barney.mdl, despite
+// its name with a walk, a jog and idles), likewise a monster's model. Blue Shift starts with the HUD; its vest is its
+// armor: none left, he's in his shirt, and a vest picked up puts it on (a helmet alone or a charger doesn't).
 constexpr const char* VestlessBarney = "models/dead_barney.mdl";
+constexpr const char* ArmorVest = "item_armorvest";
 
 // Treading water, the pose the hazard course's hologram's as she treads water (holo.mdl's treadwater, both arms
 // sculling; the player models' hold a weapon out, and with one out their back leaned into view), where it's precached
@@ -133,6 +135,12 @@ bool g_Arms = false;   // Its arms drawn: no view model (no weapon, holstered), 
 bool g_LeftArm = false;	 // Its left arm drawn: both drawn, or a weapon held in the right hand only (OneHanded).
 bool g_RightArm = false; // Its right arm drawn: both drawn, or the satchel itself (held in the left).
 bool g_Crouching = false; // In a crouching pose (crouched, not in the air).
+
+// Barney's vest (JhlBody_Armor). A map loaded, the first armor told decides: the same as before it, a level change, the
+// vest as it was; otherwise (a save loaded) worn with any armor.
+bool g_Vest = true;
+bool g_ArmorKnown = false;
+int g_LastArmor = -1;
 
 float AngleDifference(float a, float b)
 {
@@ -206,15 +214,19 @@ model_t* PickModel(cl_entity_t* player, int& index, bool& monster)
 	if (!model || model->type != mod_studio)
 		return nullptr;
 
-	// The player's model as the map's game has it (Unified's model replacement: Barney, Adrian), before the suit Gordon's
-	// lab coat and Barney's shirt; none if that isn't precached (the map had no room, or no Blue Shift for the lab coat).
-	const char* const beforeSuit = 0 == std::strcmp(model->name, HalfLifePlayer) ? LabCoatGordon
-								   : 0 == std::strcmp(model->name, BlueShiftPlayer) ? VestlessBarney
-																					 : nullptr;
+	// The player's model as the map's game has it (Unified's model replacement: Barney, Adrian), Gordon's lab coat before
+	// the suit, Barney's shirt without his vest; none if that isn't precached (the map had no room, or no Blue Shift for
+	// the lab coat).
+	const char* other = nullptr;
 
-	if (beforeSuit && !gHUD.HasSuit())
+	if (0 == std::strcmp(model->name, HalfLifePlayer) && !gHUD.HasSuit())
+		other = LabCoatGordon;
+	else if (0 == std::strcmp(model->name, BlueShiftPlayer) && !g_Vest)
+		other = VestlessBarney;
+
+	if (other)
 	{
-		index = gEngfuncs.pEventAPI->EV_FindModelIndex(beforeSuit);
+		index = gEngfuncs.pEventAPI->EV_FindModelIndex(other);
 		model = index > 0 ? gEngfuncs.hudGetModelByIndex(index) : nullptr;
 		monster = true;
 
@@ -610,4 +622,22 @@ void JhlBody_Reset()
 	g_Cycle = 0;
 	g_AirTime = 0;
 	g_StillTime = 0;
+	g_ArmorKnown = false;
+}
+
+void JhlBody_Armor(int armor)
+{
+	if (armor <= 0)
+		g_Vest = false;
+	else if (!g_ArmorKnown && armor != g_LastArmor)
+		g_Vest = true;
+
+	g_ArmorKnown = true;
+	g_LastArmor = armor;
+}
+
+void JhlBody_ItemPickedUp(const char* className)
+{
+	if (0 == std::strcmp(className, ArmorVest))
+		g_Vest = true;
 }
