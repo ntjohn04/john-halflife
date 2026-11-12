@@ -66,13 +66,14 @@ constexpr int RenderTransAdd = 5;
 // under it, each where its trace hits it as the map's lightmaps have it there (the map's own light, its first style),
 // the nearer counting more (LightFalloff); with none hit, the engine's LightAtPoint (the lightmap below, averaged
 // LightSpread around, leaving out any in a wall, further out if all are: LightRings). As bright as ever from LitLight
-// up, darkening smoothly below that to DarkestWater. On a grid (LightGrid units, the faces cut up for it), by where a
+// up, darkening smoothly below that to DarkestWater; under the open sky (straight up, SkyReach), always as bright. On a grid (LightGrid units, the faces cut up for it), by where a
 // point is alone, so faces in the same place (a water entity's brushes' tops and bottoms) are lit alike, not fighting.
 // Taken once a map, no more than LightBudget points a frame (a face not yet taken drawn as bright as ever), again where
 // a water entity has moved (as slowly, its old light kept meanwhile); lights switched later aren't followed, nor the
 // flashlight and flashes.
-constexpr float LitLight = 32;
-constexpr float DarkestWater = 0.25f;
+constexpr float LitLight = 96;
+constexpr float DarkestWater = 0.2f;
+constexpr float SkyReach = 8192;
 constexpr float LightAbove = 12;
 constexpr int LightRays = 8;
 constexpr float LightReach = 192;
@@ -834,6 +835,30 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 		start = point + Vector(std::cos(angle) * LightSpread, std::sin(angle) * LightSpread, LightAbove);
 	}
 
+	// Under the open sky (straight up, the first thing there is the sky): outdoors, as bright as ever, whatever's around.
+	{
+		const Vector up = start + Vector(0, 0, SkyReach);
+		const pmtrace_t trace = *gEngfuncs.PM_TraceLine(start, up, PM_TRACELINE_PHYSENTSONLY, 2, -1);
+
+		if (!trace.startsolid && trace.fraction < 1)
+		{
+			// A point trace passes through the sky (not solid to it) to the void beyond: in the sky just short of where it
+			// stopped, or just past it.
+			Vector before = Vector(trace.endpos) - Vector(0, 0, 2);
+			Vector beyond = Vector(trace.endpos) + Vector(0, 0, 2);
+
+			if (gEngfuncs.PM_PointContents(before, nullptr) == CONTENTS_SKY || gEngfuncs.PM_PointContents(beyond, nullptr) == CONTENTS_SKY)
+			{
+				if (hits)
+				{
+					*hits = -1;
+				}
+
+				return LitLight;
+			}
+		}
+	}
+
 	float total = 0;
 	float weight = 0;
 
@@ -1129,7 +1154,7 @@ void JhlSoftwareWater_Initialize()
 			const JhlBsp* bsp = JhlBsp_Get(g_MapName.c_str());
 			int hits = 0;
 			const float light = bsp ? SeenLight(*bsp, v_origin - Vector(0, 0, LightAbove), &hits) : LightAt(v_origin);
-			gEngfuncs.Con_Printf("jhl_debug_waterlight: light %.0f around the view (%d of %d surfaces seen; 0: the floor below instead), water %.2f (full from %.0f, %.2f at the darkest)\n",
+			gEngfuncs.Con_Printf("jhl_debug_waterlight: light %.0f around the view (%d of %d surfaces seen; 0: the floor below instead, -1: open sky above), water %.2f (full from %.0f, %.2f at the darkest)\n",
 				light, hits, LightRays + 1, Brightness(light), LitLight, DarkestWater);
 		});
 }
