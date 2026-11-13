@@ -129,6 +129,8 @@ struct WaterTexture
 	float Darkest = DarkestWater;
 	float Full = LitLight; // Full bright from this light up: Blue Shift's glowing coolant (!coolant5) sooner, and darker
 						   // at the darkest, its gradient stronger (ba_power2's pools: bright middles, dark corners).
+	bool Smoothed = false; // Its light averaged over SmoothReach first (the coolant: its steeper curve showed each
+						   // point's own unevenness as patches).
 };
 
 // A model's water faces, by texture.
@@ -164,10 +166,76 @@ struct LitFace
 	Vector SampledOrigin;
 	Vector SampledAngles;
 	float SampledTime = -1;
+	bool Indexed = false;			  // Its light put in g_LightCells (once, taken in full the first time).
+	std::vector<float> Smooth;		  // Its light averaged around each point (Smoothed textures), as of SmoothVersion.
+	int SmoothVersion = -1;
+	float SmoothTime = -1;			  // When it was last averaged (again no more than SmoothEvery).
 };
 
 std::string g_MapName;
 bool g_MapReady = false;
+// Taken light by cell (LightGrid units, a model's own coordinates), for averaging it around a point (Smoothed textures).
+struct LightCell
+{
+	float Sum = 0;
+	int Count = 0;
+};
+
+constexpr float SmoothReach = 64;
+constexpr float SmoothEvery = 0.25f;
+std::unordered_map<std::int64_t, LightCell> g_LightCells;
+int g_LightCellsVersion = 0; // Raised whenever a face's light is added.
+
+std::int64_t LightCellKey(int model, int x, int y, int z)
+{
+	return (static_cast<std::int64_t>(model & 0x3FF) << 54) | ((static_cast<std::int64_t>(x) & 0x3FFFF) << 36) |
+		   ((static_cast<std::int64_t>(y) & 0x3FFFF) << 18) | (static_cast<std::int64_t>(z) & 0x3FFFF);
+}
+
+int LightCellOf(float value)
+{
+	return static_cast<int>(std::floor(value / LightGrid));
+}
+
+// The light averaged around a point of a model (cells within SmoothReach, nearer counting more); its own if none.
+float SmoothedLight(int model, const Vector& point, float own)
+{
+	const int cx = LightCellOf(point.x);
+	const int cy = LightCellOf(point.y);
+	const int cz = LightCellOf(point.z);
+	const int reach = static_cast<int>(SmoothReach / LightGrid);
+	float total = 0;
+	float weight = 0;
+
+	for (int x = cx - reach; x <= cx + reach; ++x)
+	{
+		for (int y = cy - reach; y <= cy + reach; ++y)
+		{
+			const auto found = g_LightCells.find(LightCellKey(model, x, y, cz));
+
+			if (found == g_LightCells.end() || found->second.Count == 0)
+			{
+				continue;
+			}
+
+			const float dx = (x + 0.5f) * LightGrid - point.x;
+			const float dy = (y + 0.5f) * LightGrid - point.y;
+			const float distance = std::sqrt(dx * dx + dy * dy);
+
+			if (distance > SmoothReach + LightGrid)
+			{
+				continue;
+			}
+
+			const float share = 1 / (1 + distance / LightGrid);
+			total += found->second.Sum / found->second.Count * share;
+			weight += share;
+		}
+	}
+
+	return weight > 0 ? total / weight : own;
+}
+
 std::vector<LitFace> g_LitFaces;	 // By face in the map; only water faces filled.
 std::vector<LitFace> g_EngineFaces; // The same on the engine's cut (EngineGrid), lit likewise.
 
@@ -400,6 +468,8 @@ void LoadMap(const char* mapName)
 	FreeTextures();
 	g_Models.clear();
 	g_LitFaces.clear();
+	g_LightCells.clear();
+	++g_LightCellsVersion;
 	g_EngineFaces.clear();
 	g_MapReady = false;
 
@@ -430,8 +500,9 @@ void LoadMap(const char* mapName)
 			water.Darkest = 0.6f;
 		else if (0 == stricmp(water.Name.c_str(), "!coolant5"))
 		{
-			water.Full = 56;
-			water.Darkest = 0.1f;
+			water.Full = 65;
+			water.Darkest = 0.15f;
+			water.Smoothed = true;
 		}
 		std::string why;
 
@@ -983,7 +1054,7 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 }
 
 // A face's light, taken the first time it's drawn (budget allowing) and again if its entity has moved (see LitLight).
-void Relight(const JhlBsp& bsp, LitFace& lit, const Vector& origin, const Vector& angles)
+void Relight(const JhlBsp& bsp, LitFace& lit, const Vector& origin, const Vector& angles, int model)
 {
 	const bool taken = lit.SampledTime >= 0;
 	const bool moved = taken && ((lit.SampledOrigin - origin).Length() > 0.5f || (lit.SampledAngles - angles).Length() > 0.5f);
@@ -1024,6 +1095,20 @@ void Relight(const JhlBsp& bsp, LitFace& lit, const Vector& origin, const Vector
 	if (lit.Next < lit.Points.size())
 	{
 		return;
+	}
+
+	// Taken in full the first time: its light in the cells, for averaging (moved again later, its first light stays there).
+	if (!lit.Indexed)
+	{
+		for (std::size_t i = 0; i < lit.Points.size(); ++i)
+		{
+			auto& cell = g_LightCells[LightCellKey(model, LightCellOf(lit.Points[i].x), LightCellOf(lit.Points[i].y), LightCellOf(lit.Points[i].z))];
+			cell.Sum += lit.Light[i];
+			++cell.Count;
+		}
+
+		lit.Indexed = true;
+		++g_LightCellsVersion;
 	}
 
 	lit.SampledTime = gEngfuncs.GetClientTime();
@@ -1132,8 +1217,25 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 
 			if (faceLit)
 			{
-				Relight(bsp, litFace, origin, angles);
+				Relight(bsp, litFace, origin, angles, modelIndex);
+
+				// Averaged around each point, again whenever more light has been taken.
+				const float now = gEngfuncs.GetClientTime();
+
+				if (g_Textures[t].Smoothed && litFace.Indexed && litFace.SmoothVersion != g_LightCellsVersion &&
+					(litFace.SmoothVersion < 0 || now < litFace.SmoothTime || now - litFace.SmoothTime >= SmoothEvery))
+				{
+					litFace.SmoothTime = now;
+					litFace.Smooth.resize(litFace.Points.size());
+
+					for (std::size_t i = 0; i < litFace.Points.size(); ++i)
+						litFace.Smooth[i] = SmoothedLight(modelIndex, litFace.Points[i], litFace.Light[i]);
+
+					litFace.SmoothVersion = g_LightCellsVersion;
+				}
 			}
+
+			const bool smooth = faceLit && g_Textures[t].Smoothed && litFace.SmoothVersion >= 0;
 
 			// Waves lowered seen from under the face (the view no higher than its first point, as the engine compares them).
 			const float waveScale = waves != 0 && v_origin.z <= face.Points[0].z ? -waves : waves;
@@ -1146,7 +1248,7 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 				for (int i = 0; i < count; ++i, ++next)
 				{
 					const Vector& point = litFace.Points[next];
-					const float light = faceLit ? Brightness(litFace.Light[next], full, darkest) : 1.0f;
+					const float light = faceLit ? Brightness(smooth ? litFace.Smooth[next] : litFace.Light[next], full, darkest) : 1.0f;
 					const float s = DotProduct(point, Vector(texinfo.Vecs[0][0], texinfo.Vecs[0][1], texinfo.Vecs[0][2])) + texinfo.Vecs[0][3];
 					const float t2 = DotProduct(point, Vector(texinfo.Vecs[1][0], texinfo.Vecs[1][1], texinfo.Vecs[1][2])) + texinfo.Vecs[1][3];
 					gl.Color4f(color[0] * light, color[1] * light, color[2] * light, color[3]);

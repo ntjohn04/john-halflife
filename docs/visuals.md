@@ -220,7 +220,8 @@ bright, whatever the floor under it. Xen's fluids (`!fluid...`, c4a3's chamber) 
 green, usually with its own lights: of1a1) are never darkened. On A Rail's own water (`!gwater3`) darkens to 0.8 at most, and the
 hazard courses' and On A Rail's others (`!bwater2`, `!gwater2`, also in c3a1 and lambda_bunker) to 0.6: dim tunnels
 whose water was too dark. Blue Shift's glowing coolant (`!coolant5`: ba_power1, ba_power2, op4ctf_power) has a stronger gradient: full bright
-from a light of 56, down to 0.1 (bright middles, dark corners). Water under the open sky (straight up or tilted 45° four ways, the first thing there is the sky; a fence overhead
+from a light of 65, down to 0.15 (bright middles, dark corners), its light first averaged over 64 units around each
+point (the steeper curve showed each point's own unevenness as patches). Water under the open sky (straight up or tilted 45° four ways, the first thing there is the sky; a fence overhead
 blocks one, a roof all) is
 outdoors and stays full bright. With nothing hit (open water, or only entities), the engine's `LightAtPoint`
 under it instead. A point inside a wall (water brushes run into the walls) looks from just beside it. The traces see the world alone, not entities (the client only has those near the player, so a
