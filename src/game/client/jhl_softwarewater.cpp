@@ -27,6 +27,7 @@
 
 #include "hud.h"
 #include "com_model.h"
+#include "entity_types.h"
 #include "event_api.h"
 #include "pm_defs.h"
 #include "pmtrace.h"
@@ -230,6 +231,8 @@ std::unordered_map<std::int64_t, std::vector<int>> g_SurfaceCells;
 std::vector<WaterTexture> g_Textures;
 std::vector<WaterModel> g_Models;
 std::vector<WaterEntity> g_Entities;
+std::vector<WaterEntity> g_LastEntities;
+int g_EntitiesAdded = 0;
 
 int g_LastFog[4]{};
 float g_LastFogTime = -1;
@@ -547,7 +550,9 @@ bool Ready()
 		return false;
 	}
 
-	const char* mapName = gEngfuncs.pfnGetLevelName();
+	// The world being drawn, not the level name, which can run ahead of it in a level change.
+	const cl_entity_t* world = gEngfuncs.GetEntityByIndex(0);
+	const char* mapName = world && world->model ? world->model->name : nullptr;
 
 	if (!mapName || '\0' == *mapName)
 	{
@@ -1297,9 +1302,11 @@ void JhlSoftwareWater_Initialize()
 		});
 }
 
-bool JhlSoftwareWater_Add(cl_entity_t* ent)
+bool JhlSoftwareWater_Add(int type, cl_entity_t* ent)
 {
-	if (!ent->model || ent->model->type != mod_brush || ent->model->name[0] != '*' || !Ready())
+	++g_EntitiesAdded;
+
+	if (type != ET_NORMAL || !ent->model || ent->model->type != mod_brush || ent->model->name[0] != '*' || !Ready())
 	{
 		return false;
 	}
@@ -1343,6 +1350,12 @@ bool JhlSoftwareWater_Add(cl_entity_t* ent)
 
 void JhlSoftwareWater_DrawOpaque()
 {
+	// A redrawn frame (the loading screen) passes no entities: draw the last frame's.
+	if (0 == g_EntitiesAdded)
+	{
+		g_Entities = g_LastEntities;
+	}
+
 	const bool ready = Ready();
 	g_SeeThrough = ready && g_WaterOpacity->value < 1;
 
@@ -1398,7 +1411,12 @@ void JhlSoftwareWater_DrawTransparent()
 	// Whatever happens, this frame's entities are done with.
 	struct ClearEntities
 	{
-		~ClearEntities() { g_Entities.clear(); }
+		~ClearEntities()
+		{
+			g_LastEntities = std::move(g_Entities);
+			g_Entities.clear();
+			g_EntitiesAdded = 0;
+		}
 	} clearEntities;
 
 	if (!Ready())

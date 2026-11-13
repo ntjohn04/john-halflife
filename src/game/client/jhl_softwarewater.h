@@ -21,7 +21,7 @@ void JhlSoftwareWater_Initialize();
 
 bool JhlSoftwareWater_LastFog(int (&fog)[4]);
 
-bool JhlSoftwareWater_Add(cl_entity_t* ent);
+bool JhlSoftwareWater_Add(int type, cl_entity_t* ent);
 
 void JhlSoftwareWater_DrawOpaque();
 

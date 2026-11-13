@@ -88,7 +88,7 @@ int DLLEXPORT HUD_AddEntity(int type, cl_entity_t* ent, const char* modelname)
 		break;
 	}
 
-	if (type == ET_NORMAL && JhlSoftwareWater_Add(ent))
+	if (JhlSoftwareWater_Add(type, ent))
 	{
 		return 0;
 	}
