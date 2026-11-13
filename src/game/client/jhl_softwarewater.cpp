@@ -122,7 +122,8 @@ struct WaterTexture
 	bool Mipmapped = false;
 	int Fog[4]{}; // Its fog under water: colour and density, from its palette (see EngineTexture).
 	bool HasFog = false;
-	bool Unlit = false; // Never darkened (jhl_visuals_waterlight): Xen's fluids (!fluid...), murky and alien already.
+	bool Unlit = false; // Never darkened (jhl_visuals_waterlight): Xen's fluids (!fluid...), murky and alien already, and
+						// the toxic goo (!toxicgrn...), neon green, usually with its own lights.
 };
 
 // A model's water faces, by texture.
@@ -416,7 +417,7 @@ void LoadMap(const char* mapName)
 
 		WaterTexture water;
 		water.Name = bsp->TextureNames[miptex];
-		water.Unlit = 0 == strnicmp(water.Name.c_str(), "!fluid", 6);
+		water.Unlit = 0 == strnicmp(water.Name.c_str(), "!fluid", 6) || 0 == strnicmp(water.Name.c_str(), "!toxicgrn", 9);
 		std::string why;
 
 		if (LoadTexture(water, EngineTexture(worldEntity->model, *bsp, static_cast<int>(miptex), why, water), why))
