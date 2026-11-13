@@ -83,8 +83,8 @@ static DLL_FUNCTIONS gFunctionTable =
 		[](const char* name)
 		{ return g_MaterialSystem.FindTextureType(name); }, // pfnPM_FindTextureType
 
-		JHL_TIMED(SetupVisibility),		  // pfnSetupVisibility        Set up PVS and PAS for networking for this client
-		JHL_TIMED(UpdateClientData),		  // pfnUpdateClientData       Set up data sent only to specific client
+		JHL_TIMED(SetupVisibility),
+		JHL_TIMED(UpdateClientData),
 		JHL_TIMED(AddToFullPack),			  // pfnAddToFullPack
 		CreateBaseline,			  // pfnCreateBaseline			Tweak entity baseline for network encoding, allows setup of player baselines, too.
 		RegisterEncoders,		  // pfnRegisterEncoders		Callbacks for network encoding

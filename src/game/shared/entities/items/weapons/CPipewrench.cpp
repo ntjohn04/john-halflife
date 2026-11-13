@@ -451,11 +451,6 @@ void CPipewrench::BigSwing()
 			// delay the decal a bit
 			m_trHit = tr;
 
-			// Shepard - The original Opposing Force's pipe wrench
-			// doesn't make a bullet hole decal when making a big
-			// swing.
-			// johnhalflife (jhl_fx_bulletimpacts): it marks the wall as a small swing does, the decal (and the spark now
-			// and then off metal) a moment later; without, as Opposing Force: no decal, the spark at once.
 			if (UTIL_JhlBulletImpacts())
 			{
 				SetThink(&CPipewrench::Smack);
@@ -486,8 +481,6 @@ void CPipewrench::WeaponIdle()
 		{
 			m_iSwingMode = SWING_DOING_BIG;
 
-			// The charged swing: the biggest, slowest motion. Kicked here because the swing itself is a server-only
-			// think; no hit jolt, so it settles slowly either way.
 			MeleeKick(2.4f, false);
 
 			m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 1.2;

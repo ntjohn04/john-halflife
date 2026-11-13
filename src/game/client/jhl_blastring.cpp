@@ -27,24 +27,15 @@
 
 namespace
 {
-// A ring facing the view (a sphere's outline from anywhere: the blast's), growing from its middle out to its radius
-// over GrowTime, widening and fading out as it goes, all three along one curve (Curve); up to MaxRings at once. It's drawn as
-// one band of triangles, this many points round (beams, straight pieces with square ends, overlapped at every joint:
-// seams, brighter where they added up).
 constexpr int Points = 64;
 constexpr float GrowTime = 0.265f;
 
-// How far along it is at p of its time: evenly, halfway at half of it (tried halfway at 60%: a little harsh; quick at
-// first and slowing: it crawled to its edge mostly faded).
 float Curve(float p)
 {
 	return p;
 }
 constexpr std::size_t MaxRings = 4;
 
-// Lumpy: a circle at a glance, a lumpy one looked at; its edge wavers by up to this much of its radius, three waves
-// around it (2, 3 and 5 to a turn, the bigger ones the larger, drifting round at their own pace), both layers the same
-// shape, the core's a little turned (LayerTurn, radians) so they part a little.
 constexpr float Waver = 0.12f;
 constexpr float LayerTurn = 0.35f;
 
@@ -56,8 +47,6 @@ struct Layer
 	float Brightness;
 };
 
-// Its two layers, both faint: a wide lime glow (the spore launcher's lime, its burst sprite's), and inside it a
-// thinner, paler core, only a hint of texture (it adds onto the glow).
 const Layer Layers[2] = {{{221, 255, 54}, 3, 12.8f, 0.235f}, {{240, 255, 170}, 1, 3.2f, 0.12f}};
 
 struct Ring
@@ -130,8 +119,6 @@ void JhlBlastRing_Draw()
 		if (radius < 1)
 			continue;
 
-		// A little toward the view, so on a wall seen straight on it isn't in the wall's own surface (flickering); seen
-		// at a slant, what of it is in the wall is hidden, as the blast is by walls.
 		const Vector center = ring.Center + (v_origin - ring.Center).Normalize() * 6;
 
 		for (int l = 0; l < 2; ++l)
@@ -152,7 +139,6 @@ void JhlBlastRing_Draw()
 				const Vector out = right * std::cos(angle) + up * std::sin(angle);
 				const float along = static_cast<float>(i) / Points * 8;
 
-				// Across its width the texture's soft edge to edge; along it, repeating.
 				gEngfuncs.pTriAPI->TexCoord2f(0, along);
 				gEngfuncs.pTriAPI->Vertex3fv(center + out * std::max(r - half, 0.f));
 				gEngfuncs.pTriAPI->TexCoord2f(1, along);

@@ -43,8 +43,6 @@ WEAPON* gpLastSel;	 // Last weapon menu selection
 
 int g_weaponselect = 0;
 
-// johnhalflife (jhl_weapons_holster): slot 8's holster, putting the weapon away (selectweapon jhl_holster). Not a
-// weapon: no sprites, drawn as an empty selection box.
 static const WeaponInfo JhlHolsterInfo = []()
 {
 	WeaponInfo info;
@@ -384,7 +382,7 @@ bool CHudAmmo::Init()
 
 	CVAR_CREATE("hud_drawhistory_time", HISTORY_DRAW_TIME, 0);
 	CVAR_CREATE("hud_fastswitch", "0", FCVAR_ARCHIVE); // controls whether or not weapons can be selected in one keypress
-	m_pCvarCrosshairScale = CVAR_CREATE("crosshair_scale", "0", FCVAR_ARCHIVE); // johnhalflife: 0, automatic (below)
+	m_pCvarCrosshairScale = CVAR_CREATE("crosshair_scale", "0", FCVAR_ARCHIVE); // johnhalflife
 	m_pCvarHolster = CVAR_CREATE("jhl_weapons_holster", "1", FCVAR_ARCHIVE);
 	m_pCvarCampaignCrosshair = CVAR_CREATE("jhl_hud_campaigncrosshair", "1", FCVAR_ARCHIVE);
 
@@ -425,7 +423,6 @@ bool CHudAmmo::VidInit()
 	// Get weapon and ammo info from server info, load weapon sprites.
 	gWR.InitializeWeapons();
 
-	// johnhalflife: the holster's box, a weapon picture's size.
 	JhlHolster.rcActive = JhlHolster.rcInactive = gHUD.GetSpriteRect(m_HUD_selection);
 
 	return true;
@@ -458,7 +455,7 @@ void CHudAmmo::Think()
 		}
 	}
 
-	// johnhalflife (jhl_weapons_holster): the holster, with any weapon to put away.
+	// johnhalflife
 	if (0 != m_pCvarHolster->value && gHUD.HasAnyWeapons())
 	{
 		gWR.PickupWeapon(&JhlHolster);
@@ -619,7 +616,6 @@ void CHudAmmo::MsgFunc_ItemPickup(const char* pszName, BufferReader& reader)
 {
 	const char* szName = reader.ReadString();
 
-	// johnhalflife: a vest picked up puts Barney's on (jhl_body.cpp).
 	JhlBody_ItemPickedUp(szName);
 
 	// Add the weapon to the history
@@ -943,9 +939,6 @@ void AdjustSubRect(const int iWidth, const int iHeight, float& left, float& righ
 	bottom = (iBottom - 0.5) * flHeight;
 }
 
-// johnhalflife (jhl_weapons_holster): the box behind a weapon's selected picture, as the pictures have it, of 255 and
-// added: Half-Life's and Blue Shift's (640hud*.spr) lines of 21 and 29 by turns, from the top, the 29s' first column
-// 21; Opposing Force's the same with black for the 21s; the half-size pictures' (320hud*.spr) a flat 32.
 static void JhlDrawHolsterBox(int x, int y, int width, int height, const RGB24& color)
 {
 	if (gHUD.m_bHalfSizeHud)
@@ -987,15 +980,13 @@ void CHudAmmo::DrawCrosshair(int x, int y)
 				return;
 			}
 
-			// The position is in HUD units; the size is set by crosshair_scale alone, independent of the HUD scale.
 			x = static_cast<int>(std::lround(x * gHUD.m_flHudScale));
 			y = static_cast<int>(std::lround(y * gHUD.m_flHudScale));
 
 			const int iOrigWidth = gEngfuncs.pfnSPR_Width(crosshair.sprite, 0);
 			const int iOrigHeight = gEngfuncs.pfnSPR_Height(crosshair.sprite, 0);
 
-			// johnhalflife: 0 is automatic, as jhl_hud_scale is: 1 at 600 tall and below (where the HUD is half size),
-			// 3 from 2160 (where it's 3x), else 2.
+			// johnhalflife
 			float flScale = m_pCvarCrosshairScale->value;
 
 			if (flScale <= 0)
@@ -1056,8 +1047,7 @@ void CHudAmmo::DrawCrosshair(int x, int y)
 		}
 	};
 
-	// johnhalflife (jhl_hud_campaigncrosshair): the crosshair in the HUD's colour. Half-Life's, Uplink's and Opposing
-	// Force's already are; Blue Shift's goes blue (vanilla Blue Shift kept Half-Life's orange with its blue HUD).
+	// johnhalflife
 	renderer(x, y, m_Crosshair, 0 != m_pCvarCampaignCrosshair->value ? gHUD.m_HudColor : gHUD.m_CrosshairColor);
 	renderer(x, y, m_AutoaimCrosshair, RGB_REDISH);
 }
@@ -1375,7 +1365,7 @@ bool CHudAmmo::DrawWList(float flTime)
 
 				if (gpActiveSel == p)
 				{
-					// johnhalflife: the holster has no picture, only the faint box a weapon's picture has behind it.
+					// johnhalflife
 					if (0 != p->hActive)
 					{
 						SPR_Set(p->hActive, color);
@@ -1404,7 +1394,7 @@ bool CHudAmmo::DrawWList(float flTime)
 
 				// Draw Ammo Bar
 
-				// johnhalflife (jhl_hud_minimal): without the ammo bars, the small green bars under each weapon.
+				// johnhalflife
 				if (!gHUD.m_pCvarHudMinimal || 0 == gHUD.m_pCvarHudMinimal->value)
 				{
 					DrawAmmoBar(p, x + giABWidth / 2, y, giABWidth, giABHeight);

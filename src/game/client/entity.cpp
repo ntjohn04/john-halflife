@@ -88,7 +88,6 @@ int DLLEXPORT HUD_AddEntity(int type, cl_entity_t* ent, const char* modelname)
 		break;
 	}
 
-	// johnhalflife: water entities drawn as the software renderer drew them, in place of the engine.
 	if (type == ET_NORMAL && JhlSoftwareWater_Add(ent))
 	{
 		return 0;
@@ -337,7 +336,6 @@ void DLLEXPORT HUD_CreateEntities()
 	// Add in any game specific objects
 	Game_AddObjects();
 
-	// johnhalflife (jhl_visuals_firstpersonbody): the player's own body, seen looking down.
 	JhlBody_CreateEntities();
 
 	GetClientVoiceMgr()->CreateEntities();
@@ -404,7 +402,6 @@ void DLLEXPORT HUD_TempEntUpdate(
 	int (*Callback_AddVisibleEntity)(cl_entity_t* pEntity),
 	void (*Callback_TempEntPlaySound)(TEMPENTITY* pTemp, float damp))
 {
-	// johnhalflife: the Xen spire rings' strands onto their entities, before the engine draws beams.
 	JhlRings_Update(client_time);
 	JhlTracers_Update(client_time);
 	JhlGauss_Update(client_time);
@@ -472,9 +469,7 @@ void DLLEXPORT HUD_TempEntUpdate(
 	gravity = -frametime * cl_gravity;
 	gravitySlow = gravity * 0.5;
 
-	// johnhalflife (jhl_physics_fpsfix): what's below lands to rest when it hits the floor slower than three frames of
-	// gravity, so the higher the frame rate, the more tiny bounces before it does (and bounce sounds, and speed lost
-	// along the floor): no slower than three 72 fps frames of it.
+	// johnhalflife
 	restSpeed = gravity * 3;
 
 	if (JhlFpsFixEnabled())
@@ -888,7 +883,6 @@ static void CL_ParseArmorRicochet(BufferReader& reader)
 
 	auto model = gEngfuncs.CL_LoadModel("sprites/richo1.spr", nullptr);
 
-	// The engine's own ricochets use a copy of richo1 that maps don't precache; load it as a HUD sprite.
 	if (!model)
 	{
 		if (const HSPRITE flash = gEngfuncs.pfnSPR_Load("sprites/richo1.spr"); flash > 0)
@@ -903,7 +897,6 @@ static void CL_ParseArmorRicochet(BufferReader& reader)
 	R_RicochetSound(pos);
 }
 
-// johnhalflife's ring strand (UTIL_JhlRingStrand): a torus, its life in hundredths.
 static void CL_ParseJhlRingStrand(BufferReader& reader)
 {
 	Vector center = reader.ReadCoordVector();

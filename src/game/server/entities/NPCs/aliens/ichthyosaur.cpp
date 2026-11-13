@@ -413,8 +413,6 @@ void CIchthyosaur::HandleAnimEvent(MonsterEvent_t* pEvent)
 
 	if (bDidAttack)
 	{
-		// johnhalflife (jhl_fx_particlesystem): the burst at its mouth (vanilla's aim was only set with its enemy in
-		// sight, else left from whoever set it last), drawn on the client spreading out from it (TE_BUBBLES, ours).
 		if (UTIL_JhlParticleSystem())
 		{
 			UTIL_MakeAimVectors(pev->angles);

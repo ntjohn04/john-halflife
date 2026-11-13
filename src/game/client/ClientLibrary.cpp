@@ -201,7 +201,6 @@ void ClientLibrary::RunFrame()
 			// Stop music playback if we disconnect or start a new map.
 			sound::g_SoundSystem->GetMusicSystem()->Stop();
 
-			// johnhalflife: a save being loaded plays its music again (jhl_music.cpp).
 			JhlMusic_ConnectionReset();
 
 			// Clear out old server info.

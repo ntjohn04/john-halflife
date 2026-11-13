@@ -97,7 +97,6 @@ void GameDLLInit()
 		return;
 	}
 
-	// johnhalflife (jhl_debug_hitch): how a client in this process finds the server, to report both as one.
 	CVAR_REGISTER(JhlHitch_ServerLink());
 
 	CVAR_REGISTER(&displaysoundlist);

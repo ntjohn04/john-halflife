@@ -30,16 +30,9 @@
 
 namespace
 {
-// Its own color: the portal sprite's (exit1.spr, the ball's), yellow-green.
 constexpr const char* BallSprite = "sprites/exit1.spr";
 constexpr color24 LightColor{140, 190, 40};
 
-// The charge: from the spin-up to the shot (CDisplacer: fired 0.9 s in, on its next think 0.1 s later), a ball of the
-// portal sprite at the muzzle (between its prongs, FindMuzzle) growing quickly
-// then easing (ChargeCurve), a little bigger and brighter at the end than the Gauss gun's full charge (its glow 0.144
-// of a 64-pixel sprite, 9 units; this 0.13 of an 80-pixel one, 10), and its light (the Gauss gun's to 110 units).
-// Flickering a little; going out over FadeTime when it fires (the ball takes over), or if the shot never comes
-// (holstered meanwhile) by GiveUpTime.
 constexpr float ChargeTime = 1;
 constexpr float ChargeCurve = 0.6f;
 constexpr float GlowScaleMin = 0.015f;
@@ -53,7 +46,6 @@ constexpr float Flicker = 0.1f;
 constexpr float FadeTime = 0.1f;
 constexpr float GiveUpTime = 1.5f;
 
-// The ball in flight (CDisplacerBall: exit1.spr, flying): a light going with it, a little under the charge's.
 constexpr float BallLightRadius = 115;
 constexpr float BallLightFlicker = 0.08f;
 constexpr int ChargeLightKey = 8192 + 4096 + 24;
@@ -69,8 +61,6 @@ float Random(float low, float high)
 	return gEngfuncs.pfnRandomFloat(low, high);
 }
 
-// The middle of its three prongs (the view model's attachments 1-3, "reflector01-03"): its first, "spinner", is on the
-// bone that spins up, off its axis, so a glow there circled the muzzle.
 bool FindMuzzle(Vector& muzzle)
 {
 	if (0 != CL_IsThirdPerson())
@@ -129,15 +119,12 @@ void JhlDisplacer_Fired()
 
 void JhlDisplacer_Track(cl_entity_t* entity, const char* modelname)
 {
-	// The ball: its sprite, flying (the Lambda Core's portals are the same sprite, standing).
 	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, BallSprite) ||
 		entity->curstate.movetype != MOVETYPE_FLY)
 	{
 		return;
 	}
 
-	// The charge's shot: the server sends no event for a primary shot (CDisplacer::FireThink's is commented out), so a
-	// ball seen as the charge ends is it.
 	if (g_ChargeStart >= 0 && g_FiredAt < 0 && gEngfuncs.GetClientTime() - g_ChargeStart > ChargeTime * 0.8f)
 		JhlDisplacer_Fired();
 

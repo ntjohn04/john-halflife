@@ -28,17 +28,11 @@
 
 namespace
 {
-// Each strand: this many pieces, each this long in time (the wake is their product: about 300 units at its 2000 a
-// second), for up to MaxWakes bolts at once, the newest (to keep within the engine's beams); every bolt (up to
-// MaxBolts) has its glow and spark.
 constexpr int Pieces = 8;
 constexpr float PieceTime = 0.02f;
 constexpr std::size_t MaxBolts = 16;
 constexpr std::size_t MaxWakes = 4;
 
-// A bolt's wake fades out over WakeFadeTime (its glow and spark go on), done this long before the bolt MaxWakes after it
-// is fired (held fire: MaxWakes refires, shockrifle_fast's 0.1 s or its usual 0.2 s), so a new bolt never takes a wake
-// from one still showing: 0.6-0.7 s (about 100-117 feet) usually, 0.2-0.3 s (about 33-50 feet) fast.
 constexpr float WakeFadeTime = 0.1f;
 constexpr float WakeFadeMargin = 0.1f;
 
@@ -48,21 +42,16 @@ float WakeFadeEnd()
 	return MaxWakes * refire - WakeFadeMargin;
 }
 
-// Its glow and spark circle its path this far out, this many turns a second, the circle easing in (smoothstep) to
-// RadiusEnd over its first RadiusTime: 4 units by a medium-range hit (25 feet, about 300 units at its 2000 a second,
-// 0.15 s), 3.3 by 35 feet (0.21 s). Half the bolts turn one way, half the other.
 constexpr float Radius = 6.85f;
 constexpr float RadiusEnd = 3.3f;
 constexpr float RadiusTime = 0.21f;
 constexpr float TurnsPerSecond = 3;
 
-// The glow (vanilla's, flare3) and the spark (the gluon gun's flare, XSpark1: cyan-blue by itself, sparkling).
 constexpr const char* GlowSprite = "sprites/flare3.spr";
 constexpr float GlowScale = 0.35f;
 constexpr const char* SparkSprite = "sprites/XSpark1.spr";
 constexpr float SparkScale = 0.45f;
 
-// A bolt not seen for this long is gone: its wake fades out over what's left.
 constexpr float LostAfter = 0.05f;
 
 struct Strand
@@ -70,10 +59,9 @@ struct Strand
 	Vector Color;
 	float Width;
 	float Brightness;
-	float Noise; // The engine's random noise, rerolled every frame: jagged, crackling.
+	float Noise;
 };
 
-// The smooth purplish one along its glow's path, the jagged cyan one along its spark's.
 const Strand Strands[2] = {{{170, 110, 220}, 1.6f, 0.5f, 0}, {{0, 253, 253}, 0.8f, 0.6f, 0.15f}};
 
 struct Sample
@@ -153,7 +141,6 @@ void Kill(BEAM*& beam)
 
 void JhlShockBeams_Track(cl_entity_t* entity, const char* modelname)
 {
-	// Tagged by the server (CShockBeam::Spawn): the barnacle grapple's tongue tip has the same model.
 	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "models/shock_effect.mdl") ||
 		entity->curstate.renderamt != 1)
 		return;
@@ -180,7 +167,6 @@ void JhlShockBeams_Track(cl_entity_t* entity, const char* modelname)
 
 	bolt->LastSeen = now;
 
-	// Its glow and spark, circling its path (its angles' way; a studio model's pitch is the other way round).
 	Vector forward, right, up;
 	AngleVectors(Vector{-entity->angles.x, entity->angles.y, 0}, forward, right, up);
 	const float angle = bolt->Phase + bolt->Turning * 6.2831853f * TurnsPerSecond * now;
@@ -220,7 +206,6 @@ void JhlShockBeams_Update(double time)
 
 	const int sprite = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/laserbeam.spr");
 
-	// The newest young bolts have wakes (the nearest: on a long shot the oldest are far off).
 	const float fadeEnd = WakeFadeEnd();
 	std::vector<const Bolt*> newest;
 
@@ -284,7 +269,6 @@ void JhlShockBeams_Update(double time)
 				Vector from, to;
 				BEAM*& beam = bolt.Beams[s][i];
 
-				// Not one of the newest young: its beams freed for them (a bolt can have a wake again later).
 				if (!wake)
 				{
 					Kill(beam);

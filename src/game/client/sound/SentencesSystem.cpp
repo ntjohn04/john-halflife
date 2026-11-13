@@ -149,8 +149,7 @@ bool SentencesSystem::SetSentenceWord(Channel& channel, SentenceChannel& sentenc
 		// Mix sentence-wide and word-specific pitch values.
 		const int pitch = std::clamp(channel.Pitch + (word.Parameters.Pitch - PITCH_NORM), 1, 255);
 
-		// johnhalflife (jhl_snd_vanilla): off its own pitch, the word pitched as the engine pitches it (a voice is
-		// 100-103, so nearly every word), played at that pitch's own rate.
+		// johnhalflife
 		ALuint wordBuffer = wordSound->Buffer.Id;
 		const std::vector<float>* wordSamples = &wordSound->Samples;
 		channel.BufferPitch = PITCH_NORM;
@@ -280,7 +279,7 @@ void SentencesSystem::MoveMouth(Channel& channel, const Sound& sound)
 	ALint sampleOffset = 0;
 	alGetSourcei(channel.Source.Id, AL_SAMPLE_OFFSET, &sampleOffset);
 
-	// johnhalflife: the samples it's playing (a pitched version's, with the engine's mixing), and none past their end.
+	// johnhalflife
 	const std::vector<float>& samples = SoundCache::GetSamples(sound, channel.BufferPitch);
 
 	if (sampleOffset < 0 || static_cast<std::size_t>(sampleOffset) >= samples.size())

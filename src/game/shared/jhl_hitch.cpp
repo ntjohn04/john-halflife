@@ -41,15 +41,12 @@ constexpr int Side = 0;
 constexpr int Side = 1;
 #endif
 
-// Calls of one part slower than this are listed one by one, with their detail.
 constexpr double SlowCallMs = 1;
 constexpr std::size_t PartsShown = 10;
 constexpr std::size_t SlowCallsKept = 64;
 constexpr std::size_t SlowCallsShown = 12;
 constexpr double SkipSeconds = 2;
-// Longer than this is a pause (the game paused with the console or menu open stops the server's frames), not a hitch.
 constexpr double PauseMs = 5000;
-// A server "frame" that ran more of the player's moves than this is the engine not having started frames (paused).
 constexpr int MostMoves = 20;
 // The frames a report's "usually" is the median of.
 constexpr std::size_t RecentFrames = 240;
@@ -71,17 +68,15 @@ void Copy(char (&to)[NameSize], const char* from)
 	to[NameSize - 1] = '\0';
 }
 
-// The frame outside the libraries' calls. Plain data: on a listen server the client works in the server's (each
-// library has its own heap, so nothing in what's shared is allocated).
 struct Timeline
 {
 	std::int64_t LastCallEnd = 0;
 	char LastCallName[NameSize]{};
-	bool LastWasRedraw = false; // The client's HUD_Redraw, the frame drawn: the engine presents it next.
+	bool LastWasRedraw = false;
 	double CodeMs[2]{};			// The client's, the server's.
-	double EngineMs[2]{};		// Of that, the engine's work they call (JhlHitchScope names starting "engine").
-	double PresentMs = 0;		// From HUD_Redraw's end to the next call.
-	double GapMs = 0;			// The longest stretch outside both, and the calls either side.
+	double EngineMs[2]{};
+	double PresentMs = 0;
+	double GapMs = 0;
 	char GapAfter[NameSize]{};
 	char GapBefore[NameSize]{};
 	std::int64_t SkipUntil = 0;
@@ -103,22 +98,21 @@ struct Summary
 	int DetailCount = 0;
 	Entry Slow[SlowCallsShown];
 	int SlowCount = 0;
-	double SaveMs = 0; // DispatchSave and SaveGlobalState: the entities' data for a save.
+	double SaveMs = 0;
 	int SavedEntities = 0;
 	int Moves = 0;
 };
 
 constexpr std::uint32_t LinkMagic = 0x4A484854; // "JHHT"
 
-// The server's, found by the client through its console variable (the engine keeps the cvar_t it's given).
 struct Shared
 {
 	cvar_t Cvar;
 	std::uint32_t Magic;
 	std::uint32_t Size;
 	Timeline Frame;
-	void (*Summarize)(Summary* summary); // The server's frame so far, cleared (nullptr: only cleared).
-	std::int64_t ClientDrove;			  // When the client last ended a frame it reported both libraries in.
+	void (*Summarize)(Summary* summary);
+	std::int64_t ClientDrove;
 };
 
 struct Part
@@ -138,12 +132,12 @@ struct Recent
 	float FrameMs, CodeMs, PresentMs, OtherMs;
 };
 
-std::unordered_map<const char*, Part> g_Parts;		  // By name (string literals, so by address).
+std::unordered_map<const char*, Part> g_Parts;
 std::unordered_map<std::string, Part> g_DetailParts; // By name and detail.
 std::vector<SlowCall> g_SlowCalls;
 int g_Depth = 0;
 int g_Moves = 0;
-Shared* g_Linked = nullptr; // The client's, once it found the server.
+Shared* g_Linked = nullptr;
 std::int64_t g_NextLinkTry = 0;
 std::int64_t g_FrameStart = 0;
 bool g_HaveFrame = false;
@@ -239,7 +233,6 @@ Shared g_Shared{
 	&Summarize,
 	0};
 
-// The server's frame is always the shared one; the client's its own until it finds the server.
 Timeline* g_Frame = &g_Shared.Frame;
 #else
 Timeline g_OwnFrame;
@@ -332,8 +325,6 @@ void AppendParts(std::string& text, const char* label, const Entry* entries, int
 	text.back() = '\n';
 }
 
-// @p client is null on a server reporting alone (a dedicated server, or a client playing elsewhere), @p server on a
-// client reporting alone.
 void Report(double frameMs, const std::string& where, const Summary* client, const Summary* server)
 {
 	const Timeline& frame = *g_Frame;
@@ -364,7 +355,6 @@ void Report(double frameMs, const std::string& where, const Summary* client, con
 	}
 	else if (codeMs - usualCode >= excess / 2 && codeMs >= 1)
 	{
-		// The most precise thing named: a part with its detail (a class, a sound) if one's slow, else the slowest part.
 		const Entry* top = nullptr;
 
 		for (const Summary* summary : {client, server})
@@ -546,7 +536,6 @@ void JhlHitch_EndFrame(float thresholdMs, std::string (*where)())
 	g_JhlHitchOn = true;
 
 #ifndef CLIENT_DLL
-	// The client's reporting this library's frames with its own (a listen server).
 	if (now - g_Shared.ClientDrove < 1'000'000'000)
 	{
 		g_HaveFrame = false;
@@ -611,7 +600,6 @@ void JhlHitch_EndFrame(float thresholdMs, std::string (*where)())
 	g_FrameStart = now;
 	ResetFrame(now, start);
 
-	// The report's own time (printing, the log) is this library's, in the new frame.
 	if (reported)
 	{
 		const std::int64_t after = Ticks(Clock::now());
@@ -661,7 +649,6 @@ void JhlHitch_Link(cvar_t* (*find)(const char* name))
 
 	g_NextLinkTry = now + 1'000'000'000;
 
-	// The engine loads the server's library once, at its start, and keeps it, so what's found stays valid.
 	if (auto* shared = reinterpret_cast<Shared*>(find("jhl_debug_hitch_link"));
 		shared && shared->Magic == LinkMagic && shared->Size == sizeof(Shared))
 	{

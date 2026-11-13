@@ -212,8 +212,6 @@ bool CBasePlayerWeapon::DefaultDeploy(const char* szViewModel, const char* szWea
 	SendWeaponAnim(iAnim);
 
 #ifndef CLIENT_DLL
-	// Weapon switches happen on the server (selectweapon), not in client prediction,
-	// so this is a regular sound: a predicted one would skip the local player.
 	if (const char* deploySound = GetWeaponDeploySound(szViewModel); deploySound)
 	{
 		m_pPlayer->EmitSound(CHAN_ITEM, deploySound, VOL_NORM, ATTN_NORM);
@@ -227,8 +225,6 @@ bool CBasePlayerWeapon::DefaultDeploy(const char* szViewModel, const char* szWea
 	return true;
 }
 
-// Played when switching to a weapon, by view model (the satchel's charge and radio sound different).
-// The snark, penguin, shock rifle and barnacle grapple are left out: they already play a sound when drawn.
 static constexpr WeaponDeploySound WeaponDeploySounds[] = {
 	{"models/v_crowbar.mdl", "weapons/weapon_draw_crowbar.wav"},
 	{"models/v_9mmhandgun.mdl", "weapons/weapon_draw_glock.wav"},
@@ -316,8 +312,6 @@ bool CBasePlayerWeapon::DefaultReload(int iClipSize, int iAnim, float fDelay)
 
 float CBasePlayerWeapon::GetCurrentSpread(const SpreadSettings& settings) const
 {
-	// Recovery starts shortly after the weapon is ready to fire again, so holding the trigger keeps the bloom.
-	// With relative weapon times m_flNextPrimaryAttack keeps counting down below zero (to -1.1), which gives the recovery time.
 	constexpr float RecoveryDelay = 0.1f;
 
 	const float recoveryTime = std::max(0.f, UTIL_WeaponTimeBase() - m_flNextPrimaryAttack - RecoveryDelay);
@@ -341,14 +335,12 @@ void CBasePlayerWeapon::MeleeKick(float strength, bool hit)
 		return;
 	}
 
-	// Leaning into the swing: down and to one side, with a little roll. Heavier weapons swing wider and settle slower.
 	const float side = RANDOM_LONG(0, 1) != 0 ? 1.f : -1.f;
 	WeaponKick({-1.3f * strength, 1.04f * strength * side, 0.78f * strength * side}, 90 / strength, 10);
 }
 
 void CBasePlayerWeapon::ThrowKick(float strength)
 {
-	// The arm follows through forward and down, rolling slightly with it.
 	WeaponKick({-0.9f * strength, 0.2f * strength, 0.5f * strength}, 50, 10);
 }
 

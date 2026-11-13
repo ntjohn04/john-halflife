@@ -592,10 +592,6 @@ static const char* JhlMaterialName(char material)
 	}
 }
 
-// johnhalflife: jhl_texture [material]: the texture under the crosshair, for sound/jhl_impact_materials.json: its name,
-// the material impacts show on it and the one Valve's table gives it (footsteps, ricochet sounds). Traced as vanilla's
-// impulse 107 does, but without cheats. Each is also added to jhl_textures.txt in the game's folder, with the map and
-// the material asked for if one was given, to collect over a playthrough.
 static void JhlTexture_Command(CBasePlayer* player, const CommandArgs& args)
 {
 	UTIL_MakeVectors(player->pev->v_angle + player->pev->punchangle);
@@ -1177,7 +1173,6 @@ void ServerDeactivate()
 
 void ServerActivate(edict_t* pEdictList, int edictCount, int clientMax)
 {
-	// johnhalflife (jhl_debug_hitch): a map loading isn't a hitch.
 	JhlHitch_Skip();
 
 	int i;
@@ -1255,7 +1250,6 @@ void ParmsChangeLevel()
 //
 // GLOBALS ASSUMED SET:  g_ulFrameCount
 //
-// johnhalflife (jhl_debug_hitch, the client's setting): a frame is from one of these to the next (jhl_hitch.h).
 static void JhlHitch_ServerFrame()
 {
 	static const cvar_t* threshold = nullptr;
@@ -1368,7 +1362,7 @@ void ClientPrecache()
 	UTIL_PrecacheSound("player/pl_snow3.wav");
 	UTIL_PrecacheSound("player/pl_snow4.wav");
 
-	for (const auto& deploySound : GetWeaponDeploySounds()) // johnhalflife: switch to a weapon
+	for (const auto& deploySound : GetWeaponDeploySounds()) // johnhalflife
 	{
 		UTIL_PrecacheSound(deploySound.Sound);
 	}
@@ -1422,7 +1416,7 @@ void ClientPrecache()
 	UTIL_PrecacheSound("player/geiger1.wav");
 
 	UTIL_PrecacheSound("ctf/pow_big_jump.wav");
-	UTIL_PrecacheSound("player/power_jump.wav"); // johnhalflife: the long jump module's jump (pm_shared.cpp).
+	UTIL_PrecacheSound("player/power_jump.wav"); // johnhalflife
 
 	// for cheat_givemagazine
 	UTIL_PrecacheSound(DefaultItemPickupSound);

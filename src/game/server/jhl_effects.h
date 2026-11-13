@@ -18,15 +18,10 @@
 #include "UserMessages.h"
 #include "jhl_framerate.h"
 
-/**
- *	@brief One of the client's cvars, found once (@p cache) and kept: the engine finds a cvar by name by going down the
- *	list of them all, and some of these are asked for very often (ShouldCollide, for every entity near every move an
- *	NPC tries: a scientist looking for cover asked 321,000 times in one think, a frame of 150 ms).
- */
 struct JhlCvarCache
 {
 	const cvar_t* Cvar = nullptr;
-	bool Looked = false; // Also when it isn't there (a dedicated server has no client): not looked for again.
+	bool Looked = false;
 };
 
 inline const cvar_t* UTIL_JhlClientCvar(const char* name, JhlCvarCache& cache)
@@ -40,10 +35,6 @@ inline const cvar_t* UTIL_JhlClientCvar(const char* name, JhlCvarCache& cache)
 	return cache.Cvar;
 }
 
-/**
- *	@brief Whether jhl_physics_fpsfix is on (see JhlReferenceFrameRate): the client's setting, read as
- *	jhl_fx_particlesystem is.
- */
 inline bool UTIL_JhlFpsFix()
 {
 	static JhlCvarCache cache;
@@ -51,10 +42,6 @@ inline bool UTIL_JhlFpsFix()
 	return !cvar || cvar->value != 0;
 }
 
-/**
- *	@brief Whether jhl_physics_wallfix is on (walking along a wall no faster than in the open): the client's setting,
- *	read as jhl_fx_particlesystem is.
- */
 inline bool UTIL_JhlWallFix()
 {
 	static JhlCvarCache cache;
@@ -62,10 +49,6 @@ inline bool UTIL_JhlWallFix()
 	return !cvar || cvar->value != 0;
 }
 
-/**
- *	@brief Whether jhl_fx_bulletimpacts is on (bullet impacts and water splashes; the pipe wrench's big swing marks the
- *	wall as its small one does): the client's setting, read as jhl_fx_particlesystem is.
- */
 inline bool UTIL_JhlBulletImpacts()
 {
 	static JhlCvarCache cache;
@@ -73,10 +56,6 @@ inline bool UTIL_JhlBulletImpacts()
 	return !cvar || cvar->value != 0;
 }
 
-/**
- *	@brief Whether jhl_fx_keepcorpses is on (corpses vanilla fades are kept, see CBaseMonster::JhlFadeCorpse): the
- *	client's setting, read as jhl_fx_particlesystem is.
- */
 inline bool UTIL_JhlKeepCorpses()
 {
 	static JhlCvarCache cache;
@@ -84,10 +63,6 @@ inline bool UTIL_JhlKeepCorpses()
 	return !cvar || cvar->value != 0;
 }
 
-/**
- *	@brief Whether jhl_camera_jumplandjolt is on: the client's setting, read as jhl_fx_particlesystem is (the long
- *	jump's sound goes with the jump jolts).
- */
 inline bool UTIL_JhlJumpLandJolt()
 {
 	static JhlCvarCache cache;
@@ -95,21 +70,11 @@ inline bool UTIL_JhlJumpLandJolt()
 	return !cvar || cvar->value != 0;
 }
 
-/**
- *	@brief The frame time for vanilla's once-a-frame formulas (an NPC's turn, the stomp's speed-up): a 72 fps frame's
- *	with jhl_physics_fpsfix, as vanilla played at 72 fps; else this frame's, as vanilla has it, following the frame rate.
- *	Half-Life Updated had made them steady at other rates (NPC turns as at 50 fps, flying banks at 10, the stomp at 40).
- */
 inline float UTIL_JhlVanillaFrametime()
 {
 	return UTIL_JhlFpsFix() ? 1.0f / JhlReferenceFrameRate : gpGlobals->frametime;
 }
 
-/**
- *	@brief Whether johnhalflife's particle system changes are on for effects the server sends (hit blood).
- *	It's the client's jhl_fx_particlesystem, which the server can read in single player since the engine's cvars are
- *	shared; a server without it (dedicated) always uses them.
- */
 inline bool UTIL_JhlParticleSystem()
 {
 	static JhlCvarCache cache;
@@ -117,51 +82,18 @@ inline bool UTIL_JhlParticleSystem()
 	return !cvar || cvar->value != 0;
 }
 
-/**
- *	@brief A projectile fired from source, off to the side of the player's eye (at the gun), aimed at what the
- *	crosshair is on (at least 64 units out, so nothing close up turns it sharply): its angles, the view's way round
- *	(pitch down positive). Vanilla fires them parallel to the aim, so they land as far off the crosshair as the gun is
- *	from the eye at any range. With jhl_fx_particlesystem off, the angles unchanged (vanilla).
- */
 Vector UTIL_JhlAimAtCrosshair(CBasePlayer* player, const Vector& source, const Vector& angles);
 
-// johnhalflife explosion extras (util.cpp), by the explosion's fireball scale (a grenade 3), for callers to use with
-// jhl_fx_particlesystem on (vanilla's otherwise).
-
-/**
- *	@brief The scorch where an explosion hit: one of {scorch1-3} (vanilla 1-2), and for big explosions (scale 6+, 9+)
- *	one or two more, overlapping.
- */
 void UTIL_JhlExplosionScorch(TraceResult* trace, float scale);
 
-/**
- *	@brief Shakes the screens of players near an explosion, more and further for bigger ones (vanilla: none).
- */
 void UTIL_JhlExplosionShake(const Vector& origin, float scale);
 
-/**
- *	@brief An underwater explosion's bubbles: vanilla's, more and over a bigger area for bigger explosions, and some
- *	lingering after them, rising slowly.
- */
 void UTIL_JhlExplosionBubbles(const Vector& origin, float scale);
 
 class CBeam;
 
-/**
- *	@brief johnhalflife's beam pattern (the vortigaunt's): a thin, wild, dimmer strand layered on a beam, with the
- *	same ends, type, flags and color, its own @p width, @p noise (±25% each time) and @p brightness. Call it again
- *	with the strand it returned to follow a beam that moved (effects.cpp). Temporary, as monsters' beams are.
- *	@return The strand (@p strand, or a new one), or null if it couldn't be made.
- */
 CBeam* UTIL_JhlBeamStrand(CBeam* strand, CBeam* beam, int width, int noise, int brightness);
 
-/**
- *	@brief johnhalflife's ring strand (the displacer's is the model): a thin, noisy torus on a ring (TE_BEAMCYLINDER),
- *	with the ring's @p center, @p axis end, @p sprite and @p color, living 20% longer than its @p life so it grows with
- *	the ring to 20% further, 1.25 times its @p width (tenths), noise 0.5 ±25%, half its @p brightness. Through the
- *	SDK's own temp entity message (the client's, entity.cpp), whose life is in hundredths: the engine's tenths would
- *	round a houndeye's 0.24 s.
- */
 inline void UTIL_JhlRingStrand(const Vector& center, const Vector& axis, int sprite, float life, int width,
 	const Vector& color, int brightness)
 {
@@ -183,10 +115,6 @@ inline void UTIL_JhlRingStrand(const Vector& center, const Vector& axis, int spr
 	MESSAGE_END();
 }
 
-/**
- *	@brief Low dust puffs kicked out along the floor at @p position (the client's, jhl_explosions.cpp): TE_SMOKE through
- *	the SDK's own temp entity message. @p size tenths: 10 a houndeye's; bigger ones also billow up, the floor's color.
- */
 inline void UTIL_JhlGroundDust(const Vector& position, int count, int size = 10)
 {
 	if (!UTIL_JhlParticleSystem())
@@ -200,10 +128,6 @@ inline void UTIL_JhlGroundDust(const Vector& position, int count, int size = 10)
 	MESSAGE_END();
 }
 
-/**
- *	@brief A few specks of a displacer ball left falling where it went (the client's, jhl_explosions.cpp):
- *	TE_SPRITETRAIL through the SDK's own temp entity message, the position.
- */
 inline void UTIL_JhlDisplacerSpecks(const Vector& position)
 {
 	if (!UTIL_JhlParticleSystem())
@@ -215,10 +139,6 @@ inline void UTIL_JhlDisplacerSpecks(const Vector& position)
 	MESSAGE_END();
 }
 
-/**
- *	@brief Whether johnhalflife's tracers are on: the particle system and the client's jhl_fx_tracers (read as
- *	UTIL_JhlParticleSystem reads its cvar).
- */
 inline bool UTIL_JhlTracers()
 {
 	static JhlCvarCache cache;
@@ -226,7 +146,6 @@ inline bool UTIL_JhlTracers()
 	return UTIL_JhlParticleSystem() && (!cvar || cvar->value != 0);
 }
 
-// The kinds of johnhalflife tracer (the client's JhlTracerKind, jhl_tracers.h: these must match).
 constexpr int JhlTracerMP5 = 0;
 constexpr int JhlTracerGlock = 1;
 constexpr int JhlTracerHeavy = 2;
@@ -234,11 +153,6 @@ constexpr int JhlTracerSniper = 3;
 constexpr int JhlTracerShotgun = 4;
 constexpr int JhlTracerM249 = 5;
 
-/**
- *	@brief An NPC's tracer through the SDK's own temp entity message (TE_TRACER: start, end, kind, muzzle), in place of the
- *	engine's: the client draws the vanilla one and johnhalflife's of @p kind on top (the M249's instead of it). Sent as
- *	the vanilla one is, to those who can hear it.
- */
 inline void UTIL_JhlTracer(const Vector& start, const Vector& end, int kind, const Vector& muzzle)
 {
 	MESSAGE_BEGIN(MSG_PAS, gmsgTempEntity, start);
@@ -246,13 +160,10 @@ inline void UTIL_JhlTracer(const Vector& start, const Vector& end, int kind, con
 	WRITE_COORD_VECTOR(start);
 	WRITE_COORD_VECTOR(end);
 	WRITE_BYTE(kind);
-	WRITE_COORD_VECTOR(muzzle); // Where johnhalflife's streak starts.
+	WRITE_COORD_VECTOR(muzzle);
 	MESSAGE_END();
 }
 
-/**
- *	@brief A dynamic light (TE_DLIGHT): @p radius in units, @p life in seconds, fading @p decay units a second.
- */
 inline void UTIL_JhlDynamicLight(const Vector& position, float radius, int r, int g, int b, float life, float decay)
 {
 	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, position);
@@ -267,10 +178,6 @@ inline void UTIL_JhlDynamicLight(const Vector& position, float radius, int r, in
 	MESSAGE_END();
 }
 
-/**
- *	@brief Spark showers, as explosions throw them (the client's, jhl_explosions.cpp), going up from a point: TE_SPARKS
- *	through the SDK's own temp entity message (position, then the number of showers).
- */
 inline void UTIL_JhlSparkShowers(const Vector& position, int count, float lifeScale = 0.5f, const Vector& direction = Vector(0, 0, 1),
 	float flashMax = 0, int streaksMax = 0)
 {
@@ -278,25 +185,17 @@ inline void UTIL_JhlSparkShowers(const Vector& position, int count, float lifeSc
 	WRITE_BYTE(TE_SPARKS);
 	WRITE_COORD_VECTOR(position);
 	WRITE_BYTE(count);
-	WRITE_BYTE(std::clamp(static_cast<int>(lifeScale * 10), 1, 255)); // The showers' life, tenths of an explosion's.
+	WRITE_BYTE(std::clamp(static_cast<int>(lifeScale * 10), 1, 255));
 
-	// Which way they're thrown (as off a surface facing that way), hundredths.
 	for (int i = 0; i < 3; ++i)
 		WRITE_CHAR(std::clamp(static_cast<int>(direction[i] * 100), -100, 100));
 
-	// The showers' biggest flash (tenths) and most streaks a burst; 0: an explosion's (0.4-1, 6-12).
 	WRITE_BYTE(std::clamp(static_cast<int>(flashMax * 10), 0, 255));
 	WRITE_BYTE(std::clamp(streaksMax, 0, 255));
 
 	MESSAGE_END();
 }
 
-/**
- *	@brief TE_BREAKMODEL (breakable shards, helicopter debris). With jhl_fx_particlesystem on, it goes through the SDK's
- *	own temp entity message and the client makes the shards (jhl_debris.cpp): lasting 60 seconds like gibs,
- *	@p multiplier times the count, counted against its debris budget. Otherwise the engine's, as vanilla.
- *	@param count 0: by the size. @param life Tenths of a second (vanilla only).
- */
 inline void UTIL_JhlBreakModel(const Vector& position, const Vector& size, const Vector& velocity, int random,
 	int model, int count, int life, int flags, int multiplier = 1)
 {
@@ -319,10 +218,6 @@ inline void UTIL_JhlBreakModel(const Vector& position, const Vector& size, const
 	MESSAGE_END();
 }
 
-/**
- *	@brief The scale (× 10) an explosion's smoke puff is sent with: 7% bigger than vanilla's (the client adds a big
- *	lingering cloud behind it, jhl_explosions.cpp).
- */
 inline int UTIL_JhlExplosionSmokeScale(float vanillaScale)
 {
 	if (!UTIL_JhlParticleSystem())
@@ -331,11 +226,6 @@ inline int UTIL_JhlExplosionSmokeScale(float vanillaScale)
 	return std::min(255, static_cast<int>(vanillaScale * 1.07f));
 }
 
-/**
- *	@brief A mushroom cloud (hexplo.spr, precached in W_Precache) rising from the ground under a crashing helicopter,
- *	alongside its vanilla fexplo fireball. Sent as TE_SPRITE like that fireball, so it plays once at the engine's
- *	default speed (30 frames, about as long as fexplo's).
- */
 inline void UTIL_JhlCrashMushroom(CBaseEntity* helicopter, const Vector& wreck, float scale)
 {
 	if (!UTIL_JhlParticleSystem())
@@ -344,7 +234,6 @@ inline void UTIL_JhlCrashMushroom(CBaseEntity* helicopter, const Vector& wreck, 
 	TraceResult tr;
 	UTIL_TraceLine(wreck, wreck - Vector(0, 0, 1024), ignore_monsters, helicopter->edict(), &tr);
 
-	// The sprite is 96 px tall and centered; its base goes on the ground (slightly sunk, the bottom rows are empty).
 	Vector origin = tr.vecEndPos;
 	origin.z += 96 * scale * 0.45f;
 
@@ -357,27 +246,18 @@ inline void UTIL_JhlCrashMushroom(CBaseEntity* helicopter, const Vector& wreck, 
 	MESSAGE_END();
 }
 
-// Blood colors that don't pick up the palette's bright reds and yellows (as the client's gib splash).
 constexpr int JhlBloodRed = 74;
 constexpr int JhlBloodYellow = 198;
 
-// Blood streams pick colors from the given one to 9 above it: red 68-77, yellow 198-207. Their particles are flat and
-// drawn at full brightness, so they start 2 darker than vanilla's red streams (70) to match the textured puffs.
 constexpr int JhlBloodStreamRed = 68;
 constexpr int JhlBloodStreamYellow = 198;
 constexpr int VanillaBloodStreamRed = 70;
 
-/**
- *	@brief The color to give a blood stream for a blood color: red 247 would run into the palette's bright reds, so
- *	streams use JhlBloodStreamRed and JhlBloodStreamYellow. Others, and everything with the particle system
- *	off, are unchanged.
- */
 inline int UTIL_JhlBloodStreamColor(int color)
 {
 	if (!UTIL_JhlParticleSystem())
 		return color;
 
-	// Vanilla passes 70 for red streams (env_blood, the sniper rifle), others the blood color.
 	if (color == BLOOD_COLOR_RED || color == VanillaBloodStreamRed)
 		return JhlBloodStreamRed;
 

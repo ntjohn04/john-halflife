@@ -29,30 +29,19 @@
 
 namespace
 {
-// How far out: the engine's view has its near plane at 4 units, so in a 24 bit depth buffer two surfaces d units away
-// can be told apart from about d² / (4 * 2^24) units apart; coplanar faces made of different triangles differ by a few
-// of those steps besides. 16 steps out: 0.06 units at 500, 0.24 at 1000, 1 at 2000; at least a tenth of a unit (so
-// the software renderer, which sorts by the BSP rather than a depth buffer, puts it in front of the wall), at most 2.
 constexpr float OffsetPerDistanceSquared = 16.0f / (4.0f * 16777216.0f);
 constexpr float MinOffset = 0.1f;
 constexpr float MaxOffset = 2;
 
-// Faces count as coplanar within this (units, and of their normals), and as covering a world face from this much area
-// of it (square units).
 constexpr float PlaneEpsilon = 0.02f;
 constexpr float NormalEpsilon = 0.0005f;
 constexpr float MinOverlap = 1;
 
-// The entity is at a place it rested before within this (its origin is sent to 1/8 unit), turned as it was within
-// this (degrees).
 constexpr float RestEpsilon = 0.2f;
 constexpr float RestAngleEpsilon = 0.1f;
 
-// A place an entity has stood still at this long (seconds) counts as a rest: a slow door or train can look still for an
-// update or two on its way.
 constexpr float RestTime = 0.25f;
 
-// Places an entity rests at that are worked out, at most: a door's two, a train's stops.
 constexpr std::size_t MaxRests = 32;
 
 // A face, in the world's coordinates.
@@ -64,7 +53,6 @@ struct Face
 	Vector Mins, Maxs;
 };
 
-// A plane an entity is flush with the world on, at a place it rests.
 struct FlushPlane
 {
 	Vector Normal;
@@ -82,10 +70,9 @@ struct Rest
 struct FlushModel
 {
 	std::vector<Face> Faces; // Its own, at origin 0.
-	std::vector<Rest> Rests; // Where the map placed it first (a door closed), then where it came to rest (open, turned).
+	std::vector<Rest> Rests;
 };
 
-// Where an entity was last seen and since when, for telling a rest from a pause.
 struct Still
 {
 	Vector Origin;
@@ -104,14 +91,11 @@ std::string g_MapName;
 std::vector<FlushModel> g_Models; // By submodel (*1 ...).
 std::unordered_map<int, Still> g_Still; // By entity.
 
-// The world's faces, by distance from the world's origin (to the unit) for finding those on a plane. Sky faces aren't
-// drawn as the world is.
 std::vector<Face> g_World;
 std::unordered_map<int, std::vector<std::size_t>> g_WorldByDist;
 std::vector<Moved> g_Moved;
 float g_MovedTime = -1;
 
-// The two axes a face is seen along best, to compare faces on a plane in 2D.
 void PlaneAxes(const Vector& normal, int& u, int& v)
 {
 	const float x = std::abs(normal.x);
@@ -172,7 +156,6 @@ std::vector<Point2D> Project(const Face& face, int u, int v)
 	return polygon;
 }
 
-// The area two convex polygons (counter-clockwise) share (Sutherland-Hodgman).
 float OverlapArea(std::vector<Point2D> subject, const std::vector<Point2D>& clipper)
 {
 	std::vector<Point2D> input;
@@ -212,14 +195,10 @@ float OverlapArea(std::vector<Point2D> subject, const std::vector<Point2D>& clip
 	return subject.size() >= 3 ? std::abs(SignedArea(subject)) : 0;
 }
 
-// The planes a model placed at origin, turned by angles, is flush with the world on.
 std::vector<FlushPlane> FindPlanes(const FlushModel& flush, const Vector& origin, const Vector& angles)
 {
 	std::vector<FlushPlane> planes;
 
-	// Turned as the engine turns a brush entity it collides with (SV_ClipMoveToEntity). Drawn turned so about its up
-	// (yaw: doors swinging open) and forward axes (roll: c1a0's door wheels); about its side (pitch) the renderer may
-	// turn it the other way, so a pitched entity is left alone.
 	if (std::abs(std::remainder(angles.x, 360.0f)) > RestAngleEpsilon)
 	{
 		return planes;
@@ -313,8 +292,6 @@ std::vector<FlushPlane> FindPlanes(const FlushModel& flush, const Vector& origin
 	return planes;
 }
 
-// Reads the map being played: the world's faces, and each brush entity's, with the planes it's flush with the world on
-// where the map placed it.
 void LoadMap(const char* mapName)
 {
 	g_Models.clear();
@@ -329,7 +306,6 @@ void LoadMap(const char* mapName)
 		return;
 	}
 
-	// A face of a model placed at origin, in the world's coordinates.
 	const auto makeFace = [&](const JhlBspFace& source, const Vector& origin, Face& face)
 	{
 		if (source.Points.empty())
@@ -390,8 +366,6 @@ void LoadMap(const char* mapName)
 			continue;
 		}
 
-		// The map's angles aren't looked at: doors and buttons take them as the way they move and are drawn unturned. One
-		// drawn turned gets its planes worked out turned when it's drawn (JhlFlushFaces_Add).
 		auto& flush = g_Models[submodel];
 		Vector origin;
 
@@ -440,7 +414,6 @@ void JhlFlushFaces_Add(cl_entity_t* ent)
 		return;
 	}
 
-	// The engine has put every entity back where it is since the last frame drawn.
 	if (const float time = gEngfuncs.GetClientTime(); time != g_MovedTime)
 	{
 		g_Moved.clear();
@@ -471,8 +444,6 @@ void JhlFlushFaces_Add(cl_entity_t* ent)
 		return;
 	}
 
-	// Only at rest (a door closed or open, not on its way): where the map placed it, or anywhere it's come to a stop,
-	// moved or turned, worked out the first time.
 	const auto turnedAs = [](const Vector& a, const Vector& b)
 	{
 		for (int k = 0; k < 3; ++k)
@@ -516,7 +487,6 @@ void JhlFlushFaces_Add(cl_entity_t* ent)
 		return;
 	}
 
-	// Out of each wall it's flush with that faces the view (last frame's: near enough).
 	Vector direction;
 	float distance = 0;
 
@@ -539,7 +509,6 @@ void JhlFlushFaces_Add(cl_entity_t* ent)
 
 	ent->origin = ent->origin + offset;
 
-	// Added again before the view was drawn (time stands still while paused): the engine has put it back since.
 	if (auto moved = std::find_if(g_Moved.begin(), g_Moved.end(), [&](const Moved& candidate)
 			{ return candidate.Entity == ent; });
 		moved != g_Moved.end())

@@ -87,7 +87,6 @@ void CDisplacerBall::Precache()
 	PrecacheSound("weapons/displacer_teleport.wav");
 }
 
-// johnhalflife: its impact light (vanilla's 160 units) 15% bigger, in 10s: 184.
 constexpr int JhlImpactLightRadius = 18;
 
 void CDisplacerBall::Spawn()
@@ -140,7 +139,6 @@ void CDisplacerBall::BallTouch(CBaseEntity* pOther)
 	WRITE_BYTE(0);	 // byte (scroll speed in 0.1's)
 	MESSAGE_END();
 
-	// johnhalflife: the ring's strand (and particles pulled in to it, ImplodeThink).
 	UTIL_JhlRingStrand(pev->origin, pev->origin + Vector(0, 0, 800), m_iTrail, 0.3f, 16, Vector(255, 255, 255), 255);
 
 	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, pev->origin);
@@ -241,7 +239,6 @@ void CDisplacerBall::BallTouch(CBaseEntity* pOther)
 
 	const float killDelay = g_pGameRules->IsMultiplayer() ? 0.2 : 0.5;
 
-	// johnhalflife: particles pulled in to it, ending as it goes (KillThink, then ExplodeThink 0.2 s later).
 	if (UTIL_JhlParticleSystem())
 	{
 		SetThink(&CDisplacerBall::ImplodeThink);
@@ -322,7 +319,6 @@ void CDisplacerBall::FizzleThink()
 
 	EmitSound(CHAN_WEAPON, "weapons/displacer_impact.wav", RANDOM_FLOAT(0.8, 0.9), ATTN_NORM);
 
-	// johnhalflife: a few specks of it left falling, from a little above its center (clear of a floor it hit).
 	UTIL_JhlDisplacerSpecks(pev->origin + Vector(0, 0, 8));
 
 	UTIL_Remove(this);
@@ -342,7 +338,6 @@ void CDisplacerBall::ExplodeThink()
 
 	EmitSound(CHAN_WEAPON, "weapons/displacer_teleport.wav", RANDOM_FLOAT(0.8, 0.9), ATTN_NORM);
 
-	// johnhalflife: a few specks of it left falling, from a little above its center (clear of a floor it hit).
 	UTIL_JhlDisplacerSpecks(pev->origin + Vector(0, 0, 8));
 
 	UTIL_Remove(this);
@@ -453,8 +448,6 @@ void CDisplacerBall::ArmBeam(int iSide)
 		m_pBeam[m_uiBeams]->SetNoise(80);
 	}
 
-	// johnhalflife: as the vortigaunt's beams, a thin, wild, dimmer strand, and every other re-aim a faint green light
-	// where it touches (it re-aims 40 times a second).
 	if (UTIL_JhlParticleSystem())
 	{
 		CBeam* beam = m_pBeam[m_uiBeams];

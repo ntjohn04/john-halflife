@@ -69,9 +69,6 @@ int DamageDecal(CBaseEntity* pEntity, int bitsDamageType)
 	return pEntity->DamageDecal(bitsDamageType);
 }
 
-// Lets nearby clients add their bullet impact effects (weapon_effects.cpp) for bullets fired on the server.
-// The player's own bullets get theirs from the client-side weapon events instead.
-// The material of the surface a trace hit, as impacts show it (concrete if it can't be found).
 static char TraceTextureType(TraceResult* pTrace, CBaseEntity* pEntity)
 {
 	char textureType = CHAR_TEX_CONCRETE;
@@ -89,7 +86,6 @@ static char TraceTextureType(TraceResult* pTrace, CBaseEntity* pEntity)
 	return textureType;
 }
 
-// What it was (the client's JhlImpact): a gun's, or a melee blow's (the knife's smaller).
 constexpr int ImpactBullet = 0;
 constexpr int ImpactMelee = 3;
 constexpr int ImpactKnife = 4;
@@ -119,9 +115,7 @@ static void SendBulletImpact(TraceResult* pTrace, CBaseEntity* pEntity)
 
 void MeleeImpactSpark(TraceResult* pTrace, float puffChance, bool knife)
 {
-	// johnhalflife: a melee weapon striking metal now and then sparks, as a bullet hitting metal does (the client's
-	// metal bullet impact: a few small streaks and a very short warm flash); striking dirt, wood, concrete or tile,
-	// with @p puffChance a little puff (smaller than a bullet's, the knife's smaller still).
+	// johnhalflife
 	constexpr float SparkChance = 0.35f;
 
 	if (!UTIL_JhlParticleSystem() || pTrace->flFraction >= 1.0)
@@ -168,13 +162,11 @@ const char* RandomWeaponPickupSound()
 
 void SendBulletWaterSplash(const Vector& start, const Vector& end)
 {
-	// Bullet traces pass through water, so a bullet entered it if it ended in liquid but started outside.
 	if (0 == gmsgWaterSplash || !IsLiquid(end) || IsLiquid(start))
 	{
 		return;
 	}
 
-	// Narrow down the surface between the last point outside and the first point inside.
 	Vector outside = start;
 	Vector inside = end;
 
@@ -381,7 +373,7 @@ void W_Precache()
 	g_sModelIndexWExplosion = UTIL_PrecacheModel("sprites/WXplo1.spr");		// underwater fireball
 	g_sModelIndexSmoke = UTIL_PrecacheModel("sprites/steam1.spr");			// smoke
 
-	// johnhalflife's effect sprites and models: at the end, while the map has room.
+	// johnhalflife: 's effect sprites and models
 
 	g_sModelIndexBubbles = UTIL_PrecacheModel("sprites/bubble.spr");		// bubbles
 	g_sModelIndexBloodSpray = UTIL_PrecacheModel("sprites/bloodspray.spr"); // initial blood
@@ -408,24 +400,17 @@ void W_Precache()
 
 	UTIL_PrecacheSound("items/weapondrop1.wav"); // weapon falls to the ground
 
-	// johnhalflife: the sprites and models only its client effects use, last and only while the map clearly has room.
-	// The engine's 512 models a map are shared with its brush entities, and past them a model the map needs isn't
-	// precached and its first use ends the map: of4a4, with 330 brush entities, came within 4 with these, and
-	// op4ctf_crash went over. So, in order of how much each is seen, as many as leave room for what's precached after
-	// this (the player, gibs, the map's NPCs and breakables: 33 on of4a4, the most) and 10 to spare, as vanilla had more
-	// (followers crossing a level change bring their models). An effect whose sprite isn't precached is left out, its
-	// vanilla part drawn (the client can't load a model the server didn't precache). Only op4ctf_crash (none), of4a4
-	// (6 of 13) and op4ctf_power get fewer.
+	// johnhalflife
 	constexpr std::size_t RoomForTheMapsOwnModels = 43;
 	constexpr std::size_t EngineModels = 512;
 
 	const char* const effectModels[] = {
 		"sprites/blood_chnk.spr", "sprites/blood_chnk_yellow.spr", // Gibbing blood splash chunks.
-		"sprites/bexplo.spr", "sprites/cexplo.spr",				   // Second fireballs (jhl_explosions.cpp).
+		"sprites/bexplo.spr", "sprites/cexplo.spr",
 		"sprites/wep_smoke_01.spr",								   // Lingering explosion smoke.
 		"sprites/wsplash3.spr",									   // Bullet water splash droplets.
-		"models/shell_op4.mdl",									   // The Desert Eagle's shell (ev_hldm.cpp).
-		"sprites/glow_blu.spr",									   // A laser turret's flash (weapon_effects.cpp).
+		"models/shell_op4.mdl",
+		"sprites/glow_blu.spr",
 		"sprites/dexplo.spr", "sprites/eexplo.spr", "sprites/fexplo.spr", "sprites/gexplo.spr", "sprites/hexplo.spr"};
 
 	std::size_t precached = 0;
@@ -434,7 +419,6 @@ void W_Precache()
 	{
 		if (g_ModelPrecache->GetCount() + RoomForTheMapsOwnModels >= EngineModels)
 		{
-			// Said in the console, once a map: which effects draw only their vanilla part here.
 			std::string leftOut;
 
 			for (std::size_t i = precached; i < std::size(effectModels); ++i)
@@ -448,7 +432,6 @@ void W_Precache()
 			break;
 		}
 
-		// Opposing Force's, installed from the player's game; without it, left out.
 		if (g_pFileSystem->FileExists(model))
 		{
 			UTIL_PrecacheModel(model);
@@ -457,17 +440,11 @@ void W_Precache()
 		++precached;
 	}
 
-	// johnhalflife (jhl_visuals_firstpersonbody, the client's setting, read as it's loaded): the body seen looking down
-	// is Gordon's lab coat before the HEV suit (jhl_body.cpp), and with no weapon every player model's arms take his
-	// poses. Blue Shift's, installed from the player's game; like the effects above, only while the map has room. Treading
-	// water, the arms are the hazard course's hologram's (holo.mdl). Barney before his vest, Blue Shift's guard in his
-	// shirt (Unified's dead_barney.mdl), only where the player is Barney (the map's model replacement). With the body off,
-	// nothing.
+	// johnhalflife
 	constexpr const char* LabCoatGordon = "models/gordon_scientist.mdl";
 	constexpr const char* WaterArms = "models/holo.mdl";
 	constexpr const char* VestlessBarney = "models/dead_barney.mdl";
 	const bool barney = 0 == stricmp(UTIL_CheckForGlobalModelReplacement("models/player.mdl"), "models/bshift/player.mdl");
-	// Adrian in boot camp before his vest, in the recruits' training clothes: boot camp's maps only.
 	constexpr const char* Recruit = "models/recruit.mdl";
 	const bool bootCamp = 0 == strnicmp(STRING(gpGlobals->mapname), "ofboot", 6);
 
@@ -862,12 +839,9 @@ void CBasePlayerWeapon::DoRetireWeapon()
 
 float CBasePlayerWeapon::GetNextAttackDelay(float delay)
 {
-	// johnhalflife (jhl_physics_fpsfix): fired as soon as it could, a shot came due partway through the last frame but
-	// went with this one; the time it waited comes off the next, so it fires at its rate at any frame rate (it lost up
-	// to a frame each shot). Due longer ago than about a frame, it wasn't being held. The same on the client.
 	if (UTIL_JhlFpsFix())
 	{
-		m_flLastFireTime = 0; // Vanilla's book keeping starts afresh if it's turned off.
+		m_flLastFireTime = 0;
 		const float waited = UTIL_WeaponTimeBase() - m_flNextPrimaryAttack;
 		return UTIL_WeaponTimeBase() + delay - (waited > 0 && waited < 1.5f * gpGlobals->frametime ? waited : 0);
 	}

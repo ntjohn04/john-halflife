@@ -25,8 +25,7 @@
 
 LINK_ENTITY_TO_CLASS(weapon_rpg, CRpg);
 
-// johnhalflife: the reload had no sound. Its hit lands as the rocket is pushed home: frame 41 of the 30 fps reload
-// animation, less the 0.14 s into the sound that the hit peaks.
+// johnhalflife: the reload had no sound
 constexpr const char* RpgReloadSound = "weapons/weapon_reload_rpg.wav";
 constexpr float RpgReloadSoundDelay = 1.2f;
 
@@ -105,7 +104,7 @@ void CRpg::Precache()
 	PrecacheModel("models/v_rpg.mdl");
 	PrecacheModel("models/p_rpg.mdl");
 
-	// johnhalflife: the launch's flame flashes (EV_RpgFireEffects; the client only finds what's precached).
+	// johnhalflife
 	PrecacheModel("sprites/muzzleflash2.spr");
 
 	PrecacheSound("items/9mmclip1.wav");
@@ -196,7 +195,6 @@ void CRpg::PrimaryAttack()
 		UTIL_MakeVectors(m_pPlayer->pev->v_angle);
 		Vector vecSrc = m_pPlayer->GetGunPosition() + gpGlobals->v_forward * 16 + gpGlobals->v_right * 8 + gpGlobals->v_up * -8;
 
-		// johnhalflife: aimed at the crosshair (UTIL_JhlAimAtCrosshair; a guided rocket steers to the laser anyway).
 		CRpgRocket* pRocket = CRpgRocket::CreateRpgRocket(vecSrc, UTIL_JhlAimAtCrosshair(m_pPlayer, vecSrc, m_pPlayer->pev->v_angle), m_pPlayer, this);
 
 		UTIL_MakeVectors(m_pPlayer->pev->v_angle); // RpgRocket::Create stomps on globals, so remake.
@@ -238,7 +236,6 @@ void CRpg::SecondaryAttack()
 		m_pSpot = nullptr;
 	}
 
-	// The Desert Eagle's laser on/off sounds, played from the server like CEagle does.
 	m_pPlayer->EmitSound(CHAN_ITEM, m_fSpotActive ? "weapons/desert_eagle_sight.wav" : "weapons/desert_eagle_sight2.wav", VOL_NORM, ATTN_NORM);
 
 #endif
@@ -291,7 +288,6 @@ void CRpg::WeaponIdle()
 
 void CRpg::ItemAlwaysFrame()
 {
-	// Not ItemPostFrame: the player's busy reloading, so that isn't called until the reload's done.
 #ifndef CLIENT_DLL
 	if (0 != m_flReloadSoundTime && gpGlobals->time >= m_flReloadSoundTime)
 	{

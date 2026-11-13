@@ -85,7 +85,6 @@ void CHornet::Spawn()
 		m_flFlySpeed = HORNET_ORANGE_SPEED;
 	}
 
-	// johnhalflife: its colour within its type (a separate roll, so the types stay as they were).
 	m_JhlColor = m_iHornetType == HORNET_TYPE_RED ? JhlRed + RANDOM_LONG(0, 1) : JhlOrange + RANDOM_LONG(0, 2);
 
 	SetModel("models/hornet.mdl");
@@ -124,7 +123,7 @@ void CHornet::Precache()
 	PrecacheSound("hornet/ag_hornethit2.wav");
 	PrecacheSound("hornet/ag_hornethit3.wav");
 
-	// johnhalflife: its dart splat (the bullsquid's spit hitting).
+	// johnhalflife
 	PrecacheSound("bullchicken/bc_spithit1.wav");
 	PrecacheSound("bullchicken/bc_spithit2.wav");
 
@@ -190,9 +189,6 @@ void CHornet::IgniteTrail()
 
 	*/
 
-	// johnhalflife: the client draws its trail (jhl_hornets.cpp), twirling while it hunts and straight once it commits:
-	// tagged with its colour (rendercolor) and its state (renderamt 1 hunting, 2 committed; a normal render mode ignores
-	// both).
 	if (UTIL_JhlParticleSystem())
 	{
 		pev->rendercolor = TrailColor();
@@ -220,8 +216,6 @@ void CHornet::IgniteTrail()
 
 Vector CHornet::TrailColor() const
 {
-	// johnhalflife: its colour within its type: purple-red (ted's suggested colour above, browner), yellow and light
-	// brown its orange's lighter and earthier sides.
 	switch (UTIL_JhlParticleSystem() ? m_JhlColor : (m_iHornetType == HORNET_TYPE_RED ? JhlRed : JhlOrange))
 	{
 	case JhlRed: return {179, 39, 14};
@@ -238,8 +232,7 @@ void CHornet::StrikeFlare()
 	if (pev->renderamt == 1)
 		pev->renderamt = 2;
 
-	// johnhalflife: as it commits to its strike its trail flares: a wider glow in its colour and a hot core (its colour
-	// whitened), drawing only the straight line of its dive, with a shorter tail than its trail.
+	// johnhalflife
 	const Vector color = TrailColor();
 	const Vector hot = color + (Vector{255, 255, 255} - color) * 0.55f;
 
@@ -390,7 +383,6 @@ void CHornet::TrackTarget()
 			// don't attack again
 			m_flStopAttack = gpGlobals->time;
 
-			// johnhalflife: the strike made visible (it stings or expires after it: never hunts again).
 			if (UTIL_JhlParticleSystem())
 				StrikeFlare();
 		}
@@ -450,14 +442,10 @@ void CHornet::DieTouch(CBaseEntity* pOther)
 
 		pOther->TakeDamage(this, GetOwner(), pev->dmg, DMG_BULLET);
 
-		// johnhalflife: its sting draws blood (it deals its damage straight, past the code that would bleed), sized as
-		// a light hit.
 		if (UTIL_JhlParticleSystem() && pOther->BloodColor() != DONT_BLEED)
 			SpawnBlood(pev->origin, pOther->BloodColor(), pev->dmg);
 	}
 
-	// johnhalflife: a dart that hits a wall splats on it, in its colour, with a small wet sound (the bullsquid's spit
-	// hitting, higher and quieter: it's small).
 	else if (UTIL_JhlParticleSystem() && pOther && (pOther->IsBSPModel() || pOther == CBaseEntity::World) && pev->velocity.Length() > 1)
 	{
 		const Vector direction = pev->velocity.Normalize();
@@ -472,9 +460,6 @@ void CHornet::DieTouch(CBaseEntity* pOther)
 			ATTN_NORM, 0, RANDOM_LONG(125, 140));
 	}
 
-	// johnhalflife: where it dies on something (a sting, a dart's splat; only ever once: it dies here; not when a
-	// homing one turns off a wall, which can be several times in a row), a small pop of its colour, as faint as the
-	// energy weapons' small lights (72 units), fading out over half a second: its trail's energy going.
 	if (UTIL_JhlParticleSystem())
 	{
 		const Vector color = TrailColor();

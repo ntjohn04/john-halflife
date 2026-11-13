@@ -281,10 +281,9 @@ CBeam* UTIL_JhlBeamStrand(CBeam* strand, CBeam* beam, int width, int noise, int 
 		if (!strand)
 			return nullptr;
 
-		strand->pev->spawnflags |= SF_BEAM_TEMPORARY; // Flag these to be destroyed on save/restore or level transition
+		strand->pev->spawnflags |= SF_BEAM_TEMPORARY;
 	}
 
-	// The beam's ends (start point and entity, end point and entity, with attachments), type and flags, color.
 	strand->pev->rendermode = beam->pev->rendermode;
 	strand->pev->origin = beam->pev->origin;
 	strand->pev->angles = beam->pev->angles;
@@ -405,25 +404,10 @@ public:
 
 	void UpdateOnRemove() override;
 
-	/**
-	 *	@brief johnhalflife (jhl_fx_particlesystem): whether this is an electric arc that gets the vortigaunt's strand
-	 *	(UTIL_JhlBeamStrand): lgtning.spr, noisy (0.2 or more), not a ring. Smooth beams (lasers, plasma, crystal and
-	 *	teleport beams, c4a3's finale) aren't.
-	 */
 	bool JhlArc();
 
-	/**
-	 *	@brief johnhalflife (jhl_fx_particlesystem): whether this is one of the Xen spires' rings (c4a1's, and of3a1b's,
-	 *	its copy), which get two strands around them (SendSpireRingStrand). Only these maps: other ring beams
-	 *	(c4a1b's machines, of6a5's Gene Worm orbs) are left as they are.
-	 */
 	bool JhlSpireRing();
 
-	/**
-	 *	@brief A strand ring around the same entities' midpoint, @p scale (hundredths) times as wide, its texture
-	 *	scrolling @p speedScale times the ring's, trailing them by 0 to @p lagMax seconds and back every @p lagPeriod
-	 *	(the client's, jhl_rings.cpp).
-	 */
 	void SendSpireRingStrand(CBaseEntity* start, CBaseEntity* end, int scale, int width, int noise, int brightness,
 		float speedScale, float lagMax, float lagPeriod);
 
@@ -432,24 +416,15 @@ public:
 	int JhlStrandNoise() const { return std::min(255, static_cast<int>(m_noiseAmplitude * 2.5f)); }
 	int JhlStrandBrightness() const { return static_cast<int>(pev->renderamt * 0.4f); }
 
-	// A strike's strand noise, ±25% each strike (as UTIL_JhlBeamStrand's).
 	int JhlStrandStrikeNoise() const
 	{
 		return std::min(255, static_cast<int>(JhlStrandNoise() * RANDOM_FLOAT(0.75f, 1.25f)));
 	}
 
-	/**
-	 *	@brief A strike between two entities (TE_BEAMENTS, or with a point entity TE_BEAMENTPOINT or TE_BEAMPOINTS; the
-	 *	point entity must be @p end), with its width, noise and brightness.
-	 */
 	void SendStrike(CBaseEntity* start, CBaseEntity* end, int width, int noise, int brightness);
 
-	/**
-	 *	@brief A strike between two points (TE_BEAMPOINTS), with its width, noise and brightness.
-	 */
 	void SendZap(const Vector& vecSrc, const Vector& vecDest, int width, int noise, int brightness);
 
-	// A lasting arc's strand (not saved: temporary, made again in Activate).
 	EHANDLE m_hJhlStrand;
 
 	static CLightning* LightningCreate(const char* pSpriteName, int width)
@@ -561,7 +536,6 @@ void CLightning::Activate()
 	{
 		BeamUpdateVars();
 
-		// johnhalflife: a lasting arc's strand, on and off with it (ToggleUse).
 		if (JhlArc())
 		{
 			if (CBeam* strand = UTIL_JhlBeamStrand(static_cast<CBeam*>(static_cast<CBaseEntity*>(m_hJhlStrand)), this,
@@ -758,7 +732,7 @@ void CLightning::StrikeThink()
 			}
 		}
 
-		if ((IsPointEntity(pStart) || IsPointEntity(pEnd)) && !IsPointEntity(pEnd)) // One point entity must be in pEnd
+		if ((IsPointEntity(pStart) || IsPointEntity(pEnd)) && !IsPointEntity(pEnd))
 			std::swap(pStart, pEnd);
 
 		SendStrike(pStart, pEnd, m_boltWidth, m_noiseAmplitude, pev->renderamt);
@@ -767,11 +741,6 @@ void CLightning::StrikeThink()
 		if (JhlArc())
 			SendStrike(pStart, pEnd, JhlStrandWidth(), JhlStrandStrikeNoise(), JhlStrandBrightness());
 
-		// johnhalflife: a Xen spire ring's two (the client keeps them on them): one 67% wider, only a little under the
-		// ring (0.7 its width and brightness, noise a steady 1.6; c4a1's ring 1.2), and a faint one 2.55 times as wide
-		// (half its width, 0.53 its brightness: 80, noise a steady 1.9). Each falls behind the ring by up to 0.19 s and
-		// catches up again, on its own period (2.3 s, 3.7 s), so the three line up and drift apart; and its texture
-		// flows at its own speed (0.7, 1.4 times the ring's).
 		if (JhlSpireRing() && !IsPointEntity(pStart) && !IsPointEntity(pEnd))
 		{
 			SendSpireRingStrand(pStart, pEnd, 167, std::max(1, static_cast<int>(m_boltWidth * 0.7f)), 160,
@@ -1586,17 +1555,9 @@ CGib* CGibShooter::CreateGib()
 	return pGib;
 }
 
-// johnhalflife (jhl_fx_particlesystem): what a gib shooter throws, if models (not sprites: sparks, glass), lies a
-// while as debris does: at least JhlShooterGibLife, ±20%, its own life if longer (as many as vanilla's: a second piece
-// half the shots spawned in the same spot as the first, and the two stuck in each other, as c1a1a's cans in their
-// vending machine). At most JhlShooterGibsKept of them lie about at once (they're entities, and
-// a repeatable one can throw many): past that the oldest fades out. Each is marked with when it was thrown (its
-// fuser4), and the live gibs are looked through for the oldest: no handles kept between maps (entities' slots are
-// reused, so a kept one could come to name something else).
 constexpr float JhlShooterGibLife = 45;
 constexpr int JhlShooterGibsKept = 64;
 
-// Room for one more: the oldest of those lying about faded, if there are as many as are kept.
 static void JhlMakeRoomForShooterGib()
 {
 	int kept = 0;
@@ -1627,7 +1588,7 @@ void CGibShooter::ShootThink()
 
 	const bool sprite = std::string_view{STRING(pev->model)}.ends_with(".spr");
 	const bool jhl = UTIL_JhlParticleSystem() && !sprite;
-	const int pieces = 1; // A second piece, half the shots, spawned in the same spot as the first and stuck with it.
+	const int pieces = 1;
 
 	for (int piece = 0; piece < pieces; ++piece)
 	{

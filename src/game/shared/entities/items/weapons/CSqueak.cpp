@@ -155,8 +155,6 @@ void CSqueakGrenade::Killed(CBaseEntity* attacker, int iGib)
 
 	UTIL_BloodDrips(pev->origin, g_vecZero, BloodColor(), 80);
 
-	// johnhalflife: it leaves no body, so its burst: a small blood puff and two or three small blood chunks (the
-	// client's, ClientGibs_Pop), and a splat of its blood where it was, on the floor (or the wall or ceiling it was on).
 	if (UTIL_JhlParticleSystem())
 	{
 		MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, pev->origin);

@@ -138,12 +138,7 @@ void SetupEffect(ALuint effectId, unsigned int roomType)
 	alEffecti(effectId, AL_EAXREVERB_DECAY_HFLIMIT, reverb.iDecayHFLimit);
 }
 
-// johnhalflife: the engine's software DSP presets (Steam Half-Life plays room types through these, not EAX), as
-// Xash3D's s_dsp.c has them (rgsxpre). Its reverb: two delay lines fed back on themselves, size and 0.71 size long
-// (at most 0.1 s), feedback refl, a two-tap lowpass in the loop if rvblp, summed in at about 0.029 each (/6, *11/64);
-// its echo: one delay line (at most 0.4 s), feedback, a three-tap lowpass in the loop if dlylp, in at a quarter; then
-// a left channel delay (left; not done here: it delays the dry sound, which an effect send can't). lp lowpasses the
-// whole sound (water: the SDK's underwater filter already), mod modulates its loudness.
+// johnhalflife
 struct VanillaRoom
 {
 	float Lowpass, Modulate, Size, Reflectivity, ReverbLowpass, Delay, Feedback, DelayLowpass, Left;
@@ -181,12 +176,9 @@ constexpr VanillaRoom VanillaRooms[RoomEffectCount] = {
 	{0.0, 0.0, 0.001, 0.999, 0.0, 0.2, 0.8, 2.0, 0.05},	  // 28
 };
 
-// Levels as worked out from the engine's mix, for tuning by ear.
 constexpr float VanillaReverbLevel = 1;
 constexpr float VanillaEchoLevel = 1;
 
-// Each room's reverb and echo, in dB, set to vanilla's as measured: a click in every room type recorded in vanilla and
-// here, each room's response against room 0's (every room now within about 2 dB of vanilla's).
 constexpr float VanillaReverbTrim[RoomEffectCount] = {
 	0, 0, 0, 0, 0,		// 0-4: no reverb
 	0, 0, 0,			// 5-7 tunnel: matched
@@ -196,21 +188,16 @@ constexpr float VanillaReverbTrim[RoomEffectCount] = {
 	15, 9, 10,			// 17-19 concrete
 	0, 0, 0,			// 20-22 outside: no reverb
 	10, 11, 11,			// 23-25 cavern
-	30, 0, 27,			// 26-28 weirdo (27: none; 28: its feedback, rounded as the engine's, had run away)
+	30, 0, 27,
 };
 
-// 2-7, by band (2026-11-04: the tail split into 0.1-8 kHz bands, against vanilla's): an echo's first repeat here is the
-// sound itself, in vanilla it has gone once through the feedback (2-4: 2.5 dB louder here); and the engine's three-tap
-// lowpass, run at its 22050 Hz, takes far more highs off each time round than AL_ECHO_DAMPING can (5-7's short echoes
-// rang 3-6 dB loud at 0.5-3 kHz, tinny). Lowered, each band up to 3 kHz is within about 1 dB (6-7's bass and 7's
-// 1.5-3 kHz within 3).
 constexpr float VanillaEchoTrim[RoomEffectCount] = {
-	0, -15, -3, -3, -3, // 0-4: room 1's faint 65 ms echo barely there in vanilla
+	0, -15, -3, -3, -3,
 	-3, -3, -4,			// 5-7 tunnel
 	0, 0, 0,			// 8-10: no echo
 	0, 0, 0,			// 11-13: no echo
 	0, -3, -6,			// 14-16 water
-	0, 0, -8,			// 17-19 concrete (19: as outdoors)
+	0, 0, -8,
 	-11, -11, -9,		// 20-22 outside
 	0, 0, 0,			// 23-25 cavern
 	0, -6, 0,			// 26-28
@@ -221,18 +208,13 @@ static float DecibelsToGain(float decibels)
 	return std::pow(10.f, decibels / 20);
 }
 
-// The engine keeps a feedback as an integer, (int)(255 * value), and applies it shifted down 8 (out of 256): 0.999
-// is 0.992, so a short delay fed back on itself (room 27) dies away rather than ringing on.
 static float EngineFeedback(float value)
 {
 	return std::floor(255 * std::clamp(value, 0.f, 1.f)) / 256;
 }
 
-// The longest echo delay OpenAL takes (AL_ECHO_MAX_DELAY): longer ones (outdoors, caverns: 0.3-0.38 s) are made this,
-// their feedback lowered to die away as fast.
 constexpr float MaxEchoDelay = 0.207f;
 
-// A two-tap average's gain at 5 kHz (the effects' high frequency reference), at 44.1 kHz.
 constexpr float TwoTapAverageHF = 0.937f;
 
 static const VanillaRoom& GetVanillaRoom(unsigned int roomType)
@@ -251,11 +233,9 @@ void SetupVanillaReverb(ALuint effectId, unsigned int roomType)
 
 	if (size > 0 && feedback > 0)
 	{
-		// Each line's decay to -60 dB, 3 * length / -log10(feedback); the two averaged.
 		const float decay = 3 * size * (1 + 0.71f) * 0.5f / -std::log10(feedback);
 		reverb.flDecayTime = std::clamp(decay, 0.1f, 20.f);
 
-		// The lowpass in the loop takes away highs a little each time round.
 		reverb.flDecayHFRatio = room.ReverbLowpass != 0
 									? std::clamp(std::log(feedback) / std::log(feedback * TwoTapAverageHF), 0.1f, 2.f)
 									: 1.f;
@@ -264,11 +244,9 @@ void SetupVanillaReverb(ALuint effectId, unsigned int roomType)
 		reverb.flReflectionsDelay = size * 0.71f;
 		reverb.flLateReverbDelay = std::clamp(size * 0.29f, 0.f, 0.1f);
 
-		// Two lines (their loudness, broadband: 1 / sqrt(1 - feedback^2) each) at about 0.029 each.
 		const float level = 0.0286f * std::sqrt(2.f) / std::sqrt(1 - feedback * feedback) * VanillaReverbLevel *
 							DecibelsToGain(VanillaReverbTrim[roomType < RoomEffectCount ? roomType : 0]);
 
-		// Past what its overall gain takes (1), the rest on its late reverb (to 10).
 		reverb.flGain = std::min(level, 1.f);
 		reverb.flLateReverbGain = std::min(reverb.flLateReverbGain * std::max(level, 1.f), 10.f);
 
@@ -328,7 +306,6 @@ void SetupVanillaEcho(ALuint effectId, unsigned int roomType)
 
 	alEffecti(effectId, AL_EFFECT_TYPE, AL_EFFECT_ECHO);
 
-	// Both taps together: one echo, every delay, fed back from the second.
 	alEffectf(effectId, AL_ECHO_DELAY, std::clamp(delay, AL_ECHO_MIN_DELAY, AL_ECHO_MAX_DELAY));
 	alEffectf(effectId, AL_ECHO_LRDELAY, 0);
 	alEffectf(effectId, AL_ECHO_FEEDBACK, std::clamp(feedback, 0.f, AL_ECHO_MAX_FEEDBACK));
@@ -355,16 +332,12 @@ float VanillaEchoGain(unsigned int roomType)
 
 std::vector<float> VanillaRoomResponse(unsigned int roomType)
 {
-	// Long enough for every room's tail to fall 60 dB (the tunnels' hum, 7 and 27, takes longer: cut and faded here).
 	constexpr float MaxSeconds = 6;
 	constexpr float FadeSeconds = 0.25f;
 
 	const auto& room = GetVanillaRoom(roomType);
 	const int length = static_cast<int>(MaxSeconds * VanillaResponseRate);
 
-	// The engine's processing (Xash3D's SX_RoomFX, which matches Steam Half-Life's measured rooms) of a click, the
-	// whole mix in: its two reverb lines, then its delay line on the result. Both mix in mono, (left + right) / 2, and
-	// add to both channels alike. The click itself taken off: the effect send is only what the room adds.
 	struct Line
 	{
 		int Length;
@@ -415,7 +388,6 @@ std::vector<float> VanillaRoomResponse(unsigned int roomType)
 		{
 			float value = mix + delayFeedback * delayLine[i];
 
-			// Its three-tap lowpass is recursive: it takes far more off each time round than the effects can.
 			if (room.DelayLowpass != 0)
 			{
 				value = (lowpass0 + lowpass1 + value) / 3;

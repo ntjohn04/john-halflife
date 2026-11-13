@@ -34,7 +34,6 @@ extern engine_studio_api_t IEngineStudio;
 
 namespace
 {
-// The models' sequences by their activities (activity.h, the server's).
 constexpr int ActIdle = 1;
 constexpr int ActWalk = 3;
 constexpr int ActRun = 4;
@@ -42,80 +41,49 @@ constexpr int ActHop = 7;
 constexpr int ActCrouch = 17;
 constexpr int ActCrouchIdle = 18;
 constexpr int ActHover = 50;
-// None of the engine's: on a ladder, walking's pose stepping as it climbs, up or down (a loop each LadderSteps strides
-// climbed, LadderStride if the pose has none: a little slower than walking), held where it is while still; no arms
-// (none of the games has a climbing pose: the hazard course hologram's "ladder" is her pointing at one).
 constexpr int ActLadder = -2;
 constexpr float LadderStride = 64;
 constexpr float LadderSteps = 1.3f;
 
-// As the server's CBasePlayer::SetAnimation: running above this speed, walking above nothing, the legs' turn flipped to
-// walking backwards past this far from where the player looks (the engine's StudioProcessGait).
 constexpr float RunSpeed = 220;
 constexpr float StillSpeed = 5;
 constexpr float BackwardsTurn = 120;
 
-// How far behind the eyes it stands, so mostly its legs are seen looking down; crouched, a little further (its legs
-// come forward).
 constexpr float Offset = 14;
 constexpr float CrouchedOffset = 4;
 
-// Jumping, its arms no further through the player model's jump than this frame (of its 34), raised JumpArmsRaise degrees
-// (negative: forward) and moved JumpArmsForward and JumpArmsUp units, closer to the eyes, as view models are: [0] both
-// arms drawn (or none), [1] one (a one-handed weapon's free arm, swung back out of the weapon's way).
 constexpr float JumpArmsFrame = 21;
 constexpr float JumpArmsRaise[2] = {-45, 90};
 constexpr float JumpArmsForward[2] = {4, 5};
 constexpr float JumpArmsUp[2] = {-2, 0};
 
-// Running, its arms (the lab coat's swing) raised RunArmsRaise degrees (positive: back) and moved RunArmsForward and
-// RunArmsUp units: at a near-level view, more of the swing in sight than fingertips popping up.
 constexpr float RunArmsRaise = 25;
 constexpr float RunArmsForward = 1;
 constexpr float RunArmsUp = 0;
 
-// How many of its spine's bones are kept above the hips: all of them (its neck and head hidden).
 constexpr int KeptSpine = 4;
 
-// Crawling, a loop (two steps) in no more than this many seconds: slow (walk mode's crouching alone is 2.5), not far
-// off its footsteps (500 ms apart at their slowest crouched, pm_shared.cpp's PM_UpdateStepSound).
 constexpr float CrouchedSlowestLoop = 1.8f;
 
-// Off the ground this long, or going up (a jump), the legs take the jump's pose; less is a step down.
 constexpr float FallTime = 0.15f;
 
-// Moving, it stays so until it's been still this long: walking along a wall, the speed can flicker to nothing and back.
 constexpr float StillTime = 0.1f;
 
-// The eyes' height above a standing player's origin (VEC_VIEW): in the air, it hangs from the eyes as a standing jump's.
 constexpr float StandingEyeHeight = 28;
 
-// Gordon before the HEV suit: Blue Shift's lab coat Gordon, precached by the server (W_Precache) where the player is
-// Half-Life's own model. A monster's model: its origin at its feet, not the hull's middle.
 constexpr const char* HalfLifePlayer = "models/player.mdl";
 constexpr const char* BlueShiftPlayer = "models/bshift/player.mdl"; // Barney.
 constexpr const char* OpposingForcePlayer = "models/op4/player.mdl"; // Adrian.
 constexpr const char* LabCoatGordon = "models/gordon_scientist.mdl";
 
-// Barney without his vest: Blue Shift's guard in his shirt and tie, no vest or helmet (Unified's dead_barney.mdl, despite
-// its name with a walk, a jog and idles), likewise a monster's model. Blue Shift starts with the HUD; its vest is its
-// armor: none left, he's in his shirt, and a vest picked up puts it on (a helmet alone or a charger doesn't).
 constexpr const char* VestlessBarney = "models/dead_barney.mdl";
 constexpr const char* ArmorVest = "item_armorvest";
 
-// Adrian in boot camp before his vest (its suit, ofboot2): the recruits' training clothes (Opposing Force's recruit.mdl,
-// its biped's newer names: JhlBoneName), likewise a monster's model. Only in boot camp: the campaign's Osprey (of0a0)
-// and its crash (of1a1, before the suit's found again) have no suit either, but he's in his fatigues there.
 constexpr const char* Recruit = "models/recruit.mdl";
 constexpr const char* BootCampMaps = "maps/ofboot";
 
-// Boot camp's first map: he starts it standing at ease as the other recruits do (the recruit's own standing, hands
-// behind his back), until he first moves.
 constexpr const char* AtEaseMap = "maps/ofboot0.bsp";
 
-// Treading water, the pose the hazard course's hologram's as she treads water (holo.mdl's treadwater, both arms
-// sculling; the player models' hold a weapon out, and with one out their back leaned into view), where it's precached
-// (W_Precache).
 constexpr const char* WaterArms = "models/holo.mdl";
 constexpr const char* WaterArmsSequence = "treadwater";
 struct Movement
@@ -125,7 +93,7 @@ struct Movement
 	Vector Velocity;
 	float EyeHeight = 0; // Above the origin (view_ofs).
 	float FeetDepth = 0; // Below it (the hull's bottom).
-	bool Crouched = false; // Fully: going down, the camera lowers first, the hull standing.
+	bool Crouched = false;
 	bool OnGround = false;
 	int WaterLevel = 0;
 	int MoveType = 0;
@@ -137,23 +105,20 @@ cvar_t* g_Enabled = nullptr;
 Movement g_Movement;
 cl_entity_t g_Body;
 double g_LastTime = 0;
-float g_Cycle = 0;	 // Through the legs' loop, 0 to 1.
+float g_Cycle = 0;
 float g_AirTime = 0; // Since leaving the ground.
 float g_StillTime = 0; // Since it last moved.
 float g_LegYaw = 0;	   // The way its legs last went.
-bool g_Arms = false;   // Its arms drawn: no view model (no weapon, holstered), so nothing else is the player's arms.
-bool g_LeftArm = false;	 // Its left arm drawn: both drawn, or a weapon held in the right hand only (OneHanded).
-bool g_RightArm = false; // Its right arm drawn: both drawn, or the satchel itself (held in the left).
-bool g_Crouching = false; // In a crouching pose (crouched, not in the air).
-int g_HandsIndex = 0;	   // The model whose hands it's drawn with (JhlBody_HandsModel), 0 its own.
+bool g_Arms = false;
+bool g_LeftArm = false;
+bool g_RightArm = false;
+bool g_Crouching = false;
+int g_HandsIndex = 0;
 
-// Barney's vest (JhlBody_Armor). A map loaded, the first armor told decides: the same as before it, a level change, the
-// vest as it was; otherwise (a save loaded) worn with any armor.
 bool g_Vest = true;
 bool g_ArmorKnown = false;
 int g_LastArmor = -1;
 
-// Standing at ease (AtEaseMap): decided on a map's first frame (g_AtEaseUndecided), ended by moving.
 bool g_AtEase = false;
 bool g_AtEaseUndecided = true;
 
@@ -200,8 +165,6 @@ int FindSequence(const studiohdr_t* header, const char* name)
 	return -1;
 }
 
-// The pose for the player's movement, and those it falls back to where a model hasn't it (the lab coat's monster has
-// no jump or swim). Standing still, the player model's deep_idle, as the server's gait.
 int PickSequence(const studiohdr_t* header, int activity)
 {
 	int sequence = FindActivity(header, activity);
@@ -220,9 +183,6 @@ int PickSequence(const studiohdr_t* header, int activity)
 	return std::max(sequence, 0);
 }
 
-// dressed: a monster's model posed as the player model (the recruit: its own walk and run unusable, its walk's hips 17
-// units ahead of its standing ones), standing, walking and running the player model's legs and the lab coat's arms over
-// them, as Adrian himself is (CStudioModelRenderer::JhlSetupBorrowedBones, vuser3).
 model_t* PickModel(cl_entity_t* player, int& index, bool& monster, bool& dressed)
 {
 	index = player->curstate.modelindex;
@@ -233,9 +193,6 @@ model_t* PickModel(cl_entity_t* player, int& index, bool& monster, bool& dressed
 	if (!model || model->type != mod_studio)
 		return nullptr;
 
-	// The player's model as the map's game has it (Unified's model replacement: Barney, Adrian), Gordon's lab coat before
-	// the suit, Barney's shirt without his vest; none if that isn't precached (the map had no room, or no Blue Shift for
-	// the lab coat).
 	const char* other = nullptr;
 
 	if (0 == std::strcmp(model->name, HalfLifePlayer) && !gHUD.HasSuit())
@@ -264,8 +221,6 @@ model_t* PickModel(cl_entity_t* player, int& index, bool& monster, bool& dressed
 	return model;
 }
 
-// The view model's free hand, by its file (any campaign's copy): 'L' its left arm drawn (held in the right hand only),
-// 'R' its right (the satchel itself, held in the left), 0 none (both hands on it).
 char OneHanded(const model_t* viewModel, int sequence)
 {
 	static constexpr const char* RightHanded[] = {"v_crowbar.mdl", "v_pipe_wrench.mdl", "v_knife.mdl", "v_bgrap.mdl",
@@ -274,7 +229,6 @@ char OneHanded(const model_t* viewModel, int sequence)
 	const char* slash = std::strrchr(viewModel->name, '/');
 	const char* file = slash ? slash + 1 : viewModel->name;
 
-	// The grenade's pin pulled by its own left hand (pinpull, 2); the .357 reloaded with both (reload, 3).
 	if ((0 == stricmp(file, "v_grenade.mdl") && sequence == 2) || (0 == stricmp(file, "v_357.mdl") && sequence == 3))
 		return 0;
 
@@ -339,11 +293,9 @@ void JhlBody_CreateEntities()
 	if (!header || header->numseq <= 0)
 		return;
 
-	// Barney in his shirt with his vest's hands (the shirt's are pale, blocky ones, its sleeves the same).
 	if (0 == std::strcmp(model->name, VestlessBarney))
 		g_HandsIndex = player->curstate.modelindex;
 
-	// The pose: the movement as just predicted, changed at once (no blend), as Half-Life's movement is.
 	const Movement& move = g_Movement;
 	const float speed = move.MoveType == MOVETYPE_FLY ? move.Velocity.Length() : move.Velocity.Length2D();
 	const bool inWater = move.WaterLevel >= 2;
@@ -356,7 +308,7 @@ void JhlBody_CreateEntities()
 	int activity = ActIdle;
 
 	if (inWater)
-		activity = ActHover; // Treading water, upright: swimming's pose lies along the view.
+		activity = ActHover;
 	else if (move.MoveType == MOVETYPE_FLY)
 		activity = ActLadder;
 	else if (inAir && (move.Velocity.z > 0 || g_AirTime > FallTime))
@@ -368,10 +320,8 @@ void JhlBody_CreateEntities()
 	else if (moving)
 		activity = ActWalk;
 
-	// A crouching jump jumps as a standing one: its pose, arms and back, hung from the eyes (StandingEyeHeight).
 	g_Crouching = move.Crouched && activity != ActHop;
 
-	// Boot camp's first map started standing at ease, until it first moves; the recruit's own standing then.
 	if (g_AtEaseUndecided)
 	{
 		const char* level = gEngfuncs.pfnGetLevelName();
@@ -379,8 +329,6 @@ void JhlBody_CreateEntities()
 		g_AtEaseUndecided = false;
 	}
 
-	// Ended by moving itself: going along, crouching, jumping, a ladder or water (not the moment a map starts counted as
-	// moving, StillTime, nor settling onto the floor), standing till then.
 	if (speed > StillSpeed || move.Crouched || (inAir && move.Velocity.z > 0) || inWater || move.MoveType == MOVETYPE_FLY)
 		g_AtEase = false;
 
@@ -390,10 +338,8 @@ void JhlBody_CreateEntities()
 		g_Crouching = false;
 	}
 
-	// Posed as the player model, its legs, the lab coat's arms over them: the player models, and the recruit but at ease.
 	const bool playerPoses = !monster || (dressed && !g_AtEase);
 
-	// No view model (no weapon, holstered): its arms are drawn, nothing else being the player's (below).
 	const cl_entity_t* viewModel = gEngfuncs.GetViewModel();
 	g_Arms = (!viewModel || !viewModel->model) && !g_Crouching && activity != ActLadder;
 	const char freeHand = viewModel && viewModel->model && !g_Crouching && activity != ActLadder ? OneHanded(viewModel->model, viewModel->curstate.sequence) : 0;
@@ -416,10 +362,6 @@ void JhlBody_CreateEntities()
 			waterArms = nullptr;
 	}
 
-	// The lab coat's monster jumping, crouching or in water: the player model's pose (its poses are only walking ones),
-	// drawn on his bones (CStudioModelRenderer::JhlSetupBorrowedBones). The player model is his here (PickModel). In
-	// water every model takes the hologram's whole pose, her legs too, its arms drawn or not (one pose is borrowed at a
-	// time; her arms over the player models' own treading legs looked worse).
 	const studiohdr_t* poseHeader = header;
 	int poseIndex = player->curstate.modelindex;
 	int sequence = -1;
@@ -444,15 +386,10 @@ void JhlBody_CreateEntities()
 	const auto& description = Sequences(poseHeader)[sequence];
 	const float frames = static_cast<float>(std::max(description.numframes - 1, 1));
 
-	// The player models' upper bodies hold a weapon out in every pose, lunging and twisting the back as they run; standing,
-	// walking and running, they take the lab coat's instead (his own poses, arms at his sides), half a loop on (his loops
-	// start on the other foot), where it's precached (W_Precache), a weapon out or not (its arms hidden then). Crouching,
-	// none: their crouching arms hold one out too; treading water, the hologram's whole pose (above).
 	const studiohdr_t* armsHeader = nullptr;
 	int armsIndex = 0;
 	int armsSequence = -1;
 
-	// A monster's model (the lab coat, Barney's shirt), running, its own (for its arms moved, below).
 	if (!g_Crouching && (playerPoses ? (activity == ActIdle || activity == ActWalk || activity == ActRun) : activity == ActRun))
 	{
 		armsIndex = playerPoses ? gEngfuncs.pEventAPI->EV_FindModelIndex(LabCoatGordon) : modelIndex;
@@ -463,8 +400,6 @@ void JhlBody_CreateEntities()
 			armsHeader = nullptr;
 	}
 
-	// The legs turned the way it moves (backwards past BackwardsTurn), the player model's back turned the rest of the way
-	// to where it looks (its four spine controllers, as the engine's StudioProcessGait); still, the way it looks.
 	Vector viewAngles;
 	gEngfuncs.GetViewAngles(viewAngles);
 	const float viewYaw = viewAngles[YAW];
@@ -473,7 +408,6 @@ void JhlBody_CreateEntities()
 
 	if (moving && !inWater && move.MoveType != MOVETYPE_FLY)
 	{
-		// The way it goes; a moment still (StillTime), the way it last went.
 		if (speed > StillSpeed)
 			g_LegYaw = std::atan2(move.Velocity.y, move.Velocity.x) * 180 / static_cast<float>(PI);
 
@@ -486,10 +420,6 @@ void JhlBody_CreateEntities()
 		}
 	}
 
-	// Through its loop in time, walking and running as made (their strides far shorter than the player's speeds, their
-	// steps as the footsteps); crawling as far as it moves, its stride near a crouched player's (a third of the speed),
-	// slower in walk mode but no slower than its footsteps (CrouchedSlowestLoop); backwards walking backwards. A jump from
-	// leaving the ground, held at its end.
 	const float stride = description.linearmovement.Length();
 
 	if (activity == ActHop)
@@ -512,25 +442,16 @@ void JhlBody_CreateEntities()
 	g_Body.curstate.sequence = sequence;
 	g_Body.curstate.frame = g_Cycle * 256;
 
-	// Jumping, the player model's pose without its root's motion (playerclass 2), its own drawn as the lab coat's is: the
-	// jump has its arc in it, the whole body rising 20 units, sinking 37 below standing as it lands, and leaning 29 degrees
-	// forward, its neck and shoulders brought under the eyes and far below them (a fall's wide view of its back).
-	// Dressed (the recruit) standing, walking or running, the player model's pose its own (vuser3), the lab coat's arms
-	// over it (below).
 	const bool dressedBase = dressed && poseHeader != header && armsHeader && activity != ActHop;
 
 	if ((poseHeader != header && !dressedBase) || activity == ActHop)
 	{
-		g_Body.curstate.sequence = PickSequence(header, ActIdle); // For any bone the player model hasn't.
+		g_Body.curstate.sequence = PickSequence(header, ActIdle);
 		g_Body.curstate.iuser1 = poseIndex;
 		g_Body.curstate.iuser2 = sequence + 1;
 		g_Body.curstate.fuser3 = g_Cycle * frames;
 		g_Body.curstate.fuser4 = g_Crouching ? 18 : 36;
 
-		// None of its rise or sinking; its back upright; its arms held at JumpArmsFrame, spread out (after it they come
-		// back in to hold a weapon: the right hand's grip in a fall, which holds its last frame), and moved and raised
-		// forward, closer to the eyes, as view models are (the upright shoulders are further back than the leaning ones
-		// they hung from).
 		if (activity == ActHop)
 		{
 			g_Body.curstate.playerclass = 2;
@@ -552,7 +473,7 @@ void JhlBody_CreateEntities()
 
 		if (dressedBase)
 		{
-			g_Body.curstate.sequence = PickSequence(header, ActIdle); // For any bone the player model hasn't.
+			g_Body.curstate.sequence = PickSequence(header, ActIdle);
 			g_Body.curstate.vuser3 = Vector{static_cast<float>(poseIndex), static_cast<float>(sequence + 1), g_Cycle * frames};
 		}
 
@@ -572,10 +493,6 @@ void JhlBody_CreateEntities()
 	g_Body.curstate.animtime = static_cast<float>(time);
 	g_Body.curstate.framerate = 0;
 	g_Body.curstate.iuser4 = JhlBodyMarker;
-	// Crouched, only its legs: its back would be in view. Jumping (its back upright), with its arms drawn all its spine,
-	// shoulders and arms moving together; with a weapon out, as much as shows no shoulders moving without the view model's
-	// hands: the HEV suit's first three, Barney's and the lab coat's first two, Adrian's all (with three, his belly
-	// vanishes; with all, his shoulders move, the better of the two).
 	int jumpSpine = KeptSpine;
 
 	if (!g_Arms)
@@ -601,9 +518,6 @@ void JhlBody_CreateEntities()
 	for (int i = 0; i < 4; ++i)
 		g_Body.curstate.controller[i] = g_Body.latched.prevcontroller[i] = static_cast<byte>(std::clamp(twist, 0.f, 255.f));
 
-	// Its origin above the player's feet (JhlBody_Place): the player model's is the hull's middle as the engine draws
-	// players (its crouching poses made for the crouching hull's), the monster's its feet. In the air, below the eyes as a
-	// standing player's: crouching in a jump tucks the hull's feet up, the camera low in it.
 	if (activity == ActHop)
 		g_Body.curstate.fuser1 = move.EyeHeight - StandingEyeHeight - (monster ? 36 : 0);
 	else
@@ -616,7 +530,6 @@ void JhlBody_CreateEntities()
 
 bool JhlBody_Place(cl_entity_t* entity, const float* viewOrigin)
 {
-	// Drawn only from the player's own eyes: not a camera elsewhere (a map's, third person).
 	const Vector& origin = g_Movement.Origin;
 	const Vector eye = origin + Vector{0, 0, g_Movement.EyeHeight};
 	const Vector view{viewOrigin[0], viewOrigin[1], viewOrigin[2]};
@@ -624,8 +537,6 @@ bool JhlBody_Place(cl_entity_t* entity, const float* viewOrigin)
 	if ((view - eye).Length() > 48)
 		return false;
 
-	// On the player's feet where the movement has them, whatever the camera's smoothing does (stairs, crouching, landing),
-	// behind the eyes (Offset) along where the player looks.
 	const float yaw = entity->curstate.fuser2 * static_cast<float>(PI) / 180;
 	const float offset = Offset + (g_Crouching ? CrouchedOffset : 0);
 
@@ -637,22 +548,19 @@ bool JhlBody_Place(cl_entity_t* entity, const float* viewOrigin)
 
 void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*bones)[3][4], float (*lightBones)[3][4])
 {
-	// Its head hidden, and its arms from the shoulders while there's a view model (its arms are the player's; the
-	// collarbones kept, Barney's vest hanging from them), and its spine above its iuser3 bones over the hips with all
-	// above but its arms while they're drawn. Its bones come after their parents.
 	const auto* bone = reinterpret_cast<const mstudiobone_t*>(reinterpret_cast<const byte*>(header) + header->boneindex);
 	const int count = std::min(header->numbones, MAXSTUDIOBONES);
 	const int keptSpine = entity->curstate.iuser3;
 
-	int cut[MAXSTUDIOBONES];		  // The first hidden bone it's under (itself), -1 if shown.
-	int spineDepth[MAXSTUDIOBONES]{}; // Its place up the spine: 1 its first bone above the hips.
+	int cut[MAXSTUDIOBONES];
+	int spineDepth[MAXSTUDIOBONES]{};
 
 	for (int i = 0; i < count; ++i)
 	{
 		const int parent = bone[i].parent >= 0 && bone[i].parent < i ? bone[i].parent : -1;
 		const bool spine = std::strstr(bone[i].name, "Spine") != nullptr;
 		char nameBuffer[32];
-		const char* name = JhlBoneName(bone[i].name, nameBuffer); // The recruit's as the player models'.
+		const char* name = JhlBoneName(bone[i].name, nameBuffer);
 		const std::size_t length = std::strlen(name);
 		const bool head = std::strstr(name, "Head") != nullptr;
 		const bool shown = std::strstr(name, " L ") ? g_LeftArm : std::strstr(name, " R ") ? g_RightArm : g_Arms;
@@ -669,8 +577,6 @@ void JhlBody_Pose(const cl_entity_t* entity, const studiohdr_t* header, float (*
 		if (cut[i] < 0)
 			continue;
 
-		// Every bone hidden together shrunk to one point, where it's cut off: a triangle between them is nothing then, not
-		// one stretched between their joints (a hand's, the head's), and the shown body closes up to that point.
 		for (int row = 0; row < 3; ++row)
 		{
 			for (int column = 0; column < 3; ++column)

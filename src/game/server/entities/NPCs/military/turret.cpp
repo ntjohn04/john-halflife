@@ -629,9 +629,6 @@ void CBaseTurret::ActiveThink()
 	MoveTurret();
 }
 
-// johnhalflife (jhl_fx_particlesystem): a turret's shot's effects at its muzzle (the client's, weapon_effects.cpp's
-// JhlTank_ParseFire, a mounted gun's as a smaller gun, kind 4): a flickering flash, a light on top of the engine's
-// (EF_MUZZLEFLASH), a wisp and its brass: rifle casings for 12 mm (as func_tank's TANK_BULLET_12MM, 3), else 9 mm.
 static void JhlTurretShot(const Vector& muzzle, const Vector& direction, bool rifle)
 {
 	if (!UTIL_JhlParticleSystem())

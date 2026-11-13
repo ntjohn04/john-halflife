@@ -1504,7 +1504,6 @@ void CBasePlayer::PlayerUse()
 	}
 }
 
-// Kicks the player's view with a spring-damped punch on the client. The client decides whether to show it.
 static void SendSmoothPunch(CBasePlayer* player, const Vector& kick, float spring, float damping)
 {
 	MESSAGE_BEGIN(MSG_ONE, gmsgSmoothPunch, nullptr, player);
@@ -1825,7 +1824,6 @@ void CBasePlayer::UpdateEntityInfo()
 
 void CBasePlayer::PreThink()
 {
-	// johnhalflife: player movement reads jhl_physics_fpsfix from here, as the client's prediction of it does.
 	if (const char* fpsFix = UTIL_JhlFpsFix() ? "1" : "0"; 0 != strcmp(g_engfuncs.pfnGetPhysicsKeyValue(edict(), "jfps"), fpsFix))
 	{
 		g_engfuncs.pfnSetPhysicsKeyValue(edict(), "jfps", fpsFix);
@@ -1837,7 +1835,6 @@ void CBasePlayer::PreThink()
 		g_engfuncs.pfnSetPhysicsKeyValue(edict(), "jwf", wallFix);
 	}
 
-	// johnhalflife: and jhl_camera_jumplandjolt, for the long jump's sound.
 	if (const char* jolt = UTIL_JhlJumpLandJolt() ? "1" : "0"; 0 != strcmp(g_engfuncs.pfnGetPhysicsKeyValue(edict(), "jlj"), jolt))
 	{
 		g_engfuncs.pfnSetPhysicsKeyValue(edict(), "jlj", jolt);
@@ -2634,7 +2631,6 @@ void CBasePlayer::PostThink()
 	// do weapon stuff
 	ItemPostFrame();
 
-	// Landing jolt, dipping the view in proportion to how fast the player fell.
 	if (FBitSet(pev->flags, FL_ONGROUND) && pev->health > 0 && m_flFallVelocity >= 75)
 	{
 		SendSmoothPunch(this, {-0.01f * m_flFallVelocity, 0, 0}, 50, 8);
@@ -3911,7 +3907,6 @@ void CBasePlayer::UpdateClientData()
 		WRITE_BYTE(0);
 		MESSAGE_END();
 
-		// johnhalflife: the music as saved, played again if a save was loaded.
 		JhlMusic_SendToClient(this);
 
 		if (!m_fGameHUDInitialized)

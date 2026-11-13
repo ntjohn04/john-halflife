@@ -51,11 +51,6 @@ inline HSPRITE SPR_Load(const std::string& spriteName)
 	return gEngfuncs.pfnSPR_Load(spriteName.c_str());
 }
 
-// HUD scale (jhl_hud_scale): the sprite HUD is laid out on a virtual screen of HudWidth x HudHeight
-// (the real size divided by the scale) and the drawing functions below scale it back up to real pixels.
-// Engine text can't be scaled, so text keeps its size and is only positioned in HUD units.
-// VGUI and other code that works in real pixels keeps using ScreenWidth/ScreenHeight.
-
 void SPR_Set(HSPRITE hPic, const RGB24& color);
 
 #define SPR_Frames (*gEngfuncs.pfnSPR_Frames)
@@ -79,7 +74,6 @@ void FillRGBA(int x, int y, int width, int height, const RGB24& color, int a);
 // ScreenWidth returns the width of the screen, in pixels
 #define ScreenWidth (gHUD.m_scrinfo.iWidth)
 
-// Size of the virtual screen the sprite HUD is laid out on (see HUD scale above)
 #define HudHeight (gHUD.m_HudScreenInfo.iHeight)
 #define HudWidth (gHUD.m_HudScreenInfo.iWidth)
 

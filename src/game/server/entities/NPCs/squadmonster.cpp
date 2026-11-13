@@ -514,7 +514,6 @@ const Schedule_t* CSquadMonster::GetScheduleOfType(int iType)
 
 bool CSquadMonster::TakeDamage(CBaseEntity* inflictor, CBaseEntity* attacker, float flDamage, int bitsDamageType)
 {
-	// No attacker: damage from a projectile whose owner has been removed (GetOwner() is null once its owner is freed).
 	if (attacker && flDamage >= pev->max_health)
 	{
 		auto squadLeader = MySquadLeader();

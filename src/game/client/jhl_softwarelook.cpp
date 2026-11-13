@@ -26,15 +26,14 @@
 namespace
 {
 cvar_t* g_16BitColor = nullptr;
-cvar_t* g_RenderFixes = nullptr; // Model lighting, and (jhl_skyboxes.cpp) sampling and the sky's.
-cvar_t* g_SoftwareWater = nullptr;  // jhl_visuals_softwarewater (jhl_softwarewater.cpp's): its view under water too.
+cvar_t* g_RenderFixes = nullptr;
+cvar_t* g_SoftwareWater = nullptr;
 cvar_t* g_TextureMode = nullptr;
 cvar_t* g_PreferFiltering = nullptr;
-bool g_SetTextureMode = false; // gl_texturemode is this setting's.
+bool g_SetTextureMode = false;
 
 JhlGL& gl = g_JhlGL;
 
-// The software water's setting, its view under water with it (registered by jhl_softwarewater.cpp, after this).
 bool SoftwareWaterOn()
 {
 	if (!g_SoftwareWater)
@@ -54,13 +53,10 @@ enum class State
 
 State g_State = State::NotTried;
 
-// The frame copied: a texture the size of the view, in a framebuffer to blit into (blitting resolves a multisampled
-// frame, which can't be copied directly).
 GLuint g_Texture = 0;
 GLuint g_Framebuffer = 0;
 GLint g_TextureSize[2]{};
 
-// A way of drawing the copied frame back over the view: its program and where its uniforms are.
 struct Pass
 {
 	const char* FragmentShader;
@@ -78,7 +74,6 @@ void main()
 }
 )";
 
-// Each colour cut down to the software renderer's 16 bits: red and blue to multiples of 8, green of 4 (565).
 Pass g_16BitPass{R"(#version 130
 uniform sampler2D frame;
 uniform ivec2 origin;
@@ -91,10 +86,6 @@ void main()
 }
 )"};
 
-// The view under water as the software renderer drew it: at a lower resolution, stretched back (scale: the frame's
-// pixels a block; each block takes its middle pixel), and fogged its way (softwareFog.w > 0: colour 0-255 and density;
-// the engine's own fog kept off, see JhlSoftwareLook_SetupView). Depth gives each pixel's distance: projection is the 3D
-// view's matrix [10] and [14] and its depth range.
 Pass g_UnderwaterPass{R"(#version 130
 uniform sampler2D frame;
 uniform sampler2D depth;
@@ -194,7 +185,6 @@ bool CreateProgram(Pass& pass)
 	return true;
 }
 
-// Only on the OpenGL renderer (the software one draws in 16 bits itself), and only once it's known to work.
 bool Ready()
 {
 	if (g_State == State::NotTried)
@@ -214,7 +204,6 @@ bool Ready()
 	return g_State == State::Ready;
 }
 
-// The copy's texture sized to the view, attached to its framebuffer.
 bool SizeCopy(GLint width, GLint height)
 {
 	if (g_TextureSize[0] == width && g_TextureSize[1] == height)
@@ -251,8 +240,6 @@ bool SizeCopy(GLint width, GLint height)
 }
 }
 
-// Models' light: the second texture unit, set to multiply what the first gives by a constant 2/3 and scale it by 2 (a
-// combiner can only scale by 1, 2 or 4), sampling a white texel. What it was is put back after.
 constexpr float ModelLightScale = 4.0f / 3.0f;
 
 GLuint g_White = 0;
@@ -274,18 +261,15 @@ struct UnitState
 
 UnitState g_SavedUnit;
 
-// Software's warp buffer (sw.dll sets it at every mode change).
 constexpr float WarpWidth = 320;
 constexpr float WarpHeight = 200;
 
-// The underwater fog's values for its pass (see g_UnderwaterPass).
 struct UnderwaterFog
 {
 	float Projection[4]{};
 	float SoftwareFog[4]{};
 };
 
-// The 3D view as the engine draws it, taken while it's drawing the world (HUD_DrawNormalTriangles).
 struct CapturedView
 {
 	float Time = -1;
@@ -303,7 +287,6 @@ GLint g_DepthSize[2]{};
 GLenum g_DepthFormat = 0;
 bool g_FogFailed = false;
 
-// The engine's fog kept off for this frame (see JhlSoftwareLook_SetupView).
 bool g_EngineFogOff = false;
 
 void JhlSoftwareLook_Initialize()
@@ -392,7 +375,6 @@ void JhlSoftwareLook_EndModel()
 	gl.ActiveTexture(active);
 }
 
-// Copies the view (the viewport) and draws it back over itself through a pass.
 static void RedrawView(const Pass& pass, const GLint (&viewport)[4], float scaleX, float scaleY, const UnderwaterFog* fog = nullptr)
 {
 	if (viewport[2] <= 0 || viewport[3] <= 0 || !SizeCopy(viewport[2], viewport[3]))
@@ -456,7 +438,6 @@ static void RedrawView(const Pass& pass, const GLint (&viewport)[4], float scale
 		gl.Uniform2f(pass.Scale, scaleX, scaleY);
 	}
 
-	// The fog's values, and the view's depth on the second unit; none, without fog.
 	const UnderwaterFog none;
 	const UnderwaterFog& values = fog ? *fog : none;
 	GLint depthUnitTexture = 0;
@@ -500,8 +481,6 @@ static void RedrawView(const Pass& pass, const GLint (&viewport)[4], float scale
 	gl.PopAttrib();
 }
 
-// The view's depth, copied for the underwater fog: a depth texture in the format of the frame's depth buffer (a blit
-// needs them the same).
 static bool CopyDepth(const GLint (&viewport)[4], GLint drawFramebuffer)
 {
 	GLint depthBits = 0, stencilBits = 0, type = GL_UNSIGNED_NORMALIZED;
@@ -511,7 +490,7 @@ static bool CopyDepth(const GLint (&viewport)[4], GLint drawFramebuffer)
 	gl.GetFramebufferAttachmentParameteriv(GL_READ_FRAMEBUFFER, 0 == drawFramebuffer ? GL_STENCIL : GL_STENCIL_ATTACHMENT,
 		GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE, &stencilBits);
 	gl.GetFramebufferAttachmentParameteriv(GL_READ_FRAMEBUFFER, attachment, GL_FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE, &type);
-	gl.GetError(); // A combined depth and stencil buffer can't answer for its stencil alone everywhere.
+	gl.GetError();
 
 	GLenum format = GL_DEPTH_COMPONENT24;
 
@@ -585,8 +564,6 @@ void JhlSoftwareLook_CaptureView()
 		return;
 	}
 
-	// The engine's fog is what it drew the world with (under water: linear, its colour and end, set every frame; it
-	// turns fog off around this callback, so whether it's on can't be asked here).
 	auto& view = g_CapturedView;
 	view.Time = gEngfuncs.GetClientTime();
 	view.EngineFogEnd = 0;
@@ -640,7 +617,6 @@ void JhlSoftwareLook_RunFrame()
 	}
 	else if (g_SetTextureMode && (0 == g_RenderFixes->value || !unfiltered))
 	{
-		// Turned off: back to the menu's mode, if it's still this setting's.
 		if (unfiltered && 0 == stricmp(g_TextureMode->string, Software))
 		{
 			gEngfuncs.Cvar_Set(g_TextureMode->name, Unfiltered);
@@ -652,9 +628,6 @@ void JhlSoftwareLook_RunFrame()
 
 void JhlSoftwareLook_SetupView()
 {
-	// The engine fogs the view under water itself (linear, from the eye, every frame it's under water). For software's
-	// fog instead, OpenGL is told to fog by a fog coordinate of 0 (nothing drawn uses another): linear fog starting at 0
-	// then covers nothing, and the engine's set up stays as it is. Put back as soon as it's not wanted.
 	bool off = false;
 
 	if (SoftwareWaterOn() && !g_FogFailed && JhlGL_Available())
@@ -678,10 +651,6 @@ void JhlSoftwareLook_SetupView()
 
 void JhlSoftwareLook_ViewDrawn()
 {
-	// Software's view under water (sw.dll's R_SetupFrame): in water, slime or lava, drawn into its warp buffer, 320 x
-	// 200 (Quake's, never raised): narrowed to 320 wide keeping its shape, then no more than 200 tall (its width kept,
-	// so its pixels aren't square), and stretched back over the view; fogged as it's stretched (see g_UnderwaterPass).
-	// The HUD is drawn after, as sharp as ever.
 	const bool lowResolution = SoftwareWaterOn();
 	bool fog = lowResolution && !g_FogFailed;
 
@@ -719,8 +688,6 @@ void JhlSoftwareLook_ViewDrawn()
 		scaleY = viewport[3] / std::floor(height);
 	}
 
-	// The fog: software's, from the water's palette as the engine would take it (the water drawn last: here if it's
-	// drawn here, else the engine's own fog's colour and where it ends, 1536 - 4 x density), the engine's kept off.
 	UnderwaterFog underwater;
 	const auto& view = g_CapturedView;
 	fog = fog && g_EngineFogOff && view.Time == gEngfuncs.GetClientTime();

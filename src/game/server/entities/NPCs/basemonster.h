@@ -800,25 +800,13 @@ public:
 	 */
 	bool DeadTakeDamage(CBaseEntity* inflictor, CBaseEntity* attacker, float flDamage, int bitsDamageType);
 
-	/**
-	 *	@brief johnhalflife (jhl_fx_particlesystem): how much bullet damage gibs this monster's corpse, added up over
-	 *	hits (vanilla: bullets never gib corpses), or 0 for never.
-	 */
 	virtual float JhlCorpseGibDamage() { return 0; }
 
 	// Bullet damage its corpse has taken (JhlCorpseGibDamage).
 	float m_JhlCorpseDamage = 0;
 
-	/**
-	 *	@brief johnhalflife (jhl_fx_keepcorpses): whether its corpse fades now it's come to rest. Vanilla fades those a
-	 *	monstermaker made and those the map flagged to fade (ShouldFadeOnDeath); with the setting they're kept, the
-	 *	oldest faded past JhlKeptCorpses of them.
-	 */
 	bool JhlFadeCorpse();
 
-	/**
-	 *	@brief A kept corpse in a monstermaker's way: it fades, out of the way at once. Whether it was one.
-	 */
 	bool JhlMakeRoom();
 
 	// When its corpse was kept (JhlFadeCorpse), or 0.

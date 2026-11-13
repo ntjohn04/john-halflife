@@ -18,8 +18,6 @@
 #define HORNET_TYPE_RED 0
 #define HORNET_TYPE_ORANGE 1
 
-// johnhalflife: hornet colours (CHornet::m_JhlColor): a red-type hornet red or purple-red, an orange one orange,
-// yellow or light brown (so each colour is a fifth of all hornets).
 constexpr int JhlRed = 0;
 constexpr int JhlPurple = 1;
 constexpr int JhlOrange = 2;
@@ -77,15 +75,12 @@ public:
 	float m_flStopAttack;
 	int m_iHornetType;
 
-	// johnhalflife (jhl_fx_particlesystem): its colour within its type, the same behaviour: a red hornet red or
-	// purple-red, an orange one orange, yellow or light brown (each colour a fifth of all hornets). Its trail and its
-	// dart splat.
 	int m_JhlColor = 0;
 
-	// Its trail's colour (johnhalflife's within its type, or vanilla's).
+	// johnhalflife
 	Vector TrailColor() const;
 
-	// johnhalflife: its trail flaring as it commits to its strike (TrackTarget).
+	// johnhalflife
 	void StrikeFlare();
 	float m_flFlySpeed;
 };

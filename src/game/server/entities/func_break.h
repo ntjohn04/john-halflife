@@ -76,11 +76,7 @@ public:
 
 	inline bool Explodable() { return ExplosionMagnitude() > 0; }
 
-	/**
-	 *	@brief johnhalflife: whether breaking this makes an explosion: its own (Explodable), or an env_explosion it
-	 *	targets, directly or through relays (how most of Half-Life's barrels do it). Those are marked as a
-	 *	breakable's (ExplosionSetBreakable), for when they're fired through a relay.
-	 */
+	// johnhalflife: @brief johnhalflife
 	bool ExplodesWhenBroken();
 	inline int ExplosionMagnitude() { return pev->impulse; }
 	inline void ExplosionSetMagnitude(int magnitude) { pev->impulse = magnitude; }
@@ -99,7 +95,7 @@ public:
 	Materials m_Material;
 	Explosions m_Explosion;
 	int m_idShard;
-	int m_idCrateWood = 0; // johnhalflife: wood thrown with a crate's content gibs (set in Precache; not saved).
+	int m_idCrateWood = 0; // johnhalflife
 	float m_angle;
 	string_t m_iszGibModel;
 	string_t m_iszSpawnObject;

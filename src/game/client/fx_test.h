@@ -15,13 +15,6 @@
 
 #pragma once
 
-/**
- *	@brief Registers jhl_fx_test, which plays effects where the player is aiming for designing particle effects
- *	(see docs/README.md#debug-commands).
- */
 void FxTest_Initialize();
 
-/**
- *	@brief Plays the parts of a test effect that are due (delayed smoke, sequences). Call every frame.
- */
 void FxTest_RunFrame();

@@ -103,7 +103,6 @@ void CBasePlayer::SelectItem(const char* pstr)
 	CBasePlayerWeapon* pItem = nullptr;
 
 #ifndef CLIENT_DLL
-	// johnhalflife (jhl_weapons_holster): the HUD's holster, putting the weapon away (lastinv takes it out again).
 	if (FStrEq(pstr, "jhl_holster"))
 	{
 		JhlHolster();
@@ -140,7 +139,6 @@ void CBasePlayer::SelectItem(const char* pstr)
 
 void CBasePlayer::SelectLastItem()
 {
-	// johnhalflife (jhl_weapons_holster): taken out of the holster, back into it.
 	if (!m_pLastWeapon && m_JhlLastHolstered)
 	{
 		JhlHolster();
@@ -168,7 +166,6 @@ void CBasePlayer::DeployWeapon(CBasePlayerWeapon* weapon)
 	if (m_pActiveWeapon)
 		m_pActiveWeapon->Holster();
 
-	// johnhalflife (jhl_weapons_holster): taken out of the holster, lastinv puts it back.
 	m_JhlLastHolstered = weapon && !m_pActiveWeapon && m_JhlHolstered;
 	m_JhlHolstered = false;
 
@@ -184,7 +181,6 @@ void CBasePlayer::DeployWeapon(CBasePlayerWeapon* weapon)
 	}
 }
 
-// johnhalflife (jhl_weapons_holster): the weapon put away, nothing in hand (lastinv takes it out again).
 void CBasePlayer::JhlHolster()
 {
 #ifndef CLIENT_DLL
@@ -194,7 +190,7 @@ void CBasePlayer::JhlHolster()
 		return;
 
 	DeployWeapon(nullptr);
-	weapon->pev->nextthink = 0; // crowbar may be trying to swing again, etc.
+	weapon->pev->nextthink = 0;
 	weapon->SetThink(nullptr);
 	pev->viewmodel = string_t::Null;
 	pev->weaponmodel = string_t::Null;

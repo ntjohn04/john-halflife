@@ -1,25 +1,3 @@
-/***
- *
- *	johnhalflife: the first start (docs/release.md#first-start).
- *
- *	The release ships johnhalflife's files and the Unified SDK's; what's Valve's comes from the player's own games
- *	(valve, gearbox, bshift, next to the mod). On the first start, and whenever SetupVersion is raised, this puts
- *	what the mod folders need from them in place and writes the version to jhl_setup.txt so later starts skip it:
- *
- *	* the files in jhl_setup_files.txt (made by scripts/make_setup_files.py): Opposing Force's and Blue Shift's
- *	  files, their soundtracks, each folder's own versions of files the games share names for;
- *	* the menu: Half-Life's main menu (its hints beside the buttons, as WON had), its background and logo,
- *	  then each folder's own Valve game's over them, so they match the player's version of the game; Opposing
- *	  Force's and Blue Shift's menu buttons in their own fonts and colours (Half-Life's TrackerScheme.res, changed);
- *	* the maps in jhl_setup_maps.txt, converted for the Unified SDK's game code (jhl_mapconvert.cpp);
- *	* Half-Life's glass shards with the chrome their texture's misspelt name kept from them.
- *
- *	It first works out every file it would write, then writes only those that differ from what's there, so running
- *	it again (jhl_setup) changes nothing on a folder set up before, and running it on a development install checks
- *	it against the install.
- *
- ****/
-
 #include <algorithm>
 #include <chrono>
 #include <cctype>
@@ -47,10 +25,6 @@ namespace fs = std::filesystem;
 
 namespace
 {
-// Raise when what the setup makes changes, so installed folders are set up again. 8: Half-Life's shell.mdl, 640_logo.spr
-// and laserdot.spr back, which installing a release over a set-up folder replaced with the Unified SDK's. 9: ba_yard3's
-// Harold on his own models. 10: of3a1b without Half-Life's chapter title; the glass shards' chrome. 11: the main
-// menu's hints back; Half-Life's intro for John Half-Life and Uplink.
 constexpr int SetupVersion = 13;
 
 constexpr const char* BaseFolder = "johnhalflife";
@@ -58,8 +32,6 @@ constexpr const char* StampFile = "jhl_setup.txt";
 constexpr const char* FilesList = "jhl_setup_files.txt";
 constexpr const char* MapsList = "jhl_setup_maps.txt";
 
-// The setup runs as the client loads, before the console keeps anything: its messages wait a few frames, as
-// jhl_settings.cpp's first launch message does.
 constexpr int FramesBeforeMessages = 5;
 bool g_DeferMessages = false;
 std::string g_DeferredMessages;
@@ -79,9 +51,6 @@ void Log(const char* format, ...)
 		gEngfuncs.Con_Printf("%s", text);
 }
 
-// Each game folder's menu: its own Valve game's art over Half-Life's, and whether it has Half-Life's widescreen
-// background (hd_background in its liblist.gam). Opposing Force's and Blue Shift's widescreen backgrounds are their
-// own, shipped (scripts/make_menu_backgrounds.py), so they take only their games' 800x600 ones from here.
 struct MenuFolder
 {
 	const char* Folder;
@@ -96,9 +65,6 @@ constexpr MenuFolder MenuFolders[] = {
 	{"johnhalflife_uplink", nullptr, true},
 };
 
-// A folder's main menu buttons in their own font (shipped in its resource/fonts) and colours, in Half-Life's
-// TrackerScheme.res: the buttons' font (MenuLarge) and their glow's (MenuBlurLarge), and their colours, normal,
-// highlighted and the glow's.
 struct MenuScheme
 {
 	const char* Folder;
@@ -116,7 +82,6 @@ constexpr MenuScheme MenuSchemes[] = {
 	{"johnhalflife_bs", "resource/fonts/CourierPrime-Bold.ttf", "Courier Prime", "150 190 255 255", "215 232 255 255", "90 150 255 255"},
 };
 
-// What a file is made from: another file, or contents worked out here.
 using Source = std::variant<fs::path, std::string>;
 
 struct SetupStats
@@ -161,8 +126,6 @@ std::string Lower(std::string text)
 	return text;
 }
 
-// The files to write, by path in lower case: the games name the same file in different cases (Opposing Force's
-// game_menu.TGA is Half-Life's game_menu.tga), and a later source replaces an earlier one, keeping the first name.
 class Plan
 {
 public:
@@ -178,7 +141,6 @@ private:
 	std::map<std::string, std::pair<fs::path, Source>> m_Files;
 };
 
-// The files in a folder whose names start and end as given (any case), as a file name pattern "start*end".
 std::vector<fs::path> Matching(const fs::path& folder, const std::string& start, const std::string& end = {})
 {
 	std::vector<fs::path> files;
@@ -198,7 +160,6 @@ std::vector<fs::path> Matching(const fs::path& folder, const std::string& start,
 	return files;
 }
 
-// The files from the player's games: each line the game folder, the file, then where it comes from, in order.
 void PlanGameFiles(const fs::path& root, Plan& plan, SetupStats& stats)
 {
 	std::ifstream list(root / BaseFolder / FilesList);
@@ -246,8 +207,6 @@ void PlanGameFiles(const fs::path& root, Plan& plan, SetupStats& stats)
 	}
 }
 
-// Half-Life's glass shards (models/glassgibs.mdl) with their texture's chrome flag: it's named chome_glass, a typo
-// (studiomdl flags a texture named chrome), so they've always been drawn flat instead of shiny.
 void PlanGlassGibs(const fs::path& root, Plan& plan)
 {
 	std::string model;
@@ -283,7 +242,6 @@ void PlanGlassGibs(const fs::path& root, Plan& plan)
 	}
 }
 
-// Replaces the value of the first "key" "value" pair after from and before to, on one line.
 bool SetValue(std::string& text, const std::string& key, const std::string& value, std::size_t from = 0, std::size_t to = std::string::npos)
 {
 	const std::size_t at = text.find('"' + key + '"', from);
@@ -299,7 +257,6 @@ bool SetValue(std::string& text, const std::string& key, const std::string& valu
 	return true;
 }
 
-// Half-Life's TrackerScheme.res with a folder's menu buttons' font and colours, its font file loaded with the others.
 bool MakeScheme(std::string& text, const MenuScheme& scheme)
 {
 	for (const char* font : {"MenuLarge", "MenuBlurLarge"})
@@ -332,7 +289,6 @@ bool MakeScheme(std::string& text, const MenuScheme& scheme)
 	return true;
 }
 
-// The menu art, Half-Life's first and then the folder's own game's over it.
 void PlanMenu(const fs::path& root, Plan& plan)
 {
 	const fs::path valve = root / "valve";
@@ -343,8 +299,6 @@ void PlanMenu(const fs::path& root, Plan& plan)
 		return;
 	}
 
-	// Half-Life's main menu, shared by every folder, with the hint beside each button (each game's text, from its own
-	// gameui_english.txt: scripts/make_menu_strings.py).
 	const fs::path gameMenu = valve / "resource" / "GameMenu.res";
 	const bool haveGameMenu = IsFile(gameMenu);
 
@@ -473,7 +427,6 @@ void Write(const fs::path& destination, const Source& source, SetupStats& stats)
 	}
 }
 
-// The maps, converted one at a time (together they're hundreds of megabytes): each line the game folder and the map.
 void ConvertMaps(const fs::path& root, SetupStats& stats)
 {
 	std::ifstream list(root / BaseFolder / MapsList);
@@ -523,10 +476,6 @@ void ConvertMaps(const fs::path& root, SetupStats& stats)
 	}
 }
 
-// The maps' node graphs (the release has the Unified SDK's) must be newer than the maps, or the game takes them for
-// out of date and builds them again the first time each map loads, a short freeze (server nodes.cpp CheckNODFile).
-// The maps are written here, after the release's files, but a newer release extracted over an install puts its graphs
-// back with the time they had when it was made, older than the maps: so on every start, not only when setting up.
 void RefreshGraphs(const fs::path& root)
 {
 	const fs::path maps = root / BaseFolder / "maps";
@@ -569,7 +518,6 @@ void Setup(bool force)
 	SetupStats stats;
 	Plan plan;
 
-	// On the first start (not jhl_setup in the game) the console isn't up yet: the messages wait for it.
 	g_DeferMessages = !force;
 
 	PlanGameFiles(root, plan, stats);
@@ -584,11 +532,6 @@ void Setup(bool force)
 	ConvertMaps(root, stats);
 	RefreshGraphs(root);
 
-	// Key bindings for a game folder with no config of its own yet, never over the player's own: the keyboard tab's
-	// "Use Defaults" ones (gfx/shell/kb_def.lst, Opposing Force's: Half-Life's and slots 6 to 10). The Unified SDK's
-	// ContentInstaller installed its default_config.cfg instead, which is its author's own config (his name, 60 fps,
-	// a strafe roll three times ours, his binds); the engine's defaults and the recommended settings
-	// (jhl_settings.cpp, on first launch) set the rest.
 	std::string keys;
 
 	if (ReadFile(root / BaseFolder / "gfx" / "shell" / "kb_def.lst", keys) || ReadFile(root / "valve" / "gfx" / "shell" / "kb_def.lst", keys))
@@ -596,7 +539,6 @@ void Setup(bool force)
 		std::string defaults = "unbindall\n";
 		std::istringstream lines(keys);
 
-		// Each line: "KEY" "command", the key's backslash written twice.
 		for (std::string line; std::getline(lines, line);)
 		{
 			std::vector<std::string> quoted;

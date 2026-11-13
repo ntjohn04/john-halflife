@@ -74,8 +74,6 @@ protected:
 	const char* m_DenySound = nullptr;
 	const char* m_DispensingSound = nullptr;
 
-	// johnhalflife: an armour charger's light is green for Opposing Force's own chargers (P.C.V., Ohms Power Inc.),
-	// told by the texture on its face; not saved, found again on the next use.
 	bool m_JhlGreen = false;
 };
 
@@ -237,16 +235,12 @@ void CBaseCharger::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE u
 		}
 	}
 
-	// johnhalflife (jhl_fx_particlesystem): a soft light on its face while it gives (health blue-green, the HEV's
-	// amber, Opposing Force's own armour chargers green), a little pulsing, kept on a tenth of a second at a time; sparks as it runs dry.
 	if (UTIL_JhlParticleSystem())
 	{
 		const Vector center = (pev->absmin + pev->absmax) * 0.5f;
 		const Vector face = center + (player->EyePosition() - center).Normalize() * 8;
 		const bool health = ClassnameIs("func_healthcharger");
 
-		// Amber for the HEV's (Half-Life's, and Blue Shift's look in Opposing Force), green for the P.C.V.'s and Ohms'.
-		// Only a charger's own textures decide: the face the player sees might be a crate it's built into.
 		if (const char* texture = health ? nullptr : TRACE_TEXTURE(edict(), player->EyePosition(), center); texture)
 		{
 			std::string name{texture};

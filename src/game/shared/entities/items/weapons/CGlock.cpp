@@ -76,7 +76,6 @@ bool CGlock::Deploy()
 // Aimed fire keeps the classic accuracy.
 static constexpr CBasePlayerWeapon::SpreadSettings GlockPrimarySpread{.Min = 0.01f, .Max = 0.01f, .PerShot = 0, .RecoveryRate = 0};
 
-// Rapid fire starts tighter than the classic 0.1 and blooms back up to it.
 static constexpr CBasePlayerWeapon::SpreadSettings GlockSecondarySpread{.Min = 0.06f, .Max = 0.1f, .PerShot = 0.03f, .RecoveryRate = 0.1f};
 
 void CGlock::SecondaryAttack()

@@ -71,36 +71,23 @@ private:
 
 	void PrintHRTFImplementations();
 
-	/**
-	 *	@brief The device's settings: HRTF (cl_snd_hrtf_enabled) and, johnhalflife, the sources and sends asked for and
-	 *	the engine's mixing (jhl_snd_vanilla: plain stereo, no limiter, no HRTF).
-	 */
+	// johnhalflife: @brief The device's settings
 	void BuildDeviceAttributes(std::vector<ALCint>& attribs);
 	void AddHRTFAttributes(std::vector<ALCint>& attribs);
 	void ResetDevice();
 	void UpdateDeviceRate();
 
-	/**
-	 *	@brief johnhalflife: a channel's resampler and spatialization, as jhl_snd_vanilla has them.
-	 */
+	// johnhalflife: @brief johnhalflife
 	void ApplySourceMode(Channel& channel);
 
-	/**
-	 *	@brief johnhalflife: the resampler sounds play with: OpenAL's default, or with the engine's mixing the one
-	 *	taking them from 22050 Hz to the device's rate.
-	 */
+	// johnhalflife: @brief johnhalflife
 	ALint GetResampler() const;
 
-	/**
-	 *	@brief johnhalflife: the engine's spatialization (SND_Spatialize): each ear (1 - distance) * (1 -+ the source's
-	 *	side), its own sounds and sounds without attenuation full in both, played through OpenAL's panning inverted.
-	 */
+	// johnhalflife: @brief johnhalflife
 	void ApplyVanillaSpatialization(Channel& channel);
 	void GetVanillaEarVolumes(const Channel& channel, float& left, float& right) const;
 
-	/**
-	 *	@brief johnhalflife: back to OpenAL's own spatialization.
-	 */
+	// johnhalflife: @brief johnhalflife
 	void RestoreSpatialization(Channel& channel);
 
 	void SetVolume();
@@ -109,30 +96,19 @@ private:
 
 	Channel* CreateChannel();
 
-	/**
-	 *	@brief johnhalflife: with no source left, a one-shot sound to take over (one out of earshot, else the one
-	 *	closest to ending), cleared; null if only loops and sentences are playing.
-	 */
+	// johnhalflife: @brief johnhalflife
 	Channel* StealChannel();
 
-	/**
-	 *	@brief johnhalflife: how loud a channel is where the listener is (its volume, after distance), 0-1.
-	 */
+	// johnhalflife: @brief johnhalflife
 	float GetChannelAudibility(const Channel& channel) const;
 
-	/**
-	 *	@brief johnhalflife: seconds left of a channel's sound.
-	 */
+	// johnhalflife: @brief johnhalflife
 	float GetChannelTimeLeft(const Channel& channel) const;
 
-	/**
-	 *	@brief johnhalflife: the sounds playing most, by name, with how many of each.
-	 */
+	// johnhalflife: @brief johnhalflife
 	std::string DescribeChannels(std::size_t most) const;
 
-	/**
-	 *	@brief johnhalflife: @c cl_snd_channels, every sound playing.
-	 */
+	// johnhalflife: @brief johnhalflife
 	void PrintChannels();
 
 	/**
@@ -156,15 +132,10 @@ private:
 
 	void UpdateSourceEffect(Channel& channel);
 
-	/**
-	 *	@brief johnhalflife: a fresh effect slot for the room, with a room's response (0: none) on OpenAL's convolution
-	 *	effect, every source sent to it and the old one deleted (1.22 takes a response only on a new slot).
-	 */
+	// johnhalflife: @brief johnhalflife
 	bool ReplaceRoomSlot(ALuint response);
 
-	/**
-	 *	@brief johnhalflife: a room's response (VanillaRoomResponse) at the device's rate, made the first time (0: none).
-	 */
+	// johnhalflife: @brief johnhalflife
 	ALuint GetVanillaResponse(int roomType);
 
 	void SetDirectLowpass(bool lowpass);
@@ -196,8 +167,7 @@ private:
 
 	std::array<ALuint, RoomEffectCount> m_RoomEffects{};
 
-	// johnhalflife: room types as the engine's software DSP has them (jhl_snd_vanilla): its reverb on the first
-	// send, its echo on a second.
+	// johnhalflife
 	std::array<ALuint, RoomEffectCount> m_VanillaReverbEffects{};
 	std::array<ALuint, RoomEffectCount> m_VanillaEchoEffects{};
 	ALuint m_EchoEffectSlot{0};
@@ -205,9 +175,7 @@ private:
 	bool m_VanillaRoomsWork{true};
 	bool m_PreviousVanilla{false};
 
-	// johnhalflife: the engine's rooms played exactly, through OpenAL Soft's convolution effect (experimental in 1.22,
-	// AL_SOFTX_convolution_reverb), each room's response made once at the device's rate; the reverb and echo above
-	// without it.
+	// johnhalflife
 	ALuint m_ConvolutionEffect{0};
 	std::array<ALuint, RoomEffectCount> m_VanillaResponses{};
 	ALCint m_VanillaResponsesRate{0};
@@ -217,7 +185,7 @@ private:
 
 	ALuint m_Filter{0};
 
-	// johnhalflife: the engine's water rooms' lowpass on the direct sound (jhl_snd_vanilla).
+	// johnhalflife
 	static constexpr float VanillaLowpassHFGain = 0.1f;
 	ALuint m_DirectFilter{0};
 	bool m_DirectLowpass{false};
@@ -238,7 +206,7 @@ private:
 
 	float m_LastKnownVolume{-1};
 
-	// johnhalflife: sources asked of OpenAL (its default is 256 in all), and when running out was last said.
+	// johnhalflife
 	static constexpr ALCint RequestedMonoSources = 1024;
 	static constexpr ALCint RequestedStereoSources = 64;
 	float m_NextStealWarning{0};
@@ -246,7 +214,7 @@ private:
 
 	// johnhalflife: the engine's mixing (jhl_snd_vanilla).
 	static constexpr ALCint VanillaMixFrequency = 22050;
-	cvar_t* m_PreloadAllCvar = nullptr; // johnhalflife: jhl_perf_preloadsounds.
+	cvar_t* m_PreloadAllCvar = nullptr; // johnhalflife
 	cvar_t* m_VanillaCvar{};
 	bool m_VanillaMix{false};
 	ALCint m_DefaultFrequency{0};
@@ -260,8 +228,7 @@ private:
 
 	std::vector<SoundIndex> m_PrecacheMap;
 
-	// johnhalflife: sounds started before they were ready, waiting for their work on another thread
-	// (SoundCache::Request), started as it's done (StartPendingSounds).
+	// johnhalflife
 	struct PendingStart
 	{
 		int EntityIndex;
@@ -280,10 +247,7 @@ private:
 
 	void StartPendingSounds();
 
-	/**
-	 *	@brief johnhalflife: whether a sound or each word of a sentence can start at once at @p pitch; those that can't
-	 *	asked for (SoundCache::Request) if @p request.
-	 */
+	// johnhalflife: @brief johnhalflife
 	bool IsReady(const PendingStart& start, bool request);
 };
 }

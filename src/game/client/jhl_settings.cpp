@@ -13,10 +13,6 @@
  *
  ****/
 
-// Recommended settings for johnhalflife (see docs/README.md#john-settings).
-// Vanilla settings are saved in config.cfg, so their defaults can't simply be changed without overriding what the
-// player chose. Instead the recommended values are applied once, the first time a version of them is seen.
-
 #include <chrono>
 #include <span>
 #include <vector>
@@ -32,22 +28,9 @@ struct RecommendedSetting
 	const char* Value;
 };
 
-// The dialog's settings are applied on first launch too (the defaults are the recommended values). Raise the version
-// when changing the list so existing players get the new values once. 2: all of them, not only crosshair_scale,
-// m_rawinput and jhl_gore (a clean install's config had someone's own settings: 60 fps, a strafe roll three times ours).
-// 3: crosshair, the engine's default being off. 4: auto-aim off (sv_aim, on by the engine's default), field of
-// view 100. 5: gamma 1.92 and brightness 0 (else a new game folder took its first config's, Half-Life's, often an
-// old default: gamma 2.5, brightness 1; the engine's are 2.2 and 0, and gamma can't go below 1.8). 6: the hidden
-// settings below, texture filtering off among them, and the original (not HD) models. 7: jhl_hud_scale 0 (automatic:
-// Valve's half-size HUD at 800x600 and below), and only that: a player's own settings aren't applied again, the HUD
-// scale moved along only if still at the old default, 1. 8: crosshair_scale 0 (automatic: 1 at 800x600 and below, 2
-// above, 3 from 2160 tall), likewise moved along only if still at the old default, 2.
 constexpr int RecommendedSettingsVersion = 8;
 constexpr int LastFullRecommendedVersion = 6;
 
-// Applied on first launch and by a reset: every setting listed in the John Settings dialog (config/mod/user.scr), and
-// the hidden ones below. Keep in sync with that file, whose defaults should match. jhl_gore: the content lock isn't used, so
-// blood and gibs are on.
 constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_camera_bob", "1"},
 	{"jhl_camera_viewroll", "1"},
@@ -99,30 +82,24 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"cl_snd_hrtf_implementation", ""},
 };
 
-// Applied with them but not in the dialog: settings the engine's own Video options already show (texture filtering,
-// widescreen field of view), and technical ones a player would only change by mistake, kept at what johnhalflife is
-// made and checked with. Mostly the engine's defaults; texture filtering is off (point sampled, as software drew; with
-// jhl_visuals_renderfixes, mipmapped as software was). Only those the renderer has: the software one has no gl_*.
 constexpr RecommendedSetting HiddenSettings[] = {
-	{"r_prefertexturefiltering", "0"}, // Video options' texture filtering (gl_texturemode follows it).
-	{"gl_ansio", "16"},				   // Anisotropic filtering: only seen with texture filtering on.
-	{"gl_widescreen_yfov", "1"},	   // Video options: a widescreen shows more at the sides, the height as 4:3's.
-	{"gl_overbright", "1"},			   // The world lit up to 4/3, as software did (and models with renderfixes).
+	{"r_prefertexturefiltering", "0"},
+	{"gl_ansio", "16"},
+	{"gl_widescreen_yfov", "1"},
+	{"gl_overbright", "1"},
 	{"gl_use_shaders", "1"},
 	{"gl_dither", "1"},
 	{"gl_spriteblend", "1"},
 	{"gl_fog", "1"},
-	{"r_detailtextures", "0"}, // Detail textures (a fine pattern over walls up close, where a map has them): not 1998's.
-	{"texgamma", "2.0"},	   // The textures' and the lighting's gamma, under gamma itself.
+	{"r_detailtextures", "0"},
+	{"texgamma", "2.0"},
 	{"lightgamma", "2.5"},
-	{"cl_lw", "1"}, // Weapon and movement prediction, which the weapon effects are made for.
+	{"cl_lw", "1"},
 	{"cl_lc", "1"},
 };
 
-// The engine runs config.cfg from the command buffer before the client's first frames; wait a few to be safe.
 constexpr int FramesBeforeFirstLaunchCheck = 5;
 
-// The content lock's settings: Valve's lock sets all four to 0 and unlocking sets them back to 1, nothing else.
 constexpr const char* GoreSettings[] = {"violence_hblood", "violence_hgibs", "violence_ablood", "violence_agibs"};
 
 cvar_t* g_RecommendedVersion = nullptr;
@@ -141,7 +118,6 @@ void Apply(std::span<const RecommendedSetting> settings)
 	}
 }
 
-// jhl_gore stands in for the four content lock settings, so the dialog can show them as one checkbox.
 void SyncGoreFromContentLock()
 {
 	bool allOn = true;
@@ -182,16 +158,9 @@ void ApplyRecommended()
 		}
 	}
 
-	// The original models, not the HD pack (the 25th anniversary update's default too). A command, not a setting: it
-	// saves the choice and, only if that changes it, reloads the game's files.
 	gEngfuncs.pfnClientCmd("_sethdmodels 0\n");
 }
 
-// A reset from John Settings is applied as that dialog closes, but the Options window behind it still shows the old
-// values (Video's gamma, brightness, texture filtering; Mouse's raw input), and its OK writes them all back. The menu
-// is the engine's, so it can't be updated or asked whether it's open; instead, for a while after a reset, a setting
-// going back to exactly its value before the reset is taken for that write, and the reset applied again. A setting
-// changed to anything else is the player's own and left alone.
 struct ResetWatch
 {
 	const char* Name;
@@ -199,12 +168,11 @@ struct ResetWatch
 	float After;
 };
 
-std::vector<ResetWatch> g_ResetChanged; // Every setting the reset changed.
+std::vector<ResetWatch> g_ResetChanged;
 std::vector<ResetWatch> g_ResetWatches; // Those still watched.
 std::chrono::steady_clock::time_point g_ResetWatchEnd;
 constexpr std::chrono::minutes ResetWatchTime{10};
 
-// Once the Options window has written, a little longer, in case its writes come over more than one frame.
 constexpr std::chrono::seconds ResetRewriteTime{2};
 
 void WatchReset(const std::vector<ResetWatch>& before)
@@ -270,7 +238,6 @@ void CheckResetWatch()
 			continue;
 		}
 
-		// Back to its old value: the Options window's write. Anything else: the player's change, kept.
 		written = written || value == watch->Before;
 		watch = g_ResetWatches.erase(watch);
 	}
@@ -298,28 +265,21 @@ bool JhlFpsFixEnabled()
 
 void JhlSettings_Initialize()
 {
-	// One switch for all of johnhalflife's particle system changes (see docs/effects.md).
 	g_ParticleSystem = gEngfuncs.pfnRegisterVariable("jhl_fx_particlesystem", "1", FCVAR_ARCHIVE);
 
-	// Half-Life's game code acting at any frame rate as it did at 72 fps (see jhl_framerate.h); the server reads it too.
 	g_FpsFix = gEngfuncs.pfnRegisterVariable("jhl_physics_fpsfix", "1", FCVAR_ARCHIVE);
 
-	// Walking along a wall no faster than in the open (pm_shared.cpp's PM_WalkMove); the server reads it too.
 	gEngfuncs.pfnRegisterVariable("jhl_physics_wallfix", "1", FCVAR_ARCHIVE);
 
-	// Corpses vanilla fades (a monstermaker's, or flagged by the map) kept (CBaseMonster::JhlFadeCorpse); the server reads it.
 	gEngfuncs.pfnRegisterVariable("jhl_fx_keepcorpses", "1", FCVAR_ARCHIVE);
 
-	// johnhalflife's tracers on their own (jhl_tracers.cpp); they also need the particle system.
 	gEngfuncs.pfnRegisterVariable("jhl_fx_tracers", "1", FCVAR_ARCHIVE);
 
-	// Archived, so it survives in config.cfg and the first launch values are only applied once per version.
 	g_RecommendedVersion = gEngfuncs.pfnRegisterVariable("jhl_recommended_version", "0", FCVAR_ARCHIVE);
 
 	// Ticked from the settings dialog; cleared again once applied.
 	g_ResetRecommended = gEngfuncs.pfnRegisterVariable("jhl_reset_recommended", "0", 0);
 
-	// Not archived: its value comes from the content lock settings, which the engine saves.
 	g_Gore = gEngfuncs.pfnRegisterVariable("jhl_gore", "1", 0);
 
 	gEngfuncs.pfnAddCommand("jhl_recommended", &ApplyAllRecommended);

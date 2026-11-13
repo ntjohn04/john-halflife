@@ -15,17 +15,13 @@
 
 #pragma once
 
-// johnhalflife: the music playing, saved with the player. In single player the client is in the server's process, so
-// the server asks the client's music system for it as it saves (the client's exported JhlMusic_GetState: exact, at
-// the moment of saving), and on loading sends it back (the JhlMusic message).
-
 struct JhlMusicState
 {
 	char FileName[260]; // Empty: none.
 	bool Looping;
-	bool Paused;		   // By the map (music pause), not the game being paused.
+	bool Paused;
 	float Position;		   // Seconds into the track.
-	float FadeRemaining;   // Fading out (music fadeout): seconds left, 0 if not,
+	float FadeRemaining;
 	float FadeDuration;	   // and the whole fade's.
 };
 

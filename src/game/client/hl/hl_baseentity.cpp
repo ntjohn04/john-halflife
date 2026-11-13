@@ -313,7 +313,6 @@ void EjectBrass(const Vector& vecOrigin, const Vector& vecVelocity, float rotati
 bool CBasePlayerWeapon::KeyValue(KeyValueData* pkvd) { return false; }
 float CBasePlayerWeapon::GetNextAttackDelay(float flTime)
 {
-	// johnhalflife (jhl_physics_fpsfix): as the server's (weapons.cpp), so prediction agrees.
 	if (JhlFpsFixEnabled())
 	{
 		const float waited = -m_flNextPrimaryAttack;

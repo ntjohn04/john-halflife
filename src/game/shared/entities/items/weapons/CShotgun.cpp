@@ -87,7 +87,6 @@ bool CShotgun::Deploy()
 	return DefaultDeploy("models/v_shotgun.mdl", "models/p_shotgun.mdl", SHOTGUN_DRAW, "shotgun");
 }
 
-// The pellet cone starts at 8.5 degrees and opens to the classic 10 when firing back to back.
 static constexpr CBasePlayerWeapon::SpreadSettings ShotgunSpread{
 	.Min = 0.0741f, .Max = VECTOR_CONE_10DEGREES.x, .PerShot = 0.004f, .RecoveryRate = 0.1f};
 

@@ -15,23 +15,10 @@
 
 #pragma once
 
-/**
- *	@brief Registers jhl_recommended and the cvars that track and request recommended settings.
- */
 void JhlSettings_Initialize();
 
-/**
- *	@brief Applies the recommended settings once per version, after the saved config has loaded,
- *	and again whenever the settings dialog's reset box is ticked. Call every frame.
- */
 void JhlSettings_RunFrame();
 
-/**
- *	@brief Whether johnhalflife's particle system changes are on (jhl_fx_particlesystem): gibs, and future effects.
- */
 bool JhlParticleSystemEnabled();
 
-/**
- *	@brief Whether frame rate independent physics is on (jhl_physics_fpsfix; see JhlReferenceFrameRate).
- */
 bool JhlFpsFixEnabled();

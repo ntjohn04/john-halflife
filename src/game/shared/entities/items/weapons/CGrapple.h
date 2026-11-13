@@ -74,7 +74,7 @@ public:
 #endif
 	}
 
-	// johnhalflife: the tip it's firing, for the tip to tell it's been left behind (CGrappleTip::IsOrphaned).
+	// johnhalflife
 	const CGrappleTip* GetTip() const { return m_pTip; }
 
 private:

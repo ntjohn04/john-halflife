@@ -62,6 +62,5 @@ private:
 	float m_flStartThrow;
 	float m_flReleaseThrow;
 
-	// When to play the pin pull sound (server only, not saved), 0 if none is due.
 	float m_flPinPullSoundTime = 0;
 };

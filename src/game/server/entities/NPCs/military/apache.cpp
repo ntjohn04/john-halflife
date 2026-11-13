@@ -196,7 +196,6 @@ void CApache::DyingThink()
 		MESSAGE_END();
 
 		Vector vecSpot = pev->origin + (pev->mins + pev->maxs) * 0.5;
-		// johnhalflife: through UTIL_JhlBreakModel, so with jhl_fx_particlesystem the debris lasts like gibs.
 		UTIL_JhlBreakModel(Vector(vecSpot.x, vecSpot.y, vecSpot.z), Vector(400, 400, 132), Vector(pev->velocity.x, pev->velocity.y, pev->velocity.z),
 			50, m_iBodyGibs, UTIL_JhlParticleSystem() ? RANDOM_LONG(4, 8) : 4, 30, BREAK_METAL);
 
@@ -282,7 +281,6 @@ void CApache::DyingThink()
 
 		// gibs
 		vecSpot = pev->origin + (pev->mins + pev->maxs) * 0.5;
-		// johnhalflife: through UTIL_JhlBreakModel, so with jhl_fx_particlesystem the debris lasts like gibs.
 		UTIL_JhlBreakModel(Vector(vecSpot.x, vecSpot.y, vecSpot.z + 64), Vector(400, 400, 128), Vector(0, 0, 200),
 			30, m_iBodyGibs, 200, 200, BREAK_METAL);
 

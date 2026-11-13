@@ -20,7 +20,6 @@
  *	@brief the "LaBuznik" mortar device
  *	Drops bombs from above
  */
-// johnhalflife: a shell's last moment, seen coming in (CMortar::JhlIncomingThink).
 static void JhlMortarIncoming(CBaseEntity* mortar, float impactTime);
 
 class CFuncMortarField : public CBaseToggle
@@ -187,16 +186,11 @@ public:
 
 	void MortarExplode();
 
-	/**
-	 *	@brief johnhalflife (jhl_fx_particlesystem): its streak falling onto where it lands, sent JhlIncomingLead before
-	 *	it does (the client's, a tracer: JhlTracer_Fire), then on to exploding on time.
-	 */
 	void JhlIncomingThink();
 
 	int m_spriteTexture;
 };
 
-// How long before it lands its streak's sent: as long as the client's takes to fall (jhl_explosions.cpp).
 constexpr float JhlIncomingLead = 0.35f;
 
 BEGIN_DATAMAP(CMortar)
@@ -302,7 +296,6 @@ void CMortar::MortarExplode()
 	Explode(&tr, DMG_BLAST | DMG_MORTAR);
 	UTIL_ScreenShake(tr.vecEndPos, 25.0, 150.0, 1.0, 750);
 
-	// johnhalflife: an artillery shell's, not a grenade's: the ground thrown up in a column, the floor's color.
 	UTIL_JhlGroundDust(tr.vecEndPos, 12, 20);
 
 #if 0

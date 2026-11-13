@@ -78,7 +78,6 @@ void CSatchelCharge::SatchelSlide(CBaseEntity* pOther)
 	if (tr.flFraction < 1.0)
 	{
 		// add a bit of static friction
-		// johnhalflife (jhl_physics_fpsfix): touched every frame it slides, so taken off as at 72 fps.
 		const bool fpsFix = UTIL_JhlFpsFix();
 		pev->velocity = pev->velocity * (fpsFix ? JhlReferenceDecay(0.95f, gpGlobals->frametime) : 0.95f);
 		pev->avelocity = pev->avelocity * (fpsFix ? JhlReferenceDecay(0.9f, gpGlobals->frametime) : 0.9f);

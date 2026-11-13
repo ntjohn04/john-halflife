@@ -15,23 +15,12 @@
 
 #pragma once
 
-/**
- *	@brief iuser4 value of a client-side model the renderer should scale by curstate.scale (vanilla ignores model scale,
- *	so only entities marked this way get it).
- */
 constexpr int ScaledModelMarker = 0x4A484C; // "JHL"
 
 void ClientGibs_Initialize();
 
-/**
- *	@brief johnhalflife: a small creature bursting with no body left (a snark): a small blood puff and @p chunks small
- *	blood chunks (the TempEntity message's TE_BLOODSPRITE).
- */
+// johnhalflife: @brief johnhalflife
 void ClientGibs_Pop(const Vector& origin, int bloodColor, int chunks);
 
-/**
- *	@brief Spawns gibs as the server's ClientGibs message does.
- *	@param flags A GibType combined with GibFlag_* values.
- */
 void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& origin, const Vector& angles,
 	GibVelocityMultiplier multiplier, int flags);

@@ -66,7 +66,6 @@ void JhlMusic_RunFrame()
 
 	g_Received = false;
 
-	// A level change: the music never stopped, so it plays on as it is.
 	if (!g_ConnectionReset)
 	{
 		return;
@@ -74,14 +73,12 @@ void JhlMusic_RunFrame()
 
 	g_ConnectionReset = false;
 
-	// jhl_snd_musicsaves 0: loading stops the music, as vanilla (it's still saved, for turning this back on).
 	if (!g_ReceivedState.FileName.empty() && 0 != g_MusicSaves->value)
 	{
 		sound::g_SoundSystem->GetMusicSystem()->PlayFrom(g_ReceivedState);
 	}
 }
 
-// The server's, as it saves (single player: this library is in its process).
 extern "C" DLLEXPORT bool JhlMusic_GetState(JhlMusicState* state)
 {
 	if (!state || !sound::g_SoundSystem)

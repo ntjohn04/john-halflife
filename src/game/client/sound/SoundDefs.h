@@ -108,9 +108,7 @@ struct SoundIndex final
  *	@brief A single sound.
  *	@details Sounds should always be referred to using a @see SoundIndex.
  */
-/**
- *	@brief johnhalflife (jhl_snd_vanilla): a sound at one pitch, pitched as the engine pitches it.
- */
+// johnhalflife
 struct PitchedSound
 {
 	OpenALBuffer Buffer;
@@ -125,8 +123,7 @@ struct Sound
 	std::vector<float> Samples; // For sentences, to update mouths.
 	bool IsLooping{false};
 
-	// johnhalflife (jhl_snd_vanilla): the sound as loaded, before it was stepped to the engine's rate, its loop in
-	// its own frames, and the pitches it's been played at (SoundCache::GetPitched).
+	// johnhalflife
 	std::vector<float> NativeSamples;
 	int NativeRate{0};
 	int ChannelCount{1};
@@ -178,17 +175,16 @@ struct Channel
 	int Pitch{PITCH_NORM};
 	int CreatedOnFrame{0};
 
-	// johnhalflife (jhl_snd_vanilla): what the engine's own spatialization works from, each frame. Volume is
-	// a sentence's current word's for sentences.
+	// johnhalflife
 	float Origin[3]{};
 	float Volume{1};
 	float Attenuation{1};
 	bool Relative{false};
 
-	// johnhalflife (jhl_snd_vanilla): the pitch its buffer was made at (100: none; OpenAL pitches the rest).
+	// johnhalflife
 	int BufferPitch{PITCH_NORM};
 
-	// johnhalflife (jhl_snd_vanilla): its effect send's gain, so the room takes it in as the engine's mono mix did.
+	// johnhalflife
 	float SendGain{1};
 
 	OpenALSource Source;

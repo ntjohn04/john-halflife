@@ -1,22 +1,3 @@
-/***
- *
- *	johnhalflife: Valve's maps converted for the Unified SDK's game code (docs/release.md#first-start).
- *
- *	The Unified SDK's ContentInstaller rewrites each map's entities with its map upgrades
- *	(HalfLife.UnifiedSdk-CSharp, MapUpgrader.Upgrades, version 1.0.0): old class names and keyvalues into the ones the
- *	game code reads, and fixes to particular maps. This is that, in the same order with the same results: an entity's
- *	keyvalues kept in order, one changed in place, a new one added at the end, numbers written as .NET writes them.
- *	Checked against the ContentInstaller's own output, map by map (scripts/mapconvert_check.cpp): 215 of the 220 maps
- *	the same, byte for byte. The others keep what the ContentInstaller's BSP reader lost: bytes outside ASCII in the
- *	wad lists of c1a3d, op4_kbase and ba_tram2 (it wrote '?'), the target of c1a4i's door testroom1 (the vanilla map has
- *	it, after the class name); and op4_disposal's shotgun is 1.4142133 units up, not 1.4142134 (its cosine was one bit
- *	off).
- *
- *	Only the entities change; Blue Shift's maps, which list their first two lumps the other way round, get Half-Life's
- *	order. Everything else in the file is Valve's, as it was.
- *
- ****/
-
 #include <algorithm>
 #include <charconv>
 #include <cmath>
@@ -81,8 +62,6 @@ bool TryParseReal(std::string_view text, T& value)
 	return result.ec == std::errc{} && result.ptr == text.data() + text.size();
 }
 
-// float.ToString() and double.ToString(): the shortest text that reads back the same, plain from 1e-5 up to 1e15,
-// otherwise as 1.5E+15.
 template <typename T>
 std::string FormatReal(T value)
 {
@@ -141,7 +120,6 @@ struct Vector3
 	Vector3 operator*(float scale) const { return {X * scale, Y * scale, Z * scale}; }
 };
 
-// Components split on runs of spaces, as Regex.Split(value, @"\s+"): space at either end makes an empty one.
 Vector3 ParseVector3(std::string_view text)
 {
 	std::vector<std::string_view> parts;
@@ -176,7 +154,6 @@ std::string FormatVector3(const Vector3& v)
 	return FormatReal(v.X) + " " + FormatReal(v.Y) + " " + FormatReal(v.Z);
 }
 
-// An entity: its keyvalues in order, the class name among them.
 class Entity
 {
 public:
@@ -294,7 +271,6 @@ public:
 		return nullptr;
 	}
 
-	// The first with this targetname (worldspawn, with none, matches an empty one).
 	Entity* Find(std::string_view targetName) const
 	{
 		return First([&](const Entity& e)
@@ -358,7 +334,6 @@ const std::string* Lookup(const Remap& remap, std::string_view key)
 	return nullptr;
 }
 
-// ScriptedSequenceUtilities.RenameAnimations: scripts whose target is this NPC class or uses this model.
 void RenameAnimations(Context& context, const char* npcName, std::string_view modelName, const Remap& remap)
 {
 	for (Entity* script : context.Entities.OfClass("scripted_sequence"))
@@ -388,7 +363,6 @@ void RenameAnimations(Context& context, const char* npcName, std::string_view mo
 const Vector3 HullMin{-16, -16, -36};
 const Vector3 HullMax{16, 16, 36};
 
-// MathF.Sin and MathF.Cos as the ContentInstaller (64-bit) got them: correctly rounded, which a 32-bit sinf isn't always.
 float Sin(float angle)
 {
 	return static_cast<float>(std::sin(static_cast<double>(angle)));
@@ -399,7 +373,6 @@ float Cos(float angle)
 	return static_cast<float>(std::cos(static_cast<double>(angle)));
 }
 
-// MathUtilities.AngleVectors, up only, in single precision as MathF.
 Vector3 AngleUp(const Vector3& angles)
 {
 	constexpr float ToRadians = 3.14159265f * 2 / 360;
@@ -638,13 +611,11 @@ void RenameMessages(Context& context)
 	check(context.Entities.Worldspawn(), "chaptertitle");
 }
 
-// GameMedia.TrackToMusicMap: CD tracks to the soundtrack's files.
 const char* const TrackMusic[] = {"", "", "Half-Life01", "Prospero01", "Half-Life12", "Half-Life07", "Half-Life10",
 	"Suspense01", "Suspense03", "Half-Life09", "Half-Life02", "Half-Life13", "Half-Life04", "Half-Life15", "Half-Life14",
 	"Half-Life16", "Suspense02", "Half-Life03", "Half-Life08", "Prospero02", "Half-Life05", "Prospero04", "Half-Life11",
 	"Half-Life06", "Prospero03", "Half-Life17", "Prospero05", "Suspense05", "Suspense07"};
 
-// The tracks Opposing Force's and Blue Shift's soundtracks have of Half-Life's names (theirs, renamed).
 const char* const ExpansionMusic[] = {"Half-Life01", "Half-Life02", "Half-Life03", "Half-Life04", "Half-Life05",
 	"Half-Life07", "Half-Life08", "Half-Life09", "Half-Life10", "Half-Life12", "Half-Life13", "Half-Life14",
 	"Half-Life15", "Half-Life16", "Prospero01", "Prospero02", "Suspense01", "Suspense02", "Suspense03"};
@@ -850,7 +821,6 @@ void ConvertSoundIndicesToNames(Context& context)
 		{
 			std::optional<std::string> name;
 
-			// func_rotating: the game read a sound file name from "message" first.
 			if (key.RotatingMessage)
 			{
 				const auto message = entity->Find("message");
@@ -1662,16 +1632,12 @@ void BaTram2FixScientistSkinColor(Context& context)
 
 // ---- John Half-Life's own ----
 
-// of3a1b's chapter title is Half-Life's C4A1TITLE (copied from c4a1's), which Opposing Force's titles don't have; with
-// Half-Life's in the same file it came up as "XEN". The chapter's title shows at of3a1, as ba_power2's (above).
 void Of3a1bRemoveChapterTitle(Context& context)
 {
 	if (context.MapName == "of3a1b" && context.Entities.Worldspawn().GetString("chaptertitle") == "C4A1TITLE")
 		context.Entities.Worldspawn().Remove("chaptertitle");
 }
 
-// ba_yard3's Harold, the wounded scientist (and his stand-in for his death), on his own models: the glasses scientist
-// made bald, without his glasses (assets/models/harold). He was the glasses scientist's head, like any other.
 void BaYard3HaroldModel(Context& context)
 {
 	if (context.MapName != "ba_yard3")
@@ -1683,7 +1649,6 @@ void BaYard3HaroldModel(Context& context)
 		dying->Set("model", "models/harold_cower.mdl");
 }
 
-// The upgrades, in the ContentInstaller's order (MapUpgradeBuilderExtensions), then John Half-Life's own.
 using Upgrade = void (*)(Context&);
 
 constexpr Upgrade Upgrades[] = {
@@ -1801,7 +1766,6 @@ bool LooksLikeEntities(const std::string& bsp, const Lump& lump)
 	return false;
 }
 
-// Blue Shift lists the planes first and the entities second; Half-Life the other way round.
 bool EntityLumpIndex(const std::string& bsp, const Lump (&lumps)[LumpCount], int& index)
 {
 	if (LooksLikeEntities(bsp, lumps[0]))
@@ -1872,8 +1836,6 @@ bool ParseEntities(std::string_view text, EntityList& list)
 			if (!quoted(value))
 				return false;
 
-			// As the ContentInstaller reads them (Sledge.Formats.Bsp): a key with no value is left out, and a key given
-			// twice keeps its last value, in its last place (the engine would end up with the same).
 			if (value.empty())
 				continue;
 
@@ -1949,7 +1911,6 @@ bool JhlMapConvert(const std::string& bsp, JhlMapGame game, std::string_view map
 
 	const std::string entityText = WriteEntities(entities);
 
-	// The lumps in the order they were in the file, the entities' replaced, each on a 4 byte boundary.
 	int order[LumpCount];
 
 	for (int i = 0; i < LumpCount; ++i)

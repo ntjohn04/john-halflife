@@ -17,11 +17,6 @@
 #include "squadmonster.h"
 #include "jhl_effects.h"
 
-/**
- *	@brief The sprite of the controller's balls (in its hands, its head ball and energy balls): with
- *	jhl_fx_particlesystem, xspark4 with its haze faded out round (scripts/make_round_xspark4.py); the haze fills the
- *	frames to their edges, which showed as a faint square around them.
- */
 static const char* ControllerBallSprite()
 {
 	return UTIL_JhlParticleSystem() ? "sprites/xspark4_round.spr" : "sprites/xspark4.spr";
@@ -46,8 +41,6 @@ public:
 
 	bool HasAlienGibs() override { return true; }
 
-	// johnhalflife: its corpse gibs from 120, big but worth shredding: two double shotgun blasts, 15 9mm rounds, 3 from
-	// the .357.
 	float JhlCorpseGibDamage() override { return 120; }
 
 	void Spawn() override;
@@ -209,7 +202,6 @@ void CController::Killed(CBaseEntity* attacker, int iGib)
 		m_pBall[1] = nullptr;
 	}
 
-	// johnhalflife: it shorts out, a spark burst and a shower or two; once, not again when its corpse gibs.
 	if (UTIL_JhlParticleSystem() && pev->deadflag != DEAD_DEAD)
 		UTIL_JhlSparkShowers(Center(), RANDOM_LONG(1, 2));
 
@@ -387,7 +379,7 @@ void CController::Precache()
 	PRECACHE_SOUND_ARRAY(pDeathSounds);
 
 	PrecacheModel("sprites/xspark4.spr");
-	PrecacheModel("sprites/xspark4_round.spr"); // johnhalflife: ControllerBallSprite.
+	PrecacheModel("sprites/xspark4_round.spr"); // johnhalflife
 
 	UTIL_PrecacheOther("controller_energy_ball");
 	UTIL_PrecacheOther("controller_head_ball");
@@ -532,9 +524,7 @@ Vector Intersect(Vector vecSrc, Vector vecDst, Vector vecMove, float flSpeed)
 	}
 	else if (const float discriminant = b * b - 4 * a * c; discriminant < 0)
 	{
-		// johnhalflife: no solution, the target (as estimated) moving faster than the ball; vanilla took the square root
-		// of this, and the ball got a NaN velocity ("Got a NaN velocity on controller_energy_ball") and was removed.
-		// Aim where it is now.
+		// johnhalflife
 		t = sqrt(c) / flSpeed;
 	}
 	else
@@ -797,7 +787,6 @@ void CController::RunAI()
 			m_pBall[i]->SetAttachment(edict(), (i + 3));
 			m_pBall[i]->SetScale(1.0);
 
-			// johnhalflife: playing their frames as the energy balls do (vanilla creates them to animate, at 0 fps).
 			if (UTIL_JhlParticleSystem())
 			{
 				m_pBall[i]->pev->framerate = 10;
@@ -1143,8 +1132,6 @@ void CControllerHeadBall::HuntThink()
 
 	pev->renderamt -= 5;
 
-	// johnhalflife: plays its sprite as the energy balls do (the same sprite; vanilla shows the head ball's first frame
-	// only).
 	if (UTIL_JhlParticleSystem())
 		pev->frame = (static_cast<int>(pev->frame) + 1) % 11;
 
@@ -1188,7 +1175,6 @@ void CControllerHeadBall::HuntThink()
 			ApplyMultiDamage(this, m_hOwner);
 		}
 
-		// johnhalflife: a little dimmer and not quite straight, with a thin, wild, dim strand (as the vortigaunt's).
 		const bool jhl = UTIL_JhlParticleSystem();
 
 		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
@@ -1229,9 +1215,6 @@ void CControllerHeadBall::HuntThink()
 			WRITE_BYTE(10);											 // speed
 			MESSAGE_END();
 
-			// Where it hits, as the vortigaunt's zap: a big warm light shrinking away over 1.5 s, and sparks by what it
-			// hit (a player whose suit lost charge 2-3 showers, a player it went straight into or a creature none, a
-			// wall one half the time).
 			int showers = 0;
 
 			if (pEntity && pEntity->IsPlayer())
@@ -1367,7 +1350,7 @@ void CControllerZapBall::Spawn()
 void CControllerZapBall::Precache()
 {
 	PrecacheModel("sprites/xspark4.spr");
-	PrecacheModel("sprites/xspark4_round.spr"); // johnhalflife: ControllerBallSprite.
+	PrecacheModel("sprites/xspark4_round.spr"); // johnhalflife
 	// PrecacheSound("debris/zap4.wav");
 	// PrecacheSound("weapons/electro4.wav");
 }
@@ -1406,9 +1389,6 @@ void CControllerZapBall::ExplodeTouch(CBaseEntity* pOther)
 		EmitAmbientSound(tr.vecEndPos, "weapons/electro4.wav", 0.3, ATTN_NORM, 0, RANDOM_LONG(90, 99));
 	}
 
-	// johnhalflife: where it hits, lighter than the zap's (they come in volleys): a warm light shrinking away over
-	// 0.5 s, and sparks by what it hit (a player whose suit lost charge 2-3 showers, a player it went straight into
-	// or a creature none, a wall one a quarter of the time).
 	if (UTIL_JhlParticleSystem())
 	{
 		const Vector hit = pev->origin - pev->velocity.Normalize() * 4;

@@ -152,7 +152,7 @@ bool CHudMenu::Draw(float flTime)
 	}
 
 	// center it
-	int y = (HudHeight / 2) - ((nlc / 2) * 12) - 40; // make sure it is above the say text
+	int y = (HudHeight / 2) - ((nlc / 2) * 12) - 40;
 
 	menu_color = {255, 255, 255};
 	menu_x = 20;

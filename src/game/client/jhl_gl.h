@@ -18,8 +18,6 @@
 #include "PlatformHeaders.h"
 #include <SDL2/SDL_opengl.h>
 
-// johnhalflife: OpenGL calls in the engine's context, for drawing it doesn't offer (the client doesn't link OpenGL;
-// they're looked up through SDL). Only with the OpenGL renderer.
 struct JhlGL
 {
 	decltype(&::glGetIntegerv) GetIntegerv = nullptr;
@@ -93,7 +91,4 @@ struct JhlGL
 
 extern JhlGL g_JhlGL;
 
-/**
- *	@brief Whether the calls are there to use: the OpenGL renderer, and all of them found (looked up once).
- */
 bool JhlGL_Available();

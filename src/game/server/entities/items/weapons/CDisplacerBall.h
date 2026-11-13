@@ -35,7 +35,7 @@ public:
 	void ExplodeThink();
 	void KillThink();
 
-	// johnhalflife: its implosion (TE_IMPLOSION), timed to end as it goes.
+	// johnhalflife
 	void ImplodeThink();
 	static constexpr float ImplosionLife = 0.3f;
 
@@ -56,15 +56,10 @@ private:
 
 	size_t m_uiBeams;
 
-	// johnhalflife: a strand on each beam (UTIL_JhlBeamStrand), and which of its beam re-aims lights where they touch
-	// (every other); the sprite's frames, animated as the Lambda Core's portals (vanilla shows only the first). Not
-	// saved: beams are temporary, and the ball lives a second or two.
+	// johnhalflife
 	EHANDLE m_pStrands[NUM_BEAMS];
 	int m_iArmBeamCount = 0;
 
-	/**
-	 *	@brief Steps exit1.spr's frames, as the Lambda Core's env_sprites play it (40 fps).
-	 */
 	void Animate();
 
 	EHANDLE m_hDisplacedTarget;

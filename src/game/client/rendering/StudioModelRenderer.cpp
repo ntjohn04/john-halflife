@@ -28,11 +28,8 @@
 #include "jhl_softwarelook.h"
 #include "StudioModelRenderer.h"
 
-// johnhalflife: a shell that's a view model's casing (JhlViewModelCasings): its iuser4, and its bone its iuser3.
 constexpr int JhlCasingMarker = 0x4A4843; // "JHC"
 
-// johnhalflife: a shell drawn posed as usual, only its casing's bone (its iuser3) stretched (JhlEjectShapedBrass): its
-// iuser4.
 constexpr int JhlShapedMarker = 0x4A4853; // "JHS"
 #include "GameStudioModelRenderer.h"
 
@@ -517,7 +514,7 @@ void CStudioModelRenderer::StudioSetUpTransform(bool trivial_accept)
 			}
 		}
 
-		// johnhalflife (jhl_debug_npcdraw): where an NPC is drawn against where it is, a line every 1/50 second each.
+		// johnhalflife
 		const int index = m_pCurrentEntity->index;
 		static cvar_t* debugDraw = gEngfuncs.pfnRegisterVariable("jhl_debug_npcdraw", "0", 0);
 		static float debugTimes[MAX_EDICTS];
@@ -567,15 +564,13 @@ void CStudioModelRenderer::StudioSetUpTransform(bool trivial_accept)
 	// Con_DPrintf("%.0f %0.f %0.f\n", modelpos[0], modelpos[1], modelpos[2] );
 	// Con_DPrintf("%.0f %0.f %0.f\n", angles[0], angles[1], angles[2] );
 
-	// johnhalflife: johnhalflife's shells turned as they tumble (their angles, which the temporary entities' update turns;
-	// their state's are only as they were thrown).
 	if (m_pCurrentEntity->curstate.iuser4 == JhlCasingMarker || m_pCurrentEntity->curstate.iuser4 == JhlShapedMarker)
 		angles = m_pCurrentEntity->angles;
 
 	angles[PITCH] = -angles[PITCH];
 	AngleMatrix(angles, (*m_protationmatrix));
 
-	// Scaled client-side models (johnhalflife gibs); everything else ignores scale, as in vanilla.
+	// johnhalflife
 	if (m_pCurrentEntity->curstate.iuser4 == ScaledModelMarker && m_pCurrentEntity->curstate.scale > 0)
 	{
 		for (int row = 0; row < 3; ++row)
@@ -842,31 +837,15 @@ StudioSetupBones
 
 ====================
 */
-// johnhalflife: the engine doesn't latch the view model's sequence changes, so it snaps from one to the next; the
-// barnacle grapple's blend from its last pose instead (jhl_fx_particlesystem), into idle (and firereached, which
-// CGrapple::EndAttack shows a frame before idle) over the usual 0.2 s, between its firing ones quicker, 0.1 s; only
-// into firing (fire) does it snap, at once. A flip for a frame between the client's prediction and the server's word
-// on its animation (ClientPredictionSystem forces the server's, from its start) is blended too. Its timings are as
-// they were: only how it looks.
 static float g_JhlViewModelBlendTime = 0.2f;
 
 static model_t* g_JhlViewModel = nullptr;
 static int g_JhlViewModelBoneCount = 0;
 static double g_JhlViewModelTime = 0;
 static float g_JhlViewModelBones[MAXSTUDIOBONES][3][4];
-static Vector g_JhlViewModelOrigin; // Where the view model was, and its angles, when they were.
+static Vector g_JhlViewModelOrigin;
 static Vector g_JhlViewModelAngles;
 
-// johnhalflife: casings the view model's animations throw out (jhl_fx_particlesystem) become shells of the world's
-// where they're let go (as the other guns' ejected ones: falling, bouncing and clinking), each the casing itself (its
-// view model drawn as only that bone, JhlSetupCasingBones), turned as it was, thrown on as its animation had it going
-// (and as the player's going); the revolver's six spent casings dropping out of its cylinder as it's
-// reloaded (snapped back to be its new rounds in the speedloader a frame later), the sniper rifle's flying off its bolt
-// as it's worked (snapped back into the rifle at its end: hidden from where it's let go). Found in their models'
-// animations.
-// johnhalflife: whether the view model drawn, @p drawn, is @p wanted, by its file's name: Opposing Force and Blue Shift
-// draw their own (the Unified SDK's model replacement: models/op4/v_rpg.mdl, models/bshift/v_rpg.mdl for
-// models/v_rpg.mdl), the same skeleton and gun, other arms.
 static bool JhlSameViewModel(const char* drawn, const char* wanted)
 {
 	const auto fileName = [](const char* path)
@@ -882,33 +861,24 @@ struct JhlCasingDrop
 {
 	const char* Model;
 	int Sequence;
-	float Frame;	 // Let go as its animation reaches this,
-	float HideUntil; // and its animation's own hidden until this.
+	float Frame;
+	float HideUntil;
 	int Bones[6];
 	int BoneCount;
-	Vector Velocity; // Along the view model (forward, left, up), units a second.
-	Vector Scale;	 // Drawn this much bigger along its bone's axes once it's let go (growing to it over JhlCasingGrowTime).
-	Vector Scatter{8, 8, 8}; // Each thrown up to this much more or less along each (units a second), apart from the others.
+	Vector Velocity;
+	Vector Scale;
+	Vector Scatter{8, 8, 8};
 };
 
 constexpr float JhlCasingGrowTime = 0.15f;
 
 
 static const JhlCasingDrop JhlCasingDrops[] = {
-	// v_357 reload (36 fps): falling out of the cylinder, frames 45-58. Its rounds are tiny (1.6 units long, 0.55 across,
-	// smaller than the Glock's 9 mm shell, 3 by 1.45): a .357 Magnum's (33 mm long, 9.6 across; the 9 mm's 19 and 10),
-	// as long as the Desert Eagle's .50 AE and as wide as the 9 mm, a little smaller, 4.1 by 1.3. Scattering as they
-	// fall, not one heap.
 	{"models/v_357.mdl", 3, 57.5f, 57.5f, {19, 21, 23, 25, 27, 29}, 6, {-10, 0, -70}, {2.32f, 2.55f, 2.32f}, {45, 45, 15}},
-	// v_m40a1 fire, firelastround (38 fps): clear of the bolt, frame 46, back in the rifle at 67. Its casing's tiny (1.7
-	// units long, 0.32 across): a 7.62x51mm's (51 mm long, 12 across), the biggest of the guns' casings (the shotgun's
-	// shell 1.6 across), 7.7 by 1.8.
 	{"models/v_m40a1.mdl", 2, 46, 67, {10}, 1, {0, -45, 60}, {4.5f, 5.67f, 5.67f}},
 	{"models/v_m40a1.mdl", 3, 46, 67, {10}, 1, {-20, -95, 60}, {4.5f, 5.67f, 5.67f}},
 };
 
-// A shell that's @p model's bone @p bone (as JhlSetupCasingBones draws it), turned to @p angles, @p scale bigger along
-// its bone's axes, growing to it if @p grow.
 static void JhlSpawnCasing(int model, int bone, const Vector& origin, const Vector& velocity, const Vector& angles,
 	const Vector& scale, bool grow)
 {
@@ -924,8 +894,6 @@ static void JhlSpawnCasing(int model, int bone, const Vector& origin, const Vect
 	}
 }
 
-// A shell's tumble growing from its start (its fuser2 of it) to all of it (its vuser2) over its fuser3 seconds since it
-// was thrown (its fuser1), eased.
 static void JhlRampTumble(TEMPENTITY* shell, float frametime, float currenttime)
 {
 	const entity_state_t& state = shell->entity.curstate;
@@ -970,8 +938,6 @@ void JhlEjectShapedBrass(const Vector& origin, const Vector& velocity, const Vec
 
 static void JhlViewModelCasings(cl_entity_t* entity, model_t* model, float frame, float (*bones)[3][4], float (*rotation)[3][4])
 {
-	// Where its casings were drawn last (and the view model then), to be let go from: drawn now, they may have snapped
-	// back already.
 	static const JhlCasingDrop* last = nullptr;
 	static float lastFrame = 0;
 	static float lastBones[6][3][4];
@@ -994,10 +960,8 @@ static void JhlViewModelCasings(cl_entity_t* entity, model_t* model, float frame
 		return;
 	}
 
-	// Reached where they're let go, since it was drawn last (and not started over).
 	if (drop == last && lastFrame < drop->Frame && frame >= drop->Frame && frame >= lastFrame)
 	{
-		// The one drawn: in Opposing Force and Blue Shift only theirs is loaded.
 		const int shell = gEngfuncs.pEventAPI->EV_FindModelIndex(model->name);
 
 		for (int i = 0; shell != 0 && i < drop->BoneCount; ++i)
@@ -1012,7 +976,6 @@ static void JhlViewModelCasings(cl_entity_t* entity, model_t* model, float frame
 			for (int axis = 0; axis < 3; ++axis)
 				velocity[axis] += (*rotation)[axis][0] * along.x + (*rotation)[axis][1] * along.y + (*rotation)[axis][2] * along.z;
 
-			// Turned as it was drawn (the inverse of AngleMatrix; a studio model's pitch is the other way round).
 			constexpr float Degrees = 180 / 3.1415927f;
 			const Vector angles{std::asin(std::clamp(m[2][0], -1.f, 1.f)) * Degrees, std::atan2(m[1][0], m[0][0]) * Degrees,
 				std::atan2(m[2][1], m[2][2]) * Degrees};
@@ -1066,8 +1029,6 @@ static void JhlLatchViewModelSequence(cl_entity_t* entity, model_t* model, float
 
 	if (std::strstr(model->name, "v_bgrap.mdl"))
 	{
-		// v_bgrap's sequences: breathe, longidle, shortidle, cough (0-3), down, up (4-5); fire, firewaiting, firereached,
-		// firetravel, firerelease (6-10).
 		constexpr int Fire = 6;
 		constexpr int FireReached = 8;
 
@@ -1078,9 +1039,6 @@ static void JhlLatchViewModelSequence(cl_entity_t* entity, model_t* model, float
 	}
 	else
 	{
-		// The Glock's, revolver's, Desert Eagle's and shotgun's reloads blended into (from the last shot's end pose,
-		// the slide back) over 0.12 s, and out of into idle over 0.2 s (the shotgun's start_reload, reload and pump
-		// between each other too); a shot during one still snaps, at once.
 		if (!std::strstr(model->name, "v_9mmhandgun.mdl") && !std::strstr(model->name, "v_357.mdl") &&
 			!std::strstr(model->name, "v_desert_eagle.mdl") && !std::strstr(model->name, "v_shotgun.mdl"))
 		{
@@ -1102,19 +1060,14 @@ static void JhlLatchViewModelSequence(cl_entity_t* entity, model_t* model, float
 		g_JhlViewModelBlendTime = reloading(sequence) ? 0.12f : 0.2f;
 	}
 
-	// When the blend started, never exactly its animation's start (animtime, stamped with the same client time as it
-	// changed): the engine takes the two being equal for a sequence just begun, and plays all its events from frame 0
-	// again, every frame (its reload sounds, over and over, until the next change).
 	const float blendStart = time == entity->curstate.animtime ? time - 0.001f : time;
 
-	// One shown only a moment (a frame's flip, or firereached before idle): blend from the pose before it, not from it.
 	if (0 != entity->latched.sequencetime && time - entity->latched.sequencetime < 0.1f)
 	{
 		entity->latched.sequencetime = blendStart;
 		return;
 	}
 
-	// latched.prevframe is still the frame it drew last (StudioSetupBones).
 	entity->latched.prevsequence = previous;
 	entity->latched.prevseqblending[0] = entity->latched.prevseqblending[1] = 0;
 	entity->latched.sequencetime = blendStart;
@@ -1205,7 +1158,6 @@ void CStudioModelRenderer::StudioSetupBones()
 		}
 	}
 
-	// johnhalflife: the view model's blends are its own length (JhlLatchViewModelSequence).
 	const double blendTime = m_pCurrentEntity == gEngfuncs.GetViewModel() ? g_JhlViewModelBlendTime : 0.2;
 
 	if (m_fDoInterp &&
@@ -1346,7 +1298,7 @@ void CStudioModelRenderer::StudioSetupBones()
 		}
 	}
 
-	// johnhalflife: the view model's bones kept, for points on it that have no attachment (JhlViewModelPoint).
+	// johnhalflife
 	if (m_pCurrentEntity == gEngfuncs.GetViewModel())
 	{
 		JhlViewModelCasings(m_pCurrentEntity, m_pRenderModel, static_cast<float>(f), *m_pbonetransform, m_protationmatrix);
@@ -1362,7 +1314,6 @@ void CStudioModelRenderer::StudioSetupBones()
 
 void CStudioModelRenderer::JhlSetupCasingBones()
 {
-	// Only its casing's bone drawn, where it is and as it's turned, growing to its size; every other shrunk to nothing.
 	const int casing = m_pCurrentEntity->curstate.iuser3;
 	const float grown = std::clamp((static_cast<float>(m_clTime) - m_pCurrentEntity->curstate.fuser1) / JhlCasingGrowTime, 0.f, 1.f);
 	const Vector& size = m_pCurrentEntity->curstate.vuser1;
@@ -1384,8 +1335,6 @@ void CStudioModelRenderer::JhlSetupCasingBones()
 
 void CStudioModelRenderer::JhlSetupBorrowedBones()
 {
-	// The pose's model, sequence and frame (its iuser1, iuser2 less one, fuser3), its origin fuser4 above the feet; with
-	// playerclass 1, only its upper body (jhl_body.h).
 	model_t* donor = IEngineStudio.GetModelByIndex(m_pCurrentEntity->curstate.iuser1);
 	auto donorHeader = donor ? static_cast<studiohdr_t*>(IEngineStudio.Mod_Extradata(donor)) : nullptr;
 	const int donorSequence = m_pCurrentEntity->curstate.iuser2 - 1;
@@ -1405,7 +1354,6 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 
 	const bool armsOnly = m_pCurrentEntity->curstate.playerclass == 1;
 
-	// Its own sequence: for any bone the other hasn't (standing), or all but the arms.
 	if (m_pCurrentEntity->curstate.sequence >= m_pStudioHeader->numseq)
 		m_pCurrentEntity->curstate.sequence = 0;
 
@@ -1413,7 +1361,6 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	mstudioseqdesc_t* own = &sequences[m_pCurrentEntity->curstate.sequence];
 	StudioCalcRotations(pos, q, own, StudioGetAnim(m_pRenderModel, own), StudioEstimateFrame(own));
 
-	// The other model's pose, and the player model's standing one (deep_idle) to measure its hips' rise and fall from.
 	studiohdr_t* const ownHeader = m_pStudioHeader;
 	model_t* const ownModel = m_pRenderModel;
 	m_pStudioHeader = donorHeader;
@@ -1423,7 +1370,6 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	mstudioseqdesc_t* pose = &donorSequences[donorSequence];
 	StudioCalcRotations(donorPos, donorQ, pose, StudioGetAnim(donor, pose), m_pCurrentEntity->curstate.fuser3);
 
-	// With playerclass 2 (a jump), its arms no further through it than vuser1[1] (they come back in to hold a weapon).
 	static float armsPos[MAXSTUDIOBONES][3];
 	static vec4_t armsQ[MAXSTUDIOBONES];
 	const float armsFrame = m_pCurrentEntity->curstate.vuser1[1];
@@ -1445,12 +1391,9 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	m_pStudioHeader = ownHeader;
 	m_pRenderModel = ownModel;
 
-	// Bone for bone by name (their bipeds alike, Bip02 the lab coat's, Bip01 the player models' and the hologram's): its
-	// own name, else the other biped's.
 	auto bones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(m_pStudioHeader) + m_pStudioHeader->boneindex);
 	auto donorBones = reinterpret_cast<mstudiobone_t*>(reinterpret_cast<byte*>(donorHeader) + donorHeader->boneindex);
 
-	// Their names in one biped naming (JhlBoneName: Opposing Force's recruit's as the player models').
 	static char ownNameBuffers[MAXSTUDIOBONES][32];
 	static char donorNameBuffers[MAXSTUDIOBONES][32];
 	static const char* ownNames[MAXSTUDIOBONES];
@@ -1462,9 +1405,6 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	for (int i = 0; i < std::min(donorHeader->numbones, MAXSTUDIOBONES); ++i)
 		donorNames[i] = JhlBoneName(donorBones[i].name, donorNameBuffers[i]);
 
-	// With vuser3 (a model's index, its sequence plus one, its frame), its own pose that model's instead, bone for bone by
-	// name: its turns, and its hips raised and lowered as that model's from its standing, to its size (Opposing Force's
-	// recruit walking as Adrian does, the arms over it the lab coat's as on Adrian).
 	if (const int baseIndex = static_cast<int>(m_pCurrentEntity->curstate.vuser3[0]); baseIndex > 0)
 	{
 		model_t* base = IEngineStudio.GetModelByIndex(baseIndex);
@@ -1577,13 +1517,6 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 
 	if (!armsOnly)
 	{
-		// Its turns, and its hips raised and lowered as the player model's (from its origin, the hull's middle, to the
-		// feet), to his size. With playerclass 2, without its root's motion: the root turned as standing, and placed as
-		// standing (none of its rise or sinking); its back and neck upright as standing (coming down
-		// the jump folds it forward over the hips, 70 degrees, its back and shoulders out under the eyes); its arms held
-		// (above), and turned as the jump's are, its whole lean in them (on the folded back's rotations an upright back
-		// swung them up behind it), raised forward vuser1[2] degrees more, and moved vuser2[0] forward and vuser2[1] up
-		// (the shoulders upright are further back).
 		const bool rootStill = m_pCurrentEntity->curstate.playerclass == 2;
 		bool arm[MAXSTUDIOBONES]{};
 
@@ -1610,8 +1543,6 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 
 		if (rootStill)
 		{
-			// The jump's own turns (its arms' frame if held), its root's lean among them, to each collarbone; the extra
-			// raise about the model's sideways axis.
 			const vec4_t* jumpQ = armsHeld ? armsQ : donorQ;
 
 			for (int j = 0; j < donorHeader->numbones; ++j)
@@ -1624,9 +1555,6 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 					std::memcpy(donorWorld[j], jumpQ[j], sizeof(donorWorld[j]));
 			}
 
-			// Both about where the player looks, not where its legs go: moving sideways in the air its legs turn that way, its
-			// back twisted the rest of the way to the view (its controllers), and a raise about the legs' sideways axis rolled
-			// the arms across the view (fuser2 the view's yaw, angles the legs').
 			const float turn = std::remainder(m_pCurrentEntity->curstate.fuser2 - m_pCurrentEntity->curstate.angles[1], 360.f) *
 							   static_cast<float>(PI) / 180;
 			const float raise = m_pCurrentEntity->curstate.vuser1[2] * static_cast<float>(PI) / 360;
@@ -1663,11 +1591,6 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	}
 	else
 	{
-		// Its upper body turned as the lab coat's is against his hips: its back, neck and arms (the player models' poses
-		// lunge and twist the back as they run with a weapon), measured from the hips, not bone by bone (their collarbones
-		// aren't alike: his a dummy at the neck, the player models' out to the shoulder). Its collarbones, fingers (he has
-		// none) and any back bone he hasn't as at rest, its fingers open, not gripping a weapon. Its arms raised forward
-		// vuser1[2] degrees about the model's sideways axis and moved vuser2[0] forward and vuser2[1] up (at the collarbones).
 		const float raise = m_pCurrentEntity->curstate.vuser1[2] * static_cast<float>(PI) / 360;
 		const vec4_t raiseQ = {0, std::sin(raise), 0, std::cos(raise)};
 		const float moved[3] = {m_pCurrentEntity->curstate.vuser2[0], 0, m_pCurrentEntity->curstate.vuser2[1]};
@@ -1773,8 +1696,6 @@ void CStudioModelRenderer::JhlSetupBorrowedBones()
 	}
 }
 
-// johnhalflife: the first-person body's bones as posed, its hands not yet hidden (JhlKeepWrists), for the hands drawn on
-// them (JhlDrawBorrowedHands), in one biped naming (JhlBoneName).
 static int g_JhlBodyBoneCount = 0;
 static char g_JhlBodyBoneNames[MAXSTUDIOBONES][32];
 static float g_JhlBodyBones[MAXSTUDIOBONES][3][4];
@@ -1792,7 +1713,6 @@ void CStudioModelRenderer::JhlKeepWrists()
 	std::memcpy(g_JhlBodyBones, *m_pbonetransform, sizeof(float[3][4]) * g_JhlBodyBoneCount);
 	std::memcpy(g_JhlBodyLightBones, *m_plighttransform, sizeof(float[3][4]) * g_JhlBodyBoneCount);
 
-	// Its own hands hidden, shrunk to their wrists (each hand bone to the first hand bone it's under, itself).
 	int wrist[MAXSTUDIOBONES];
 
 	for (int i = 0; i < g_JhlBodyBoneCount; ++i)
@@ -1839,8 +1759,6 @@ void CStudioModelRenderer::JhlDrawBorrowedHands(alight_t* lighting)
 	const int count = std::min(header->numbones, MAXSTUDIOBONES);
 	bool hand[MAXSTUDIOBONES];
 
-	// Bone for bone by name the body's as posed (its hands' too, hidden with its arms or not); any it hasn't (fingers) as
-	// their model has them at rest on the bone they're under, as the borrowed poses do.
 	for (int i = 0; i < count; ++i)
 	{
 		char buffer[32];
@@ -1876,8 +1794,6 @@ void CStudioModelRenderer::JhlDrawBorrowedHands(alight_t* lighting)
 		}
 	}
 
-	// All but its hands hidden: a forearm shrunk to its wrist (the hand's skin closing over it), everything else to one
-	// point, each triangle between them nothing.
 	const Vector common{(*m_pbonetransform)[0][0][3], (*m_pbonetransform)[0][1][3], (*m_pbonetransform)[0][2][3]};
 	const Vector commonLight{(*m_plighttransform)[0][0][3], (*m_plighttransform)[0][1][3], (*m_plighttransform)[0][2][3]};
 
@@ -1917,7 +1833,6 @@ void CStudioModelRenderer::JhlDrawBorrowedHands(alight_t* lighting)
 
 bool JhlViewModelPoint(const char* modelName, int bone, const Vector& local, Vector& world)
 {
-	// Drawn just now (last frame's, the view model being drawn after the effects), and the one asked about.
 	if (!g_JhlViewModel || bone < 0 || bone >= g_JhlViewModelBoneCount ||
 		!JhlSameViewModel(g_JhlViewModel->name, modelName) || std::abs(gEngfuncs.GetClientTime() - g_JhlViewModelTime) > 0.1)
 	{
@@ -1930,8 +1845,6 @@ bool JhlViewModelPoint(const char* modelName, int bone, const Vector& local, Vec
 	for (int i = 0; i < 3; ++i)
 		then[i] = m[i][0] * local.x + m[i][1] * local.y + m[i][2] * local.z + m[i][3];
 
-	// Moved with the view model since (the camera, the player, its sway): where it is on the view model then, put where
-	// the view model is now (its animation a frame behind, too little to see).
 	cl_entity_t* viewModel = gEngfuncs.GetViewModel();
 
 	if (!viewModel)
@@ -2108,7 +2021,6 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 		return result;
 	}
 
-	// johnhalflife (jhl_visuals_firstpersonbody): the player's body on their feet, or left out (seen from elsewhere).
 	if (m_pCurrentEntity->curstate.iuser4 == JhlBodyMarker && !JhlBody_Place(m_pCurrentEntity, m_vRenderOrigin))
 		return false;
 
@@ -2142,7 +2054,6 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 	}
 	else if (m_pCurrentEntity->curstate.iuser4 == JhlShapedMarker)
 	{
-		// Posed as usual (Half-Life's shell lies flat by its bones' own turns), its casing's bone stretched along its axes.
 		StudioSetupBones();
 
 		if (const int bone = m_pCurrentEntity->curstate.iuser3; bone >= 0 && bone < m_pStudioHeader->numbones)
@@ -2186,7 +2097,6 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 
 			memcpy(ent->attachment, m_pCurrentEntity->attachment, sizeof(Vector) * 4);
 
-			// johnhalflife: a gargantua's flames' cores onto its hands, a pit worm's eye's light, as just drawn.
 			JhlGargantua_Drawn(m_pCurrentEntity);
 			JhlPitWorm_Drawn(m_pCurrentEntity);
 			JhlGeneWorm_Drawn(m_pCurrentEntity);
@@ -2213,7 +2123,6 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 
 		StudioRenderModel();
 
-		// johnhalflife: the first-person body's hands as another model's (Barney's shirt's as his vest's).
 		if (m_pCurrentEntity->curstate.iuser4 == JhlBodyMarker && JhlBody_HandsModel() > 0)
 			JhlDrawBorrowedHands(&lighting);
 	}
@@ -2699,7 +2608,6 @@ void CStudioModelRenderer::StudioRenderFinal_Hardware()
 
 			IEngineStudio.GL_SetRenderMode(rendermode);
 
-			// johnhalflife: lit as the software renderer lit models (jhl_visuals_renderfixes).
 			const bool overbright = JhlSoftwareLook_BeginModel(rendermode, m_pCurrentEntity->curstate.renderfx);
 			IEngineStudio.StudioDrawPoints();
 
@@ -2730,8 +2638,7 @@ StudioRenderFinal
 */
 void CStudioModelRenderer::StudioRenderFinal()
 {
-	// johnhalflife (jhl_debug_hitch): the engine's drawing, counted as the engine's, not the client's; a model's first
-	// draw this map named (the driver uploading its textures, the engine loading its data).
+	// johnhalflife
 	static std::unordered_set<const model_t*> drawn;
 	static double lastTime = 0;
 

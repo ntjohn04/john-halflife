@@ -28,25 +28,15 @@ constexpr int RoomEffectCount = 29;
 
 void SetupEffect(ALuint effectId, unsigned int roomType);
 
-/**
- *	@brief johnhalflife: a room's reverb as the engine's own software DSP has it (Steam Half-Life's; the table above is
- *	the long gone EAX one's), and its echo (an echo effect, on a second send), with that echo's level.
- */
+// johnhalflife: @brief johnhalflife
 void SetupVanillaReverb(ALuint effectId, unsigned int roomType);
 void SetupVanillaEcho(ALuint effectId, unsigned int roomType);
 float VanillaEchoGain(unsigned int roomType);
 
-/**
- *	@brief johnhalflife: whether the engine lowpasses the whole sound in a room (its water rooms, 14-16: room 14 is
- *	the one under water), the direct sound too.
- */
+// johnhalflife: @brief johnhalflife
 bool VanillaLowpass(unsigned int roomType);
 
-/**
- *	@brief johnhalflife: everything a room adds to a click, at the engine's 22050 Hz, as the engine's software DSP plays
- *	it (its reverb and echo whole: the echo's lowpass, recursive, is what the echo effect can't do), for OpenAL's
- *	convolution effect. Empty for rooms that add nothing. Its loudness modulation (room 26) isn't in it.
- */
+// johnhalflife: @brief johnhalflife
 constexpr int VanillaResponseRate = 22050;
 std::vector<float> VanillaRoomResponse(unsigned int roomType);
 }

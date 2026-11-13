@@ -27,14 +27,12 @@
 
 namespace
 {
-// The client library's JhlMusic_GetState, if it's loaded in this process (single player, or a listen server's host).
 JhlMusicGetStateFn FindGetState()
 {
 #ifdef WIN32
 	HMODULE client = GetModuleHandleA("client.dll");
 	return client ? reinterpret_cast<JhlMusicGetStateFn>(GetProcAddress(client, JhlMusicGetStateName)) : nullptr;
 #else
-	// RTLD_NOLOAD: only if it's already loaded; the handle's reference is dropped again (the engine holds its own).
 	const std::string path = FileSystem_GetGameDirectory() + "/cl_dlls/client.so";
 	void* client = dlopen(path.c_str(), RTLD_NOW | RTLD_NOLOAD);
 

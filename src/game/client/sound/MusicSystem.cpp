@@ -250,7 +250,7 @@ void MusicSystem::StartPlaying(bool looping, FileWrapper file, MusicState from)
 	// No longer need the file.
 	file.reset();
 
-	// johnhalflife: from where it was saved (round again for a looping track; a track that had ended stays ended).
+	// johnhalflife
 	const std::size_t channels = m_Info.Data->channelCount;
 	const std::size_t frames = channels > 0 ? m_Info.Data->samples.size() / channels : 0;
 	std::size_t startFrame = static_cast<std::size_t>(std::max(0.f, from.Position) * m_Info.Data->sampleRate);
@@ -322,7 +322,7 @@ void MusicSystem::StartPlaying(bool looping, FileWrapper file, MusicState from)
 
 	m_Position = static_cast<float>(startFrame) / m_Info.Data->sampleRate;
 
-	// johnhalflife: as it was saved: still fading out, or paused by the map.
+	// johnhalflife: as it was saved
 	if (from.FadeRemaining > 0)
 	{
 		m_FadeDuration = from.FadeDuration > 0 ? from.FadeDuration : from.FadeRemaining;
@@ -392,8 +392,7 @@ void MusicSystem::Resume()
 	if (!m_Paused)
 		return;
 
-	// johnhalflife: the game unpausing doesn't resume a track the map paused (music pause; music resume clears this
-	// first).
+	// johnhalflife
 	if (m_PausedByCommand)
 		return;
 
@@ -405,7 +404,6 @@ void MusicSystem::Resume()
 
 void MusicSystem::SetPausedByCommand(bool paused)
 {
-	// On the worker thread, in order with a track being started (which sets it as the track was saved).
 	if (RunOnWorkerThread(&MusicSystem::SetPausedByCommand, paused))
 	{
 		return;
@@ -602,7 +600,6 @@ void MusicSystem::UpdatePosition()
 		return;
 	}
 
-	// The source's offset is from the start of its queue, which m_Queued mirrors.
 	ALint offset = 0;
 	alGetSourcei(m_Source.Id, AL_SAMPLE_OFFSET, &offset);
 

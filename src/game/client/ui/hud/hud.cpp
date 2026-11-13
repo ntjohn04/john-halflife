@@ -113,7 +113,7 @@ void CHud::Init()
 
 	CVAR_CREATE("zoom_sensitivity_ratio", "1.2", 0);
 	CVAR_CREATE("cl_autowepswitch", "1", FCVAR_ARCHIVE | FCVAR_USERINFO);
-	default_fov = CVAR_CREATE("default_fov", "100", FCVAR_ARCHIVE); // johnhalflife: its recommended value
+	default_fov = CVAR_CREATE("default_fov", "100", FCVAR_ARCHIVE); // johnhalflife
 	m_pCvarHudScale = CVAR_CREATE("jhl_hud_scale", "0", FCVAR_ARCHIVE);
 	m_pCvarHudMinimal = CVAR_CREATE("jhl_hud_minimal", "1", FCVAR_ARCHIVE);
 	m_pCvarStealMouse = CVAR_CREATE("hud_capturemouse", "1", FCVAR_ARCHIVE);
@@ -189,15 +189,12 @@ void CHud::UpdateScreenInfo()
 	m_scrinfo.iSize = sizeof(m_scrinfo);
 	GetScreenInfo(&m_scrinfo);
 
-	// Scaling draws sprites through the triangle API, so software rendering stays at native size. The half-size HUD
-	// is drawn at native size too.
 	float scale = 1;
 
 	if (m_pCvarHudScale && !m_bHalfSizeHud && IEngineStudio.IsHardware && 0 != IEngineStudio.IsHardware())
 	{
 		scale = m_pCvarHudScale->value;
 
-		// 0 picks a whole-number scale from the screen height: 1 up to 1439 pixels, 2 at 1440, 3 at 2160.
 		if (scale <= 0)
 		{
 			scale = std::floor(m_scrinfo.iHeight / 720.f);
@@ -214,7 +211,6 @@ void CHud::UpdateScreenInfo()
 	m_HudScreenInfo.iWidth = static_cast<int>(m_scrinfo.iWidth / scale);
 	m_HudScreenInfo.iHeight = static_cast<int>(m_scrinfo.iHeight / scale);
 
-	// Text is drawn at its real size, so round its size up in HUD units to keep characters from overlapping.
 	m_HudScreenInfo.iCharHeight = static_cast<int>(std::ceil(m_scrinfo.iCharHeight / scale));
 
 	for (std::size_t i = 0; i < std::size(m_HudScreenInfo.charWidths); ++i)
@@ -235,8 +231,7 @@ void CHud::VidInit()
 	m_hsprLogo = 0;
 	m_hsprCursor = 0;
 
-	// johnhalflife: the half-size sprites below 640 wide, as vanilla, with jhl_hud_scale below 1 (0.5), or automatic (0)
-	// at 600 tall and below (800x600, 640x480).
+	// johnhalflife
 	{
 		SCREENINFO screen{};
 		screen.iSize = sizeof(screen);

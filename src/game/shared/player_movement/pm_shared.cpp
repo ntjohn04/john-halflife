@@ -1021,10 +1021,7 @@ void PM_WalkMove()
 	PM_Accelerate(wishdir, wishspeed, pmove->movevars->accelerate);
 	pmove->velocity[2] = 0;
 
-	// johnhalflife (jhl_physics_wallfix, sent by the server as "jwf"): walking at an angle into a wall, the wall takes
-	// away the speed into it each frame and accelerating puts it back, so along the wall it builds to the full speed
-	// asked for in the direction pressed: 1.4 times as fast at 45 degrees. Accelerating on the ground now goes no faster
-	// than asked for, or than already going (a landing, a push); in the air, as before.
+	// johnhalflife
 	if (atoi(pmove->PM_Info_ValueForKey(pmove->physinfo, "jwf")) == 1)
 	{
 		const float speedAfter = pmove->velocity.Length();
@@ -2136,10 +2133,7 @@ void PM_LadderMove(physent_t* pLadder)
 				tmp = CrossProduct(trace.plane.normal, perp);
 				pmove->velocity = lateral + (-normal * tmp);
 
-				// johnhalflife (jhl_physics_wallfix, sent by the server as "jwf"): each key asks for the full climbing
-				// speed, so two at once ask for 1.4 times it, and the speed into the ladder's face is turned into
-				// climbing on top of any already along it (looking up or down at an angle): turned 45 degrees with two
-				// keys held, it climbed 1.4 times as fast. Now no faster than the climbing speed, whatever's pressed.
+				// johnhalflife
 				if (atoi(pmove->PM_Info_ValueForKey(pmove->physinfo, "jwf")) == 1)
 				{
 					if (const float climbing = pmove->velocity.Length(); climbing > flSpeed)
@@ -2581,8 +2575,6 @@ void PM_Jump()
 			(pmove->flDuckTime > 0) &&
 			pmove->velocity.Length() > 50)
 		{
-			// No punch here: the server sends a smooth punch jolt for jumps instead.
-
 			for (i = 0; i < 2; i++)
 			{
 				pmove->velocity[i] = pmove->forward[i] * PLAYER_LONGJUMP_SPEED * 1.6;
@@ -2594,8 +2586,7 @@ void PM_Jump()
 			{
 				PM_PlaySound(CHAN_STATIC, "ctf/pow_big_jump.wav", VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 			}
-			// johnhalflife (jhl_camera_jumplandjolt, sent by the server as "jlj"): the long jump module's jump, a
-			// reserved burst (vanilla's is silent, but for the jump's own sound).
+			// johnhalflife
 			else if (atoi(pmove->PM_Info_ValueForKey(pmove->physinfo, "jlj")) == 1)
 			{
 				PM_PlaySound(CHAN_STATIC, "player/power_jump.wav", VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
@@ -2739,8 +2730,6 @@ void PM_CheckFalling()
 
 			// play step sound for current texture
 			PM_PlayStepSound(PM_MapTextureTypeStepType(pmove->chtexturetype), fvol);
-
-			// No screen punch here: the server sends a smooth punch landing jolt instead.
 		}
 	}
 
@@ -3028,8 +3017,7 @@ void PM_PlayerMove(qboolean server)
 	// Slow down, I'm pulling it! (a box maybe) but only when I'm standing on ground
 	if ((pmove->onground != -1) && (pmove->cmd.buttons & IN_USE) != 0)
 	{
-		// johnhalflife (jhl_physics_fpsfix, sent by the server as "jfps"): every input frame, against walking's pull
-		// over time, so walking with +use settles at the speed it did at 72 fps.
+		// johnhalflife
 		const bool fpsFix = atoi(pmove->PM_Info_ValueForKey(pmove->physinfo, "jfps")) == 1;
 		pmove->velocity = pmove->velocity * (fpsFix ? JhlReferenceSettlingDecay(0.3f, pmove->frametime) : 0.3f);
 	}

@@ -47,7 +47,7 @@ struct Material
 {
 	char Type{}; //!< 0: not given (concrete).
 
-	// johnhalflife: how impacts look on it (sound/jhl_impact_materials.json), where Valve's table doesn't say; 0: as Type.
+	// johnhalflife
 	char Impact{};
 };
 
@@ -81,10 +81,7 @@ public:
 	 */
 	char FindTextureType(const char* name) const;
 
-	/**
-	 *	@brief johnhalflife: the material bullet impacts, melee and explosion debris show on a texture: its Impact if
-	 *	it has one, else its type. Sounds (footsteps, ricochets) keep FindTextureType.
-	 */
+	// johnhalflife: @brief johnhalflife
 	char FindImpactType(const char* name) const;
 
 private:

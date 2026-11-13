@@ -13,11 +13,6 @@
  *
  ****/
 
-// jhl_fx_test: plays effects where the player is aiming, for designing particle effects
-// (see docs/README.md#debug-commands). Client side only: nothing is sent to the server, and only the local
-// player sees the result. Presets reproduce what the game does for an event with the original values; primitives
-// play one building block with any parameters.
-
 #include <functional>
 #include <string>
 #include <unordered_map>
@@ -42,10 +37,6 @@
 
 namespace
 {
-/**
- *	@brief key=value command arguments. Every value read is recorded, so what was played can be printed with all
- *	its parameters, defaults included.
- */
 class Params
 {
 public:
@@ -64,7 +55,6 @@ public:
 		}
 	}
 
-	// A value as set, without recording it (for effects derived from another's parameters).
 	float Value(const char* name, float defaultValue) const
 	{
 		if (auto it = m_Values.find(name); it != m_Values.end())
@@ -73,7 +63,6 @@ public:
 		return defaultValue;
 	}
 
-	// Sets a value, as if it had been given on the command line (for presets).
 	Params& Set(const char* name, float value)
 	{
 		m_Values[name] = fmt::format("{:g}", value);
@@ -137,7 +126,6 @@ public:
 		return value;
 	}
 
-	// Prints what was played and clears the record for the next part of the effect.
 	void Print(const char* what)
 	{
 		gEngfuncs.Con_Printf("  %s %s\n", what, m_Used.c_str());
@@ -159,7 +147,6 @@ private:
 	std::string m_Used;
 };
 
-// Where the player is aiming: the surface point, its normal (facing the player if nothing was hit) and the view.
 struct Target
 {
 	Vector Position;
@@ -179,7 +166,6 @@ Target FindTarget()
 	pmtrace_t tr;
 	gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(0, 1);
 	gEngfuncs.pEventAPI->EV_PushPMStates();
-	// Other players are solid, but not the local one, or the trace would stop inside them at once.
 	gEngfuncs.pEventAPI->EV_SetSolidPlayers(gEngfuncs.GetLocalPlayer()->index - 1);
 	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
 	gEngfuncs.pEventAPI->EV_PlayerTrace(start, end, PM_STUDIO_BOX, -1, &tr);
@@ -188,7 +174,6 @@ Target FindTarget()
 	return {tr.endpos, tr.fraction < 1 ? Vector{tr.plane.normal} : -forward, start, forward};
 }
 
-// Finds a sprite or model, loading it if the map didn't precache it.
 int ModelIndex(const std::string& name)
 {
 	if (const int index = gEngfuncs.pEventAPI->EV_FindModelIndex(name.c_str()); index != 0)
@@ -196,7 +181,6 @@ int ModelIndex(const std::string& name)
 		return index;
 	}
 
-	// A model the map didn't load gets index -1, which effects can't use (the engine reports "no model -1").
 	int index = 0;
 	gEngfuncs.CL_LoadModel(name.c_str(), &index);
 
@@ -209,8 +193,6 @@ int ModelIndex(const std::string& name)
 	return index;
 }
 
-// R_TempSprite for any sprite file: one the map didn't load has no index, so its temp entity is built from the model,
-// loaded as a HUD sprite (CL_LoadModel only finds what the map precached).
 TEMPENTITY* TempSprite(const std::string& name, Vector origin, const Vector& velocity, float scale, int render, float alpha,
 	float life, int flags)
 {
@@ -265,7 +247,6 @@ constexpr int BloodRed = 247;
 constexpr int BloodYellow = 195;
 constexpr int BloodStreamRed = 70;
 
-// Parts of an effect that play later (smoke after an explosion, a falling helicopter's sequence).
 struct Pending
 {
 	float Time;
@@ -279,9 +260,6 @@ void Later(float delay, std::function<void()> action)
 	g_Pending.push_back({gEngfuncs.GetClientTime() + delay, std::move(action)});
 }
 
-// ---- Primitives: one building block each ------------------------------------------------------------------------
-
-// The general particle: any sprite, moving, animating and fading.
 void Sprite(const Target& target, Params& p)
 {
 	const auto name = p.String("sprite", "sprites/steam1.spr");
@@ -301,7 +279,6 @@ void Sprite(const Target& target, Params& p)
 	const int gravity = p.Int("gravity", 0);
 	const float fade = p.Float("fade", 0);
 	const bool collide = 0 != p.Int("collide", 0);
-	// Plays its frames once over its life (JhlSprite_PlayOnce), fading over the last fade (0-1) of it.
 	const bool once = 0 != p.Int("once", 0);
 	p.Print("sprite");
 
@@ -338,13 +315,11 @@ void Sprite(const Target& target, Params& p)
 	}
 }
 
-// The engine's explosion (TE_EXPLOSION): an additive animated sprite, a light, particles and a sound.
 void Explosion(const Target& target, Params& p)
 {
 	const auto name = p.String("sprite", "sprites/zerogxplode.spr");
 	const float scale = p.Float("scale", 3);
 	const float fps = p.Float("fps", 15);
-	// Out from the surface as far as a 100 damage grenade's: (dmg - 24) * 0.6.
 	const float offset = p.Float("offset", 45.6f);
 	int flags = TE_EXPLFLAG_NONE;
 	flags |= 0 == p.Int("additive", 1) ? TE_EXPLFLAG_NOADDITIVE : 0;
@@ -362,7 +337,6 @@ void Explosion(const Target& target, Params& p)
 	}
 }
 
-// The engine's smoke puff (TE_SMOKE): a sprite rising slowly, drawn translucent.
 void Smoke(const Target& target, Params& p)
 {
 	const auto name = p.String("sprite", "sprites/steam1.spr");
@@ -382,7 +356,6 @@ void Smoke(const Target& target, Params& p)
 	}
 }
 
-// The lingering cloud after an explosion's smoke (jhl_explosions.cpp), by itself; scale is the fireball's.
 void LingeringSmoke(const Target& target, Params& p)
 {
 	JhlLingeringSmoke settings;
@@ -404,7 +377,6 @@ void LingeringSmoke(const Target& target, Params& p)
 	}
 }
 
-// The engine's spark burst (TE_SPARKS): fixed look, no parameters but how many.
 void Sparks(const Target& target, Params& p)
 {
 	const int count = p.Int("count", 1);
@@ -418,7 +390,6 @@ void Sparks(const Target& target, Params& p)
 	}
 }
 
-// Spark streaks (R_SparkStreaks), as used on metal by the bullet impacts.
 void Streaks(const Target& target, Params& p)
 {
 	const int count = p.Int("count", 4);
@@ -431,10 +402,6 @@ void Streaks(const Target& target, Params& p)
 	gEngfuncs.pEfxAPI->R_SparkStreaks(origin, count, minimum, maximum);
 }
 
-// A flying spark emitter like the game's spark_shower: thrown off the surface, sparking every 0.1 seconds while it
-// slows down. Each burst is the engine's TE_SPARKS (8 streaks at ±200 and a richo1 flash, scale 0.5-1), or, with
-// any of streaks=, vel= or flash= given, the same built from its parts (baseline.renderamt, .rendermode, .skin:
-// streaks, velocity, flash scale × 100; baseline.fuser1: interval).
 void ShowerCallback(TEMPENTITY* ent, float frametime, float currenttime)
 {
 	if (currenttime < ent->entity.baseline.scale)
@@ -451,7 +418,6 @@ void ShowerCallback(TEMPENTITY* ent, float frametime, float currenttime)
 	{
 		gEngfuncs.pEfxAPI->R_SparkStreaks(origin, custom.renderamt, -custom.rendermode, custom.rendermode);
 
-		// The engine's own bursts use a copy of richo1 that maps don't precache; load it as a HUD sprite.
 		if (const HSPRITE flash = gEngfuncs.pfnSPR_Load("sprites/richo1.spr"); flash > 0 && custom.skin > 0)
 		{
 			const float scale = custom.skin / 100.f;
@@ -514,7 +480,6 @@ void Shower(const Target& target, Params& p)
 	}
 }
 
-// The engine's blood (TE_BLOODSPRITE): a spray sprite plus droplets, in a palette color.
 void Blood(const Target& target, Params& p)
 {
 	const int color = p.Int("color", BloodRed);
@@ -527,16 +492,12 @@ void Blood(const Target& target, Params& p)
 	gEngfuncs.pEfxAPI->R_BloodSprite(origin, color, ModelIndex(spray), ModelIndex(drop), size);
 }
 
-// A stream of blood particles arcing out of the surface (TE_BLOODSTREAM). The engine doesn't normalize the
-// direction: particle speed is direction length x speed, so a long direction makes a long line.
 void BloodStream(const Target& target, Params& p)
 {
-	// The stream picks colors color..color+9, so red is 70, not the blood sprite's 247.
 	const int color = p.Int("color", BloodStreamRed);
 	const int speed = p.Int("speed", 100);
 	// normal: out of the surface; player: back toward you; up.
 	const auto dir = p.String("dir", "normal");
-	// Direction length; "dist" uses the distance to you, as the sniper rifle does.
 	const auto length = p.String("length", "1");
 	p.Print("bloodstream");
 
@@ -565,7 +526,6 @@ int Material(const std::string& name)
 	return 0;
 }
 
-// Model debris (TE_BREAKMODEL), as breakables and destroyed vehicles throw.
 void Debris(const Target& target, Params& p)
 {
 	const auto name = p.String("model", "models/metalplategibs.mdl");
@@ -577,7 +537,6 @@ void Debris(const Target& target, Params& p)
 	const int material = Material(p.String("material", "metal"));
 	p.Print("debris");
 
-	// Through johnhalflife's debris, which loads gib models the map didn't (as surface debris would need).
 	if (model_t* model = JhlDebris_LoadModel(name.c_str()); model)
 	{
 		Vector origin = target.Position + target.Normal * (size * 0.5f);
@@ -635,9 +594,6 @@ void Beam(const Target& target, Params& p)
 	}
 }
 
-// A ring (TE_BEAMCYLINDER, TE_BEAMTORUS, TE_BEAMDISK): a beam bent into a circle around a point, growing by its axis
-// length every second (the game sends radius / life to reach a radius as it dies). Units as the client takes them:
-// a message's width, noise, life and speed are tenths, hundredths, tenths and tenths of these.
 void Ring(const Target& target, Params& p)
 {
 	const auto type = p.String("type", "cylinder");
@@ -651,7 +607,6 @@ void Ring(const Target& target, Params& p)
 	const float fps = p.Float("fps", 0);
 	const float speed = p.Float("speed", 0);
 	const float offset = p.Float("offset", 16);
-	// up: lying flat, as the game's are; normal: facing out of the surface aimed at.
 	const bool up = p.String("axis", "up") != "normal";
 	p.Print("ring");
 
@@ -659,7 +614,6 @@ void Ring(const Target& target, Params& p)
 
 	int model = gEngfuncs.pEventAPI->EV_FindModelIndex(name.c_str());
 
-	// Only sprites the map loaded can be used; the hornet gun's laserbeam always is.
 	if (model == 0)
 	{
 		gEngfuncs.Con_Printf("  (%s isn't loaded by this map; using sprites/laserbeam.spr)\n", name.c_str());
@@ -675,10 +629,6 @@ void Ring(const Target& target, Params& p)
 		color.x / 255, color.y / 255, color.z / 255);
 }
 
-// Tracer rounds from just below your eyes to the target: the engine's tracer (color=-1, as the MP5's: tracerred,
-// tracergreen, tracerblue, tracerlength, tracerspeed) or a tracer particle in one of the engine's 12 tracer colors
-// (0 white, 1 red, 2 green, 3 blue, 4 the cvars', 5 yellow-orange 255,167,17, 6 255,130,90, 7 blue 55,60,144,
-// 8 255,130,90, 9 255,140,90, 10 200,130,90, 11 255,120,70). count rounds, every interval seconds, spread degrees.
 void Tracer(const Target& target, Params& p)
 {
 	const int color = p.Int("color", 11);
@@ -687,8 +637,6 @@ void Tracer(const Target& target, Params& p)
 	const int count = p.Int("count", 1);
 	const float interval = p.Float("interval", 0.067f);
 	const float spread = p.Float("spread", 0);
-	// eye: where the game's own tracers start (16 forward, 2 right, 4 down of the eye); muzzle: the view model's
-	// muzzle (its first attachment), so the streak crosses the view instead of flying straight away from it.
 	const bool muzzle = p.String("from", "eye") == "muzzle";
 	p.Print("tracer");
 
@@ -727,8 +675,6 @@ void Tracer(const Target& target, Params& p)
 	}
 }
 
-// johnhalflife's tracers (jhl_tracers.cpp): a beam streak that grows out of the muzzle, flies at its own speed and
-// length, and shrinks into the target. Defaults: the M249's. count rounds every interval, spread degrees.
 void JhlTracer(const Target& target, Params& p)
 {
 	JhlTracerStyle style;
@@ -774,7 +720,6 @@ void JhlTracer(const Target& target, Params& p)
 	}
 }
 
-// The engine's built-in particle effects (palette colors 0-255).
 void Particles(const Target& target, Params& p)
 {
 	const auto type = p.String("type", "burst");
@@ -796,7 +741,7 @@ void Particles(const Target& target, Params& p)
 	}
 	else if (type == "blob")
 	{
-		// 1024: the engine's own; any other count, johnhalflife's copy of it (JhlExplosion_Blob).
+		// johnhalflife
 		const int count = p.Int("count", 1024);
 		p.Print("particles");
 
@@ -840,7 +785,6 @@ void Particles(const Target& target, Params& p)
 	}
 }
 
-// The engine's armor ricochet (TE_ARMOR_RICOCHET): a flash sprite and a ricochet sound.
 void Ricochet(const Target& target, Params& p)
 {
 	const float scale = p.Float("scale", 1);
@@ -855,7 +799,6 @@ void Ricochet(const Target& target, Params& p)
 	}
 }
 
-// The game's gibs (the ClientGibs message): body part models thrown away from the player, bleeding on bounces.
 void Gibs(const Target& target, Params& p)
 {
 	const auto type = p.String("type", "human");
@@ -880,15 +823,11 @@ void Gibs(const Target& target, Params& p)
 	ClientGibs_Spawn(player, alien ? BloodYellow : BloodRed, count, origin, -target.Forward, multiplier, flags);
 }
 
-// ---- Presets: what the game does for an event, with the original values -------------------------------------
-
-// The server sends explosion smoke 7% bigger with jhl_fx_particlesystem on (UTIL_JhlExplosionSmokeScale).
 float ExplosionSmokeFactor()
 {
 	return JhlParticleSystemEnabled() ? 1.07f : 1.f;
 }
 
-// A grenade, rocket, satchel or tripmine: CGrenade::Explode and CGrenade::Smoke, scaled by the damage.
 void GrenadePreset(const Target& target, Params& p)
 {
 	const float damage = p.Float("dmg", 100);
@@ -914,7 +853,6 @@ void GrenadePreset(const Target& target, Params& p)
 		gEngfuncs.Con_Printf("  (0.3 s later)\n");
 		Smoke(target, smoke); });
 
-	// With jhl_fx_particlesystem on, the explosion throws its own (jhl_explosions.cpp).
 	if (!JhlParticleSystemEnabled())
 	{
 		Params shower;
@@ -925,7 +863,6 @@ void GrenadePreset(const Target& target, Params& p)
 	gEngfuncs.Con_Printf("  plus a scorch decal and a debris sound\n");
 }
 
-// An env_explosion: explosive barrels and crates (func_breakable), func_tank shells, scripted explosions.
 void BarrelPreset(const Target& target, Params& p)
 {
 	const float magnitude = p.Float("magnitude", 100);
@@ -959,7 +896,6 @@ void BarrelPreset(const Target& target, Params& p)
 	}
 }
 
-// A bullet or melee hit on a monster: SpawnBlood (CBaseMonster::TraceAttack), sized by the damage.
 void BloodPreset(const Target& target, Params& p, const char* what, float multiplier)
 {
 	const float damage = p.Float("dmg", 30);
@@ -974,8 +910,6 @@ void BloodPreset(const Target& target, Params& p, const char* what, float multip
 	gEngfuncs.Con_Printf("  plus blood decals behind the hit (TraceBleed)\n");
 }
 
-// An M40A1 sniper rifle hit on a bleeding target (CBaseEntity::FireBulletsPlayer): a blood stream aimed back at
-// the shooter, with the full distance as its direction, which stretches it into a line.
 void SniperHitPreset(const Target& target, Params& p)
 {
 	const bool alien = p.String("type", "human") == "alien";
@@ -990,13 +924,10 @@ void SniperHitPreset(const Target& target, Params& p)
 
 	Params blood;
 	blood.Set("color", static_cast<float>(alien ? BloodYellow : BloodRed));
-	// 100 damage (plr_762_bullet), times 3 on a headshot, size damage / 10 clamped to 16.
 	blood.Set("size", 10.f);
 	Blood(target, blood);
 }
 
-// An Apache crashing: CApache::DyingThink, every 0.1 seconds for the 4 seconds it falls. Played around a point in
-// front of the surface, since there's no helicopter.
 void ApachePreset(const Target& target, Params& p)
 {
 	const float duration = p.Float("time", 4);
@@ -1049,7 +980,6 @@ void ApachePreset(const Target& target, Params& p)
 	}
 }
 
-// A vortigaunt's zap: CISlave::ZapBeam and the light when it fires.
 void VortZapPreset(const Target& target, Params& p)
 {
 	p.Print("vortzap (CISlave: zap beam and its light; the beam's width is CBeam 50, matched by eye; with jhl_fx_particlesystem, a thin, wild, dimmer strand layered on it)");
@@ -1075,8 +1005,6 @@ void VortZapPreset(const Target& target, Params& p)
 	Light(lightTarget, light);
 }
 
-// With jhl_fx_particlesystem, a ring's strand (UTIL_JhlRingStrand): a torus, 20% further over 20% longer, 1.25 times
-// as wide, noise 0.5 ±25%, half as bright.
 void RingStrand(const Target& target, const Params& ring)
 {
 	if (!JhlParticleSystemEnabled())
@@ -1092,8 +1020,6 @@ void RingStrand(const Target& target, const Params& ring)
 	Ring(target, strand);
 }
 
-// A houndeye's blast (CHoundeye::SonicAttack): two rings, to its attack radius (384) and half of it, in 0.2 s,
-// colored by its squad's size.
 void HoundeyePreset(const Target& target, Params& p)
 {
 	const int squad = p.Int("squad", 1);
@@ -1110,8 +1036,6 @@ void HoundeyePreset(const Target& target, Params& p)
 		RingStrand(target, ring);
 	}
 
-	// With jhl_fx_particlesystem, a light in its color (and a light shake for players in reach, server only), and dust
-	// puffs along the floor (JhlExplosion_ParseGroundDust).
 	if (JhlParticleSystemEnabled())
 	{
 		Params dust;
@@ -1138,8 +1062,6 @@ void HoundeyePreset(const Target& target, Params& p)
 	}
 }
 
-// A helicopter's crash ring (CApache::DyingThink white.spr, COsprey::DyingThink rope.spr): axis 2000 over 0.4 s,
-// so 800 units; vanilla centers it on the wreck in the air.
 void HeliRingPreset(const Target& target, Params& p)
 {
 	const bool osprey = p.String("type", "apache") == "osprey";
@@ -1157,7 +1079,6 @@ void HeliRingPreset(const Target& target, Params& p)
 	RingStrand(target, ring);
 }
 
-// The displacer ball's impact ring (CDisplacerBall::BallTouch): axis 800 over 0.3 s, so 240 units, at the ball.
 void DisplacerRingPreset(const Target& target, Params& p)
 {
 	p.Print("dispring (CDisplacerBall::BallTouch: TE_BEAMCYLINDER, disp_ring.spr, white, at the ball)");
@@ -1171,7 +1092,6 @@ void DisplacerRingPreset(const Target& target, Params& p)
 	Ring(target, ring);
 	RingStrand(target, ring);
 
-	// With jhl_fx_particlesystem, particles pulled in to it (TE_IMPLOSION), ending as the ball goes 0.7 s in.
 	if (JhlParticleSystemEnabled())
 	{
 		Later(0.4f, [=]()
@@ -1278,12 +1198,10 @@ void FxTest_RunFrame()
 
 	const float now = gEngfuncs.GetClientTime();
 
-	// Due actions are taken out first, since playing one can't add to the list but erasing while calling would be fragile.
 	std::vector<Pending> due;
 
 	for (auto it = g_Pending.begin(); it != g_Pending.end();)
 	{
-		// A new map restarts the client clock; drop anything left over.
 		if (it->Time <= now || it->Time > now + 60)
 		{
 			if (it->Time <= now)

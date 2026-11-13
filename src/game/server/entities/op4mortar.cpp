@@ -151,10 +151,6 @@ void CMortarShell::MortarExplodeTouch(CBaseEntity* pOther)
 
 	const auto contents = UTIL_PointContents(pev->origin);
 
-	// johnhalflife (jhl_fx_particlesystem): exploding as a grenade of its damage does (CGrenade::Explode: scale
-	// (dmg - 50) * 0.6, 15 fps, the client's spark showers), so with johnhalflife's explosions (two fireballs, specks,
-	// lights, debris). Vanilla's (dmg - 50) * 5 overflowed its byte (200 damage: 750, sent as 238, a fireball some 24
-	// times a grenade's), at 10 fps, which the client's explosions don't take for one.
 	const bool jhl = UTIL_JhlParticleSystem();
 	const bool clientSparks = jhl && contents != CONTENTS_WATER;
 	const float jhlScale = (pev->dmg - 50) * 0.06f;
@@ -216,14 +212,11 @@ void CMortarShell::MortarExplodeTouch(CBaseEntity* pOther)
 	}
 }
 
-// johnhalflife (jhl_fx_particlesystem): a mortar's launch at its muzzle as a rocket launcher's (func_tankrocket's,
-// weapon_effects.cpp's JhlTank_ParseFire, kind 1): a flash of light and fire, a cloud blown out along its shell's way.
 static void JhlMortarLaunch(const Vector& muzzle, const Vector& angles)
 {
 	if (!UTIL_JhlParticleSystem())
 		return;
 
-	// Its shell goes against its angles' forward (CMortarShell::Spawn).
 	UTIL_MakeVectors(angles);
 	const Vector direction = -gpGlobals->v_forward;
 

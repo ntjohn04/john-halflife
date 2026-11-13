@@ -13,9 +13,6 @@
  *
  ****/
 
-// Reserved weapon effects, using engine particles, short lights and stock sprites: bullet impacts and water
-// splashes, and muzzle light and smoke.
-
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -45,7 +42,6 @@
 #include "networking/ClientUserMessages.h"
 
 
-// Dynamic light keys for tripmine lights (TripmineLight), clear of the engine's entity-index keys.
 constexpr int TripmineLightKey = 8192;
 constexpr float TripmineLightDistance = 1024;
 
@@ -63,7 +59,6 @@ static cvar_t* g_cl_muzzleflash = nullptr;
 
 static bool MuzzleEffectsEnabled()
 {
-	// In third person the effects would be placed relative to a first person view that isn't there.
 	return 0 != g_cl_muzzleflash->value && 0 == CL_IsThirdPerson();
 }
 
@@ -75,9 +70,6 @@ static bool IsZoomed()
 static void MuzzleEffectsAt(const Vector& position, float wispChance, float wispScale = 1, float wispAlpha = 0.1f, int rolls = 1,
 	float lightScale = 1, float lightTime = 0.06f);
 
-// Smoke leaves the gun moving with it, and the air stops it: it's given the shooter's velocity on top of its own
-// (kept in curstate.vuser1), and sheds it, halving every 0.5 s (CarriedTime), so it hangs where it was let out a
-// moment after (a sprite's velocity otherwise never changes but for gravity).
 constexpr float CarriedTime = 0.72f;
 
 static void ShedCarried(TEMPENTITY* ent, float frametime, float currenttime)
@@ -96,11 +88,8 @@ static void Carry(TEMPENTITY* ent, const Vector& velocity)
 	ent->callback = ShedCarried;
 }
 
-// Where the view model's muzzle is, if muzzle effects should be drawn there now.
 static bool FindMuzzle(Vector& muzzle)
 {
-	// Zoomed in, the view model isn't drawn, so its attachment is stale and the effects would appear where the
-	// muzzle last was.
 	if (!MuzzleEffectsEnabled() || IsZoomed())
 	{
 		return false;
@@ -113,7 +102,6 @@ static bool FindMuzzle(Vector& muzzle)
 		return false;
 	}
 
-	// The muzzle is the first attachment on the stock view models; it's set while the model is drawn.
 	muzzle = viewModel->attachment[0];
 
 	return muzzle != g_vecZero;
@@ -128,9 +116,6 @@ void EV_GunMuzzleEffects(int pellets, bool doubleShot)
 		return;
 	}
 
-	// Now and then a wisp of smoke; real guns barely smoke. A shotgun's chance is per pellet, so it smokes more.
-	// The shotgun's double shot, with jhl_fx_particlesystem, a little more of a blast: its light a little bigger, and
-	// two small puffs pushed out ahead, carrying the player's movement.
 	const bool blast = doubleShot && JhlParticleSystemEnabled();
 	MuzzleEffectsAt(muzzle, 0.3f, 1, 0.1f, std::max(1, pellets), blast ? 1.2f : 1);
 
@@ -161,8 +146,6 @@ void EV_GunMuzzleEffects(int pellets, bool doubleShot)
 
 void EV_GlockRapidMuzzleEffects()
 {
-	// As the M249's, much lighter (EV_M249MuzzleEffects): how hot a burst has got it, 0-1, up a 12th a round, back to 0
-	// after a pause; its wisps from a gun's (30% of shots, 0.1, 1x) to 45%, 0.15, up to 1.15x.
 	constexpr float HeatPerRound = 1.f / 12;
 	constexpr float CoolAfter = 0.3f;
 
@@ -193,8 +176,6 @@ void EV_GlockRapidMuzzleEffects()
 
 void EV_MP5GrenadeEffects()
 {
-	// A grenade launch, with jhl_fx_particlesystem: always two wisps, more than twice a gun's and more opaque, and its
-	// light a little bigger and longer (it had nothing but the sound).
 	Vector muzzle;
 
 	if (!JhlParticleSystemEnabled() || !FindMuzzle(muzzle))
@@ -205,7 +186,6 @@ void EV_MP5GrenadeEffects()
 
 void EV_M249MuzzleEffects()
 {
-	// How hot it is from sustained fire, 0-1: up a 25th a round, back to 0 after a pause (tap fire stays cold).
 	constexpr float HeatPerRound = 1.f / 25;
 	constexpr float CoolAfter = 0.25f;
 
@@ -230,8 +210,6 @@ void EV_M249MuzzleEffects()
 		return;
 	}
 
-	// More than a gun's even cold (37% of shots, opacity 0.13, 1.08x); hot, more often (70%), more opaque (0.33) and
-	// bigger on average, varied (120-145%); and a little off the muzzle so wisps don't stack.
 	const float chance = 0.37f + heat * 0.33f;
 	const float scale = 1.08f + heat * gEngfuncs.pfnRandomFloat(0.12f, 0.37f);
 	const float alpha = 0.13f + heat * 0.2f;
@@ -248,9 +226,6 @@ void EV_M249MuzzleEffects()
 
 static void Flash(const Vector& origin, float scale, float brightness);
 
-// A thin wisp off a barrel after a shot (SniperSmoke_Update, EagleSmoke_Update): @p left of its stream to go (1 to 0),
-// thinning as it does; rising, carrying the player's movement, shed as smoke's (Carry); lasting @p life of its sprite's
-// run.
 static void BarrelWisp(const Vector& muzzle, float left, float scaleMin, float scaleMax, float alphaBase, float alphaMore, float life = 1)
 {
 	const int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
@@ -272,9 +247,6 @@ static void BarrelWisp(const Vector& muzzle, float left, float scaleMin, float s
 	}
 }
 
-// A thrown shell's lingering (JhlBrassLinger): 6-10 s, then fading out over a second, while fewer than BrassMost are
-// lingering (the temporary entities, 2048, are everyone's: the particles' too; and only so many entities are drawn a
-// frame); vanilla's 2.5 s past that. Kept as when each lingering one goes.
 constexpr int BrassMost = 100;
 static float g_BrassGone[BrassMost]{};
 static int g_BrassNext = 0;
@@ -287,7 +259,6 @@ void JhlBrassLinger(TEMPENTITY* shell)
 	const float now = gEngfuncs.GetClientTime();
 	int lingering = 0;
 
-	// (A new map or a loaded game restarts the clock: one due to go further off than a shell lasts is from before.)
 	for (float& gone : g_BrassGone)
 	{
 		if (gone > now + 11)
@@ -308,7 +279,6 @@ void JhlBrassLinger(TEMPENTITY* shell)
 	g_BrassNext = (g_BrassNext + 1) % BrassMost;
 }
 
-// The local player's shotgun's shells, thrown when it's pumped (EV_ShotgunPumpShells): when each's due, how many.
 struct PumpShells
 {
 	float Due = -1;
@@ -333,7 +303,6 @@ void EV_ShotgunPumpShells(int count, float delay)
 		}
 	}
 
-	// Both taken (it can't fire that fast): the oldest's forgotten.
 	g_PumpShells[0] = g_PumpShells[1];
 	g_PumpShells[1] = {now + delay, count};
 }
@@ -347,7 +316,6 @@ void ShotgunShells_Update(double time)
 		if (pending.Due < 0)
 			continue;
 
-		// (A new map or a loaded game restarts the clock: one due further off than a pump is from before.)
 		if (pending.Due - now > 2)
 		{
 			pending.Due = -1;
@@ -360,7 +328,6 @@ void ShotgunShells_Update(double time)
 		const int count = pending.Count;
 		pending.Due = -1;
 
-		// Only if it's still the shotgun pumping (not switched away from), in first person.
 		cl_entity_t* viewModel = gEngfuncs.GetViewModel();
 		const int shell = gEngfuncs.pEventAPI->EV_FindModelIndex("models/shotgunshell.mdl");
 
@@ -370,10 +337,6 @@ void ShotgunShells_Update(double time)
 			continue;
 		}
 
-		// From its ejection port, on the right of its receiver as its view model's drawn (in its right hand's bone, found
-		// in its vertices: the receiver 4-11 units along it, the barrel and tube on to 26), as a pump gun's are; else
-		// from where a shot's are (EV_GetDefaultShellInfo's, the shotgun's 32 ahead, 12 down, 6 right: out by its
-		// muzzle). Thrown as now aimed, moving as the player is.
 		Vector forward, right, up;
 		AngleVectors(v_angles, forward, right, up);
 
@@ -391,18 +354,12 @@ void ShotgunShells_Update(double time)
 	}
 }
 
-// The Desert Eagle's barrel smoking a moment after a shot (EagleSmoke_Update): a smaller, shorter, fainter stream than
-// the sniper rifle's, a big-bore pistol's, its wisps gone a little sooner.
 constexpr float EagleSmokeLife = 0.93f;
 constexpr float EagleSmokeTime = 0.35f;
-constexpr float EagleSmokeEvery = 0.1f; // Four: at 0, 0.1, 0.2 and 0.3 s.
+constexpr float EagleSmokeEvery = 0.1f;
 static float g_EagleSmokeStart = -1;
 static float g_EagleSmokeNext = 0;
 
-// The sniper rifle's barrel venting smoke through the bolt's working (SniperSmoke_Update): a thin wisp every
-// SniperSmokeEvery for SniperSmokeTime after a shot, thinning out, from its barrel's tip as the view model's drawn (its
-// attachment sits behind the player; the tip, found in its vertices, in its rifle's bone, m40a1_stock), so it stays on
-// the barrel as the bolt's worked; carrying the player's movement, shed as smoke's (Carry).
 constexpr float SniperSmokeTime = 1.2f;
 constexpr float SniperSmokeEvery = 0.07f;
 constexpr int SniperBarrelBone = 5;
@@ -417,19 +374,10 @@ void EV_SniperMuzzleEffects(const Vector& eyePosition, const Vector& forward, co
 		return;
 	}
 
-	// The M40A1 view model's attachment sits behind the player, so place the muzzle relative to the view instead:
-	// the view model is always drawn in the same place on screen.
-	// Offset from the eyes, checked in game.
 	constexpr float Forward = 30;
 	constexpr float Right = 5;
 	constexpr float Up = -5;
 
-	// The light; its smoke comes off the barrel through the bolt's working instead (SniperSmoke_Update), with
-	// jhl_fx_particlesystem; otherwise a slow, heavy rifle shot more often leaves a wisp, except when scoped, where it
-	// would drift across the magnified view.
-	// With jhl_fx_particlesystem its light's bigger and a little longer, a heavy round's (190-230 units, 0.08 s; a gun's
-	// 140-170, 0.06 s), and its flash is shown: the engine draws a gun's flash at its view model's first attachment,
-	// which on this one sits behind the player, so it never showed; it's drawn on its barrel's tip instead.
 	const bool stream = JhlParticleSystemEnabled();
 	MuzzleEffectsAt(eyePosition + forward * Forward + right * Right + up * Up, stream || IsZoomed() ? 0 : 0.6f, 1, 0.1f, 1,
 		stream ? 1.35f : 1, stream ? 0.08f : 0.06f);
@@ -454,13 +402,11 @@ void SniperSmoke_Update(double time)
 		return;
 	}
 
-	// (A new map or a loaded game restarts the clock: one due further off than that is from before.)
 	if (now < g_SniperSmokeNext && g_SniperSmokeNext - now <= SniperSmokeEvery)
 		return;
 
 	g_SniperSmokeNext = now + SniperSmokeEvery;
 
-	// Not scoped (it would drift across the magnified view), and only on the barrel as it's drawn.
 	Vector muzzle;
 
 	if (IsZoomed() || !MuzzleEffectsEnabled() || !JhlViewModelPoint("models/v_m40a1.mdl", SniperBarrelBone, SniperMuzzle, muzzle))
@@ -487,18 +433,15 @@ void EagleSmoke_Update(double time)
 		return;
 	}
 
-	// (A new map or a loaded game restarts the clock: one due further off than that is from before.)
 	if (now < g_EagleSmokeNext && g_EagleSmokeNext - now <= EagleSmokeEvery)
 		return;
 
 	g_EagleSmokeNext = now + EagleSmokeEvery;
 
-	// Its muzzle is its view model's first attachment, as the other guns' (not while scoped or in third person).
 	if (Vector muzzle; FindMuzzle(muzzle))
 		BarrelWisp(muzzle, 1 - age / EagleSmokeTime, 0.05f, 0.07f, 0.03f, 0.07f, EagleSmokeLife);
 }
 
-// A flash of flame for a moment (the engine's own muzzle flash, muzzleflash2, additive), turned at random.
 static void Flash(const Vector& origin, float scale, float brightness)
 {
 	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/muzzleflash2.spr");
@@ -518,8 +461,6 @@ static void Flash(const Vector& origin, float scale, float brightness)
 	}
 }
 
-// A mounted gun's smoke blast out of its muzzle (JhlTank_ParseFire): @p count puffs, @p scale big, blown out ahead at
-// @p speed and spreading, lingering.
 static void TankMuzzleSmoke(const Vector& muzzle, const Vector& forward, int count, float scaleMin, float scaleMax, float speedMin,
 	float speedMax, float life)
 {
@@ -538,7 +479,6 @@ static void TankMuzzleSmoke(const Vector& muzzle, const Vector& forward, int cou
 		Vector velocity = forward * gEngfuncs.pfnRandomFloat(speedMin, speedMax) + right * gEngfuncs.pfnRandomFloat(-50, 50) +
 						  up * gEngfuncs.pfnRandomFloat(-10, 40);
 
-		// Plays once and is removed on its last frame (see DustImpact); a slower frame rate lets it linger.
 		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, gEngfuncs.pfnRandomFloat(scaleMin, scaleMax), model,
 			kRenderTransAlpha, kRenderFxNone, 0.3f, life + 1, FTENT_SPRANIMATE);
 
@@ -575,7 +515,7 @@ void JhlTank_ParseFire(BufferReader& reader)
 	const int bullet = reader.ReadByte();
 	const Vector end = reader.ReadCoordVector();
 	const color24 laserColor{static_cast<byte>(reader.ReadByte()), static_cast<byte>(reader.ReadByte()), static_cast<byte>(reader.ReadByte())};
-	const float flashScale = reader.ReadByte() / 100.f; // The map's flash sprite's (muzzleflash2), or 0 if it gave none.
+	const float flashScale = reader.ReadByte() / 100.f;
 
 	if (!JhlParticleSystemEnabled() || 0 == g_cl_muzzleflash->value)
 		return;
@@ -583,18 +523,12 @@ void JhlTank_ParseFire(BufferReader& reader)
 	Vector forward{fx, fy, fz};
 	forward = forward.Length() > 0.1f ? forward.Normalize() : Vector{1, 0, 0};
 
-	// The kinds (CFuncTank::Fire): 0 a machine gun, 1 a rocket launcher, 2 a cannon (func_tankmortar: the Abrams', the
-	// howitzer's, the player's tank's), 3 a laser; 4 an NPC turret (turret.cpp).
 	switch (kind)
 	{
 	case 0:
 	{
-		// A gun's muzzle light, bigger (a mounted gun), and a wisp; its brass thrown out to its right, from a little
-		// behind its muzzle, lingering as guns' do: rifle casings for a 12 mm gun, else 9 mm brass.
 		MuzzleEffectsAt(muzzle, 0.5f, 1.6f, 0.12f, 1, 1.6f, 0.06f);
 
-		// Its flash, as the server's was (in its place), the map's size, but a frame, a turn and a little bigger or
-		// smaller at random, and only a moment: flickering as a gun's.
 		if (flashScale > 0)
 			Flash(muzzle, flashScale * gEngfuncs.pfnRandomFloat(0.85f, 1.15f), 0.9f);
 
@@ -613,14 +547,12 @@ void JhlTank_ParseFire(BufferReader& reader)
 	}
 
 	case 1:
-		// A rocket's launch out of its tube: a big flash, of light and fire, and a cloud blown out ahead.
 		TankLight(muzzle, 260, {255, 170, 90}, 0.15f);
 		Flash(muzzle, 0.5f, 0.8f);
 		TankMuzzleSmoke(muzzle, forward, 5, 0.6f, 0.9f, 40, 110, 2.0f);
 		break;
 
 	case 2:
-		// A cannon's blast: the biggest flash, of light and fire, and a big cloud spreading out from its muzzle.
 		TankLight(muzzle, 380, {255, 180, 100}, 0.2f);
 		Flash(muzzle, 1.0f, 1.0f);
 		Flash(muzzle + forward * 24, 0.7f, 0.8f);
@@ -629,8 +561,6 @@ void JhlTank_ParseFire(BufferReader& reader)
 
 	case 4:
 	{
-		// An NPC turret (turret.cpp: ceiling turrets, mini-turrets, sentries): a smaller gun's, on top of the engine's
-		// light (EF_MUZZLEFLASH): a flickering flash, a little more light, now and then a wisp, and its brass.
 		MuzzleEffectsAt(muzzle, 0.35f, 1.0f, 0.1f, 1, 0.8f, 0.05f);
 
 		if (flashScale > 0)
@@ -651,8 +581,6 @@ void JhlTank_ParseFire(BufferReader& reader)
 	}
 
 	case 3:
-		// A laser: a light its own color at its emitter and where it hits; a real laser (laserbeam.spr: its bullet byte
-		// 1), a blue flash at its emitter (glow_blu: additive, it can't be tinted; they're all blue).
 		TankLight(muzzle, 140, laserColor, 0.1f);
 		TankLight(end, 110, laserColor, 0.1f);
 
@@ -686,7 +614,6 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 		return;
 	}
 
-	// The RPG view model has no attachments, so place the front of the tube relative to the view (see EV_SniperMuzzleEffects).
 	if (isLocal && MuzzleEffectsEnabled())
 	{
 		// Offset from the eyes, checked in game.
@@ -694,7 +621,6 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 		constexpr float Right = 8;
 		constexpr float Up = -6;
 
-		// Always two wisps, much larger than a gun's and twice as opaque.
 		const Vector front = eyePosition + forward * Forward + right * Right + up * Up;
 		MuzzleEffectsAt(front, 1, 4, 0.2f, 2);
 
@@ -702,8 +628,6 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 		Flash(front, 0.25f, 0.6f);
 	}
 
-	// Backblast out of the rear of the tube, over the right shoulder. Placed from the player rather than the view
-	// model, so other players and third person see it too.
 	const Vector rear = eyePosition - forward * 24 + right * 8 - up * 4;
 
 	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)
@@ -717,7 +641,6 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 		light->decay = light->radius / 0.15f;
 	}
 
-	// A short flame out of the back: two flashes along it (a sprite faces the view, so two make it long seen side on).
 	Flash(rear, 0.45f, 0.8f);
 	Flash(rear - forward * 14, 0.35f, 0.6f);
 
@@ -734,7 +657,6 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 		Vector origin = rear - forward * gEngfuncs.pfnRandomFloat(0, 12);
 		Vector velocity = forward * -gEngfuncs.pfnRandomFloat(90, 160) + right * gEngfuncs.pfnRandomFloat(-40, 40) + up * gEngfuncs.pfnRandomFloat(-10, 25);
 
-		// Plays once and is removed on its last frame (see DustImpact); a slower frame rate lets the plume linger.
 		TEMPENTITY* puff = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, gEngfuncs.pfnRandomFloat(0.6f, 0.95f),
 			modelIndex, kRenderTransAlpha, kRenderFxNone, 0.3f, 3.0f, FTENT_SPRANIMATE);
 
@@ -747,8 +669,6 @@ void EV_RpgFireEffects(bool isLocal, const Vector& eyePosition, const Vector& fo
 		}
 	}
 
-	// Smoke billowing back around the shooter: large, slow puffs that start behind on either side and roll forward
-	// past the shoulders, into view. Three per side, one of the six left out at random.
 	const int skipped = gEngfuncs.pfnRandomLong(0, 5);
 
 	for (int i = 0; i < 6; ++i)
@@ -782,7 +702,6 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance, float wisp
 {
 	Vector muzzle = position;
 
-	// A warm flash on top of the engine's own muzzle light, making it stronger and slightly longer.
 	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)
 	{
 		light->origin = muzzle;
@@ -801,7 +720,6 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance, float wisp
 		return;
 	}
 
-	// A faint wisp of smoke drifting up from the muzzle, with a chance for each roll (a shotgun's pellets).
 	bool first = true;
 
 	for (int i = 0; i < rolls; ++i)
@@ -816,8 +734,6 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance, float wisp
 		float scale = gEngfuncs.pfnRandomFloat(0.08f, 0.12f) * wispScale;
 		float framerate = 28;
 
-		// Later wisps of the same shot spread out from the first, so they don't play over it: a little apart, drifting
-		// their own ways, some bigger and slower.
 		if (!first)
 		{
 			origin = origin + Vector{gEngfuncs.pfnRandomFloat(-2, 2), gEngfuncs.pfnRandomFloat(-2, 2), gEngfuncs.pfnRandomFloat(-1, 2)};
@@ -828,7 +744,6 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance, float wisp
 
 		first = false;
 
-		// Plays once and is removed on its last frame (see DustImpact).
 		TEMPENTITY* wisp = gEngfuncs.pEfxAPI->R_TempSprite(origin, velocity, scale,
 			modelIndex, kRenderTransAlpha, kRenderFxNone, wispAlpha, 2.0f, FTENT_SPRANIMATE);
 
@@ -838,43 +753,28 @@ static void MuzzleEffectsAt(const Vector& position, float wispChance, float wisp
 			wisp->entity.curstate.framerate = framerate;
 			wisp->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
 
-			// Only the local player's guns smoke here (first person): theirs is the velocity.
 			Carry(wisp, v_sim_vel);
 		}
 	}
 }
 
-// The RPG's and the Desert Eagle's lasers in first person (RpgLaserLine_Update), from their laser dots (RpgLaserDot): a
-// short stub out of the laser's housing, along it, tapering to a point, for as long as the laser's on and ready (not
-// while the gun's taken out or reloaded: the server's dot is out then too). The RPG's laser coming on shows a thin red
-// line all the way to its dot first, which draws back into the stub; it lights the launcher's little screen.
 struct LaserLook
 {
 	const char* Model;
 	int Bone;
-	Vector Front; // The middle of the front of the laser's housing in the view model, in that bone.
-	Vector Back;  // The middle of its back: the stub goes on from the front, as the housing points.
+	Vector Front;
+	Vector Back;
 	float StubLength;
-	int TaperPieces; // The stub's taper in this many pieces, each a little thinner.
+	int TaperPieces;
 	float CoreBrightness;
-	// Flickering as the RPG rocket's motor does (RocketFlickerMin): each frame the line's width and its core's times
-	// between these (the line's evenly about its width, the core's mostly flaring wider), and their brightness down to
-	// the first.
 	float LineFlickerMin, LineFlickerMax;
 	float CoreFlickerMin, CoreFlickerMax;
 };
 
-// The RPG's: its housing the small cylinder under the front of the tube (v_rpg.mdl's launcher bone, Dummy22, 12: the
-// middles of its front and back eight-sided rings, found in its vertices).
 constexpr LaserLook RpgLaser{"models/v_rpg.mdl", 12, {3.37f, -9.88f, -3.39f}, {3.16f, -6.79f, -3.31f}, 11, 12, 0.85f, 0.75f, 1.25f, 0.7f, 1.5f};
 
-// The Desert Eagle's: the cylinder under its barrel (v_desert_eagle.mdl's right hand, 10: the middles of its front and
-// back rings). A shorter stub, its core a little dimmer; flickering as the RPG's (smaller, it showed less, so no less).
 constexpr LaserLook EagleLaser{"models/v_desert_eagle.mdl", 10, {12.35f, 2.41f, 2.21f}, {10.02f, 1.89f, 2.11f}, 5, 8, 0.8f, 0.75f, 1.25f, 0.7f, 1.6f};
 
-// The line: thin, red, as bright as this; a hot core down its middle as on the other lasers (env_laser's,
-// func_tanklaser's): a little under a third its width, its color toward white, a little wider near the housing
-// (CoreNearWider over CoreNear units, fading off). The stub thins to a point over its length, dimming toward its tip.
 constexpr float LineWidth = 0.5f;
 constexpr float LineBrightness = 0.4f;
 constexpr color24 LineColor{255, 31, 31};
@@ -884,23 +784,14 @@ constexpr color24 CoreColor{255, 190, 175};
 constexpr float CoreNearWider = 0.35f;
 constexpr float CoreNear = 24;
 
-// The RPG's line coming on: all the way to the dot for LineHold, then drawing back to the stub by LineTime (easing in
-// and out), turning from the dot to the way the housing points. It starts with the first dot seen within DotWait of
-// the laser coming on (the server places the dot a moment after; with none, the laser on the sky, the stub alone).
 constexpr float LineHold = 0.15f;
 constexpr float LineTime = 1;
 constexpr float DotWait = 1;
 
-// The line's pieces (each a beam, and one for its core): a few near the housing (the core's widening), its middle,
-// and the stub's taper (LaserLook::TaperPieces, at most MostTaperPieces).
 constexpr int NearPieces = 3;
 constexpr int MostTaperPieces = 12;
 constexpr int LinePieces = NearPieces + 1 + MostTaperPieces;
 
-// The RPG's little screen (M8CL.bmp's yellow readout on the sight box) lit while its laser's on: a small, dim light
-// its yellow, models only (an entity light), placed by eye. The key's low 12 bits aren't an entity's: the engine puts
-// an entity light whose key's low bits are an entity's index on that entity (at an attachment in the next 4 bits), and
-// the view model's index is 0.
 constexpr int RpgScreenLightKey = 49152 + 4095;
 const Vector RpgScreen{5.45f, 3.6f, 2.6f};
 constexpr float RpgScreenRadius = 4;
@@ -930,7 +821,6 @@ void RpgLaserDot(cl_entity_t* dot, const char* modelname)
 
 	const float now = gEngfuncs.GetClientTime();
 
-	// The Desert Eagle's laser has the same dot, drawn at half size (CEagleLaser).
 	const bool eagle = dot->curstate.scale > 0 && dot->curstate.scale < 0.75f;
 	LaserState& laser = eagle ? g_EagleLaser : g_RpgLaser;
 
@@ -950,7 +840,6 @@ void RpgLaserDot(cl_entity_t* dot, const char* modelname)
 	if (eagle)
 		return;
 
-	// As faint as the tripmine's (72 units, its color at 80%): the dot's red.
 	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(RpgDotLightKey + dot->index); light)
 	{
 		light->origin = dot->origin;
@@ -977,7 +866,6 @@ static void LaserGone(LaserState& laser)
 	}
 }
 
-// One piece of the line, from @p a to @p b: kept up from frame to frame (the engine frees a beam not kept up).
 static void LaserPiece(BEAM*& beam, Vector a, Vector b, float width, float brightness, const color24& color, float now)
 {
 	if (brightness <= 0 || width <= 0 || (b - a).Length() < 0.01f)
@@ -1017,11 +905,8 @@ static void LaserPiece(BEAM*& beam, Vector a, Vector b, float width, float brigh
 	beam->flags |= FBEAM_ISACTIVE;
 }
 
-// @p laserOn: the gun's out with its laser on; @p reloading: and it's reloading.
 static void UpdateLaser(const LaserLook& look, LaserState& laser, bool laserOn, bool reloading, bool fullLine, float now)
 {
-	// Come on (taken out with its laser on, or turned on): shown once its dot's come; reloading, not shown, and shown
-	// again at once when done.
 	if (laserOn && !laser.On)
 	{
 		laser.CameOn = now;
@@ -1033,7 +918,6 @@ static void UpdateLaser(const LaserLook& look, LaserState& laser, bool laserOn, 
 	if (!laserOn || reloading)
 		laser.Shown = false;
 
-	// Its dot not seen since it came on (it's on the sky): shown anyway, without a full line.
 	if (laserOn && !reloading && !laser.Shown && laser.CameOn > 0 && now - laser.CameOn > DotWait)
 	{
 		laser.Shown = true;
@@ -1059,8 +943,6 @@ static void UpdateLaser(const LaserLook& look, LaserState& laser, bool laserOn, 
 		return;
 	}
 
-	// The housing, from its bone as last drawn, moved with the view model since (JhlViewModelPoint; the view models have
-	// no attachments there; this is run once the view's placed, V_CalcRefdef).
 	Vector from, back;
 
 	if (!JhlViewModelPoint(look.Model, look.Bone, look.Front, from) || !JhlViewModelPoint(look.Model, look.Bone, look.Back, back))
@@ -1073,7 +955,6 @@ static void UpdateLaser(const LaserLook& look, LaserState& laser, bool laserOn, 
 	float length = look.StubLength;
 	float brightness = LineBrightness;
 
-	// The RPG's line coming on: to the dot, drawing back to the stub as it turns to the housing's way.
 	if (fullLine && laser.LineStart >= 0 && now - laser.DotSeen <= 0.05f)
 	{
 		Vector toDot = laser.Dot - from;
@@ -1095,8 +976,6 @@ static void UpdateLaser(const LaserLook& look, LaserState& laser, bool laserOn, 
 	const float coreFlicker = gEngfuncs.pfnRandomFloat(look.CoreFlickerMin, 1);
 	const int pieces = NearPieces + 1 + std::min(look.TaperPieces, MostTaperPieces);
 
-	// Its pieces' ends, along it from the housing: the near pieces (as far as the core's widening reaches, and no
-	// further than where the taper starts), its middle, the taper.
 	const float taperStart = std::max(0.f, length - look.StubLength);
 	const float nearEnd = std::min(CoreNear, taperStart);
 	float ends[LinePieces + 1];
@@ -1122,7 +1001,6 @@ static void UpdateLaser(const LaserLook& look, LaserState& laser, bool laserOn, 
 		const float b = ends[i + 1];
 		const float middle = (a + b) / 2;
 
-		// Thinning and dimming over the taper to a point at the tip (as at the piece's middle).
 		const float taper = middle <= taperStart ? 1 : 1 - (middle - taperStart) / (length - taperStart);
 		const float width = LineWidth * taper * lineWidthFlicker;
 		const float shine = brightness * (1 - StubTipDimming * (1 - taper));
@@ -1138,7 +1016,6 @@ void RpgLaserLine_Update(double time)
 {
 	const float now = static_cast<float>(time);
 
-	// From the predicted weapons' state, not from the dots, which also go out of sight on the sky and some entities.
 	const auto rpg = static_cast<CRpg*>(g_ClientPrediction.GetLocalWeapon(WEAPON_RPG));
 	const bool rpgOn = g_CurrentWeaponId == WEAPON_RPG && rpg && rpg->m_fSpotActive;
 	UpdateLaser(RpgLaser, g_RpgLaser, rpgOn, rpgOn && rpg->m_fInReload, true, now);
@@ -1170,33 +1047,22 @@ void RpgLaser_Reset()
 	g_EagleLaser = {};
 }
 
-// An RPG rocket's motor: its glow (an orange glow, hotglow, with a white-hot core, glow02, on top), and its light, warm
-// orange; flickering as it burns, the core the most, fading out over BurnoutFade once it's burnt out (the engine's,
-// EF_LIGHT, was a big flat white flare and light, gone at once).
 constexpr float RocketGlowScale = 0.9f;
 constexpr float RocketCoreScale = 0.27f;
 constexpr float RocketLightRadius = 200;
 constexpr color24 RocketLightColor{255, 150, 60};
 
-// Each frame its size times between these (the glow evenly about its size; the core mostly flaring bigger, now and then
-// a little smaller), and its brightness down to the first.
 constexpr float RocketFlickerMin[2] = {0.65f, 0.8f};
 constexpr float RocketFlickerMax[2] = {1.35f, 1.6f};
 constexpr float RocketLightFlicker = 0.2f;
 constexpr float BurnoutFade = 0.25f;
 
-// Its trail, smoke laid along its path from when its motor lights (in place of the engine's follow beam, which only
-// adds light, and drawn in straight pieces showed seams and bright overlaps where it turned): grey puffs (steam1, as
-// the backblast's), one every TrailSpacing units, slowly rising and coming apart over about TrailLife, starting fairly
-// thick (TrailAlpha) and fading out as they spread (to TrailGrowth times their size); not under water (vanilla's
-// bubbles there).
 constexpr float TrailSpacing = 32;
 constexpr float TrailLife = 3.75f;
 constexpr float TrailAlpha = 0.5f;
 constexpr float TrailGrowth = 2.2f;
 constexpr int TrailMostAFrame = 12;
 
-// A trail puff as it goes (curstate.fuser1: when it was made; fuser2: its life; fuser3: its size at first).
 static void SpreadPuff(TEMPENTITY* puff, float frametime, float currenttime)
 {
 	const auto& state = puff->entity.curstate;
@@ -1210,7 +1076,7 @@ struct Rocket
 {
 	int Index;
 	float LastSeen;
-	float BurntOut; // When it was first seen burnt out; -1 while it burns.
+	float BurntOut;
 	TEMPENTITY* Glows[2];
 	Vector LastPuff;
 	bool Puffed;
@@ -1230,7 +1096,6 @@ static void TrailPuff(const Vector& origin, float scaleMin = 0.6f, float scaleMa
 	// Rising about 18 units over its life, wandering a little.
 	Vector velocity{gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(-3, 3), gEngfuncs.pfnRandomFloat(2.7f, 6.8f)};
 
-	// Plays once and is removed on its last frame (16 of them): slowly, so it lingers.
 	const float scale = gEngfuncs.pfnRandomFloat(scaleMin, scaleMax);
 	const float life = TrailLife * lifeScale * gEngfuncs.pfnRandomFloat(0.85f, 1.15f);
 
@@ -1265,7 +1130,6 @@ static TEMPENTITY* RocketSprite(const char* name, const Vector& origin, float sc
 
 void RocketGlow(cl_entity_t* rocket, const char* modelname)
 {
-	// Tagged renderamt 1 burning, 2 burnt out (CRpgRocket::IgniteThink, FollowThink).
 	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "models/rpgrocket.mdl") ||
 		(rocket->curstate.renderamt != 1 && rocket->curstate.renderamt != 2))
 	{
@@ -1274,8 +1138,6 @@ void RocketGlow(cl_entity_t* rocket, const char* modelname)
 
 	const float now = gEngfuncs.GetClientTime();
 
-	// Those gone (and a new map's clock): their glows die on their own (kept on a frame at a time; by now they may have
-	// been freed and their slots used again, so they're left alone).
 	std::erase_if(g_Rockets, [&](const Rocket& r)
 		{ return now - r.LastSeen > 0.1f || now < r.LastSeen; });
 
@@ -1370,9 +1232,6 @@ void RocketGlow(cl_entity_t* rocket, const char* modelname)
 	}
 }
 
-// Opposing Force's mortar shells (op4mortar's, mortarshell.mdl): a smoke trail all the way as the RPG rocket's
-// (TrailPuff), a little lighter (vanilla's only sputtered for the first 0.2 s): a puff every MortarTrailSpacing,
-// smaller, sooner gone, fainter.
 constexpr float MortarTrailSpacing = 40;
 constexpr float MortarTrailScaleMin = 0.45f;
 constexpr float MortarTrailScaleMax = 0.7f;
@@ -1431,10 +1290,6 @@ void MortarShellTrail(cl_entity_t* shell, const char* modelname)
 		it->LastPuff = shell->origin;
 }
 
-// A thrown hand grenade turns about its model's origin, at its base (it sits on the floor), its middle this far above
-// it (w_grenade.mdl, from its vertices): drawn as it is, tumbling it swings round a point under it. While it bounces
-// about (MOVETYPE_BOUNCE: thrown, not lying to be picked up) it's drawn moved so its middle is where its origin's
-// middle would be unturned: round its middle; lying level it isn't moved at all.
 const Vector GrenadeMiddle{0, 0, 6.3f};
 
 void GrenadePivot(cl_entity_t* grenade, const char* modelname)
@@ -1445,7 +1300,6 @@ void GrenadePivot(cl_entity_t* grenade, const char* modelname)
 		return;
 	}
 
-	// Its turn as the model's drawn (a studio model's pitch is the other way round).
 	Vector forward, right, up;
 	AngleVectors(Vector{-grenade->angles.x, grenade->angles.y, grenade->angles.z}, forward, right, up);
 	const Vector turned = forward * GrenadeMiddle.x - right * GrenadeMiddle.y + up * GrenadeMiddle.z;
@@ -1453,19 +1307,16 @@ void GrenadePivot(cl_entity_t* grenade, const char* modelname)
 	grenade->origin = grenade->origin + GrenadeMiddle - turned;
 }
 
-// The spore launcher's light color: its burst sprite's lime (spore_exp_c_01), at full brightness.
 constexpr color24 SporeLime{221, 255, 54};
 
 void SporeLight(cl_entity_t* spore, const char* modelname)
 {
-	// A spore in flight, fired or lobbed, tagged renderamt 1 by the server (CSpore::Spawn).
 	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "models/spore.mdl") ||
 		spore->curstate.renderamt != 1)
 	{
 		return;
 	}
 
-	// Kept on a frame at a time, one per spore: enough to glow on the walls it's near, smaller than its burst's.
 	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(SporeLightKey + spore->index); light)
 	{
 		light->origin = spore->origin;
@@ -1485,29 +1336,23 @@ void TripmineLight(cl_entity_t* beam, const char* modelname)
 
 	const auto& state = beam->curstate;
 
-	// Its laser, a beam between two points: no other beam is this color and brightness.
 	if ((state.rendermode & 0x0F) != BEAM_POINTS || state.rendercolor.r != 0 || state.rendercolor.g != 214 ||
 		state.rendercolor.b != 198 || state.renderamt != 64)
 	{
 		return;
 	}
 
-	// It starts at the mine's origin, its emitter, 8 units off the wall; the light sits just in front of it.
 	const Vector start = state.origin;
 	const Vector end = state.angles;
 	const Vector direction = (end - start).Normalize();
 
-	// Only mines near the view: the engine has 32 dynamic lights, and one this faint can't be seen from further.
 	if ((start - v_origin).Length() > TripmineLightDistance)
 	{
 		return;
 	}
 
-	// Kept on a frame at a time, one per beam (keyed past the entity lights the engine keys by entity index).
 	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(TripmineLightKey + beam->index); light)
 	{
-		// As faint as the small energy beams' lights where they touch (the vortigaunt's charge): 72 units, the laser's
-		// color at 80%.
 		light->origin = start + direction * 2;
 		light->radius = 72;
 		light->color.r = 0;
@@ -1554,12 +1399,8 @@ static void DustImpact(const Vector& position, const Vector& normal, const color
 	Vector velocity = normal * gEngfuncs.pfnRandomFloat(8, 16);
 	velocity.z += gEngfuncs.pfnRandomFloat(2, 6);
 
-	// Plays the sprite once and removes it on its last frame: the frames fade out by themselves, so the length of
-	// the puff is (number of frames) / PuffFrameRate. The lifetime is only a cap, kept longer than any animation.
-	// No FTENT_FADEOUT: fading keeps a finished sprite on screen while its animation wraps back to frame 0.
 	constexpr float PuffFrameRate = 24;
 
-	// Each a little fainter than its alpha and up to PuffMostBigger as big again, so they vary.
 	constexpr float PuffFainter = 0.8f;
 	constexpr float PuffMostBigger = 1.3f;
 
@@ -1577,9 +1418,6 @@ static void DustImpact(const Vector& position, const Vector& normal, const color
 	puff->entity.angles.z = gEngfuncs.pfnRandomFloat(0, 359);
 }
 
-// A heavy round's impact (the sniper rifle's, jhl_fx_particlesystem): on metal, computers, vents and grates, the hole
-// glows (hotglow, orange) a moment, fading out over HotHoleTime, as hot spall; on others, a bigger puff and two small
-// chunks of the surface (as an explosion's surface debris, smaller).
 constexpr float HotHoleTime = 1;
 constexpr float HotHoleScale = 0.096f;
 
@@ -1652,8 +1490,6 @@ void BulletImpactEffects(const Vector& position, const Vector& normal, char text
 	if (kind == JhlImpact::Sniper && JhlParticleSystemEnabled())
 		HeavyImpact(position, normal, textureType);
 
-	// The revolver's a little heavier than the other guns, and melee blows a little puff (not just on metal): smaller
-	// versions of a bullet's puff (and of the sniper rifle's, for the revolver), with jhl_fx_particlesystem.
 	if (kind != JhlImpact::Bullet && kind != JhlImpact::Sniper && JhlParticleSystemEnabled())
 	{
 		const float size = kind == JhlImpact::Revolver ? 1.4f : kind == JhlImpact::Melee ? 0.7f : 0.5f;
@@ -1675,7 +1511,6 @@ void BulletImpactEffects(const Vector& position, const Vector& normal, char text
 			return;
 
 		default:
-			// Melee sparks on metal as a bullet does (the server sends those only now and then).
 			if (kind != JhlImpact::Revolver && !IsMetalTexture(textureType))
 				return;
 			break;
@@ -1704,7 +1539,6 @@ void BulletImpactEffects(const Vector& position, const Vector& normal, char text
 		DustImpact(position, normal, {150, 150, 145}, 1);
 		break;
 
-	// Glass, liquids, snow, flesh and Xen surfaces keep the stock effects only.
 	default:
 		break;
 	}
@@ -1718,13 +1552,11 @@ static bool IsLiquid(Vector position)
 
 void BulletWaterSplashAlongPath(const Vector& start, const Vector& end)
 {
-	// Bullet traces pass through water, so a bullet entered it if it ended in liquid but started outside.
 	if (!IsLiquid(end) || IsLiquid(start))
 	{
 		return;
 	}
 
-	// Narrow down the surface between the last point outside and the first point inside.
 	Vector outside = start;
 	Vector inside = end;
 
@@ -1754,7 +1586,6 @@ static TEMPENTITY* SplashSprite(const char* spriteName, Vector origin, float sca
 		return nullptr;
 	}
 
-	// Plays once and is removed on its last frame (see DustImpact).
 	TEMPENTITY* sprite = gEngfuncs.pEfxAPI->R_TempSprite(origin, vec3_origin, scale, modelIndex, renderMode, kRenderFxNone, alpha, 2.0f, FTENT_SPRANIMATE);
 
 	if (sprite)
@@ -1772,7 +1603,6 @@ void BulletWaterSplash(const Vector& surfacePosition)
 		return;
 	}
 
-	// No R_StreakSplash spray: its streaks are opaque, and their only alpha control is the global traceralpha cvar.
 	const Vector up{0, 0, 1};
 
 	// Stock droplet spray (grey-white).
@@ -1799,8 +1629,6 @@ static void MsgFunc_BulletImpact(const char* pszName, BufferReader& reader)
 	BulletImpactEffects(position, normal, textureType, kind);
 }
 
-// jhl_debug_muzzle: each thing that keeps the muzzle light and smoke from being made, as it is now (they've been seen
-// to stop for good, rarely, the cause unknown).
 static void DebugMuzzleCommand()
 {
 	const auto value = [](const char* name)
@@ -1813,7 +1641,6 @@ static void DebugMuzzleCommand()
 	cl_entity_t* viewModel = gEngfuncs.GetViewModel();
 	const Vector attachment = viewModel ? viewModel->attachment[0] : g_vecZero;
 
-	// The temporary entities: one taken and given straight back, to see that there are any left.
 	bool tempEntity = false;
 	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
 

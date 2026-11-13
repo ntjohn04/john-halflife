@@ -80,10 +80,6 @@ void V_PunchAxis(int axis, float punch);
 bool V_WeaponRecoil(float pitchMin, float pitchMax, float jitter, float spring, float damping);
 void V_SetEgonFiring(bool firing);
 
-/**
- *	@brief Smooth recoil settings for a weapon (see V_WeaponRecoil).
- *	Positive pitch kicks the view up. Kicks are tuned so the visible peak stays close to the classic snap punch.
- */
 struct WeaponRecoil
 {
 	float PitchMin;
@@ -104,9 +100,8 @@ constexpr WeaponRecoil RecoilPython{6.6f, 8.1f, 1.75f, 85, 12};
 constexpr WeaponRecoil RecoilGauss{2.45f, 2.95f, 0.25f, 65, 12};
 constexpr WeaponRecoil RecoilCrossbow{2.0f, 2.45f, 0.25f, 65, 12};
 constexpr WeaponRecoil RecoilRpg{4.65f, 5.7f, 0.25f, 85, 12};
-constexpr WeaponRecoil RecoilHornetGun{-2.7f, 0, 0.25f, 125, 7.5f}; // Kicks down, as in the original.
+constexpr WeaponRecoil RecoilHornetGun{-2.7f, 0, 0.25f, 125, 7.5f};
 
-// Opposing Force weapons: these match the original punch with the feel of the closest Half-Life weapon.
 constexpr WeaponRecoil RecoilEagle{4.3f, 5.25f, 0.5f, 85, 12};
 constexpr WeaponRecoil RecoilM249{-2.7f, 2.7f, 1.0f, 125, 7.5f};
 constexpr WeaponRecoil RecoilDisplacer{2.45f, 2.95f, 0.25f, 65, 12};
@@ -114,9 +109,6 @@ constexpr WeaponRecoil RecoilSporeLauncher{3.3f, 4.05f, 0.25f, 65, 12};
 constexpr WeaponRecoil RecoilSniperRifle{2.5f, 3.05f, 0.25f, 85, 12};
 // clang-format on
 
-/**
- *	@brief Applies smooth recoil; returns false if the player turned it off, in which case the caller applies the classic punch.
- */
 static bool EV_WeaponRecoil(const WeaponRecoil& recoil)
 {
 	return V_WeaponRecoil(recoil.PitchMin, recoil.PitchMax, recoil.Jitter, recoil.Spring, recoil.Damping);
@@ -300,7 +292,6 @@ void EV_HLDM_GunshotDecalTrace(pmtrace_t* pTrace, char* decalName, JhlImpact kin
 
 	gEngfuncs.pEfxAPI->R_BulletImpactParticles(pTrace->endpos);
 
-	// Material-specific extras. Only the world has known materials on the client; brush entities count as concrete.
 	char textureType = CHAR_TEX_CONCRETE;
 
 	if (gEngfuncs.pEventAPI->EV_IndexFromTrace(pTrace) == 0)
@@ -369,7 +360,7 @@ void EV_HLDM_DecalGunshot(pmtrace_t* pTrace, int iBulletType)
 		case BULLET_PLAYER_EAGLE:
 		default:
 			// smoke and decal
-			// johnhalflife: the sniper rifle's round hits heavier, the revolver's a little (BulletImpactEffects).
+			// johnhalflife
 			EV_HLDM_GunshotDecalTrace(pTrace, EV_HLDM_DamageDecal(pe),
 				iBulletType == BULLET_PLAYER_762 ? JhlImpact::Sniper : iBulletType == BULLET_PLAYER_357 ? JhlImpact::Revolver : JhlImpact::Bullet);
 			break;
@@ -377,9 +368,7 @@ void EV_HLDM_DecalGunshot(pmtrace_t* pTrace, int iBulletType)
 	}
 }
 
-// johnhalflife's tracers (jhl_tracers.cpp, JhlTracers_Style): the M249's are real tracer rounds, one in 3; the MP5
-// keeps its vanilla tracer every 2nd round and adds a faint streak; the semi-automatic guns (Glock, revolver, Desert
-// Eagle, sniper rifle) have one on every shot.
+// johnhalflife
 constexpr int M249TracerFrequency = 3;
 
 static bool IsSemiAutoTracer(int bulletType)
@@ -393,8 +382,6 @@ static bool IsViewZoomed()
 	return gHUD.m_iFOV != 0 && gHUD.m_iFOV < static_cast<int>(CVAR_GET_FLOAT("default_fov"));
 }
 
-// The shotgun's: a few of each shot's pellets (3-4 single, 6-8 double), hinting at the spread and at the double
-// shot's extra pellets. EV_HLDM_FireBullets gives the next g_ShotgunTracers pellets one.
 static int g_ShotgunTracers = 0;
 
 void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const Vector& forward, const Vector& right,
@@ -403,8 +390,7 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 	int i;
 	const bool player = idx >= 1 && idx <= gEngfuncs.GetMaxClients();
 
-	// johnhalflife: the shotgun's pellet streaks, a set number a shot rather than one round in so many; the
-	// semi-automatic guns' on every shot (they had no tracers, nor a counter for them).
+	// johnhalflife
 	int unused = 0;
 
 	if (iBulletType == BULLET_PLAYER_BUCKSHOT && g_ShotgunTracers > 0)
@@ -439,8 +425,7 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 			vecTracerSrc = vecSrc;
 		}
 
-		// johnhalflife: the M249's, MP5's, shotgun's and semi-automatics' tracers; in first person from the gun's muzzle,
-		// so they cross the view instead of flying straight away from it.
+		// johnhalflife
 		if (const bool m249 = iBulletType == BULLET_PLAYER_556, shotgun = iBulletType == BULLET_PLAYER_BUCKSHOT,
 			semiAuto = IsSemiAutoTracer(iBulletType);
 			(m249 || shotgun || semiAuto || iBulletType == BULLET_PLAYER_MP5) && JhlTracersEnabled())
@@ -450,16 +435,10 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 
 			if (iBulletType == BULLET_PLAYER_762 && firstPerson)
 			{
-				// Scoped, from just under the eye, as a barrel under the scope would be: on the magnified view it rises from
-				// below its bottom edge and meets the crosshair (from the eye itself it would be a dot; started on screen,
-				// it began in mid air);
-				// otherwise from where its muzzle shows on screen, as its view model's attachment sits behind the player
-				// (EV_SniperMuzzleEffects).
 				if (IsViewZoomed())
 				{
 					constexpr float Ahead = 60;
-					constexpr float Down = 1.2f; // Of the way from the middle of the view to its edge: past it.
-					// The view's height from its width's field of view (gHUD.m_iFOV), by the screen's shape.
+					constexpr float Down = 1.2f;
 					const float halfFov = 0.5f * static_cast<float>(gHUD.m_iFOV) * 3.1415927f / 180;
 					const float halfHeight = std::tan(halfFov) * static_cast<float>(ScreenHeight) / static_cast<float>(ScreenWidth);
 					const Vector upward = CrossProduct(right, forward);
@@ -473,12 +452,10 @@ void EV_HLDM_CheckTracer(int idx, const Vector& vecSrc, const Vector& end, const
 			else if (cl_entity_t* viewModel = gEngfuncs.GetViewModel();
 					 firstPerson && !IsViewZoomed() && viewModel && viewModel->attachment[0] != g_vecZero)
 			{
-				// Zoomed (the revolver's scope), the view model isn't drawn and its attachment is stale.
 				jhlTracerSrc = viewModel->attachment[0];
 			}
 			else if (!firstPerson)
 			{
-				// Another player, or third person: from the player model's muzzle rather than by the eyes.
 				jhlTracerSrc = JhlTracers_MuzzleStart(idx, vecTracerSrc);
 			}
 
@@ -764,7 +741,6 @@ void EV_FireShotGunDouble(event_args_t* args)
 			V_PunchAxis(0, -10.0);
 	}
 
-	// johnhalflife: the player's own two thrown when it's pumped (shoot_big, 13 fps: back at frame 15), not as it fires.
 	if (JhlParticleSystemEnabled() && EV_IsLocal(idx) && 0 == CL_IsThirdPerson())
 	{
 		EV_ShotgunPumpShells(2, 1.15f);
@@ -833,7 +809,6 @@ void EV_FireShotGunSingle(event_args_t* args)
 
 	EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, 32, -12, 6);
 
-	// johnhalflife: the player's own thrown when it's pumped (shoot, 20 fps: back at frame 12), not as it fires.
 	if (JhlParticleSystemEnabled() && EV_IsLocal(idx) && 0 == CL_IsThirdPerson())
 		EV_ShotgunPumpShells(1, 0.6f);
 	else
@@ -1051,7 +1026,7 @@ void EV_StopPreviousGauss(int idx)
 
 extern float g_flApplyVel;
 
-// johnhalflife: the Gauss primary beam's core (EV_FireGauss): half its width, a pale hot orange, faint.
+// johnhalflife
 constexpr float PrimaryCoreWidth = 0.5f;
 constexpr float PrimaryCoreBrightness = 0.35f;
 const Vector PrimaryCoreColor{255, 200, 110};
@@ -1092,7 +1067,7 @@ void EV_FireGauss(event_args_t* args)
 		return;
 	}
 
-	// johnhalflife: the charge ends, its light flashing at the muzzle.
+	// johnhalflife
 	if (EV_IsLocal(idx))
 		JhlGauss_Fire(m_fPrimaryFire, flDamage);
 
@@ -1147,7 +1122,6 @@ void EV_FireGauss(event_args_t* args)
 			}
 		}
 
-		// One layer of this segment: the first from the gun (following it), the rest between points.
 		const auto drawLayer = [&](float width, float brightness, const Vector& color)
 		{
 			if (fFirstBeam)
@@ -1164,26 +1138,18 @@ void EV_FireGauss(event_args_t* args)
 
 		if (!JhlParticleSystemEnabled())
 		{
-			// Vanilla: primary orange at 128, secondary white at its damage.
 			drawLayer(m_fPrimaryFire ? 1.0f : 2.5f, (m_fPrimaryFire ? 128.0f : flDamage) / 255.0f,
 				m_fPrimaryFire ? Vector{255, 128, 0} : Vector{255, 255, 255});
 		}
 		else if (m_fPrimaryFire)
 		{
-			// johnhalflife: a little brighter (vanilla 128), with a thinner, slightly hotter core.
+			// johnhalflife
 			drawLayer(1.0f, 153.0f / 255.0f, {255, 128, 0});
 			drawLayer(PrimaryCoreWidth, PrimaryCoreBrightness, PrimaryCoreColor);
 		}
 		else
 		{
-			// johnhalflife: still white and stronger with its charge, but even a small one at least the primary's
-			// strength: by its damage (c, 0-1 at 200; what's left after reflections and walls), the beam 1.1-2.0 wide
-			// (a little over the primary's 1 when small; vanilla 2.5 at any charge) at 0.42-0.62 (vanilla at damage /
-			// 255: a half-second charge's 25 damage, more than a primary shot's 20, drew at a fifth of its brightness);
-			// a saturated orange core 40% as wide at 0.35-0.65 (orange even on a small charge; a full one stays near white),
-			// warming its center (the white is kept well below full
-			// so the orange shows: added onto bright white it only makes white); and past half charge a soft white halo
-			// twice as wide, up to 0.25.
+			// johnhalflife
 			const float c = std::clamp(flDamage / 200.0f, 0.0f, 1.0f);
 			const float width = 1.1f + 0.9f * c;
 			drawLayer(width, 0.42f + 0.2f * c, {255, 255, 255});
@@ -1192,8 +1158,6 @@ void EV_FireGauss(event_args_t* args)
 			if (c > 0.5f)
 				drawLayer(width * 2, 0.25f * (c - 0.5f) / 0.5f, {255, 255, 255});
 
-			// Its afterimage: the path it took (reflections, walls) left glowing warm white and dissipating, more the more
-			// it was charged (JhlGauss_Afterimage). From where it was fired, not following the gun.
 			Vector ghostFrom = vecSrc;
 
 			if (cl_entity_t* viewModel = gEngfuncs.GetViewModel();
@@ -1203,7 +1167,6 @@ void EV_FireGauss(event_args_t* args)
 			}
 			else if (fFirstBeam)
 			{
-				// Another player, or third person: from the player model's gun, as the tracers.
 				ghostFrom = JhlTracers_MuzzleStart(idx, vecSrc);
 			}
 
@@ -1363,7 +1326,7 @@ void EV_FireGauss(event_args_t* args)
 		}
 	}
 
-	// johnhalflife: a light where it ends up hitting something.
+	// johnhalflife
 	if (0 == tr.allsolid && tr.fraction < 1)
 		JhlGauss_ImpactLight(tr.endpos + Vector{tr.plane.normal} * 4);
 }
@@ -1668,9 +1631,7 @@ void EV_EgonFire(event_args_t* args)
 
 			int iBeamModelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex(EGON_BEAM_SPRITE);
 
-			// johnhalflife: Half-Life's own colors. Half-Life Updated divided all three by 255 ("too bright", halflife issue
-			// #3033), which made the beam a dim, see-through blue; Half-Life divides red and green by 100 and leaves blue at
-			// 125, which the engine saturates into its bright, textured white-blue.
+			// johnhalflife: half-Life's own colors
 			float r = 50.0f / 100.0f;
 			float g = 50.0f / 100.0f;
 			float b = 125.0f;
@@ -1714,7 +1675,6 @@ void EV_EgonStop(event_args_t* args)
 
 	if (EV_IsLocal(idx))
 	{
-		// johnhalflife: before its beams go, a fizzle where it was hitting.
 		JhlEgon_Stop();
 
 		V_SetEgonFiring(false);
@@ -1782,10 +1742,7 @@ void EV_HornetGunFire(event_args_t* args)
 			V_PunchAxis(0, gEngfuncs.pfnRandomLong(0, 2));
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(HGUN_SHOOT, 0);
 
-		// johnhalflife: a living gun spits as it launches: a few small droplets of spittle in its own brownish red
-		// (hornet_spit.spr: the bullsquid's tinyspit recoloured, scripts/make_hornet_spit.py) flung out of its mouth,
-		// spreading, falling and landing. Its view model has no attachments, so from where the hornets launch (CHgun:
-		// 16 forward, 8 right, 12 down of the eyes).
+		// johnhalflife: a living gun spits as it launches
 		const int spit = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/hornet_spit.spr");
 
 		if (JhlParticleSystemEnabled() && 0 == CL_IsThirdPerson() && spit != 0)
@@ -1800,7 +1757,6 @@ void EV_HornetGunFire(event_args_t* args)
 			for (int i = 0, count = gEngfuncs.pfnRandomLong(3, 5); i < count; ++i)
 			{
 				Vector position = mouth;
-				// Carrying the player's own motion, as ejected shells do, so running forward doesn't overtake it.
 				Vector velocity = forward * gEngfuncs.pfnRandomFloat(150, 260) + right * gEngfuncs.pfnRandomFloat(-70, 70) +
 								  up * gEngfuncs.pfnRandomFloat(-10, 70) + Vector{args->velocity};
 				const float life = gEngfuncs.pfnRandomFloat(0.6f, 0.9f);
@@ -1945,20 +1901,12 @@ void EV_FireEagle(event_args_t* args)
 		forward, right, up,
 		-9.0, 14.0, 9.0);
 
-	// johnhalflife: Opposing Force's came from behind the player's head, above it, out of sight; from its ejection port
-	// instead, as the Glock's (its view model's the same), but its bigger casing a little further out and thrown harder
-	// to the side, clear of the gun, its kick throwing the gun up past where it starts.
 	if (JhlParticleSystemEnabled())
 	{
 		EV_GetDefaultShellInfo(args, args->origin, args->velocity, ShellVelocity, ShellOrigin, forward, right, up, 20, -12, 7);
 		ShellVelocity = ShellVelocity + right * gEngfuncs.pfnRandomFloat(25, 40);
 	}
 
-	// johnhalflife: a .50 AE's casing, not the Glock's 9 mm: one a little short of true to life (33 mm long and 14 across,
-	// 1.7x and 1.4x the 9 mm's 19 and 10), 4.5 by 1.75, just short of the sniper rifle's 1.8 across. Opposing Force's
-	// burnt-looking shell, as its M249's and sniper rifle's (shell_op4.mdl, installed from the player's Opposing Force:
-	// 3 units long along its y, 1.09 by 0.94 across), else Half-Life's (its casing its bone 1, 3 long along its z, 1.45
-	// across).
 	const int op4Shell = JhlEffectModel("models/shell_op4.mdl");
 
 	if (JhlParticleSystemEnabled() && op4Shell != 0)
@@ -2110,18 +2058,9 @@ void EV_FireM249(event_args_t* args)
 		forward, right, up,
 		-28.0, 24.0, 4.0);
 
-	// johnhalflife: Opposing Force's came from behind the player's head, above it, out of sight; from its receiver
-	// instead, beside where its belt goes in (its view model's rounds), back toward the player.
 	if (JhlParticleSystemEnabled())
 		EV_GetDefaultShellInfo(args, args->origin, args->velocity, ShellVelocity, ShellOrigin, forward, right, up, 12, -11, 4);
 
-	// johnhalflife: a casing every shot (Opposing Force's every other, a link in between), slimmer (saw_shell.mdl, 4.1
-	// units long and 1.4 across, stubby), a 5.56x45mm's shape, 3.7 by 0.9 (a little smaller than other guns' brass, toward
-	// its belt's rounds; they're true to life, 1.4 by 0.4 without their tips, every gun's thrown brass 3-4x that), smaller
-	// than the sniper rifle's (7.7 by 1.8);
-	// and a link with it every two or three shots, thrown a little more to the side, from just behind it. Both spat out
-	// the side, lower (50-60% of a gun's usual throw up), there being so many, each harder or softer to the side
-	// (93-131%).
 	if (JhlParticleSystemEnabled())
 	{
 		static int shotsToLink = 0;
@@ -2131,11 +2070,6 @@ void EV_FireM249(event_args_t* args)
 		ShellVelocity = args->velocity + (thrown - up * upward) * gEngfuncs.pfnRandomFloat(0.93f, 1.31f) +
 						up * (upward * gEngfuncs.pfnRandomFloat(0.5f, 0.6f));
 
-		// Out as it came in on the belt: lying along the gun, pointing toward the muzzle (turned as the player faces,
-		// found in game), a few degrees off, barely tumbling at first (0-8% of it); then tumbling as other guns' shells
-		// do (the engine's R_TempModel's: -512-511 degrees a second spinning about its length, its pitch; -255-255
-		// swinging end over end, its yaw and roll), soon after, by the time the gun's fired two more (0.13 s; it fires
-		// every 0.067).
 		if (const int casing = gEngfuncs.pEventAPI->EV_FindModelIndex("models/saw_shell.mdl"); casing != 0)
 		{
 			const Vector tumble{gEngfuncs.pfnRandomFloat(-512, 511), gEngfuncs.pfnRandomFloat(-255, 255), gEngfuncs.pfnRandomFloat(-255, 255)};
@@ -2216,8 +2150,6 @@ void EV_FireDisplacer(event_args_t* args)
 				1, 60 * 0.01, 190 / 255.0, 30, 0, 10,
 				96 / 255.0, 128 / 255.0, 16 / 255.0);
 
-			// johnhalflife: as the vortigaunt's beams, a thin, wild, dim strand on each arc (kept faint: it's at
-			// the player's eye).
 			if (JhlParticleSystemEnabled())
 			{
 				gEngfuncs.pEfxAPI->R_BeamEnts(
@@ -2274,8 +2206,7 @@ void EV_FireShockRifle(event_args_t* args)
 	{
 		gEngfuncs.pEventAPI->EV_WeaponAnimation(SHOCKRIFLE_FIRE, 0);
 
-		// johnhalflife: its impact's light as a muzzle flash, as big as a firearm's (140-170 units), a brief 0.15 s, in one
-		// of its two colours half the time each (its spark's cyan, its glow's purple), as its impacts.
+		// johnhalflife
 		if (cl_entity_t* viewModel = gEngfuncs.GetViewModel();
 			JhlParticleSystemEnabled() && 0 == CL_IsThirdPerson() && viewModel && viewModel->attachment[0] != g_vecZero)
 		{
@@ -2299,8 +2230,6 @@ void EV_FireShockRifle(event_args_t* args)
 			1, 75 * 0.01, 190 / 255.0, 30, 0, 10,
 			0, 253 / 255.0, 253 / 255.0);
 
-		// johnhalflife: as the vortigaunt's beams, a thin, wild, dim strand on each arc (kept faint: it's at the
-		// player's eye).
 		if (JhlParticleSystemEnabled())
 		{
 			gEngfuncs.pEfxAPI->R_BeamEnts(
@@ -2332,8 +2261,6 @@ void EV_FireSpore(event_args_t* args)
 		{
 			Vector vecSrc = pViewModel->attachment[1];
 
-			// johnhalflife: a muzzle light, bigger than a firearm's (180-210 units), briefly (0.15 s, as the shock
-			// rifle's), in the spore launcher's lime (its burst sprite's, as all its lights).
 			if (JhlParticleSystemEnabled() && 0 == CL_IsThirdPerson() && vecSrc != g_vecZero)
 			{
 				if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)

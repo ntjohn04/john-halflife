@@ -28,13 +28,9 @@ extern engine_studio_api_t IEngineStudio;
 
 namespace
 {
-// Pieces of long-lived debris at once; the oldest fade past this (the engine has 500 temp entities for everything).
 constexpr std::size_t DebrisBudget = 250;
 
-// The most shards one breakable makes (the engine's own cap is 100).
 constexpr int MaxShards = 200;
-// A tracked piece: the temp entity and the serial number it was tagged with (curstate.iuser3), which tells whether
-// the temp entity is still that piece or has been reused for something else.
 struct TrackedDebris
 {
 	TEMPENTITY* Ent;
@@ -104,7 +100,6 @@ void JhlDebris_ParseBreakModel(BufferReader& reader)
 	const int flags = reader.ReadByte();
 	const int multiplier = std::max(1, reader.ReadByte());
 
-	// As the engine's R_BreakModel: no count means one by the size (its surface area over 432), at most 100.
 	if (count == 0)
 		count = std::min(100, static_cast<int>((size.x * size.y + size.y * size.z + size.z * size.x) / 432));
 

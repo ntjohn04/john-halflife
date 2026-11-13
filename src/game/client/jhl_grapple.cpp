@@ -28,24 +28,15 @@
 
 namespace
 {
-// A tongue is drawn in this many pieces (its sag and wiggle need them), from its player's attachment 1 (as the
-// server's was, CGrapple::CreateEffect: tongue.spr, 16 wide in tenths, brightness 100, solid) to its tip.
 constexpr int Pieces = 8;
 constexpr float Width = 1.6f;
 constexpr float Brightness = 100 / 255.f;
 
-// Flying out it hangs a little slack, sagging at its middle by this much of its length, up to SagMax; once latched on
-// it pulls taut, straight and this much thinner (over TautTime).
 constexpr float Sag = 0.07f;
 constexpr float SagMax = 14;
 constexpr float TautWidth = 1.25f;
 constexpr float TautTime = 0.08f;
 
-// It's a little springy, only to look at (where its tip goes is the server's): each point along it keeps where it is
-// when the line from the gun to the tip moves under it (as the player moves), most at its middle (none at its ends),
-// and springs back to its shape (slack, or straight once latched) at this stiffness (radians a second) and damping (1
-// none overshooting), the latched one stiffer and bouncier (it twangs taut). Moving while it's out bows it behind;
-// it's bowed at most this much of its length, up to BendMax.
 constexpr float FlyStiffness = 16;
 constexpr float FlyDamping = 0.4f;
 constexpr float TautStiffness = 60;
@@ -54,37 +45,25 @@ constexpr float BendLimit = 0.2f;
 constexpr float BendMax = 40;
 constexpr float StepTime = 1 / 200.f;
 
-// Latched on, it swallows: a bulge this much wider runs along it from the tip to the gun over BulgeTime, one every
-// BulgeEvery, spread over about BulgeSpread of its length (so it rolls from piece to piece rather than stepping),
-// starting once it's taut.
 constexpr float BulgeWidth = 0.65f;
 constexpr float BulgeTime = 0.3f;
 constexpr float BulgeEvery = 0.7f;
 constexpr float BulgeSpread = 0.22f;
 
-// When it lets go it reels back into its gun over this long, quickening, from at most this far out (so it's always
-// seen to, at the same pace).
 constexpr float RetractTime = 0.2f;
 constexpr float RetractLength = 150;
 
-// Its wiggle as it reels in, a measuring tape's (so it's plainly not the tongue in play any more): a wave this far to
-// the side at its middle (at full length; less as it shortens, none at its ends), this many waves along it, running
-// in this many times a second.
 constexpr float WiggleSize = 4;
 constexpr float WiggleWaves = 1.5f;
 constexpr float WiggleSpeed = 4;
 
-// A tongue's pieces: the first from its player's attachment (the engine keeps it there), the rest along it.
 struct Chain
 {
 	int Owner = 0;
 	BEAM* Beams[Pieces]{};
 
-	// Where it meets the gun: where the engine has the first piece's start once it's drawn it, roughly its player's
-	// eyes until then.
 	Vector Mouth() const;
 
-	// Placed along these points, each piece this wide (made if need be: the engine won't make one out of view).
 	void Place(const Vector (&points)[Pieces + 1], const float (&widths)[Pieces], float now);
 	void Place(const Vector (&points)[Pieces + 1], float width, float now);
 	void Free();
@@ -98,7 +77,6 @@ struct Tip
 	float LatchedAt; // 0 while flying.
 	Chain Tongue;
 
-	// Its points' springing, off the straight line from the gun to the tip, and where that line had them last frame.
 	Vector Offsets[Pieces + 1]{};
 	Vector Velocities[Pieces + 1]{};
 	Vector LastLine[Pieces + 1]{};
@@ -263,7 +241,6 @@ void DrawTongue(Tip& tip, float now)
 	float widths[Pieces];
 	std::fill(std::begin(widths), std::end(widths), Width + (TautWidth - Width) * eased);
 
-	// Swallowing, once taut: where the bulge is along it (1 the tip, 0 the gun), if one's running.
 	if (latched && now - tip.LatchedAt > TautTime)
 	{
 		const float cycle = std::fmod(now - tip.LatchedAt - TautTime, BulgeEvery);
@@ -284,7 +261,6 @@ void DrawTongue(Tip& tip, float now)
 	tip.Tongue.Place(points, widths, now);
 }
 
-// Its tongue gone with it: one reels back in from where it was, starting this frame.
 void Retract(Tip& tip, float now)
 {
 	const Vector mouth = tip.Tongue.Mouth();
@@ -300,7 +276,6 @@ void Retract(Tip& tip, float now)
 
 	direction = direction.Normalize();
 
-	// Its wiggle side to side as seen along it (level; any way, for one straight up or down).
 	Vector side = CrossProduct(direction, Vector{0, 0, 1});
 	side = side.Length() > 0.1f ? side.Normalize() : Vector{1, 0, 0};
 
@@ -333,8 +308,6 @@ void DrawRetraction(Retraction& retraction, float now)
 
 void JhlGrapple_Track(cl_entity_t* entity, const char* modelname)
 {
-	// The grapple's tip has the shock bolt's model; a shock bolt is tagged renderamt 1 (CShockBeam::Spawn), a latched
-	// tip 2 (CGrappleTip::TongueTouch).
 	if (!JhlParticleSystemEnabled() || !modelname || 0 != std::strcmp(modelname, "models/shock_effect.mdl") ||
 		entity->curstate.renderamt == 1 || entity->curstate.owner <= 0)
 		return;
@@ -376,7 +349,6 @@ void JhlGrapple_Update(double time)
 
 	g_LastTime = now;
 
-	// A tip not added this frame is gone: its tongue reels back in, starting this frame.
 	for (auto it = g_Tips.begin(); it != g_Tips.end();)
 	{
 		if (it->LastSeen >= now)

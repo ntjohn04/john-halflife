@@ -209,10 +209,9 @@ void CShockRifle::PrimaryAttack()
 	// Update auto-aim
 	m_pPlayer->GetAutoaimVectorFromPoint(vecSrc, AUTOAIM_10DEGREES);
 
-	// johnhalflife: aimed at the crosshair (UTIL_JhlAimAtCrosshair).
 	auto pBeam = CShockBeam::CreateShockBeam(vecSrc, UTIL_JhlAimAtCrosshair(m_pPlayer, vecSrc, vecAnglesAim), m_pPlayer);
 
-	// johnhalflife: with the particle system the bolt has no beams of its own (CShockBeam::Spawn).
+	// johnhalflife
 	if (pBeam->m_pBeam1)
 		pBeam->m_pBeam1->SetOrigin(pBeam->pev->origin);
 

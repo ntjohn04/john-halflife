@@ -39,7 +39,6 @@ void RenderFog()
  */
 void DLLEXPORT HUD_DrawNormalTriangles()
 {
-	// johnhalflife: the engine's fog and view, for the underwater fog; water as the software renderer drew it.
 	JhlSoftwareLook_CaptureView();
 	JhlSkyboxes_Update();
 	JhlSoftwareWater_DrawOpaque();
@@ -58,7 +57,6 @@ void DLLEXPORT HUD_DrawTransparentTriangles()
 	// johnhalflife: blast rings.
 	JhlBlastRing_Draw();
 
-	// johnhalflife: see-through water as the software renderer drew it.
 	JhlSoftwareWater_DrawTransparent();
 
 	// Handled in V_CalcRefdef.

@@ -71,7 +71,6 @@ public:
 
 	bool HasAlienGibs() override { return true; }
 
-	// johnhalflife: its corpse gibs from 48, as a headcrab's: 6 9mm rounds, 2 from the .357, a double shotgun blast.
 	float JhlCorpseGibDamage() override { return 48; }
 
 	/**

@@ -30,19 +30,17 @@ namespace
 // The sky's faces, as the engine loads them (R_LoadSkys).
 constexpr const char* Suffixes[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
 
-// GL texture names looked through for the sky's (the engine numbers its own from 1 up).
 constexpr GLuint MostTextureNames = 32768;
 
-// A texture is the image if its picture follows the image's this closely (correlation of their brightness).
 constexpr double MatchCorrelation = 0.95;
 
 JhlGL& gl = g_JhlGL;
 cvar_t* g_SkyFiltering = nullptr;
 cvar_t* g_TextureMode = nullptr;
 
-std::string g_SkyName; // The sky the textures were looked for (with the map, so a new map looks again).
+std::string g_SkyName;
 std::array<GLuint, 6> g_SkyTextures{};
-GLint g_AppliedFilter = 0; // What they were given (0: nothing, as the engine left them).
+GLint g_AppliedFilter = 0;
 
 struct Image
 {
@@ -51,7 +49,6 @@ struct Image
 	std::vector<float> Brightness; // Row by row, top first.
 };
 
-// A TGA's brightness (uncompressed or run-length, 24 or 32 bit), as the engine reads the sky.
 bool LoadTga(const std::string& path, Image& image)
 {
 	const auto data = FileSystem_LoadFileIntoBuffer(path.c_str(), FileContentFormat::Binary);
@@ -155,7 +152,6 @@ bool LoadTga(const std::string& path, Image& image)
 	return true;
 }
 
-// How closely two pictures of a size follow each other (every 4th pixel each way); upside down too.
 double Correlation(const Image& image, const std::vector<std::uint8_t>& rgba, bool flipped)
 {
 	double sa = 0, sb = 0, saa = 0, sbb = 0, sab = 0;
@@ -184,7 +180,6 @@ double Correlation(const Image& image, const std::vector<std::uint8_t>& rgba, bo
 	return va > 0 && vb > 0 ? (sab - sa * sb / n) / std::sqrt(va * vb) : 0;
 }
 
-// The engine's GL textures for the sky's six images; 0 for one not found.
 void FindSkyTextures(const std::string& sky)
 {
 	g_SkyTextures = {};
@@ -263,7 +258,6 @@ void FindSkyTextures(const std::string& sky)
 	gEngfuncs.Con_DPrintf("johnhalflife: sky %s: %d of its 6 textures found for its filtering\n", sky.c_str(), found);
 }
 
-// The filter the world's textures have, without mipmaps (the sky has none): nearest when they're nearest.
 GLint WorldFilter()
 {
 	return 0 == strnicmp(g_TextureMode->string, "GL_NEAREST", 10) ? GL_NEAREST : GL_LINEAR;
@@ -290,7 +284,6 @@ void ApplyFilter(GLint filter)
 
 void JhlSkyboxes_Initialize()
 {
-	// jhl_visuals_renderfixes (jhl_softwarelook.cpp's, registered before this).
 	g_SkyFiltering = gEngfuncs.pfnGetCvarPointer("jhl_visuals_renderfixes");
 }
 
@@ -306,7 +299,6 @@ void JhlSkyboxes_Update()
 		return;
 	}
 
-	// Once, for developer 1: whether the view is anti-aliased (the engine multisamples by default; -nomsaa turns it off).
 	static bool reportedSamples = false;
 
 	if (!reportedSamples)

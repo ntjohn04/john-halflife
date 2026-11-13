@@ -25,18 +25,16 @@
 #include "jhl_effects.h"
 #include "UserMessages.h"
 
-// johnhalflife hit blood (jhl_fx_particlesystem); the size curve, colors and extra droplets are in UTIL_BloodDrips.
-constexpr float HeavyHitDamage = 30;		// Hits this hard spurt blood out the far side,
-constexpr float ExitSpurtLength = 1.5f;		// a short stream: particle speed is length x speed (UTIL_BloodStream).
+// johnhalflife
+constexpr float HeavyHitDamage = 30;
+constexpr float ExitSpurtLength = 1.5f;
 constexpr int ExitSpurtSpeed = 100;
-constexpr int MeleeExtraBursts = 2;			// The player's melee hits: this many more blood bursts (each 14+14 droplets),
-constexpr float MeleeFlingLength = 1.2f;	// and a short stream flung to one side.
+constexpr int MeleeExtraBursts = 2;
+constexpr float MeleeFlingLength = 1.2f;
 constexpr int MeleeFlingSpeed = 90;
-constexpr float HeadshotStreamLength = 4;	// A killing headshot streams back toward the shooter, shorter than the
-constexpr int HeadshotStreamSpeed = 150;	// sniper rifle's, which passes the whole distance as its length.
+constexpr float HeadshotStreamLength = 4;
+constexpr int HeadshotStreamSpeed = 150;
 
-// The last bullet headshot, so a death in the same frame knows it was one. The sniper rifle's are left out: it has its
-// own blood stream.
 static struct
 {
 	EHANDLE Victim;
@@ -674,7 +672,6 @@ void CBaseMonster::Killed(CBaseEntity* attacker, int iGib)
 
 	Remember(bits_MEMORY_KILLED);
 
-	// A killing headshot: a stream of blood back toward the shooter.
 	if (s_LastHeadshot.Victim == this && s_LastHeadshot.Time == gpGlobals->time && UTIL_JhlParticleSystem())
 	{
 		UTIL_BloodStream(s_LastHeadshot.Position, s_LastHeadshot.Direction * -HeadshotStreamLength,
@@ -700,8 +697,6 @@ void CBaseMonster::Killed(CBaseEntity* attacker, int iGib)
 		SetTouch(nullptr);
 		BecomeDead();
 
-		// Clients put a pool of blood under the body once it has fallen (client_gibs.cpp). Not for the displacer's
-		// victims, which it takes away whole.
 		if (0 != gmsgBloodPool && BloodColor() != DONT_BLEED && !(attacker && attacker->ClassnameIs("displacer_ball")))
 		{
 			MESSAGE_BEGIN(MSG_PVS, gmsgBloodPool, pev->origin);
@@ -791,7 +786,6 @@ void CGib::BounceGibTouch(CBaseEntity* pOther)
 
 	if ((pev->flags & FL_ONGROUND) != 0)
 	{
-		// johnhalflife (jhl_physics_fpsfix): touched every frame it slides, so taken off as at 72 fps.
 		pev->velocity = pev->velocity * (UTIL_JhlFpsFix() ? JhlReferenceDecay(0.9f, gpGlobals->frametime) : 0.9f);
 		pev->angles.x = 0;
 		pev->angles.z = 0;
@@ -1059,7 +1053,6 @@ bool CBaseMonster::DeadTakeDamage(CBaseEntity* inflictor, CBaseEntity* attacker,
 
 #endif
 
-	// johnhalflife: enough bullet damage gibs some corpses (JhlCorpseGibDamage).
 	if ((bitsDamageType & DMG_BULLET) != 0 && JhlCorpseGibDamage() > 0 && UTIL_JhlParticleSystem())
 	{
 		m_JhlCorpseDamage += flDamage;
@@ -1358,14 +1351,11 @@ void CBaseMonster::TraceAttack(CBaseEntity* attacker, float flDamage, Vector vec
 
 		if (BloodColor() != DONT_BLEED && UTIL_JhlParticleSystem())
 		{
-			// A heavy hit spurts out the far side, along the bullet's path.
 			if (flDamage >= HeavyHitDamage)
 			{
 				UTIL_BloodStream(ptr->vecEndPos, vecDir * ExitSpurtLength, BloodColor(), ExitSpurtSpeed);
 			}
 
-			// The player's melee (crowbar, wrench, knife): more droplets, and a short fling to one side, as a swing
-			// throws blood across rather than through.
 			if ((bitsDamageType & DMG_CLUB) != 0 && attacker && attacker->IsPlayer())
 			{
 				for (int i = 0; i < MeleeExtraBursts; ++i)
@@ -1403,9 +1393,6 @@ void CBaseEntity::FireBullets(unsigned int cShots, Vector vecSrc, Vector vecDirS
 	if (attacker == nullptr)
 		attacker = this; // the default attacker is ourselves
 
-	// johnhalflife: the kind of tracer the client draws on top of the vanilla one (UTIL_JhlTracer). Opposing Force's
-	// friendly M249 grunt fires the player's M249 tracer rounds, one in 3 (vanilla's every 2nd); the Black Ops
-	// assassin's 5.56 is its sniper rifle's.
 	const bool jhlTracers = UTIL_JhlParticleSystem();
 	int jhlTracerKind = JhlTracerMP5;
 
@@ -1464,9 +1451,7 @@ void CBaseEntity::FireBullets(unsigned int cShots, Vector vecSrc, Vector vecDirS
 
 			if (jhlTracers)
 			{
-				// johnhalflife's streak from the gun's muzzle (its model's first attachment, where its muzzle flash is),
-				// not its gun position, which is often behind it; unless that's nowhere near (no attachment, or not a
-				// gun's).
+				// johnhalflife
 				Vector muzzle = vecTracerSrc;
 
 				if (CBaseMonster* monster = MyMonsterPointer(); monster && !FStringNull(pev->model))

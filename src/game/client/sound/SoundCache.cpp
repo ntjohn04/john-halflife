@@ -147,13 +147,9 @@ ConvertedSound SoundCache::Convert(const std::string& absolutePath, nqr::Nyquist
 		return result;
 	}
 
-	// See https://openal-soft.org/openal-extensions/SOFT_loop_points.txt
 	auto cuePoints = TryLoadCuePoints(absolutePath, data.samples.size(), data.channelCount);
 
-	// johnhalflife (jhl_snd_vanilla): the engine mixes at 22050 Hz, a sound at its own pitch brought to it interpolated
-	// linearly; the system then takes the engine's output to the device's rate, flat to near 11 kHz: both done here,
-	// once (ToDeviceRate), so OpenAL plays it at the device's rate as it is. The sound as loaded is kept, for its
-	// pitched versions (GetPitched).
+	// johnhalflife
 	if (m_EngineRate && data.sampleRate > 0 && data.channelCount > 0)
 	{
 		result.NativeSamples = data.samples;
@@ -251,9 +247,7 @@ bool SoundCache::Upload(Sound& sound, ConvertedSound&& converted)
 	return true;
 }
 
-// johnhalflife: work on a long sound shared out among the processor's threads, each doing its own stretch of the
-// frames it makes (the same samples come out): a scientist's 29 s speech took a frame of 60 ms or more the first time
-// it played. Sounds this long (a second at the device's rate) or longer are; shorter ones are quick on their own.
+// johnhalflife
 constexpr std::size_t ParallelFrames = 48000;
 constexpr std::size_t MaxThreads = 8;
 
@@ -346,13 +340,10 @@ std::vector<float> SoundCache::Resample(const std::vector<float>& samples, std::
 	return out;
 }
 
-// The system's conversion of the engine's 22050 Hz output to the device's rate, as in recordings of vanilla: flat to
-// near 11 kHz, nothing above (OpenAL's own sinc resamplers roll off from 6 kHz, -19 dB by 10 kHz, which muffled 22 kHz
-// sounds). A Kaiser windowed sinc, 64 taps, cut off at 10.9 kHz, tabled at 512 phases.
 constexpr int ConverterHalf = 32;
 constexpr int ConverterPhases = 512;
 constexpr double ConverterCutoff = 10900;
-constexpr double ConverterBeta = 5.65; // About 60 dB down past the cut off.
+constexpr double ConverterBeta = 5.65;
 
 static double BesselI0(double x)
 {
@@ -423,7 +414,6 @@ std::vector<float> SoundCache::ToDeviceRate(const std::vector<float>& samples, s
 	const std::size_t outFrames = std::max<std::size_t>(static_cast<std::size_t>(frames / step), 1);
 	const bool looping = loopStart >= 0 && loopEnd > loopStart && static_cast<std::size_t>(loopEnd) <= frames;
 
-	// A frame past the end: round the loop for a looping sound (so its seam stays seamless), else silence.
 	const auto frameAt = [&](std::ptrdiff_t index) -> std::ptrdiff_t
 	{
 		if (index < 0)
@@ -464,7 +454,6 @@ std::vector<float> SoundCache::ToDeviceRate(const std::vector<float>& samples, s
 				float sum = 0;
 
 #ifdef JHL_SOUND_SSE
-				// A mono sound's taps 4 at a time (summed in another order: within a millionth).
 				if (inside && channels == 1)
 				{
 					const float* source = &samples[static_cast<std::size_t>(first)];
@@ -555,11 +544,6 @@ ConvertedPitch SoundCache::ConvertPitch(const std::vector<float>& nativeSamples,
 		return result;
 	}
 
-	// The engine pitches a sound by stepping through it at its own rate without interpolating (fixed point, truncated),
-	// and only then brings it to its 22050 Hz: off the sound's own pitch the uneven steps scatter a faint distortion
-	// through the whole band, the grain of vanilla's sound (nearly everything plays a little off pitch: voices 100-103,
-	// guns 98-102). A sound faster than 22050 Hz is pitched from its 22050 Hz version. Then, as the sound itself, on to
-	// the device's rate.
 	const std::size_t channels = static_cast<std::size_t>(channelCount);
 	const double pitchStep = pitch / 100.0;
 	const double toEngine = static_cast<double>(nativeRate) / EngineMixRate;
@@ -663,7 +647,6 @@ void SoundCache::Request(SoundIndex index, int pitch)
 	const bool needBase = !sound->Buffer.IsValid();
 	const bool needPitch = pitch != PITCH_NORM && m_EngineRate;
 
-	// The file found here (the engine's file system is the main thread's); a pitch from the sound as loaded, copied.
 	std::string path;
 
 	if (needBase && !FindFile(*sound, path))
@@ -743,7 +726,7 @@ const std::vector<float>& SoundCache::GetSamples(const Sound& sound, int pitch)
 
 void SoundCache::ClearBuffers()
 {
-	m_Jobs.clear(); // Each waits for its work to finish.
+	m_Jobs.clear();
 
 	for (auto& sound : m_Sounds)
 	{

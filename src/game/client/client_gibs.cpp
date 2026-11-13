@@ -38,50 +38,44 @@ static cvar_t* g_cl_gibcount = nullptr;
 static cvar_t* g_cl_giblife = nullptr;
 static cvar_t* g_cl_gibvelscale = nullptr;
 
-// johnhalflife (jhl_fx_particlesystem): more gibs, lasting longer, each a little different in size and speed.
-constexpr int GibCountMultiplier = 7;		   // Death gibs; a single gib (a barnacle bite) stays one.
-constexpr int MaxUsesPerGibPiece = 3;		   // Each gib model piece at most this many times per death,
-constexpr int MaxUsesPerGibPieceLarge = 4;	   // or this many for large aliens, which have only 4 pieces (16 gibs).
+// johnhalflife
+constexpr int GibCountMultiplier = 7;
+constexpr int MaxUsesPerGibPiece = 3;
+constexpr int MaxUsesPerGibPieceLarge = 4;
 constexpr int SoundingGibsPerDeath = 4;		   // Gibs that make bounce sounds,
-constexpr int BounceSoundsPerGib = 3;		   // each on its first bounces only.
-constexpr float JhlGibLife = JhlDebrisLife;   // Seconds on the ground before fading (the giblife cvar otherwise).
+constexpr int BounceSoundsPerGib = 3;
+constexpr float JhlGibLife = JhlDebrisLife;
 constexpr float JhlGibScaleVariation = 0.15f;  // Size +-15%.
 constexpr float JhlGibSpeedVariation = 0.2f;   // Speed +-20%.
-constexpr float JhlGibSidewaysSpread = 0.7f;   // Random sideways direction, +-0.7 (vanilla 0.25).
-constexpr int TrailingGibsPerDeath = 7;		   // Gibs that leave a trail of blood drops as they fly,
-constexpr float BloodTrailTime = 1;			   // for this long after being thrown, thinning out,
-constexpr float BloodTrailSpacing = 4;		   // a drop every this many units at first.
-constexpr int BloodStreamRed = 68;			   // Blood particles (flat, full brightness, so 2 darker than vanilla's red
-constexpr int BloodTrailYellow = 200;		   // streams at 70): red 68 and up, yellow 200 and down.
-// Effects pick colors a few palette entries up from the one they're given. 247 (the game's red) is followed by
-// bright reds up to 255,0,0 and 195 (yellow) is the brightest of its ramp, so darker starts match the decals.
+constexpr float JhlGibSidewaysSpread = 0.7f;
+constexpr int TrailingGibsPerDeath = 7;
+constexpr float BloodTrailTime = 1;
+constexpr float BloodTrailSpacing = 4;
+constexpr int BloodStreamRed = 68;
+constexpr int BloodTrailYellow = 200;
 constexpr int SplashPuffRed = 74;			   // 87,0,0 and up.
 constexpr int DarkYellow = 198;				   // 155,131,7 and darker.
-constexpr int SplashBloodPuffs = 3;			   // A burst where the body was: the game's hit blood,
+constexpr int SplashBloodPuffs = 3;
 constexpr float SplashBloodSize = 16;		   // at its largest size,
-constexpr float SplashStagger = 0.15f;		   // the extra puffs over this long;
+constexpr float SplashStagger = 0.15f;
 constexpr int SplashChunks = 30;
-constexpr float BloodPoolDelay = 1;			   // Seconds after a death without gibbing before the pool appears.			   // and blood chunk sprites thrown out (red blood only).
+constexpr float BloodPoolDelay = 1;
 
 static cvar_t* g_violence_hblood = nullptr;
 static cvar_t* g_violence_ablood = nullptr;
 
-// How a particular monster gibs, where it differs from the defaults (GibCountMultiplier, MaxUsesPerGibPiece, full
-// size, a skull for humans). Looked up by the dying monster's model, which the client still has when the gibs
-// message arrives.
 struct GibProfile
 {
 	std::string_view Model;
-	int Count = 0;		// Exactly this many gibs, if set.
-	int Multiplier = 0; // The gib count times this, if set (instead of GibCountMultiplier, which skips single gibs).
+	int Count = 0;
+	int Multiplier = 0;
 	int MaxUsesPerPiece = MaxUsesPerGibPiece;
 	float Scale = 1;
 	bool Skull = true;
-	float Splash = 1; // Size of the blood splash where the body was.
+	float Splash = 1;
 };
 
 static constexpr GibProfile GibProfiles[] = {
-	// Full-size aliens have only 4 alien gib pieces, so they may repeat a little more (16 gibs).
 	{.Model = "models/agrunt.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge, .Splash = 1.25f},
 	{.Model = "models/islave.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge, .Splash = 1.25f},
 	{.Model = "models/bullsquid.mdl", .MaxUsesPerPiece = MaxUsesPerGibPieceLarge, .Splash = 1.25f},
@@ -96,7 +90,6 @@ static constexpr GibProfile GibProfiles[] = {
 	{.Model = "models/headcrab.mdl", .Multiplier = 1, .Splash = 0.5f},
 	{.Model = "models/baby_headcrab.mdl", .Count = 1, .Scale = 0.5f, .Splash = 0.25f},
 	{.Model = "models/bigrat.mdl", .Count = 2, .Scale = 0.35f, .Skull = false, .Splash = 0.25f},
-	// Each gib a barnacle coughs up (4 in its death animation) becomes 2.
 	{.Model = "models/barnacle.mdl", .Multiplier = 2},
 };
 
@@ -121,8 +114,6 @@ static bool ShowsBlood(int bloodColor)
 	return 0 != (bloodColor == BLOOD_COLOR_RED ? g_violence_hblood : g_violence_ablood)->value;
 }
 
-// A trailing gib drops blood particles along its path (curstate.fuser2: when the trail ends; vuser1: where the
-// last drop was left), like a thin blood stream following it.
 static void EmitBloodTrail(TEMPENTITY* ent, float currenttime)
 {
 	const float remaining = ent->entity.curstate.fuser2 - currenttime;
@@ -163,8 +154,6 @@ static void EmitBloodTrail(TEMPENTITY* ent, float currenttime)
 	ent->entity.curstate.vuser1 = ent->entity.origin;
 }
 
-// A blood puff that plays a moment later (curstate.fuser1: when; iuser1-3: color, spray and drop sprites;
-// fuser2: size).
 static void DelayedBloodPuff(TEMPENTITY* ent, float frametime, float currenttime)
 {
 	if (currenttime < ent->entity.curstate.fuser1)
@@ -176,8 +165,6 @@ static void DelayedBloodPuff(TEMPENTITY* ent, float frametime, float currenttime
 	ent->die = currenttime;
 }
 
-// Puts a decal where a downward trace from a point lands on a floor, if it does. From a temp entity callback, the temp
-// entity update has already set up tracing (HUD_TempEntUpdate), and pushing it again makes the engine complain.
 static void FloorDecal(const Vector& point, const char* decalName, bool inTempEntUpdate)
 {
 	Vector start = point;
@@ -197,7 +184,6 @@ static void FloorDecal(const Vector& point, const char* decalName, bool inTempEn
 	if (!inTempEntUpdate)
 		gEngfuncs.pEventAPI->EV_PopPMStates();
 
-	// Floors only: not off a ledge, not up a wall or a steep slope.
 	if (tr.fraction >= 1 || tr.plane.normal.z < 0.7f || r_decals->value == 0)
 		return;
 
@@ -206,8 +192,6 @@ static void FloorDecal(const Vector& point, const char* decalName, bool inTempEn
 	gEngfuncs.pEfxAPI->R_DecalShoot(textureIndex, gEngfuncs.pEventAPI->EV_IndexFromTrace(&tr), 0, &tr.endpos.x, 0);
 }
 
-// A pool of blood on the floor where a gibbed body was: the game's big blood splat, or for yellow
-// blood, whose largest decal is smaller, three overlapping. Smaller for small creatures.
 static void SpawnBloodPool(const Vector& origin, int bloodColor, float scale, bool inTempEntUpdate)
 {
 	if (scale <= 0 || !ShowsBlood(bloodColor))
@@ -231,8 +215,6 @@ static void SpawnBloodPool(const Vector& origin, int bloodColor, float scale, bo
 	}
 }
 
-// A pool under a body that died without gibbing, once it has fallen (curstate.fuser1: when; iuser1: the body's
-// entity; iuser2: blood color; fuser2: size).
 static void DelayedBloodPool(TEMPENTITY* ent, float frametime, float currenttime)
 {
 	if (currenttime < ent->entity.curstate.fuser1)
@@ -272,14 +254,11 @@ static void MsgFunc_BloodPool(const char* name, BufferReader& reader)
 	}
 }
 
-// A random point in a body around its center: wider than deep, and taller upward.
 static Vector RandomInBody(float scale)
 {
 	return Vector{RANDOM_FLOAT(-8, 8), RANDOM_FLOAT(-8, 8), RANDOM_FLOAT(-12, 18)} * scale;
 }
 
-// A burst of blood where a gibbed body was, so it doesn't just vanish: a few of the game's hit blood puffs,
-// staggered, and red blood chunks thrown out the way the gibs fly.
 static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bloodColor, float scale)
 {
 	if (scale <= 0 || !ShowsBlood(bloodColor))
@@ -321,8 +300,6 @@ static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bl
 		}
 	}
 
-	// Opposing Force's blood chunk sprite is red; alien blood uses a yellow copy of it
-	// (scripts/make_yellow_blood_chunk.py).
 	const char* const chunkSprite = bloodColor == BLOOD_COLOR_YELLOW ? "sprites/blood_chnk_yellow.spr" : "sprites/blood_chnk.spr";
 	const int chunk = JhlEffectModel(chunkSprite);
 
@@ -334,18 +311,14 @@ static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bl
 	for (int i = 0; i < chunks; ++i)
 	{
 		Vector position = origin + RandomInBody(scale);
-		// Random, a little upward, and pushed the way the gibs fly (away from the attack).
 		Vector velocity = Vector{RANDOM_FLOAT(-80, 80), RANDOM_FLOAT(-80, 80), RANDOM_FLOAT(-80, 80) + 60} - attackdir * 40;
 
-		// Slightly translucent, so a little of the surroundings shows through the sprite's pure red, as with the decals.
 		TEMPENTITY* sprite = efx->R_TempSprite(position, velocity, 0.4f, chunk, kRenderTransAlpha, kRenderFxNone, 0.9f, 4.5f,
 			FTENT_SPRANIMATE | FTENT_GRAVITY | FTENT_COLLIDEWORLD);
 
 		if (sprite)
 		{
 			sprite->entity.curstate.rendercolor = {255, 255, 255};
-			// It disappears on its last frame, so a random frame rate staggers the chunks' lifetimes: its 4 frames
-			// last 1.5-4 seconds.
 			sprite->entity.curstate.framerate = 4 / RANDOM_FLOAT(1.5f, 4);
 			sprite->entity.angles.z = RANDOM_FLOAT(0, 359);
 		}
@@ -354,8 +327,6 @@ static void SpawnGibSplash(const Vector& origin, const Vector& attackdir, int bl
 
 void ClientGibs_Pop(const Vector& origin, int bloodColor, int chunks)
 {
-	// A small creature bursting, leaving no body (a snark): one of the gib splash's blood puffs, small, and a few of
-	// its blood chunks, smaller (a snark's tiny), thrown up and out, falling and bouncing as theirs.
 	if (!ShowsBlood(bloodColor) || (bloodColor != BLOOD_COLOR_RED && bloodColor != BLOOD_COLOR_YELLOW))
 		return;
 
@@ -485,7 +456,6 @@ static void EV_TFC_GibCallback(TEMPENTITY* ent, float frametime, float currentti
 
 static void EV_TFC_GibTouchCallback(TEMPENTITY* ent, pmtrace_t* ptr)
 {
-	// Bounce sounds play after this callback, so a gib out of bounce sounds is silenced before its next one.
 	if (0 != ent->hitSound)
 	{
 		if (ent->entity.curstate.iuser2 <= 0)
@@ -564,8 +534,6 @@ static TEMPENTITY* EV_TFC_CreateGib(const char* modelName, int body, byte bloodC
 		// make the gib fly away from the attack vector
 		velocity = attackdir * -1;
 
-		// A wider sideways spread (johnhalflife), so gibs fan out rather than all flying one way when the blast is
-		// level with the body.
 		const float sidewaysSpread = JhlParticleSystemEnabled() ? JhlGibSidewaysSpread : 0.25f;
 
 		for (int i = 0; i < 3; ++i)
@@ -582,7 +550,6 @@ static TEMPENTITY* EV_TFC_CreateGib(const char* modelName, int body, byte bloodC
 	{
 		ent->entity.curstate.velocity = ent->entity.curstate.velocity * RANDOM_FLOAT(1 - JhlGibSpeedVariation, 1 + JhlGibSpeedVariation);
 
-		// The model renderer only applies scale to entities marked like this (see StudioSetUpTransform).
 		ent->entity.curstate.scale = RANDOM_FLOAT(1 - JhlGibScaleVariation, 1 + JhlGibScaleVariation);
 		ent->entity.curstate.iuser4 = ScaledModelMarker;
 	}
@@ -599,7 +566,6 @@ static TEMPENTITY* EV_TFC_CreateGib(const char* modelName, int body, byte bloodC
 	ent->entity.curstate.playerclass = int(GibState::WaitTillLand);
 	ent->entity.curstate.iuser1 = bloodColor;
 
-	// Long-lived, so they count against the debris budget, which fades the oldest early.
 	if (JhlParticleSystemEnabled())
 	{
 		JhlDebris_Track(ent, [](TEMPENTITY* gib)
@@ -677,7 +643,6 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 	int soundingGibs = 0;
 	int trailingGibs = 0;
 
-	// Uses of each randomly picked piece, so none repeats more than MaxUsesPerGibPiece times in one death.
 	eastl::fixed_vector<int, 64> pieceUses;
 	pieceUses.resize(gibData->SubModelCount);
 
@@ -714,7 +679,6 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 		}
 		else if (jhl)
 		{
-			// A random piece among those not used up yet; stop once every piece has been used enough.
 			eastl::fixed_vector<int, 64> available;
 
 			for (int piece = gibData->FirstSubModel; piece < gibData->SubModelCount; ++piece)
@@ -745,7 +709,6 @@ void ClientGibs_Spawn(int entindex, int bloodColor, int numGibs, const Vector& o
 			gib->entity.curstate.scale *= profile.Scale;
 		}
 
-		// A few gibs squelch when they bounce (debris/flesh*.wav, louder the harder they hit).
 		if (jhl && gib && soundingGibs < SoundingGibsPerDeath)
 		{
 			gib->hitSound = BOUNCE_FLESH;

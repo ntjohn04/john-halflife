@@ -220,8 +220,7 @@ void CSatchel::Throw()
 
 		SetWeaponModels("models/v_satchel_radio.mdl", "models/p_satchel_radio.mdl");
 
-		// johnhalflife: taking out the radio after a throw sounds as switching to it does (DefaultDeploy), only when it
-		// wasn't in hand already (more charges thrown while holding it don't).
+		// johnhalflife
 		if (const char* deploySound = GetWeaponDeploySound("models/v_satchel_radio.mdl"); deploySound && 0 == m_chargeReady)
 			m_pPlayer->EmitSound(CHAN_ITEM, deploySound, VOL_NORM, ATTN_NORM);
 #else
@@ -271,7 +270,7 @@ void CSatchel::WeaponIdle()
 #ifndef CLIENT_DLL
 		SetWeaponModels("models/v_satchel.mdl", "models/p_satchel.mdl");
 
-		// johnhalflife: taking out another charge after detonating sounds as switching to it does (DefaultDeploy).
+		// johnhalflife
 		if (const char* deploySound = GetWeaponDeploySound("models/v_satchel.mdl"); deploySound)
 			m_pPlayer->EmitSound(CHAN_ITEM, deploySound, VOL_NORM, ATTN_NORM);
 #else

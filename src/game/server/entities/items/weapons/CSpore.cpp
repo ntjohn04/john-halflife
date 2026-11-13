@@ -57,8 +57,6 @@ void CSpore::Spawn()
 
 	SetModel("models/spore.mdl");
 
-	// johnhalflife: tagged renderamt 1 for the client's light on it in flight (SporeLight; renderamt does nothing for a
-	// model drawn normally).
 	if (UTIL_JhlParticleSystem())
 		pev->renderamt = 1;
 
@@ -140,26 +138,22 @@ void CSpore::IgniteThink()
 
 	auto vecDir = pev->velocity.Normalize();
 
-	// johnhalflife: a lobbed spore bursting at rest on its fuse has no way it's going: it's on the floor (vanilla found
-	// no surface, so no splat and its spray no way to go).
 	if (jhl && pev->velocity.Length() < 1)
 		vecDir = Vector(0, 0, -1);
 
 	TraceResult tr;
 
-	// johnhalflife: from a little back, in case it's just inside what it hit.
+	// johnhalflife
 	UTIL_TraceLine(
 		pev->origin - vecDir * (jhl ? 8 : 0), pev->origin + vecDir * (m_SporeType == SporeType::GRENADE ? 64 : 32),
 		dont_ignore_monsters, edict(), &tr);
 
-	// johnhalflife: nothing that way (a lobbed spore sliding to a stop): it's on the floor.
 	if (jhl && tr.flFraction >= 1)
 		UTIL_TraceLine(pev->origin + Vector(0, 0, 8), pev->origin - Vector(0, 0, 32), dont_ignore_monsters, edict(), &tr);
 
 	UTIL_DecalTrace(&tr, DECAL_SPR_SPLT1 + RANDOM_LONG(0, 2));
 
-	// johnhalflife: its burst's effects from 12 units off the surface it hit, not on it (its burst sprite, 128 units
-	// across, was half behind it, its spray up into a ceiling); its damage is where vanilla's is.
+	// johnhalflife
 	Vector vecEffects = pev->origin;
 
 	if (jhl && tr.flFraction < 1 && !tr.fStartSolid)
@@ -175,9 +169,7 @@ void CSpore::IgniteThink()
 	WRITE_BYTE(180);
 	MESSAGE_END();
 
-	// johnhalflife: its burst light bigger and longer than vanilla's (100 units for 0.5 s, hidden behind its spray) but
-	// dimmer: 180 units fading out over 1 s, still glowing once most of the spray's gone, bigger than a spore's own
-	// light in flight (SporeLight), in the spore launcher's lime (its burst sprite's, as all its lights) at 60%.
+	// johnhalflife
 	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, vecEffects);
 	WRITE_BYTE(TE_DLIGHT);
 	WRITE_COORD_VECTOR(vecEffects);
@@ -209,8 +201,6 @@ void CSpore::IgniteThink()
 	WRITE_BYTE(80);
 	MESSAGE_END();
 
-	// johnhalflife: a faint ring facing the view, the outline of its blast, growing out to 180 units (its 200 less
-	// where its damage has fallen off to almost nothing) as it fades, from where its damage is (jhl_blastring.cpp).
 	if (jhl)
 	{
 		MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, pev->origin);
@@ -281,7 +271,6 @@ void CSpore::MyBounceTouch(CBaseEntity* pOther)
 
 			if ((pev->flags & FL_ONGROUND) != 0)
 			{
-				// johnhalflife (jhl_physics_fpsfix): touched every frame it slides, so taken off as at 72 fps.
 				pev->velocity = pev->velocity * (UTIL_JhlFpsFix() ? JhlReferenceDecay(0.5f, gpGlobals->frametime) : 0.5f);
 			}
 			else

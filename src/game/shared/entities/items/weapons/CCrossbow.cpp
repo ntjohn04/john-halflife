@@ -35,9 +35,9 @@ public:
 	void Precache() override;
 	void BubbleThink();
 
-	// johnhalflife: its faint grey wake, from a few feet out (not from the crossbow), then on as BubbleThink.
+	// johnhalflife
 	void WakeThink();
-	static constexpr float WakeDelay = 0.03f; // About 60 units at its speed in the air.
+	static constexpr float WakeDelay = 0.03f;
 
 	void BoltTouch(CBaseEntity* pOther);
 	void ExplodeThink();
@@ -398,8 +398,6 @@ void CCrossbow::FireBolt()
 	}
 	pBolt->pev->avelocity.z = 10;
 
-	// johnhalflife: a faint grey wake trailing the bolt (in the air; in water it leaves bubbles), with the tracers,
-	// from a few feet out (WakeThink).
 	if (UTIL_JhlTracers() && m_pPlayer->pev->waterlevel != WaterLevel::Head)
 	{
 		pBolt->SetThink(&CCrossbowBolt::WakeThink);

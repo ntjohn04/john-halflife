@@ -222,7 +222,6 @@ public:
 	bool m_fInitHUD;	 // True when deferred HUD restart msg needs to be sent
 	bool m_fGameHUDInitialized;
 
-	// johnhalflife: the music playing when the game was saved (jhl_music.cpp; single player). Empty: none.
 	string_t m_JhlMusicFile = string_t::Null;
 	bool m_JhlMusicLooping = false;
 	bool m_JhlMusicPaused = false;
@@ -290,8 +289,6 @@ public:
 	CBasePlayerWeapon* m_pClientActiveWeapon; // client version of the active weapon
 	CBasePlayerWeapon* m_pLastWeapon;
 
-	// johnhalflife (jhl_weapons_holster): the weapon put away with the HUD's holster, and the holster as the last
-	// weapon (what lastinv goes back to, there being no weapon to point at).
 	bool m_JhlHolstered = false;
 	bool m_JhlLastHolstered = false;
 

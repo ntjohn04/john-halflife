@@ -95,8 +95,6 @@ bool CMP5::Deploy()
 	return DefaultDeploy("models/v_9mmAR.mdl", "models/p_9mmAR.mdl", MP5_DEPLOY, "mp5");
 }
 
-// Bursts start slightly tighter and bloom back to the classic spread within three shots, recovering in about 0.15 seconds.
-// Single player: 2.5 to 3 degrees.
 static constexpr CBasePlayerWeapon::SpreadSettings MP5Spread{
 	.Min = 0.02182f, .Max = VECTOR_CONE_3DEGREES.x, .PerShot = 0.0015f, .RecoveryRate = 0.03f};
 

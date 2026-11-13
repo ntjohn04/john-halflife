@@ -162,7 +162,7 @@ private:
 
 	std::size_t Read(std::byte* dest, std::size_t bufferSize);
 
-	// johnhalflife: where the source is in the track, from the buffers still queued on it.
+	// johnhalflife
 	void UpdatePosition();
 
 	void Run();
@@ -184,11 +184,10 @@ private:
 	std::atomic<bool> m_Paused = false;
 	std::atomic<bool> m_Looping = false;
 
-	// johnhalflife: paused by the map (music pause), which the game's own pausing and resuming leave alone.
+	// johnhalflife
 	std::atomic<bool> m_PausedByCommand = false;
 
-	// johnhalflife: seconds into the track as heard, and each queued buffer's first sample and sample count (oldest
-	// first, as the source's queue).
+	// johnhalflife
 	std::atomic<float> m_Position = 0;
 	std::deque<std::pair<std::size_t, std::size_t>> m_Queued;
 

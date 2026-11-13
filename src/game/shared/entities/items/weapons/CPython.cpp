@@ -119,7 +119,6 @@ void CPython::SecondaryAttack()
 	m_flNextSecondaryAttack = 0.5;
 }
 
-// A careful first shot is slightly better than the classic 1 degree; fanning the trigger returns to it.
 static constexpr CBasePlayerWeapon::SpreadSettings PythonSpread{
 	.Min = 0.0065f, .Max = VECTOR_CONE_1DEGREES.x, .PerShot = 0.003f, .RecoveryRate = 0.1f};
 

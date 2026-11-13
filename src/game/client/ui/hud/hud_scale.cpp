@@ -13,16 +13,12 @@
  *
  ****/
 
-// HUD drawing in HUD units: positions and sizes are multiplied by the HUD scale (see cl_util.h).
-// At scale 1 everything goes straight to the engine, exactly as before.
-
 #include "hud.h"
 #include "triangleapi.h"
 #include "com_model.h"
 
 namespace
 {
-// The engine doesn't report the sprite and color set by SPR_Set, but scaled drawing needs both.
 HSPRITE g_CurrentSprite = 0;
 RGB24 g_CurrentColor{};
 
@@ -68,13 +64,11 @@ void DrawScaledSprite(int frame, int x, int y, const Rect* prc, int renderMode)
 		return;
 	}
 
-	// Sample half a texel in from the edges so filtering doesn't bleed in neighboring sprites on the sheet.
 	const float left = (rect.left + 0.5f) / frameWidth;
 	const float right = (rect.right - 0.5f) / frameWidth;
 	const float top = (rect.top + 0.5f) / frameHeight;
 	const float bottom = (rect.bottom - 0.5f) / frameHeight;
 
-	// Compute both edges in real pixels so neighboring sprites meet without gaps.
 	const float x1 = static_cast<float>(ToRealPixels(x));
 	const float y1 = static_cast<float>(ToRealPixels(y));
 	const float x2 = static_cast<float>(ToRealPixels(x + rect.right - rect.left));

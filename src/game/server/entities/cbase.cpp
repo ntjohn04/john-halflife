@@ -205,7 +205,6 @@ void DispatchThink(edict_t* pent)
 bool g_JhlDebugBlocked = false;
 bool g_JhlDebugDamage = false;
 
-// johnhalflife (jhl_debug_blocked): who blocks a mover and where, at most every quarter second a pair.
 static void JhlDebugBlocked(CBaseEntity* pusher, CBaseEntity* other)
 {
 	static CBaseEntity* lastPusher = nullptr;
@@ -230,8 +229,6 @@ static void JhlDebugBlocked(CBaseEntity* pusher, CBaseEntity* other)
 		!other ? "" : (other->pev->flags & FL_ONGROUND) == 0 ? "in the air" : other->GetGroundEntity() == pusher ? "standing on it" : "on the ground",
 		other ? other->pev->movetype : -1);
 
-	// The engine's push again (SV_PushMove): the mover to where it was going, the blocker's test there, its push along
-	// (the mover not solid) and its test after. Both put back after.
 	if (other)
 	{
 		const auto hit = [](const TraceResult& tr)
@@ -270,14 +267,7 @@ static void JhlDebugBlocked(CBaseEntity* pusher, CBaseEntity* other)
 	calls = 0;
 }
 
-// johnhalflife (jhl_physics_fpsfix): a lift carries its riders by adding its move to their origin each frame. Far from
-// the map's centre a float holds an origin to about 1/4000 of a unit, and the lift's origin (near 0) much finer, so a
-// rider's height above the floor drifts a little each move. At high frame rates the moves are small and the drift
-// builds one way until the rider is a hair into the floor: from then on every push ends with it stuck, so it blocks
-// every frame and is hurt (ba_elevator at 240 fps: the scientist, essential, crushed; the player hurt a point at a
-// time). A rider over the mover's floor that a raise of no more than a unit frees is raised at the start of the next
-// frame (the engine puts it back after Blocked) and not hurt. One blocked otherwise (a door closing on it, a lift
-// crushing it against a ceiling) is blocked and hurt as before.
+// johnhalflife
 namespace
 {
 struct JhlRiderRaise
@@ -289,7 +279,6 @@ struct JhlRiderRaise
 
 std::vector<JhlRiderRaise> g_JhlRiderRaises;
 
-// Whether an entity at origin is stuck in anything; the mover left out when it's to be moved along.
 bool JhlStuck(CBaseEntity* other, const Vector& origin, CBaseEntity* passable = nullptr)
 {
 	const int solid = passable ? passable->pev->solid : 0;
@@ -327,7 +316,6 @@ bool JhlRaiseRider(CBaseEntity* pusher, CBaseEntity* other)
 		return false;
 	}
 
-	// Free raised, against the mover where it is (as it will be moved along) and anything else moved along.
 	const Vector move = pusher->pev->velocity * gpGlobals->frametime;
 
 	for (float raise = RaiseStep; raise <= MaxRaise; raise += RaiseStep)
@@ -352,9 +340,6 @@ bool JhlRaiseRider(CBaseEntity* pusher, CBaseEntity* other)
 	return false;
 }
 
-// A rider the drift has left in the mover's floor once it has stopped (nothing blocks it then) never stands: an NPC
-// keeps falling a frame's gravity every frame, and its corpse sinks through the floor, touching triggers as it goes
-// (ba_elevator's scientist hurt again after dying and gibbed). One stuck in nothing else is raised out.
 bool JhlUnstickRider(CBaseEntity* rider, CBaseEntity* ground)
 {
 	constexpr float MaxRaise = 1;
@@ -395,12 +380,6 @@ void JhlRaiseRiders()
 
 	g_JhlRiderRaises.clear();
 
-	// johnhalflife (jhl_physics_fpsfix): the engine takes a walking NPC's standing flag away each time a mover carries it
-	// (players keep theirs), so the next frame it isn't carried: a lift going down drops away and it falls after it, about
-	// 1.5 units, landing eight times a second (ba_elevator's scientists bouncing); a tram leaves it behind until a wall
-	// shoves it along (NPCs rubber banding in trains). One whose ground is a moving mover, no more than 4 units over its
-	// floor, is set back down on it standing, so it's carried every frame. Turning movers are left be. Before that, one
-	// left in its mover's floor is raised out (JhlUnstickRider).
 	if (!UTIL_JhlFpsFix())
 		return;
 
@@ -439,7 +418,6 @@ void JhlRaiseRiders()
 
 		if (0 != tr.fStartSolid || 0 != tr.fAllSolid || tr.flFraction >= 1 || tr.pHit != ground)
 		{
-			// Not one more than 4 units over it: jumping or falling, as it should be, and it floods the console.
 			if (g_JhlDebugBlocked && tr.flFraction < 1)
 				Con_Printf("jhl_debug_blocked: %s \"%s\" left off %s: %s (movetype %d)\n", STRING(edict->v.classname), STRING(edict->v.targetname),
 					STRING(ground->v.classname), 0 != tr.fStartSolid ? "stuck" : "over something else", edict->v.movetype);
@@ -497,7 +475,7 @@ void DispatchSave(edict_t* pent, SAVERESTOREDATA* pSaveData)
 		pTable->location = pSaveData->size;			 // Remember entity position for file I/O
 		pTable->classname = pEntity->pev->classname; // Remember entity class for respawn
 
-		// johnhalflife: the music playing now, saved with the player.
+		// johnhalflife
 		if (pEntity->IsPlayer())
 		{
 			JhlMusic_BeforeSave(static_cast<CBasePlayer*>(pEntity));
@@ -510,11 +488,7 @@ void DispatchSave(edict_t* pent, SAVERESTOREDATA* pSaveData)
 	}
 }
 
-// johnhalflife (jhl_fx_particlesystem): gibs pass through gibs. Two thrown into the same spot (an env_shooter's, from
-// its one origin) were stuck in each other, and crept down through the air a few units a second instead of falling
-// (c4a2b's Gonarch's legs, as the floor under them goes: vanilla too, though its gibs fade in 4 s). The engine asks this
-// for every entity near every trace (hundreds of thousands of times for an NPC looking for cover), so the classes are
-// compared first and the setting only for two gibs.
+// johnhalflife
 int ShouldCollide(edict_t* pentTouched, edict_t* pentOther)
 {
 	if (pentTouched && pentOther && 0 == strcmp(STRING(pentTouched->v.classname), "gib") &&

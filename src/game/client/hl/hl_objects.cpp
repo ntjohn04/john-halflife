@@ -75,7 +75,6 @@ void UpdateBeams()
 		pBeam2->die = gEngfuncs.GetClientTime() + 0.1; // We keep it alive just a little bit forward in the future, just in case.
 	}
 
-	// johnhalflife: the beams bent as if dragged, scorches and sparks.
 	JhlEgon_Update(pBeam, pBeam2, tr);
 
 	if (pFlare) // Vit_amiN: beam flare

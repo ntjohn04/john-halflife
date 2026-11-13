@@ -49,7 +49,6 @@ void HUD_SendWeaponAnim(int iAnim, int body, bool force)
 
 void HUD_WeaponKick(const Vector& kick, float spring, float damping)
 {
-	// Only the first time we see this command, like the weapon animation.
 	if (!g_runfuncs)
 		return;
 

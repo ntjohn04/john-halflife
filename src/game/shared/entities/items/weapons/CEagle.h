@@ -74,7 +74,7 @@ public:
 
 	void SetWeaponData(const weapon_data_t& data) override;
 
-	// johnhalflife: for the laser's stub in first person (weapon_effects.cpp).
+	// johnhalflife
 	bool IsLaserActive() const { return m_bLaserActive; }
 
 private:

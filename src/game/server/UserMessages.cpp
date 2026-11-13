@@ -95,15 +95,12 @@ void LinkUserMessages()
 	// Kick angles (3 floats), spring, damping.
 	gmsgSmoothPunch = REG_USER_MSG("SmoothPunch", 20);
 
-	// Position (3 coords), surface normal (3 chars), material type. Message names are limited to 11 characters.
 	gmsgBulletImpact = REG_USER_MSG("BulletHit", 11);
 
 	// Point on the water surface (3 coords).
 	gmsgWaterSplash = REG_USER_MSG("WaterSplash", 6);
 
-	// Entity index of a monster that died without gibbing, blood color.
 	gmsgBloodPool = REG_USER_MSG("BloodPool", 3);
 
-	// The music as saved (jhl_music.cpp): file, flags (looping, paused), position, fade remaining and length.
 	gmsgJhlMusic = REG_USER_MSG("JhlMusic", -1);
 }

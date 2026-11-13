@@ -536,7 +536,6 @@ void COsprey::DyingThink()
 
 
 		vecSpot = pev->origin + (pev->mins + pev->maxs) * 0.5;
-		// johnhalflife: through UTIL_JhlBreakModel, so with jhl_fx_particlesystem the debris lasts like gibs.
 		UTIL_JhlBreakModel(Vector(vecSpot.x, vecSpot.y, vecSpot.z), Vector(800, 800, 132), Vector(pev->velocity.x, pev->velocity.y, pev->velocity.z),
 			50, m_iTailGibs, UTIL_JhlParticleSystem() ? RANDOM_LONG(8, 16) : 8, 200, BREAK_METAL);
 
@@ -614,7 +613,6 @@ void COsprey::DyingThink()
 
 		// gibs
 		vecSpot = pev->origin + (pev->mins + pev->maxs) * 0.5;
-		// johnhalflife: through UTIL_JhlBreakModel, so with jhl_fx_particlesystem the debris lasts like gibs.
 		UTIL_JhlBreakModel(Vector(vecSpot.x, vecSpot.y, vecSpot.z + 64), Vector(800, 800, 128), Vector(m_velocity.x, m_velocity.y, fabs(m_velocity.z) * 0.25),
 			40, m_iBodyGibs, 128, 200, BREAK_METAL);
 

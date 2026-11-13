@@ -65,7 +65,6 @@ bool v_resetCamera = true;
 
 Vector ev_punchangle;
 
-// Spring-damped motion of ev_punchangle, driven by the SmoothPunch message (see V_SmoothPunch).
 Vector ev_punchvelocity;
 float ev_punchspring;
 float ev_punchdamping;
@@ -83,7 +82,6 @@ cvar_t* cl_bobup;
 cvar_t* cl_waterdist;
 cvar_t* cl_chasedist;
 
-// johnhalflife camera features. See docs/camera_movement.md.
 cvar_t* jhl_camera_bob;
 cvar_t* jhl_camera_viewroll;
 cvar_t* jhl_camera_verticallag;
@@ -169,7 +167,6 @@ struct BobState
 };
 
 // Quakeworld bob code, this fixes jitters in the mutliplayer since the clock (pparams->time) isn't quite linear
-// rate scales how fast the bob cycle advances; each distinct bob signal needs its own state.
 float V_CalcBob(ref_params_t* pparams, BobState& state, float rate)
 {
 	float cycle;
@@ -420,7 +417,6 @@ void V_CalcViewRoll(ref_params_t* pparams)
 	if (!viewentity)
 		return;
 
-	// Stronger strafe roll: replaces the incoming roll with 4x the view-relative roll, then the normal roll is added on top.
 	if (0 != jhl_camera_viewroll->value)
 	{
 		pparams->viewangles[ROLL] = 4 * V_CalcRoll(pparams->viewangles, pparams->simvel, cl_rollangle->value, cl_rollspeed->value);
@@ -482,14 +478,6 @@ void V_CalcIntermissionRefdef(ref_params_t* pparams)
 	v_angles = pparams->viewangles;
 }
 
-/*
-==============
-V_CalcVerticalLag
-
-Raises the eye a little while moving upward (jumps, stairs, ladders, lifts) and lets it settle afterwards.
-The view model is not raised, so the weapon appears to lag behind.
-==============
-*/
 void V_CalcVerticalLag(ref_params_t* pparams)
 {
 	static float lift = 0;
@@ -500,7 +488,6 @@ void V_CalcVerticalLag(ref_params_t* pparams)
 		return;
 	}
 
-	// Rates were tuned per frame; scale them to 100 fps so the effect doesn't depend on frame rate.
 	const float frames = pparams->frametime / 0.01f;
 
 	if (pparams->simvel[2] > 2)
@@ -515,13 +502,6 @@ void V_CalcVerticalLag(ref_params_t* pparams)
 	pparams->vieworg[2] += lift;
 }
 
-/*
-==============
-V_CalcWeaponLag
-
-Makes the view model trail behind the view when turning.
-==============
-*/
 void V_CalcWeaponLag(ref_params_t* pparams, cl_entity_t* view)
 {
 	static Vector lastFacing{0, 0, 1};
@@ -535,7 +515,6 @@ void V_CalcWeaponLag(ref_params_t* pparams, cl_entity_t* view)
 	const Vector difference = forward - lastFacing;
 	const float differenceLength = difference.Length();
 
-	// Catch up faster when the view has turned far away from the weapon.
 	float speed = 5;
 	if (differenceLength > 0.5f)
 	{
@@ -558,13 +537,6 @@ void V_CalcWeaponLag(ref_params_t* pparams, cl_entity_t* view)
 	view->origin[2] += difference[2] * 4.5f;
 }
 
-/*
-==============
-V_CalcWeaponWallPush
-
-Pulls the view model back and tilts it up when the player is close to a wall.
-==============
-*/
 void V_CalcWeaponWallPush(ref_params_t* pparams, cl_entity_t* view)
 {
 	static float push = 0;
@@ -592,13 +564,6 @@ void V_CalcWeaponWallPush(ref_params_t* pparams, cl_entity_t* view)
 	view->origin = view->origin - pparams->forward * (push * 8.5f) - pparams->up * (push * 12.5f);
 }
 
-/*
-==============
-V_UpdatePunchSpring
-
-Moves ev_punchangle as a damped spring pulled back towards zero.
-==============
-*/
 void V_UpdatePunchSpring(float frametime)
 {
 	if (ev_punchangle.Length() <= 0.001f && ev_punchvelocity.Length() <= 0.001f)
@@ -631,8 +596,6 @@ struct viewinterp_t
 	int CurrentAngle;
 };
 
-// Gluon gun drift: a slow, smooth wander of the view while firing, none at first, growing over a few seconds of
-// sustained fire, then fading out once it stops.
 static float g_EgonFireStart = -1;
 static float g_EgonStopTime = -1;
 static float g_EgonStopAmount = 0;
@@ -644,14 +607,11 @@ static float V_EgonDriftAmount(float now)
 
 	if (g_EgonFireStart >= 0)
 	{
-		// Already a little from the start, since it's subtle, then growing.
 		constexpr float StartAmount = 0.4f;
 		const float ramp = std::min(1.f, (now - g_EgonFireStart) / RampTime);
 		return StartAmount + (1 - StartAmount) * ramp;
 	}
 
-	// Only after it stopped: the client clock restarts on a new map, and a stop time from the last one would make this
-	// huge (the view swinging round in circles).
 	if (g_EgonStopTime >= 0 && now >= g_EgonStopTime && now - g_EgonStopTime < FadeTime)
 	{
 		return g_EgonStopAmount * (1 - (now - g_EgonStopTime) / FadeTime);
@@ -683,7 +643,6 @@ static void V_AddEgonDrift(ref_params_t* pparams)
 {
 	const float now = gEngfuncs.GetClientTime();
 
-	// Don't keep drifting, or fading out, through death or a new map (the client clock restarts).
 	if ((g_EgonFireStart >= 0 && (pparams->health <= 0 || now < g_EgonFireStart)) || now < g_EgonStopTime)
 	{
 		g_EgonFireStart = -1;
@@ -698,7 +657,6 @@ static void V_AddEgonDrift(ref_params_t* pparams)
 	if (amount <= 0)
 		return;
 
-	// Up to about half a degree, made of sines at unrelated rates so it never visibly repeats.
 	constexpr float MaxDrift = 0.4f;
 	pparams->viewangles[PITCH] += MaxDrift * amount * (0.6f * std::sin(now * 2.3f) + 0.4f * std::sin(now * 5.7f + 1.3f));
 	pparams->viewangles[YAW] += MaxDrift * amount * (0.6f * std::sin(now * 1.9f + 2.1f) + 0.4f * std::sin(now * 4.9f + 0.4f));
@@ -742,7 +700,6 @@ void V_CalcNormalRefdef(ref_params_t* pparams)
 	// model origin for the view
 	if (0 != jhl_camera_bob->value)
 	{
-		// Two bob signals: a slower main bob and a side bob at twice its rate, for a figure-eight weapon sway.
 		static BobState mainBobState, sideBobState;
 		bob = V_CalcBob(pparams, mainBobState, 0.75f);
 		sidebob = V_CalcBob(pparams, sideBobState, 1.5f);
@@ -1891,7 +1848,7 @@ void DLLEXPORT V_CalcRefdef(ref_params_t* pparams)
 
 	g_Paused = pparams->paused != 0;
 
-	// johnhalflife: the local player's predicted velocity, every frame (for what's thrown off their weapon).
+	// johnhalflife
 	v_sim_vel = pparams->simvel;
 	g_WaterLevel = pparams->waterlevel;
 
@@ -1911,17 +1868,16 @@ void DLLEXPORT V_CalcRefdef(ref_params_t* pparams)
 
 	g_ViewEntity = pparams->viewentity;
 
-	// johnhalflife: the RPG's laser line, placed on its view model now it's where it'll be drawn this frame.
+	// johnhalflife
 	RpgLaserLine_Update(gEngfuncs.GetClientTime());
 
-	// johnhalflife: the sniper rifle's barrel smoking, on its view model now it's placed.
+	// johnhalflife
 	SniperSmoke_Update(gEngfuncs.GetClientTime());
 	EagleSmoke_Update(gEngfuncs.GetClientTime());
 
-	// johnhalflife: the shotgun's shells, thrown as it's pumped.
+	// johnhalflife
 	ShotgunShells_Update(gEngfuncs.GetClientTime());
 
-	// johnhalflife: the engine's fog kept off under water, for the software renderer's (jhl_visuals_softwarewater).
 	JhlSoftwareLook_SetupView();
 
 	/*
@@ -1972,14 +1928,6 @@ void V_PunchAxis(int axis, float punch)
 	ev_punchangle[axis] = punch;
 }
 
-/*
-=============
-V_SmoothPunch
-
-Kicks the client side punch with a damped spring that settles it back to zero.
-The kick is in degrees; spring and damping apply to all kicks until the next one.
-=============
-*/
 void V_SmoothPunch(const Vector& kick, float spring, float damping)
 {
 	constexpr float KickScale = 20;
@@ -2002,15 +1950,6 @@ void V_WeaponKick(const Vector& kick, float spring, float damping)
 	V_SmoothPunch(kick, spring, damping);
 }
 
-/*
-=============
-V_WeaponRecoil
-
-Weapon fire recoil as a smooth punch: an upward kick in [pitchMin, pitchMax] plus a random
-sideways and roll kick of up to jitter either way.
-Returns false if the player prefers the classic snap punch, which the caller then applies.
-=============
-*/
 bool V_WeaponRecoil(float pitchMin, float pitchMax, float jitter, float spring, float damping)
 {
 	if (0 == jhl_weapons_smoothrecoil->value)
@@ -2035,7 +1974,6 @@ static void MsgFunc_SmoothPunch(const char* pszName, BufferReader& reader)
 	const float spring = reader.ReadFloat();
 	const float damping = reader.ReadFloat();
 
-	// The server sends jump and landing jolts to everyone; players opt out here.
 	if (0 == jhl_camera_jumplandjolt->value)
 		return;
 

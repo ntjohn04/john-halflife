@@ -168,7 +168,7 @@ void CGrappleTip::FlyThink()
 
 void CGrappleTip::OffsetThink()
 {
-	// johnhalflife: latched on, it checks now and then that it's still its grapple's (Valve's did nothing).
+	// johnhalflife
 	if (IsOrphaned())
 	{
 		UTIL_Remove(this);
@@ -212,8 +212,6 @@ void CGrappleTip::TongueTouch(CBaseEntity* pOther)
 		}
 	}
 
-	// johnhalflife: latched onto a surface it leaves a small dull wet mark (the hornet's dart splat, in grey: made by
-	// scripts/make_hornet_decals.py); what bleeds bleeds instead (CGrapple::PrimaryAttack).
 	if (m_bIsStuck && pOther && pOther->IsBSPModel() && UTIL_JhlParticleSystem() && pev->velocity != g_vecZero)
 	{
 		const Vector direction = pev->velocity.Normalize();
@@ -224,8 +222,6 @@ void CGrappleTip::TongueTouch(CBaseEntity* pOther)
 
 	pev->velocity = g_vecZero;
 
-	// johnhalflife: tagged renderamt 2 once it's latched on, for the client's tongue to go taut (jhl_grapple.cpp;
-	// renderamt does nothing for a model drawn normally).
 	if (m_bIsStuck && UTIL_JhlParticleSystem())
 		pev->renderamt = 2;
 

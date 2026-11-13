@@ -39,10 +39,10 @@ namespace
 struct Fireball
 {
 	const char* Sprite;
-	float Width; // Frame size in pixels; frames are centered on the origin.
+	float Width;
 	float Height;
 	int Frames;
-	float Fill = 1; // How much of the frame the fire fills, relative to the vanilla fireball (by eye).
+	float Fill = 1;
 };
 
 // The vanilla fireball: 64 px, 15 frames at 15 fps (1 s).
@@ -56,33 +56,25 @@ constexpr Fireball RoundFireballs[] = {
 	{"sprites/eexplo.spr", 80, 80, 25, 0.85f},
 };
 
-// Fireballs that rise from the bottom of the frame (a wide blast, a fire column, a mushroom cloud), so they stand on a
-// floor. The mushroom (the last) is for the biggest explosions only.
 constexpr Fireball ShapedFireballs[] = {
 	{"sprites/fexplo.spr", 80, 96, 30},
 	{"sprites/gexplo.spr", 80, 96, 23},
 	{"sprites/hexplo.spr", 64, 96, 30},
 };
 
-// Explosions sent at 15 fps get two fireballs: grenades, rockets, satchels, tripmines, mortars, env_explosion and the
-// crossbow bolt. Opposing Force's mortar (10 fps) keeps the vanilla fireball.
 constexpr float JhlFramerate = 15;
 
-// A falling helicopter (Apache, Osprey) sends one fireball every 0.2 s under its hull, scale 3-5.9 at 12 fps (1.25 s);
-// each is drawn from the vanilla and round fireballs instead.
 constexpr float FallingFramerate = 12;
 constexpr float FallingSizeMin = 1;
 constexpr float FallingSizeMax = 1.2f;
 
-constexpr float LargeScale = 6;	  // Satchel, tripmine, Apache rocket, env_explosion magnitude 150+.
-constexpr float BiggestScale = 9; // func_mortar, env_explosion magnitude 200+: the mushroom cloud joins the pool.
+constexpr float LargeScale = 6;
+constexpr float BiggestScale = 9;
 constexpr float RocketScale = JhlRocketExplosionScale;
 
-constexpr float Jitter = 0.1f;		 // Scale and frame rate, both fireballs.
+constexpr float Jitter = 0.1f;
 constexpr float PositionJitter = 4; // Units, the vanilla fireball.
 
-// The second fireball, relative to the first's size; delayed a little, set off sideways and up (on a floor, down) by a
-// fraction of the first's size, dimmer (the vanilla fireball is additive at 180) since the two add up.
 constexpr float RoundSecondSizeMin = 0.9f;
 constexpr float RoundSecondSizeMax = 1.1f;
 constexpr float ShapedSecondSizeMin = 0.8f;
@@ -94,50 +86,36 @@ constexpr float SecondDownOnFloorMin = 0.05f;
 constexpr float SecondDownOnFloorMax = 0.15f;
 constexpr int SecondBrightness = 140;
 
-// How long the second fireball plays: about as long as the vanilla one, longer for large explosions.
 constexpr float SmallDurationMin = 0.9f;
 constexpr float SmallDurationMax = 1.3f;
 constexpr float LargeDurationMin = 1.6f;
 constexpr float LargeDurationMax = 2.0f;
 
-// The sprite's bottom rows are mostly empty, so a shaped fireball sinks this much of its height into the floor.
 constexpr float ShapedSink = 0.05f;
 
-// The lingering smoke (settings in jhl_explosions.h): Opposing Force's single-frame puff, so it can grow and fade
-// smoothly.
 constexpr const char* LingeringSmokeSprite = "sprites/wep_smoke_01.spr";
 constexpr float LingeringSmokeSpriteWidth = 64;
 constexpr float LingeringSmokeHeight = 20;
 constexpr float LingeringSmokeFadeIn = 0.05f; // Of its life.
-constexpr float LingeringSmokeDriftDecay = 0.3f; // Per second: drifting 40 units/s, it goes about 130 units.
+constexpr float LingeringSmokeDriftDecay = 0.3f;
 
-// Spark showers, instead of the server's spark_shower entities (vanilla: 0-3, thrown off the surface at 200-300
-// ±100 sideways +200 up, half gravity, sparking every 0.1 s for 0.5-1.5 s; each burst the engine's TE_SPARKS, 8
-// streaks at ±200 and a richo1 flash of scale 0.5-1). Every shower picks each of its values on its own, so no two
-// fly alike.
-// Showers: 0 to the most for the surface's material; off metal or an unknown surface the higher of two rolls
-// (averaging about 5.5 and 2.8), off anything else one (about 1.5, as vanilla's 0-3).
 constexpr int SparkShowersMin = 0;
 constexpr int SparkShowersMaxMetal = 8;
 constexpr int SparkShowersMaxOther = 3;
-constexpr int SparkShowersMaxUnknown = 4; // Mid-air, or a brush entity (their materials aren't known on the client).
-constexpr float SparkSpeedMin = 50; // Off the surface; skewed (SparkSpeedSkew) so most are moderate, some fast.
+constexpr int SparkShowersMaxUnknown = 4;
+constexpr float SparkSpeedMin = 50;
 constexpr float SparkSpeedMax = 600;
 constexpr float SparkSpeedSkew = 1.5f;
-constexpr float SparkSpread = 1.2f; // How far from the surface's direction they may leave: up to nearly along it.
-constexpr float SparkUpMin = 0;		// Added straight up (down off a ceiling).
+constexpr float SparkSpread = 1.2f;
+constexpr float SparkUpMin = 0;
 constexpr float SparkUpMax = 300;
 constexpr float SparkLifeMin = 0.4f;
 constexpr float SparkLifeMax = 2.25f;
 constexpr float SparkFullGravityChance = 0.5f; // Otherwise half, as vanilla.
 constexpr float SparkIntervalMin = 0.07f;
 constexpr float SparkIntervalMax = 0.11f;
-// The client's temp entity physics halves this again for anything with gravity: 1 keeps half the speed per bounce,
-// near vanilla's 0.6 in the air.
 constexpr float SparkBounce = 1;
 
-// Spark bursts (UTIL_Sparks: env_spark, buttons, beams, wires, computers... ; UTIL_JhlSparkShowers): the streaks and
-// flash differ each time; showers, if any, live as long as the server asks (half an explosion's for most).
 constexpr int SparkBurstStreaksMin = 4;
 constexpr int SparkBurstStreaksMax = 10;
 constexpr int SparkBurstSpeedMin = 120;
@@ -146,47 +124,36 @@ constexpr float SparkBurstFlashMin = 0.4f;
 constexpr float SparkBurstFlashMax = 1;
 
 
-// Armor ricochets (UTIL_Ricochet, scale 0.5-2): a few streaks with vanilla's flash.
 constexpr int RicochetSparksMin = 4;
 constexpr int RicochetSparksMax = 7;
 constexpr int RicochetSparkSpeedMin = 100;
 constexpr int RicochetSparkSpeedMax = 180;
 
-// The specks and lights every explosion makes (instead of the engine's: 15 pure white specks, palette 254, ±32
-// sideways and 80-143 up, 2 s; a 200 unit flash for 0.01 s and a 150 unit orange glow over 1 s; the same for every
-// size). Embers: hot colors, more and wider for bigger explosions (scale over EmberScale, up to EmberMoreMax).
-constexpr int EmberCountMin = 21; // A grenade's; up to EmberCountMore more for the biggest (15% under the first 25-35,
-constexpr int EmberCountMax = 30; // +15: the engine ran out of particles under a chain of explosions).
+constexpr int EmberCountMin = 21;
+constexpr int EmberCountMax = 30;
 constexpr int EmberCountMore = 13;
 constexpr float EmberScale = 3;
 constexpr float EmberMoreMax = 2.5f;
-constexpr int EmberColors[] = {252, 252, 253, 253, 254}; // Pale yellow, cream, some white.
+constexpr int EmberColors[] = {252, 252, 253, 253, 254};
 constexpr float EmberSidewaysMin = 20;
 constexpr float EmberSidewaysMax = 80;
 constexpr float EmberUpMin = 80;
 constexpr float EmberUpMax = 220;
 constexpr float EmberLifeMin = 1.5f;
 constexpr float EmberLifeMax = 2.5f;
-// Lights: the engine's radii times the explosion's size (scale over 3, 1 to LightMoreMax), ±LightVariation.
 constexpr float LightMoreMax = 2;
 constexpr float LightVariation = 0.05f;
 
-// A third, filling the room: this much wider than the glow, at this much of its brightness (a dlight's at its middle
-// grows with its radius too, so about half the glow's there, falling off gentler), a little redder (light gone further
-// reads warmer), shrinking to nothing as its fireballs burn out (the glow's gone well before them): FillTime, or
-// FillTimeLarge for a large explosion (its second fireball 0.9-1.3 s, a large one's 1.6-2 s).
 constexpr float FillRadius = 1.7f;
 constexpr float FillBrightness = 0.3f;
 constexpr color24 FillColor{255, 150, 40};
 constexpr float FillTime = 1.2f;
 constexpr float FillTimeLarge = 1.9f;
 
-// Under water (WXplo1): a second fireball like the first's, 80-100% its size, a little later.
 constexpr const char* UnderwaterSprite = "sprites/WXplo1.spr";
 constexpr int UnderwaterFrames = 15;
 
-// Surface debris (SurfaceDebris): pieces of what an explosion hit, thrown off it, each picking its own values.
-constexpr int SurfaceDebrisMin = 6; // For a grenade; bigger explosions more (by scale over SurfaceDebrisScale),
+constexpr int SurfaceDebrisMin = 6;
 constexpr int SurfaceDebrisMax = 18;
 constexpr float SurfaceDebrisScale = 3;
 constexpr float SurfaceDebrisMoreMax = 2; // up to twice as many.
@@ -196,12 +163,11 @@ constexpr float SurfaceDebrisSpeedSkew = 1.3f; // Most moderate, some fast.
 constexpr float SurfaceDebrisSpread = 0.9f;	   // As SparkSpread.
 constexpr float SurfaceDebrisUpMin = 0;
 constexpr float SurfaceDebrisUpMax = 200;
-constexpr float SurfaceDebrisFullGravityChance = 0.75f; // Heavier than sparks; the rest half gravity.
+constexpr float SurfaceDebrisFullGravityChance = 0.75f;
 constexpr float SurfaceDebrisLifeMin = 8;
 constexpr float SurfaceDebrisLifeMax = 16;
 constexpr float SurfaceDebrisSizeVariation = 0.15f; // Each piece ±15%.
 
-// A heavy round's chunks off what it hit (JhlExplosion_ImpactChunks): as surface debris, smaller, slower, gone sooner.
 constexpr float ImpactChunkSize = 0.5f;
 constexpr float ImpactChunkSpeedMin = 80;
 constexpr float ImpactChunkSpeedMax = 200;
@@ -209,13 +175,12 @@ constexpr float ImpactChunkUp = 60;
 constexpr float ImpactChunkLifeMin = 4;
 constexpr float ImpactChunkLifeMax = 8;
 
-// How far (units) from the expected distance a surface can be and still count as the one an explosion hit.
 constexpr float SurfaceMatchTolerance = 12;
 constexpr int SparkStreaksMin = 6; // Per burst.
 constexpr int SparkStreaksMax = 12;
 constexpr int SparkStreakSpeedMin = 150;
 constexpr int SparkStreakSpeedMax = 300;
-constexpr float SparkFlashMaxMin = 0.4f; // Each shower's biggest flash; each flash is half that to that.
+constexpr float SparkFlashMaxMin = 0.4f;
 constexpr float SparkFlashMaxMax = 1;
 
 float Random(float low, float high)
@@ -235,8 +200,6 @@ void SpawnFireball(const Vector& origin, int model, float scale, float framerate
 	sprite->entity.angles.z = roll;
 }
 
-// A fireball that plays a moment later (curstate.fuser1: when; iuser1: model; fuser2: scale; fuser3: frame rate;
-// iuser2: brightness; fuser4: roll).
 void DelayedFireball(TEMPENTITY* ent, float frametime, float currenttime)
 {
 	if (currenttime < ent->entity.curstate.fuser1)
@@ -247,8 +210,6 @@ void DelayedFireball(TEMPENTITY* ent, float frametime, float currenttime)
 	ent->die = currenttime;
 }
 
-// Where a floor is under an explosion, if one is close enough for it to have hit it: explosions are placed
-// (dmg - 24) * 0.6 units out of what they hit, which is scale * 10 + 15.6.
 bool FindFloor(const Vector& origin, float scale, Vector& floor)
 {
 	const Vector end = origin - Vector{0, 0, scale * 10 + 48};
@@ -267,8 +228,6 @@ bool FindFloor(const Vector& origin, float scale, Vector& floor)
 	return true;
 }
 
-// Grows and fades the lingering smoke (curstate.fuser1: start time; fuser2: life; fuser3, fuser4: start and end scale;
-// iuser1: peak opacity).
 void LingeringSmokeThink(TEMPENTITY* ent, float frametime, float currenttime)
 {
 	const auto& state = ent->entity.curstate;
@@ -305,8 +264,6 @@ void LingeringSmokeThink(TEMPENTITY* ent, float frametime, float currenttime)
 	ent->entity.baseline.origin.y *= slowdown;
 }
 
-// Which way is away from walls near a point (horizontally; zero if there are none in range): the sum of the directions
-// to the walls found by 8 traces, reversed and weighted by closeness.
 Vector AwayFromWalls(const Vector& origin, float range)
 {
 	Vector away = g_vecZero;
@@ -342,8 +299,6 @@ bool JhlExplosion_LingeringSmoke(const Vector& origin, float scale, const JhlLin
 		return false;
 
 	const float life = Random(settings.LifeMin, settings.LifeMax);
-	// Drifts a random way, pushed away from a wall the explosion hit (explosions are (dmg - 24) * 0.6 units out of
-	// what they hit, which is scale * 10 + 15.6).
 	const Vector away = AwayFromWalls(origin, scale * 10 + 48);
 	const Vector velocity{(Random(-1, 1) + away.x) * settings.Drift, (Random(-1, 1) + away.y) * settings.Drift,
 		Random(settings.RiseMin, settings.RiseMax)};
@@ -374,9 +329,6 @@ bool JhlExplosion_LingeringSmoke(const Vector& origin, float scale, const JhlLin
 namespace
 {
 
-// A spark shower bursting as it flies (entity.baseline: scale, next burst; framerate, time left; fuser1, interval;
-// rendermode, streak speed; fuser2, biggest flash; iuser1, most streaks a burst, or 0 for SparkStreaksMin-Max; iuser2,
-// flashes at full brightness).
 void SparkShowerThink(TEMPENTITY* ent, float frametime, float currenttime)
 {
 	auto& state = ent->entity.baseline;
@@ -389,7 +341,6 @@ void SparkShowerThink(TEMPENTITY* ent, float frametime, float currenttime)
 										 : gEngfuncs.pfnRandomLong(SparkStreaksMin, SparkStreaksMax);
 	gEngfuncs.pEfxAPI->R_SparkStreaks(origin, streaks, -state.rendermode, state.rendermode);
 
-	// The engine's own bursts use a copy of richo1 that maps don't precache; load it as a HUD sprite.
 	if (const HSPRITE flash = gEngfuncs.pfnSPR_Load("sprites/richo1.spr"); flash > 0)
 	{
 		auto model = const_cast<model_t*>(gEngfuncs.GetSpritePointer(flash));
@@ -399,9 +350,6 @@ void SparkShowerThink(TEMPENTITY* ent, float frametime, float currenttime)
 		{
 			gEngfuncs.pEfxAPI->R_RicochetSprite(origin, model, 0.1f, scale);
 		}
-		// Showers asking for their own flash size get it at full brightness, white: as R_RicochetSprite makes its
-		// flash (glow, the same size on screen at any distance, fading out over an eighth of a second, a random 45
-		// degree turn), which it draws at 200.
 		else if (TEMPENTITY* sprite = gEngfuncs.pEfxAPI->CL_TempEntAlloc(origin, model); sprite)
 		{
 			sprite->flags |= FTENT_FADEOUT;
@@ -423,14 +371,10 @@ void SparkShowerThink(TEMPENTITY* ent, float frametime, float currenttime)
 		ent->die = currenttime;
 }
 
-// The normal of the surface an explosion hit, as far as the client can tell; zero in mid-air (as vanilla's trace that
-// hits nothing). Explosions are placed (dmg - 24) * 0.6 units out of what they hit, which is scale * 10 + 15.6, so
-// of the surfaces around (down, up and 8 ways around), it's the one at the distance closest to that. The nearest
-// surface isn't always it: a wall hit low down has the floor closer.
 Vector SurfaceNormal(const Vector& origin, float scale, pmtrace_t& hit)
 {
 	const float offset = scale * 10 + 15.6f;
-	const float range = offset * 1.5f + 16; // Room for hitting a surface at an angle to the 8 directions.
+	const float range = offset * 1.5f + 16;
 
 	Vector directions[10] = {{0, 0, -1}, {0, 0, 1}};
 
@@ -455,7 +399,6 @@ Vector SurfaceNormal(const Vector& origin, float scale, pmtrace_t& hit)
 		if (tr.fraction >= 1)
 			continue;
 
-		// The distance straight out from the surface, whichever way the trace met it.
 		const float distance = std::fabs(DotProduct(tr.endpos - origin, tr.plane.normal));
 
 		if (const float mismatch = std::fabs(distance - offset); mismatch < bestMismatch)
@@ -471,8 +414,6 @@ Vector SurfaceNormal(const Vector& origin, float scale, pmtrace_t& hit)
 	return normal;
 }
 
-// The material of the surface a trace hit (pm_materials.h), or 0 if it isn't known: only the world's are on the
-// client, as for bullet impacts (ev_hldm.cpp).
 char SurfaceMaterial(const pmtrace_t& hit)
 {
 	if (gEngfuncs.pEventAPI->EV_IndexFromTrace(const_cast<pmtrace_t*>(&hit)) != 0)
@@ -487,7 +428,6 @@ char SurfaceMaterial(const pmtrace_t& hit)
 	return 0;
 }
 
-// Metal, as bullet impacts count it: metal, vents, grates, computers.
 bool IsMetal(char material)
 {
 	switch (material)
@@ -511,14 +451,12 @@ int SparkShowersMax(char material)
 	return IsMetal(material) ? SparkShowersMaxMetal : SparkShowersMaxOther;
 }
 
-// Spark showers as vanilla's spark_shower throws them, each with its own values.
-// The surface an explosion hit, for its sparks and debris.
 struct Surface
 {
-	bool Water = false; // The explosion is under water: no sparks or debris.
+	bool Water = false;
 	Vector Normal;		// Zero in mid-air.
-	pmtrace_t Hit;		// Where it was found (Normal isn't zero).
-	char Material = 0;	// pm_materials.h, or 0 if unknown (mid-air, brush entities).
+	pmtrace_t Hit;
+	char Material = 0;
 };
 
 Surface FindSurface(const Vector& origin, float scale)
@@ -539,9 +477,6 @@ Surface FindSurface(const Vector& origin, float scale)
 	return surface;
 }
 
-// @param showers How many, or -1 for an explosion's (by the surface's material).
-// @param lifeScale Times each shower's life.
-// @param flashMax, streaksMax Each shower's biggest flash and most streaks a burst, or 0 for an explosion's.
 void SparkShowers(const Vector& origin, const Surface& surface, int showers = -1, float lifeScale = 1, float flashMax = 0,
 	int streaksMax = 0)
 {
@@ -564,7 +499,6 @@ void SparkShowers(const Vector& origin, const Surface& surface, int showers = -1
 	if (count == 0)
 		return;
 
-	// In mid-air, vanilla's sparks go up (its trace's normal is zero, and they get the upward push).
 	const bool ceiling = normal.z < 0;
 
 	if (normal == g_vecZero)
@@ -604,13 +538,11 @@ void SparkShowers(const Vector& origin, const Surface& surface, int showers = -1
 		ent->entity.baseline.rendermode = gEngfuncs.pfnRandomLong(SparkStreakSpeedMin, SparkStreakSpeedMax);
 		ent->entity.baseline.fuser2 = flashMax > 0 ? Random(flashMax * 0.5f, flashMax) : Random(SparkFlashMaxMin, SparkFlashMaxMax);
 		ent->entity.baseline.iuser1 = streaksMax;
-		ent->entity.baseline.iuser2 = flashMax > 0 ? 1 : 0; // Its own flash size: drawn at full brightness, white.
+		ent->entity.baseline.iuser2 = flashMax > 0 ? 1 : 0;
 		ent->die = now + life + 1;
 	}
 }
 
-// A vanilla gib model for surface debris, and the scale that makes its typical piece about 10 units (they were made for
-// breakables of every size, from 4 unit pebbles to 33 unit planks).
 struct DebrisModel
 {
 	const char* Model;
@@ -628,7 +560,6 @@ constexpr DebrisModel ComputerDebris[] = {{"models/computergibs.mdl", 0.45f}, {"
 constexpr DebrisModel GlassDebris[] = {{"models/glassgibs.mdl", 0.5f}};
 constexpr DebrisModel FleshDebris[] = {{"models/fleshgibs.mdl", 0.65f}};
 
-// The debris a surface material throws, and how its pieces sound bouncing (BREAK_*); none off water and snow.
 std::span<const DebrisModel> SurfaceDebrisModels(char material, int& breakType)
 {
 	switch (material)
@@ -663,13 +594,12 @@ std::span<const DebrisModel> SurfaceDebrisModels(char material, int& breakType)
 	case CHAR_TEX_SLOSH:
 	case CHAR_TEX_SNOW:
 		return {};
-	default: // Concrete, and unknown (brush entities; unlisted textures are concrete too).
+	default:
 		breakType = BREAK_CONCRETE;
 		return ConcreteDebris;
 	}
 }
 
-// Pieces of the surface an explosion hit, thrown off it; each its own model, size, speed, direction, gravity and life.
 void SurfaceDebris(const Surface& surface, float scale)
 {
 	if (surface.Water || surface.Normal == g_vecZero)
@@ -717,7 +647,6 @@ void SurfaceDebris(const Surface& surface, float scale)
 			piece->flags |= FTENT_GRAVITY;
 		}
 
-		// The model renderer only scales entities marked so (StudioSetUpTransform).
 		piece->entity.curstate.scale = debris.Scale * Random(1 - SurfaceDebrisSizeVariation, 1 + SurfaceDebrisSizeVariation);
 		piece->entity.curstate.iuser4 = ScaledModelMarker;
 	}
@@ -758,10 +687,6 @@ void ImpactChunks(const Vector& position, const Vector& normal, char material, i
 	}
 }
 
-// The particles explosions' embers and blobs have out (the engine's particles are everyone's: sparks, tracers, blood
-// too; it has no way to ask how many are free): under ParticlesSoft, explosions throw all theirs; from there to
-// ParticlesHard, each throws less, down to ParticlesLeastShare of them, so a chain of big ones thins out its later ones
-// (when the air's already full of them) rather than running the engine out. Kept as when each batch goes, and how many.
 constexpr int ParticlesSoft = 500;
 constexpr int ParticlesHard = 1100;
 constexpr float ParticlesLeastShare = 0.2f;
@@ -783,7 +708,6 @@ int ParticleShare(int count)
 
 	for (ParticleBatch& batch : g_ParticleBatches)
 	{
-		// (A new map or a loaded game restarts the clock: one going further off than a particle lasts is from before.)
 		if (batch.Gone > now + 5)
 			batch = {};
 
@@ -802,7 +726,6 @@ void ParticlesThrown(int count, float gone)
 	g_NextParticleBatch = (g_NextParticleBatch + 1) % std::size(g_ParticleBatches);
 }
 
-// An explosion's specks and lights, by its size (see EmberCountMin).
 void EmbersAndLights(const Vector& origin, float scale, int flags, bool embers)
 {
 	const float more = std::clamp(scale / EmberScale, 1.f, EmberMoreMax);
@@ -810,7 +733,6 @@ void EmbersAndLights(const Vector& origin, float scale, int flags, bool embers)
 
 	if (embers && (flags & TE_EXPLFLAG_NOPARTICLES) == 0)
 	{
-		// A grenade 21-30, an RPG rocket 25-34, a satchel 30-38, a mortar 34-43 (fewer when many are out).
 		const int added = static_cast<int>(EmberCountMore * (more - 1) / (EmberMoreMax - 1));
 		const int count = ParticleShare(gEngfuncs.pfnRandomLong(EmberCountMin + added, EmberCountMax + added));
 		ParticlesThrown(count, now + EmberLifeMax);
@@ -829,7 +751,7 @@ void EmbersAndLights(const Vector& origin, float scale, int flags, bool embers)
 			ember->vel = {std::cos(angle) * sideways, std::sin(angle) * sideways, Random(EmberUpMin, EmberUpMax)};
 			ember->color = static_cast<short>(EmberColors[gEngfuncs.pfnRandomLong(0, std::size(EmberColors) - 1)]);
 			gEngfuncs.pEfxAPI->R_GetPackedColor(&ember->packedColor, ember->color);
-			ember->type = pt_blob2; // As the engine's: drifting out and falling.
+			ember->type = pt_blob2;
 			ember->die = now + Random(EmberLifeMin, EmberLifeMax);
 		}
 	}
@@ -847,7 +769,6 @@ void EmbersAndLights(const Vector& origin, float scale, int flags, bool embers)
 			flash->decay = 800;
 		}
 
-		// It fades by 200 units a second, so it lasts until it has (vanilla's 150 lasts 0.75 s).
 		if (dlight_t* glow = gEngfuncs.pEfxAPI->CL_AllocDlight(0); glow)
 		{
 			glow->origin = origin;
@@ -871,7 +792,6 @@ void EmbersAndLights(const Vector& origin, float scale, int flags, bool embers)
 	}
 }
 
-// An underwater explosion's fireballs: the vanilla one, with a little randomness, and a second like it.
 void UnderwaterFireballs(const Vector& origin, int model, float scale)
 {
 	SpawnFireball(origin, model, scale * Random(1 - Jitter, 1 + Jitter), JhlFramerate * Random(1 - Jitter, 1 + Jitter), 180,
@@ -895,7 +815,6 @@ void UnderwaterFireballs(const Vector& origin, int model, float scale)
 	}
 }
 
-// One of a falling helicopter's fireballs: the vanilla one or a round one, the same size and length.
 void FallingFireball(const Vector& origin, int model, float scale)
 {
 	const int pick = gEngfuncs.pfnRandomLong(0, std::size(RoundFireballs));
@@ -933,11 +852,9 @@ void JhlExplosion_ParseSparkShowers(BufferReader& reader)
 		return;
 	}
 
-	// A burst like the engine's (8 streaks at ±200, a richo1 flash of 0.5-1), different each time.
 	const int speed = gEngfuncs.pfnRandomLong(SparkBurstSpeedMin, SparkBurstSpeedMax);
 	gEngfuncs.pEfxAPI->R_SparkStreaks(origin, gEngfuncs.pfnRandomLong(SparkBurstStreaksMin, SparkBurstStreaksMax), -speed, speed);
 
-	// The engine's own bursts use a copy of richo1 that maps don't precache; load it as a HUD sprite.
 	if (const HSPRITE flash = gEngfuncs.pfnSPR_Load("sprites/richo1.spr"); flash > 0)
 	{
 		gEngfuncs.pEfxAPI->R_RicochetSprite(origin, const_cast<model_t*>(gEngfuncs.GetSpritePointer(flash)), 0.1f,
@@ -950,7 +867,6 @@ void JhlExplosion_ParseSparkShowers(BufferReader& reader)
 	if (gEngfuncs.PM_PointContents(origin, nullptr) == CONTENTS_WATER)
 		surface.Water = true;
 
-	// Lives as the server asks: shorter than an explosion's for sparking machinery or a computer shorting out.
 	SparkShowers(origin, surface, count, lifeScale, flashMax, streaksMax);
 }
 
@@ -959,7 +875,6 @@ void JhlExplosion_RicochetSparks(const Vector& position, float scale)
 	if (!JhlParticleSystemEnabled())
 		return;
 
-	// A little toward the viewer, so the armor they hit doesn't hide them.
 	Vector origin = position + (v_origin - position).Normalize() * 2;
 	const int speed = gEngfuncs.pfnRandomLong(RicochetSparkSpeedMin, RicochetSparkSpeedMax);
 	const int streaks = std::clamp(static_cast<int>(RicochetSparksMin + scale * 2), RicochetSparksMin, RicochetSparksMax);
@@ -971,7 +886,6 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 	if (!JhlParticleSystemEnabled() || (flags & TE_EXPLFLAG_NOADDITIVE) != 0)
 		return false;
 
-	// Drawing the fireballs, this draws the specks and lights too (R_Explosion leaves them to it).
 	const int vanillaModel = gEngfuncs.pEventAPI->EV_FindModelIndex(Vanilla.Sprite);
 
 	if (model == vanillaModel && framerate == FallingFramerate)
@@ -994,7 +908,6 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 	if (model != vanillaModel)
 		return false;
 
-	// RPG rockets and explosive breakables are drawn bigger than their damage says, and as large explosions.
 	const bool rocket = (flags & TE_EXPLFLAG_JHL_ROCKET) != 0;
 	const bool breakable = (flags & TE_EXPLFLAG_JHL_BREAKABLE) != 0;
 	const float bigger = rocket ? RocketScale : breakable ? JhlBreakableExplosionScale : 1;
@@ -1016,11 +929,9 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 	SurfaceDebris(surface, scale);
 	EmbersAndLights(origin, scale * bigger, flags, true);
 
-	// The engine's blob explosion, a sixteenth of its particles, a quarter for large ones (more ran a few satchels out).
 	if ((flags & TE_EXPLFLAG_NOPARTICLES) == 0)
 		JhlExplosion_Blob(origin, large ? 256 : 64);
 
-	// The second fireball: shaped for large explosions on a floor, round otherwise.
 	Vector floor;
 	const bool onFloor = FindFloor(origin, scale, floor);
 	const bool shaped = large && onFloor;
@@ -1050,7 +961,6 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 
 	if (shaped)
 	{
-		// Stand it on the floor (R_Sprite_Explode raises sprites 10 units).
 		const float height = second->Height * secondScale;
 		secondOrigin.z = floor.z + height * (0.5f - ShapedSink) - 10;
 	}
@@ -1083,8 +993,6 @@ bool JhlExplosion_Fireballs(const Vector& origin, int model, float scale, float 
 
 void JhlExplosion_Blob(const Vector& origin, int count)
 {
-	// The engine's R_BlobExplosion (Quake's), with any count: half pt_blob (colors 66-71, swelling and slowing),
-	// half pt_blob2 (150-155, spreading flat), living 1 or 1.4 s. Fewer when many are out (ParticleShare).
 	const float now = gEngfuncs.GetClientTime();
 
 	count = ParticleShare(count);
@@ -1112,8 +1020,6 @@ void JhlExplosion_Blob(const Vector& origin, int count)
 
 namespace
 {
-// A sprite playing its frames once over its life and fading out over the end of it (JhlSprite_PlayOnce):
-// fuser1 the start, fuser2 the life, fuser3 how much of the life it fades over, baseline.renderamt its alpha.
 void PlayOnceThink(TEMPENTITY* ent, float frametime, float currenttime)
 {
 	auto& state = ent->entity.curstate;
@@ -1142,7 +1048,6 @@ void JhlSprite_PlayOnce(TEMPENTITY* sprite, float life, float fade)
 
 namespace
 {
-// Dust the color of a floor of @p material, as bullet impacts' (weapon_effects.cpp's DustImpact), else a stony grey.
 color24 DustColor(char material)
 {
 	switch (material)
@@ -1155,7 +1060,6 @@ color24 DustColor(char material)
 	}
 }
 
-// What a burst of floor dust's billows are, rising from its middle.
 struct Billows
 {
 	int Count = 0;
@@ -1166,9 +1070,6 @@ struct Billows
 	float LifeScale = 1.3f; // × the low puffs' life.
 };
 
-// @p count low puffs kicked out along the floor at @p origin: steam1 at 0.5, alpha 0.25, ±48 and ±120 units/s, each
-// playing once over 1.2 s and fading over the last 60% of it, all of it by @p size (farther, faster, bigger, longer);
-// @p billows of them rising from the middle too.
 void DustBurst(const Vector& origin, int count, float size, color24 dust, const Billows& billows = {})
 {
 	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
@@ -1213,7 +1114,6 @@ void DustBurst(const Vector& origin, int count, float size, color24 dust, const 
 	}
 }
 
-// The floor under @p origin (within @p below), and its material; false if there's none.
 bool FloorUnder(const Vector& origin, float below, pmtrace_t& tr, char& material)
 {
 	gEngfuncs.pEventAPI->EV_PushPMStates();
@@ -1238,8 +1138,6 @@ void JhlExplosion_ParseGroundDust(BufferReader& reader)
 	if (!JhlParticleSystemEnabled())
 		return;
 
-	// A houndeye's (size 1) as it was, white; bigger ones (a gargantua's stomp) the floor's color, a third as many
-	// billowing up from the middle, bigger and slower to go.
 	if (size <= 1)
 	{
 		DustBurst(origin, count, size, {255, 255, 255});
@@ -1259,8 +1157,6 @@ void JhlExplosion_ParseMortarIncoming(BufferReader& reader)
 	if (!JhlParticleSystemEnabled())
 		return;
 
-	// A pale, warm streak falling straight onto where it lands from 1024 up, its head arriving as it explodes (the server
-	// sends it CMortar's JhlIncomingLead, 0.35 s, before: 1024 / its speed), a hotter core inside.
 	static const JhlTracerStyle Incoming{
 		.Color = {255, 200, 140},
 		.Brightness = 0.55f,
@@ -1282,7 +1178,6 @@ void JhlExplosion_TentacleImpact(const Vector& position, int strength)
 	if (!JhlParticleSystemEnabled())
 		return;
 
-	// What it hit, under where it struck (its tip is a little above the floor as it lands).
 	pmtrace_t tr;
 	char material = 0;
 
@@ -1295,8 +1190,6 @@ void JhlExplosion_TentacleImpact(const Vector& position, int strength)
 
 	if (IsMetal(material))
 	{
-		// Metal: a light tap sparks half the time, as bullets off metal do; a slam sparks harder, throws a spark shower
-		// (and 1 in 4 a second), and a little grey dust.
 		if (!slam)
 		{
 			if (gEngfuncs.pfnRandomLong(0, 1) == 0)
@@ -1316,8 +1209,6 @@ void JhlExplosion_TentacleImpact(const Vector& position, int strength)
 	}
 	else
 	{
-		// Anything else (dirt, Xen's floors, concrete): a light tap kicks up a little dust, close in; a slam a burst of
-		// it rolling out, a cloud billowing up and a clod or two of the floor.
 		if (!slam)
 		{
 			DustBurst(floor, 4, 0.6f, DustColor(material));
@@ -1329,19 +1220,15 @@ void JhlExplosion_TentacleImpact(const Vector& position, int strength)
 		ImpactChunks(floor, normal, material, gEngfuncs.pfnRandomLong(1, 2));
 	}
 
-	// The killing swing, besides: a low ring of dust rolling out, set apart from its probing slams.
 	if (strength >= 2)
 		DustBurst(floor, 12, 1.6f, DustColor(material));
 }
 
-// The ichthyosaur's bite: a burst of bubbles (the engine's bubble.spr, sized and rising as its TE_BUBBLES: 1/4-1/16,
-// 80-140 a second) thrown out from its mouth, mostly ahead, slowing as the water takes them, turning to rise, fading
-// out over their last BiteBubbleFade of BiteBubbleLife; gone on leaving the water or meeting the world.
 constexpr int BiteBubbleCount = 26;
 constexpr float BiteBubbleSpeedMin = 50;
 constexpr float BiteBubbleSpeedMax = 130;
-constexpr float BiteBubbleDrag = 3;	  // Of their thrown speed, a second (exponential).
-constexpr float BiteBubbleBuoyancy = 2.5f; // How fast they come round to rising.
+constexpr float BiteBubbleDrag = 3;
+constexpr float BiteBubbleBuoyancy = 2.5f;
 constexpr float BiteBubbleLife = 1.6f;
 constexpr float BiteBubbleFade = 0.4f;
 
@@ -1351,7 +1238,6 @@ static bool InWater(Vector position)
 	return contents == CONTENTS_WATER || contents == CONTENTS_SLIME || contents == CONTENTS_LAVA;
 }
 
-// A bite bubble (curstate.fuser1: when it was made; fuser2: its life; fuser3: how fast it rises).
 static void BiteBubbleThink(TEMPENTITY* bubble, float frametime, float currenttime)
 {
 	auto& state = bubble->entity.curstate;
@@ -1423,8 +1309,6 @@ void JhlExplosion_ParseDisplacerSpecks(BufferReader& reader)
 	if (model == 0)
 		return;
 
-	// 4 tiny specks of the ball's own sprite (exit1 at 0.04, additive), scattered ±40 with a pop of 40 up, falling at
-	// half gravity onto what's below, each playing its frames once over 1.5 s and fading over the last 60%.
 	for (int i = 0; i < 4; ++i)
 	{
 		Vector position = origin + Vector{Random(-2, 2), Random(-2, 2), Random(-2, 2)};
@@ -1463,7 +1347,6 @@ void JhlExplosion_GroundKick(const Vector& point, const Vector& direction)
 
 	const char material = SurfaceMaterial(tr);
 
-	// Dust the floor's color, as bullet impacts' (weapon_effects.cpp's DustImpact), else a stony grey.
 	color24 dust{140, 135, 130};
 
 	switch (material)
@@ -1477,7 +1360,6 @@ void JhlExplosion_GroundKick(const Vector& point, const Vector& direction)
 
 	const int model = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/steam1.spr");
 
-	// A puff thrown off each side of its path, up and a little on the way it's going.
 	Vector side = CrossProduct(direction, Vector{0, 0, 1});
 	side = side.Length() > 0.1f ? side.Normalize() : Vector{1, 0, 0};
 

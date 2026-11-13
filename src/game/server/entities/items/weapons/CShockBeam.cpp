@@ -55,11 +55,6 @@ void CShockBeam::Spawn()
 	SetTouch(&CShockBeam::BallTouch);
 	SetThink(&CShockBeam::FlyThink);
 
-	// johnhalflife: the client draws its glow and its spark instead, circling its path 180 degrees apart, with their
-	// wakes a double helix (jhl_shockbeams.cpp); its crackle across it goes (it ran between its model's attachments,
-	// 80 units apart, which can't make a small circle).
-	// It's tagged renderamt 1 for the client (the barnacle grapple's tongue tip has the same model; renderamt does
-	// nothing for a model drawn normally).
 	if (UTIL_JhlParticleSystem())
 	{
 		pev->renderamt = 1;
@@ -234,9 +229,6 @@ void CShockBeam::Explode()
 
 	pev->dmg = 40;
 
-	// johnhalflife: its impact in one of its two colours, half the time each: the spark's cyan (vanilla's light, and
-	// arcs crackling), or the glow's purple (a purple light, and a few of its glow fizzling off); in rapid fire the two
-	// tumble over each other.
 	const bool jhl = UTIL_JhlParticleSystem();
 	const bool purple = jhl && RANDOM_LONG(0, 1) != 0;
 
@@ -257,9 +249,7 @@ void CShockBeam::Explode()
 
 	EmitSound(CHAN_WEAPON, "weapons/shock_impact.wav", RANDOM_FLOAT(0.8, 0.9), ATTN_NORM);
 
-	// johnhalflife: a purple impact fizzles: 3-4 of its glow sprites (flare3, pinkish grey) thrown up and out off where
-	// it hit, falling and bouncing (the engine's sprite trail). Out from the surface it hit, and from a little off it: a
-	// sprite that hits a wall stops dead on it, and on some walls ends up just inside, stuck there.
+	// johnhalflife: a purple impact fizzles
 	if (purple)
 	{
 		Vector start = pev->origin;
@@ -290,9 +280,6 @@ void CShockBeam::Explode()
 		MESSAGE_END();
 	}
 
-	// johnhalflife: a cyan impact crackles: a few short arcs off it, 0.4-0.6 s each and up to 35% more (to the
-	// tenth; their noise changes every frame, so they crackle while they last), each impact's 5-30% bigger than the
-	// smallest (longer and wider), off the surface it hit rather than into it.
 	else if (jhl)
 	{
 		const int sprite = g_engfuncs.pfnModelIndex("sprites/lgtning.spr");

@@ -3155,8 +3155,6 @@ bool CBaseMonster::ShouldFadeOnDeath()
 	return false;
 }
 
-// johnhalflife (jhl_fx_keepcorpses): how many corpses vanilla would have faded are kept at once, oldest faded first;
-// bodies placed by the map aren't counted, as vanilla keeps them all.
 constexpr int JhlKeptCorpses = 40;
 
 bool CBaseMonster::JhlFadeCorpse()
@@ -3207,7 +3205,7 @@ bool CBaseMonster::JhlMakeRoom()
 
 	m_JhlCorpseKept = 0;
 	SUB_StartFadeOut();
-	pev->flags &= ~FL_MONSTER; // Out of monstermakers' way while it fades.
+	pev->flags &= ~FL_MONSTER;
 	return true;
 }
 

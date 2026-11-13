@@ -111,7 +111,6 @@ void DLLEXPORT HUD_PlayerMove(playermove_t* ppmove, int server)
 {
 	PM_Move(ppmove, server);
 
-	// johnhalflife (jhl_visuals_firstpersonbody): the movement just predicted, read for the body's pose.
 	JhlBody_Moved(ppmove);
 }
 
@@ -135,7 +134,6 @@ static bool CL_InitClient()
 		return false;
 	}
 
-	// johnhalflife: the first start sets the mod's folders up from the player's games.
 	JhlSetup_Run();
 
 	if (!g_Client.Initialize())
@@ -174,7 +172,6 @@ int DLLEXPORT HUD_VidInit()
 {
 	g_Client.VidInit();
 
-	// johnhalflife (jhl_debug_hitch): a map loading isn't a hitch.
 	JhlHitch_Skip();
 
 	// johnhalflife: a new map frees the engine's beams.
@@ -196,15 +193,12 @@ int DLLEXPORT HUD_VidInit()
 	return 1;
 }
 
-// johnhalflife (jhl_debug_hitch): frames longer than this many milliseconds are reported (jhl_hitch.h).
 static cvar_t* g_JhlDebugHitch;
 
 static void JhlHitch_ClientFrame()
 {
-	// The server in this process (a listen server), reported with the client's frames.
 	JhlHitch_Link(gEngfuncs.pfnGetCvarPointer);
 
-	// Where the view last was: the local player's entity isn't there yet while a map or save loads.
 	JhlHitch_EndFrame(g_JhlDebugHitch ? g_JhlDebugHitch->value : 0, []
 		{
 			const char* level = gEngfuncs.pfnGetLevelName();
@@ -231,7 +225,6 @@ void DLLEXPORT HUD_Init()
  */
 int DLLEXPORT HUD_Redraw(float time, int intermission)
 {
-	// johnhalflife: the view is drawn; brush entities moved out of walls go back.
 	JhlFlushFaces_Restore();
 
 	// johnhalflife: the view is drawn, not yet the HUD.
@@ -272,7 +265,6 @@ void DLLEXPORT HUD_Reset()
  */
 void DLLEXPORT HUD_Frame(double time)
 {
-	// johnhalflife (jhl_debug_hitch): a frame is from one of these to the next.
 	JhlHitch_ClientFrame();
 	JhlHitchScope hitchScope{"HUD_Frame"};
 

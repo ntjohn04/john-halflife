@@ -24,7 +24,6 @@ bool CHudProjectInfo::Init()
 
 	m_IsAlphaBuild = g_ProjectInfo.IsAlphaBuild(*g_ProjectInfo.GetLocalInfo());
 
-	// Off by default, even in (pre-)alpha builds; John Settings has a checkbox for it.
 	m_ShowProjectInfo = CVAR_CREATE("cl_projectinfo_show", "0", FCVAR_ARCHIVE);
 
 	return true;
@@ -41,8 +40,6 @@ bool CHudProjectInfo::Draw(float flTime)
 	{
 		const int xPos = 20;
 
-		// The lines are drawn in the HUD font, so space them by its height. The console font's height was used before,
-		// which is smaller than the HUD font's in the 25th anniversary engine and made the lines overlap.
 		const int lineHeight = gHUD.m_scrinfo.iCharHeight;
 
 		int yPos = static_cast<int>(HudHeight * 0.05);

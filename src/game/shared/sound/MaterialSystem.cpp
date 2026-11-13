@@ -204,7 +204,7 @@ bool MaterialSystem::ParseConfiguration(const json& input)
 		std::transform(name.begin(), name.end(), name.begin(), [](char c)
 			{ return std::toupper(c); });
 
-		// Merged into what an earlier file gave: johnhalflife's impact file only adds Impact.
+		// johnhalflife: merged into what an earlier file gave
 		Material& material = m_Materials[std::move(name)];
 
 		if (!type.empty())

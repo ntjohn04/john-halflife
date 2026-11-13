@@ -34,10 +34,7 @@
 
 namespace sound
 {
-/**
- *	@brief johnhalflife: a sound read and converted, ready to be handed to OpenAL (SoundCache::Convert, Upload): the
- *	work, apart from OpenAL, so it can be done on another thread.
- */
+// johnhalflife: @brief johnhalflife
 struct ConvertedSound
 {
 	bool Ok = false;
@@ -53,9 +50,7 @@ struct ConvertedSound
 	int NativeLoopEnd = -1;
 };
 
-/**
- *	@brief johnhalflife: a sound at a pitch, converted (SoundCache::ConvertPitch, UploadPitch).
- */
+// johnhalflife: @brief johnhalflife
 struct ConvertedPitch
 {
 	bool Ok = false;
@@ -108,27 +103,16 @@ public:
 
 	bool LoadSound(Sound& sound);
 
-	/**
-	 *	@brief johnhalflife: whether a sound can start at once: loaded, and at @p pitch (jhl_snd_vanilla) made.
-	 */
+	// johnhalflife: @brief johnhalflife
 	bool IsReady(SoundIndex index, int pitch);
 
-	/**
-	 *	@brief johnhalflife: a sound not ready read and converted on another thread (a scripted speech's first play
-	 *	took 20-30 ms in the frame); Poll hands it to OpenAL when done.
-	 */
+	// johnhalflife: @brief johnhalflife
 	void Request(SoundIndex index, int pitch);
 
-	/**
-	 *	@brief johnhalflife: work Request started that's done, handed to OpenAL (each frame).
-	 */
+	// johnhalflife: @brief johnhalflife
 	void Poll();
 
-	/**
-	 *	@brief johnhalflife: loads a sound now, so its first play doesn't stall a frame reading and converting it (a
-	 *	map's sounds, as the map loads): with @p all every one (jhl_perf_preloadsounds, as the engine loads its
-	 *	precached sounds), else only a long one (PreloadBytes or more: a long one took several milliseconds).
-	 */
+	// johnhalflife: @brief johnhalflife
 	void Preload(SoundIndex index, bool all);
 
 	// About 3 seconds of a 16-bit 11025 Hz sound.
@@ -138,9 +122,7 @@ public:
 
 	void Clear();
 
-	/**
-	 *	@brief johnhalflife: sounds loaded from now on stepped to the engine's mixing rate (jhl_snd_vanilla).
-	 */
+	// johnhalflife: @brief johnhalflife
 	void SetEngineRate(bool engineRate)
 	{
 		m_EngineRate = engineRate;
@@ -148,29 +130,19 @@ public:
 
 	bool IsEngineRate() const { return m_EngineRate; }
 
-	/**
-	 *	@brief johnhalflife: the device's mixing rate, which sounds at the engine's rate are converted to (0: none).
-	 */
+	// johnhalflife: @brief johnhalflife
 	void SetDeviceRate(int deviceRate)
 	{
 		m_DeviceRate = deviceRate;
 	}
 
-	/**
-	 *	@brief johnhalflife: samples at the engine's 22050 Hz to the device's rate, as the system converts the engine's
-	 *	output (flat to near 11 kHz); a loop (frames, -1: none) is wrapped round so its seam stays seamless.
-	 */
+	// johnhalflife: @brief johnhalflife
 	std::vector<float> ToDeviceRate(const std::vector<float>& samples, std::size_t channels, ALint loopStart, ALint loopEnd) const;
 
-	/**
-	 *	@brief johnhalflife (jhl_snd_vanilla): the sound at a pitch, pitched as the engine pitches it, made the first
-	 *	time it's asked for; null if it can't be (not loaded at the engine's rate).
-	 */
+	// johnhalflife
 	const PitchedSound* GetPitched(Sound& sound, int pitch);
 
-	/**
-	 *	@brief johnhalflife: the samples a sound plays at a pitch (its pitched version's, if made), for mouths.
-	 */
+	// johnhalflife: @brief johnhalflife
 	static const std::vector<float>& GetSamples(const Sound& sound, int pitch);
 
 	static std::vector<float> Resample(const std::vector<float>& samples, std::size_t channels, double step, bool interpolate);
@@ -182,8 +154,7 @@ private:
 	std::optional<std::tuple<ALint, ALint>> TryLoadCuePoints(
 		const std::string& fileName, ALint sampleCount, int channelCount);
 
-	// johnhalflife: loading split so the work can be done on another thread: the file found (the engine's file system,
-	// the main thread), read and converted (any thread), handed to OpenAL (the main thread).
+	// johnhalflife
 	bool FindFile(const Sound& sound, std::string& absolutePath);
 	ConvertedSound Convert(const std::string& absolutePath, nqr::NyquistIO& loader);
 	bool Upload(Sound& sound, ConvertedSound&& converted);

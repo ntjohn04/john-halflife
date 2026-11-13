@@ -128,12 +128,10 @@ bool ServerLibrary::Initialize()
 	g_ConCommands.CreateCommand("stop_loading_all_maps", [this](const auto&)
 		{ m_MapsToLoad.clear(); });
 
-	// johnhalflife: how many models (the map's brush entities among them), sounds and other files the map has precached,
-	// against the engine's limits; past one, using a file not precached ends the map.
+	// johnhalflife
 	g_ConCommands.CreateCommand(
 		"jhl_debug_precache", [](const auto& args)
 		{
-			// "list": every model that isn't one of the map's brush entities, in the order precached.
 			const bool list = args.Count() > 1 && 0 == strcmp(args.Argument(1), "list");
 			std::size_t brushModels = 0;
 
@@ -157,7 +155,7 @@ bool ServerLibrary::Initialize()
 		},
 		CommandLibraryPrefix::No);
 
-	// johnhalflife: logs what blocks movers (elevators, doors, trains) and where, to see why something gets crushed.
+	// johnhalflife
 	g_ConCommands.CreateCommand(
 		"jhl_debug_blocked", [](const auto&)
 		{
@@ -166,7 +164,7 @@ bool ServerLibrary::Initialize()
 		},
 		CommandLibraryPrefix::No);
 
-	// johnhalflife: logs the damage NPCs take, alive or dead, and what gibs them.
+	// johnhalflife
 	g_ConCommands.CreateCommand(
 		"jhl_debug_damage", [](const auto&)
 		{
@@ -610,7 +608,6 @@ void ServerLibrary::LoadServerConfigFiles()
 	// Initialize file lists to their defaults.
 	context.SentencesFiles.push_back("sound/sentences.json");
 	context.MaterialsFiles.push_back("sound/materials.json");
-	// johnhalflife: impact materials for textures the above doesn't list (footsteps and ricochet sounds keep its).
 	context.MaterialsFiles.push_back("sound/jhl_impact_materials.json");
 
 	context.SkillFiles.push_back("cfg/skill.json");

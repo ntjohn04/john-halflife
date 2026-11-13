@@ -44,6 +44,5 @@ public:
 
 	int m_iBeams;
 
-	// johnhalflife: the surface it hit (zero if none), for its impact's fizzles (not saved: it's gone in a moment).
 	Vector m_JhlHitNormal{0, 0, 0};
 };

@@ -386,10 +386,8 @@ void IN_MoverightUp()
 	KeyUp(&in_moveright);
 	gHUD.m_Spectator.HandleButtonsUp(IN_MOVERIGHT);
 }
-// johnhalflife (jhl_input_walktoggle): the walk key's press turns walking on or off, its release does nothing.
 static cvar_t* jhl_input_walktoggle;
 
-// johnhalflife (jhl_input_walkfix): walking diagonally no faster than straight.
 static cvar_t* jhl_input_walkfix;
 
 void IN_SpeedDown()
@@ -658,8 +656,6 @@ void DLLEXPORT CL_CreateMove(float frametime, usercmd_t* cmd, int active)
 			cmd->sidemove *= cl_movespeedkey->value;
 			cmd->upmove *= cl_movespeedkey->value;
 
-			// johnhalflife (jhl_input_walkfix): the clip to maxspeed below only reaches running, so walking diagonally
-			// went 1.41 times as fast as straight (both at 120: 170). Held to the faster of the two.
 			if (0 != jhl_input_walkfix->value)
 			{
 				const float straight = std::max(std::abs(cmd->forwardmove), std::abs(cmd->sidemove));

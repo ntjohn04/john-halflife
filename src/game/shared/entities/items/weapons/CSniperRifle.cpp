@@ -40,8 +40,7 @@ void CSniperRifle::Precache()
 	PrecacheModel("models/v_m40a1.mdl");
 	PrecacheModel("models/p_m40a1.mdl");
 
-	// johnhalflife: its flash on its barrel and its hot holes in metal (weapon_effects.cpp; the client only finds
-	// what's precached).
+	// johnhalflife
 	PrecacheModel("sprites/muzzleflash2.spr");
 	PrecacheModel("sprites/hotglow.spr");
 

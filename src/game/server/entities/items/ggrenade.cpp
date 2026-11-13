@@ -71,9 +71,7 @@ void CGrenade::Explode(TraceResult* pTrace, int bitsDamageType)
 		pev->origin = pTrace->vecEndPos + (pTrace->vecPlaneNormal * 0.6);
 	}
 
-	// johnhalflife: Half-Life Updated pulls explosions only 0.6 units out of the surface so their damage doesn't go
-	// through walls (halflife#3244), which also sank the fireball and smoke halfway into it. The damage stays there;
-	// the effects come from vanilla's point, (dmg - 24) * 0.6 units out.
+	// johnhalflife
 	Vector effectOrigin = pev->origin;
 
 	if (pTrace->flFraction != 1.0)
@@ -83,7 +81,6 @@ void CGrenade::Explode(TraceResult* pTrace, int bitsDamageType)
 
 	int iContents = UTIL_PointContents(effectOrigin);
 
-	// johnhalflife: the client throws the spark showers (jhl_explosions.cpp).
 	const bool clientSparks = UTIL_JhlParticleSystem() && iContents != CONTENTS_WATER;
 	int flags = ClassnameIs("rpg_rocket") ? TE_EXPLFLAG_JHL_ROCKET : TE_EXPLFLAG_NONE;
 
@@ -107,7 +104,6 @@ void CGrenade::Explode(TraceResult* pTrace, int bitsDamageType)
 
 	RadiusDamage(origin, this, owner, pev->dmg, bitsDamageType);
 
-	// The rest (debris sound, sparks, the smoke 0.3 seconds later) is effects.
 	SetOrigin(effectOrigin);
 
 	if (UTIL_JhlParticleSystem())
@@ -236,23 +232,18 @@ void CGrenade::DangerSoundThink()
 	}
 }
 
-// johnhalflife: a thrown grenade's tumble and roll, only to look at (where it goes is its velocity's, untouched), with
-// jhl_fx_particlesystem. In the air it spins end over end (its angles turned by avelocity, which moves nothing) as fast
-// as it was thrown, wobbling a little; each bounce flips and damps its spin; on the ground it lies level, faces where
-// it's going and rolls (its model's roll animations) as fast as it's going, easing to a stop where it is. Vanilla
-// played a slow fixed tumble animation in the air, kept its throw's facing (tilted, and sideways once it had bounced
-// off a wall), and snapped its roll back to its first frame when it slowed.
+// johnhalflife
 namespace
 {
-constexpr float TumblePerSpeed = 1.1f; // Degrees a second per unit a second it's thrown at,
+constexpr float TumblePerSpeed = 1.1f;
 constexpr float TumbleMin = 300;		 // between these:
 constexpr float TumbleMax = 1100;		 // about 1 to 3 turns a second.
 constexpr float TumbleWobble = 60;
-constexpr float BounceKeepMin = 0.4f; // Of its spin, each bounce, turned the other way.
+constexpr float BounceKeepMin = 0.4f;
 constexpr float BounceKeepMax = 0.7f;
-constexpr float RollSpeed = 200; // Its roll animation at its own rate at this speed (vanilla's).
+constexpr float RollSpeed = 200;
 constexpr float RollMost = 2;
-constexpr float RollEase = 0.5f; // Of the way to its roll's rate each think (0.1 s).
+constexpr float RollEase = 0.5f;
 constexpr float StillSpeed = 5;
 
 bool IsRollSequence(int sequence)
@@ -307,13 +298,10 @@ void CGrenade::BounceTouch(CBaseEntity* pOther)
 	if ((pev->flags & FL_ONGROUND) != 0)
 	{
 		// add a bit of static friction
-		// johnhalflife (jhl_physics_fpsfix): touched every frame it slides, so taken off as at 72 fps.
 		pev->velocity = pev->velocity * (UTIL_JhlFpsFix() ? JhlReferenceDecay(0.8f, gpGlobals->frametime) : 0.8f);
 
 		if (jhl)
 		{
-			// Down: level, done spinning, rolling one of its two ways (vanilla only ever the first), its rate eased in
-			// TumbleThink.
 			pev->avelocity = g_vecZero;
 			pev->angles.x = 0;
 			pev->angles.z = 0;
@@ -365,7 +353,6 @@ void CGrenade::SlideTouch(CBaseEntity* pOther)
 	if ((pev->flags & FL_ONGROUND) != 0)
 	{
 		// add a bit of static friction
-		// johnhalflife (jhl_physics_fpsfix): touched every frame it slides, so taken off as at 72 fps.
 		pev->velocity = pev->velocity * (UTIL_JhlFpsFix() ? JhlReferenceDecay(0.95f, gpGlobals->frametime) : 0.95f);
 
 		if (pev->velocity.x != 0 || pev->velocity.y != 0)
@@ -406,8 +393,6 @@ void CGrenade::TumbleThink()
 	StudioFrameAdvance();
 	pev->nextthink = gpGlobals->time + 0.1;
 
-	// johnhalflife: rolling on the ground, facing where it's going, as fast as it's going, easing to a stop where it is
-	// (see BounceTouch).
 	if (UTIL_JhlParticleSystem() && IsRollSequence(pev->sequence) && pev->waterlevel == WaterLevel::Dry)
 	{
 		const float speed = Vector(pev->velocity.x, pev->velocity.y, 0).Length();
@@ -512,16 +497,12 @@ CGrenade* CGrenade::ShootTimed(CBaseEntity* owner, Vector vecStart, Vector vecVe
 	// Tumble through the air
 	// pGrenade->pev->avelocity.x = -400;
 
-	// johnhalflife: end over end, as fast as it's thrown, wobbling a little, in place of its slow tumble animation
-	// (see BounceTouch).
 	if (UTIL_JhlParticleSystem())
 	{
 		pGrenade->pev->sequence = 0;
 		pGrenade->ResetSequenceInfo();
 		pGrenade->pev->framerate = 0;
 
-		// Each thrown its own way: turned about its length at random (flying flat, upright or slanted), its spin mostly
-		// end over end, some of it turned toward a roll, as hard as it's thrown more or less, now and then a lazy lob.
 		pGrenade->pev->angles.z = RANDOM_FLOAT(0, 360);
 
 		const float spin = RANDOM_LONG(0, 9) == 0 ? RANDOM_FLOAT(0.3f, 0.5f) : RANDOM_FLOAT(0.55f, 1.35f);

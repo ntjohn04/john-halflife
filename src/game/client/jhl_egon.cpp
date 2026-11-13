@@ -31,22 +31,17 @@
 
 namespace
 {
-// Each beam is drawn as this many straight pieces along a curve.
 constexpr int Segments = 8;
 
 // The curve's bow is at most this share of the beam's length.
 constexpr float MaxBow = 0.3f;
 
-// The specks: the gun's own impact flare (XSpark1, cyan-blue like the beam; additive sprites aren't tinted), 32 px.
 constexpr const char* SpeckSprite = "sprites/XSpark1.spr";
 
 // Scorches: no closer together than this, nor more often.
 constexpr float ScorchSpacing = 14;
 constexpr float ScorchInterval = 0.12f;
 
-// Lights while it fires: a faint cyan glow around the player (just above the feet, lighting the floor) and a brighter
-// one where it hits, flickering a little; each one light, moved every frame (its key), fading out when it stops.
-// Their colors are the specks' and flare's blue (XSpark1).
 constexpr int PlayerLightKey = 8192 + 4096;
 constexpr int ImpactLightKey = PlayerLightKey + 1;
 const color24 PlayerLightColor{60, 110, 150};
@@ -61,19 +56,17 @@ constexpr float VentIntervalMax = 0.3f;
 
 struct Layer
 {
-	BEAM* Source = nullptr; // The engine's beam it's drawn for.
-	float Brightness = 0;	// The engine beam's own, before it's hidden.
+	BEAM* Source = nullptr;
+	float Brightness = 0;
 	BEAM* Pieces[Segments]{};
 };
 
-// How long (seconds) the beam's pull lags behind where it hits: 0 straight, more a stronger bend.
 constexpr float Bend = 0.25f;
 
-// How many pieces its spiral is drawn in along the bend (1-8, as vanilla's spiral at 2): each restarts its turns.
 constexpr int SpiralPieces = 2;
 
 Layer g_Layers[2];
-Vector g_Lagged; // Where the hit point was a moment ago (the curve's pull).
+Vector g_Lagged;
 Vector g_LastHit;
 Vector g_LastFeet;
 Vector g_LastImpactLight;
@@ -119,11 +112,8 @@ void DrawLayer(Layer& layer, BEAM* source, const Vector& start, const Vector& co
 		layer.Brightness = source->brightness;
 	}
 
-	// The engine's beam stays (its updates and lifetime are the game's), unseen.
 	source->brightness = 0;
 
-	// Each piece draws the engine's noise over its own length (the spiral's turns restart on each), so the spiral layer
-	// uses fewer, longer pieces (SpiralPieces) than the smooth one.
 	const bool spiral = (source->flags & FBEAM_SINENOISE) != 0;
 	const int pieces = spiral ? SpiralPieces : Segments;
 
@@ -164,7 +154,6 @@ void DrawLayer(Layer& layer, BEAM* source, const Vector& start, const Vector& co
 	}
 }
 
-// A blue speck of it, falling slowly onto what's below, sparkling (its frames once over its life) and fading.
 void Speck(const Vector& origin, const Vector& velocity, float scale, float life)
 {
 	const int sprite = gEngfuncs.pEventAPI->EV_FindModelIndex(SpeckSprite);
@@ -184,7 +173,6 @@ void Speck(const Vector& origin, const Vector& velocity, float scale, float life
 	JhlSprite_PlayOnce(speck, life, 0.6f);
 }
 
-// A small scorch where it's burning a wall (not creatures), spaced out so they don't pile up.
 void Scorch(const pmtrace_t& hit, float now)
 {
 	if (hit.fraction >= 1 || now < g_NextScorch || (hit.endpos - g_LastScorch).Length() < ScorchSpacing)
@@ -205,8 +193,6 @@ void Scorch(const pmtrace_t& hit, float now)
 	g_NextScorch = now + ScorchInterval;
 }
 
-// Sets a keyed light (the same one each time: allocating a key gives it back cleared), on for @p life, fading by
-// @p decay units a second.
 void Light(int key, const Vector& origin, float radius, const color24& color, float life, float decay)
 {
 	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(key); light)
@@ -226,7 +212,6 @@ Vector Feet()
 	return player ? player->origin - Vector{0, 0, 24} : g_LastFeet;
 }
 
-// Now and then a spark of it leaking out of the barrel, flung out to the side.
 void Vent(const Vector& muzzle, float now)
 {
 	if (now < g_NextVent)
@@ -237,7 +222,6 @@ void Vent(const Vector& muzzle, float now)
 	Vector forward, right, up;
 	AngleVectors(gHUD.m_vecAngles, forward, right, up);
 
-	// Thrown off the gun, moving with it (the player's velocity), as a hornet's spit and the shells are.
 	const Vector velocity = right * Random(-90, 90) + up * Random(20, 90) - forward * Random(0, 40) + v_sim_vel;
 	Speck(muzzle, velocity, 0.06f, Random(0.4f, 0.7f));
 }
@@ -260,9 +244,6 @@ void JhlEgon_Update(BEAM* beam, BEAM* beam2, const pmtrace_t& hit)
 		return;
 	}
 
-	// It starts on the gun, where the engine starts it: in first person its view model's muzzle (the beam's own start
-	// is only set as it's drawn, so not yet on the first frame); in third person the engine's start, on the player
-	// model's gun (the view model isn't drawn, so its muzzle stays where it last was).
 	Vector start = beam->source;
 
 	if (cl_entity_t* viewModel = gEngfuncs.GetViewModel();
@@ -273,7 +254,6 @@ void JhlEgon_Update(BEAM* beam, BEAM* beam2, const pmtrace_t& hit)
 		return;
 	const Vector end = hit.endpos;
 
-	// A new beam, or a restarted clock: the pull starts on the hit point.
 	if (!g_Active || now < g_LastTime)
 	{
 		g_Lagged = end;
@@ -289,11 +269,8 @@ void JhlEgon_Update(BEAM* beam, BEAM* beam2, const pmtrace_t& hit)
 	g_LastTime = now;
 	g_LastHit = end;
 
-	// The pull follows the hit point, a little behind: it catches up when still.
 	g_Lagged = g_Lagged + (end - g_Lagged) * (1 - std::exp(-frametime / Bend));
 
-	// The curve leaves the gun toward where it was hitting and bends onto where it hits: its middle point halfway to
-	// the pull, kept within MaxBow of the straight line.
 	const Vector middle = (start + end) * 0.5f;
 	const float length = (end - start).Length();
 	Vector bow = (start + g_Lagged) * 0.5f - middle;
@@ -335,7 +312,6 @@ void JhlEgon_Stop()
 	Light(PlayerLightKey, g_LastFeet, PlayerLightRadius, PlayerLightColor, LightFade, PlayerLightRadius / LightFade);
 	Light(ImpactLightKey, g_LastImpactLight, ImpactLightRadius, ImpactLightColor, LightFade, ImpactLightRadius / LightFade);
 
-	// A few blue specks fizzling off where it was hitting, falling and fading.
 	for (int i = 0, count = gEngfuncs.pfnRandomLong(4, 6); i < count; ++i)
 	{
 		const Vector origin = g_LastHit + Vector{Random(-3, 3), Random(-3, 3), Random(-3, 3)};

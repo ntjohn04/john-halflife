@@ -37,15 +37,12 @@ struct Tracer
 	float Distance;
 	JhlTracerStyle Style;
 	double StartTime;
-	bool Hit = false; // Its head has reached the end (and thrown its speck).
+	bool Hit = false;
 };
 
-// A tracer's burning speck (ThrowSpeck): its path, worked out each frame from where and how it was thrown, so its two
-// sprites (outline and core) stay exactly together. vuser1 where, vuser2 how fast, fuser1 when, fuser2 how long it
-// lives, fuser3 where in its twirl it starts.
-constexpr float SpeckGravity = 160;		// Units/s², about a fifth of the world's: it drifts down.
+constexpr float SpeckGravity = 160;
 constexpr float SpeckTwirlRadius = 3;
-constexpr float SpeckTwirlSpeed = 13; // Radians a second: about 2 turns.
+constexpr float SpeckTwirlSpeed = 13;
 constexpr float SpeckFade = 0.5f;	  // Of its life, at the end.
 
 void SpeckThink(TEMPENTITY* ent, float frametime, float currenttime)
@@ -70,8 +67,6 @@ void ThrowSpeck(const Vector& hit, const Vector& direction, const JhlTracerStyle
 	if (sprite == 0)
 		return;
 
-	// The surface's facing, from a short trace across where it hit: the world and brush entities (walls, doors,
-	// crates), not models. A tracer that hit a creature buries itself; its blood is what shows there.
 	pmtrace_t tr;
 	gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(0, 1);
 	gEngfuncs.pEventAPI->EV_PushPMStates();
@@ -87,7 +82,6 @@ void ThrowSpeck(const Vector& hit, const Vector& direction, const JhlTracerStyle
 
 	const Vector normal = tr.plane.normal;
 
-	// Off the surface, up, and to one side along it, keeping a little of the tracer's way along it (a glancing skip).
 	Vector side = CrossProduct(normal, Vector{0, 0, 1});
 
 	if (side.Length() < 0.1f)
@@ -135,7 +129,6 @@ void ThrowSpeck(const Vector& hit, const Vector& direction, const JhlTracerStyle
 	}
 }
 
-// A machine gun fires about 15 a second and each lives well under a second.
 constexpr std::size_t MaxTracers = 64;
 
 std::vector<Tracer> g_Tracers;
@@ -144,10 +137,6 @@ double g_LastTime = 0;
 
 const JhlTracerStyle& JhlTracers_Style(JhlTracerKind kind)
 {
-	// The MP5's keeps the vanilla tracer, almost invisible in first person, and adds a faint pale orange streak: feedback
-	// on where its rounds go rather than a tracer round. The semi-automatics' are the same on every shot, the
-	// hard-hitting ones faster; the shotgun's on a few pellets a shot. The M249's are real tracer rounds, one in 3: a
-	// saturated red streak with a shorter, thinner white-hot core (less like a laser), mostly right out of the barrel.
 	static const JhlTracerStyle mp5{{255, 200, 120}, 0.2f, 1.1f, 100, 4000, 120};
 	static const JhlTracerStyle glock{{255, 200, 120}, 0.2f, 1.1f, 85, 4250, 120};
 	static const JhlTracerStyle heavy{{255, 200, 120}, 0.2f, 1.1f, 100, 5000, 120};
@@ -175,7 +164,6 @@ const JhlTracerStyle& JhlTracers_Style(JhlTracerKind kind)
 
 bool JhlTracersEnabled()
 {
-	// Found once: the engine finds a cvar by name by going down the list of them all, and this is asked a few times a shot.
 	static const cvar_t* const tracers = gEngfuncs.pfnGetCvarPointer("jhl_fx_tracers");
 	return JhlParticleSystemEnabled() && tracers && 0 != tracers->value;
 }
@@ -187,11 +175,9 @@ void JhlTracers_ParseNpcTracer(BufferReader& reader)
 	const auto kind = static_cast<JhlTracerKind>(reader.ReadByte());
 	const Vector muzzle = reader.ReadCoordVector();
 
-	// The vanilla one, but the M249's is replaced by its red tracer rounds.
 	if (kind != JhlTracerKind::M249 || !JhlTracersEnabled())
 		gEngfuncs.pEfxAPI->R_TracerEffect(start, end);
 
-	// The sniper rifle's (the male assassins') leaves its trace rather than a tracer.
 	if (JhlTracersEnabled() && kind == JhlTracerKind::Sniper)
 		JhlSniperTrace_Fire(muzzle, end, false);
 	else if (JhlTracersEnabled())
@@ -200,7 +186,6 @@ void JhlTracers_ParseNpcTracer(BufferReader& reader)
 
 Vector JhlTracers_MuzzleStart(int shooter, const Vector& start)
 {
-	// Further than this from the game's start, the attachment is stale or not a gun's.
 	constexpr float MuzzleNear = 96;
 
 	cl_entity_t* entity = shooter > 0 ? gEngfuncs.GetEntityByIndex(shooter) : nullptr;
@@ -225,7 +210,6 @@ bool IsLiquid(Vector position)
 	return contents == CONTENTS_WATER || contents == CONTENTS_SLIME || contents == CONTENTS_LAVA;
 }
 
-// Into water, a tracer stops about a foot under it (bullets' paths go through water).
 constexpr float WaterCutDepth = 12;
 
 Vector CutAtWater(const Vector& start, const Vector& end)
@@ -233,7 +217,6 @@ Vector CutAtWater(const Vector& start, const Vector& end)
 	if (!IsLiquid(end) || IsLiquid(start))
 		return end;
 
-	// The surface, between the last point out of it and the first in it (as bullet splashes find it).
 	Vector outside = start;
 	Vector inside = end;
 
@@ -256,10 +239,6 @@ Vector CutAtWater(const Vector& start, const Vector& end)
 
 namespace
 {
-// The sniper rifle's trace: not a tracer round, the faint pale line a heavy round leaves in the air, along all its path
-// (one beam, no seams), growing out at the round's speed and fading out over TraceLife; and for the first
-// HotLength units out of the barrel, hot: an orange streak with a white-hot core, cooling away from the barrel (in
-// HotPieces, end to end so they don't overlap), fading quicker; how hot varies shot to shot.
 constexpr float TraceSpeed = 5500;
 constexpr float TraceLife = 0.45f;
 const Vector TraceColor{220, 220, 215};
@@ -269,7 +248,7 @@ constexpr float TraceBrightness = 0.15f;
 constexpr float HotLengthMin = 120; // About 10 to 25 feet.
 constexpr float HotLengthMax = 300;
 constexpr float HeatMin = 0.25f;
-constexpr float HotLifeMin = 0.12f; // Hotter, longer: to HotLifeMin + HotLifeMore.
+constexpr float HotLifeMin = 0.12f;
 constexpr float HotLifeMore = 0.1f;
 constexpr int HotPieces = 3;
 constexpr float HotPieceBrightness[HotPieces] = {1, 0.6f, 0.3f};
@@ -280,7 +259,6 @@ const Vector HotCoreColor{255, 235, 200};
 constexpr float HotCoreWidth = 0.5f;
 constexpr float HotCoreBrightness = 0.9f;
 
-// Scoped, it starts this far out (from the eye, it would cut across the magnified view), without its hot start.
 constexpr float ScopedStart = 150;
 
 constexpr std::size_t MaxTraces = 4;
@@ -448,8 +426,6 @@ void JhlTracer_Fire(const Vector& muzzle, const Vector& hitEnd, const JhlTracerS
 
 	const Vector direction = path / distance;
 
-	// Made where it starts (the engine won't make a beam out of view, as for another player's shot behind you); the
-	// update places it from the next frame.
 	Vector from = start;
 	Vector to = start + direction * std::min(style.Length, distance);
 	BEAM* beam = gEngfuncs.pEfxAPI->R_BeamPoints(from, to, sprite,
@@ -476,7 +452,6 @@ void JhlTracer_Fire(const Vector& muzzle, const Vector& hitEnd, const JhlTracerS
 
 namespace
 {
-// Puts a beam between two distances down a tracer's path, at a brightness while it has any length.
 void PlaceBeam(BEAM* beam, const Tracer& tracer, float from, float to, float brightness, double time)
 {
 	beam->source = tracer.Start + tracer.Direction * from;
@@ -490,7 +465,6 @@ void PlaceBeam(BEAM* beam, const Tracer& tracer, float from, float to, float bri
 
 void JhlTracers_Update(double time)
 {
-	// A new map or a loaded game restarts the clock (and frees the beams).
 	if (time < g_LastTime)
 	{
 		g_Tracers.clear();
@@ -535,7 +509,6 @@ void JhlTracers_Update(double time)
 
 		PlaceBeam(tracer.Beam, tracer, tail, head, tracer.Style.Brightness, time);
 
-		// The core: centered on the streak, the same share of it whether it's whole or growing out or going in.
 		if (tracer.Core)
 		{
 			const float half = (head - tail) * std::min(1.f, tracer.Style.CoreLength / std::max(1.f, tracer.Style.Length)) * 0.5f;

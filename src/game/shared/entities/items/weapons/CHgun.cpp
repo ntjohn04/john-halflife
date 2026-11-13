@@ -54,7 +54,7 @@ void CHgun::Precache()
 	PrecacheModel(STRING(m_WorldModel));
 	PrecacheModel("models/p_hgun.mdl");
 
-	// johnhalflife: the spit it sprays as it fires (client ev_hldm.cpp).
+	// johnhalflife
 	PrecacheModel("sprites/hornet_spit.spr");
 
 	m_usHornetFire = PRECACHE_EVENT(1, "events/firehornet.sc");
@@ -118,13 +118,13 @@ void CHgun::PrimaryAttack()
 #ifndef CLIENT_DLL
 	UTIL_MakeVectors(m_pPlayer->pev->v_angle);
 
-	// johnhalflife: aimed at the crosshair (UTIL_JhlAimAtCrosshair).
+	// johnhalflife
 	const Vector vecSrc = m_pPlayer->GetGunPosition() + gpGlobals->v_forward * 16 + gpGlobals->v_right * 8 + gpGlobals->v_up * -12;
 	const Vector vecAngles = UTIL_JhlAimAtCrosshair(m_pPlayer, vecSrc, m_pPlayer->pev->v_angle);
 
 	CBaseEntity* pHornet = CBaseEntity::Create("hornet", vecSrc, vecAngles, m_pPlayer);
 
-	UTIL_MakeVectors(vecAngles); // Create stomps on globals, so remake.
+	UTIL_MakeVectors(vecAngles);
 
 	pHornet->pev->velocity = gpGlobals->v_forward * 300;
 
@@ -185,8 +185,6 @@ void CHgun::SecondaryAttack()
 
 	vecSrc = m_pPlayer->GetGunPosition() + gpGlobals->v_forward * 16 + gpGlobals->v_right * 8 + gpGlobals->v_up * -12;
 
-	// johnhalflife: the volley's middle aimed at the crosshair (UTIL_JhlAimAtCrosshair), every hornet of it parallel to
-	// that, so its spread is as it was, around the crosshair.
 	const Vector vecAngles = UTIL_JhlAimAtCrosshair(m_pPlayer, vecSrc, m_pPlayer->pev->v_angle);
 
 	m_iFirePhase++;

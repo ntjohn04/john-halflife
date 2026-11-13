@@ -32,7 +32,7 @@
 
 namespace sound
 {
-// johnhalflife: positions kept as plain floats in Channel (SoundDefs.h has no Vector).
+// johnhalflife
 static void StoreVector(const Vector& from, float to[3])
 {
 	to[0] = from.x;
@@ -149,8 +149,6 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 		return false;
 	}
 
-	// johnhalflife: Steam Half-Life's own mixing and room effects (jhl_snd_vanilla), from the start; the device's own
-	// rate to go back to.
 	m_VanillaCvar = gEngfuncs.pfnRegisterVariable("jhl_snd_vanilla", "1", FCVAR_ARCHIVE);
 	m_PreloadAllCvar = gEngfuncs.pfnRegisterVariable("jhl_perf_preloadsounds", "0", FCVAR_ARCHIVE);
 	m_VanillaMix = m_VanillaCvar->value != 0;
@@ -227,9 +225,7 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 		return false;
 	}
 
-	// johnhalflife (jhl_snd_vanilla): sounds come to the engine's 22050 Hz as they load (SoundCache); OpenAL takes them
-	// from there to the device's rate with its best sinc, as the system takes the engine's output (cleanly: nothing
-	// above 11 kHz).
+	// johnhalflife
 	m_SupportsResampler = alIsExtensionPresent("AL_SOFT_source_resampler") != AL_FALSE;
 
 	if (m_SupportsResampler)
@@ -274,8 +270,7 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 
 	alFilteri(m_Filter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
 
-	// johnhalflife: the engine's water rooms (14-16; 14 under water) lowpass the whole mix, the direct sound too (a
-	// five-tap average at 22050 Hz: about a tenth left by 4-5 kHz).
+	// johnhalflife
 	alGenFilters(1, &m_DirectFilter);
 	alFilteri(m_DirectFilter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
 	alFilterf(m_DirectFilter, AL_LOWPASS_GAINHF, VanillaLowpassHFGain);
@@ -291,7 +286,7 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 		return false;
 	}
 
-	// johnhalflife: the engine's software DSP rooms (jhl_snd_vanilla).
+	// johnhalflife
 	alGenEffects(m_VanillaReverbEffects.size(), m_VanillaReverbEffects.data());
 	alGenEffects(m_VanillaEchoEffects.size(), m_VanillaEchoEffects.data());
 
@@ -313,7 +308,7 @@ bool GameSoundSystem::Create(std::shared_ptr<spdlog::logger> logger)
 		m_VanillaRoomsWork = false;
 	}
 
-	// johnhalflife: the engine's rooms exactly, if OpenAL has its convolution effect; else the reverb and echo above.
+	// johnhalflife
 	if (m_VanillaRoomsWork && alIsExtensionPresent("AL_SOFTX_convolution_reverb"))
 	{
 		constexpr ALenum EffectConvolutionReverb = 0xA000;
@@ -397,9 +392,7 @@ void GameSoundSystem::HandleNetworkDataBlock(NetworkDataBlock& block)
 			m_PrecacheMap.push_back(m_SoundCache->FindName(fileName.get<std::string>().c_str()));
 		}
 
-		// johnhalflife: the map's long sounds (speeches, ambience) made ready while it loads, not the first time each
-		// plays (a scientist's 29 s speech stalled that frame); with jhl_perf_preloadsounds all of them, as the engine
-		// loads its precached sounds (in a fight, several short ones in one frame, read from disk).
+		// johnhalflife
 		if (MakeCurrent())
 		{
 			const bool all = m_PreloadAllCvar && m_PreloadAllCvar->value != 0;
@@ -425,7 +418,7 @@ void GameSoundSystem::Update()
 
 	++m_CurrentGameFrame;
 
-	// johnhalflife: sounds converted on another thread, handed to OpenAL, and those waiting for them started.
+	// johnhalflife
 	m_SoundCache->Poll();
 	StartPendingSounds();
 
@@ -438,13 +431,12 @@ void GameSoundSystem::Update()
 		}
 	}
 
-	// johnhalflife: the engine's sound switched on or off (jhl_snd_vanilla; its rooms follow in UpdateRoomEffect).
+	// johnhalflife
 	if (const bool vanillaMix = m_VanillaCvar->value != 0; m_VanillaMix != vanillaMix)
 	{
 		m_VanillaMix = vanillaMix;
 		ResetDevice();
 
-		// Sounds already loaded keep how they were loaded (they're playing) until the next map load clears the cache.
 		m_SoundCache->SetEngineRate(vanillaMix);
 
 		for (auto& channel : m_Channels)
@@ -589,9 +581,7 @@ void GameSoundSystem::StartSound(int entityIndex, int channelIndex, SoundData&& 
 		return;
 	}
 
-	// johnhalflife: a sound or a sentence not ready (a sound or a word not loaded, or not yet at its pitch) started when
-	// its work on another thread is done, a frame or a few later (a scripted speech's first play took 20-30 ms in the
-	// frame); stopped meanwhile, not at all. Only playing is put off: the game goes on as it would.
+	// johnhalflife
 	if (pitch != 0)
 	{
 		PendingStart start{entityIndex, channelIndex, SoundIndex{}, SIZE_MAX, origin, volume, attenuation, pitch, flags,
@@ -706,7 +696,6 @@ void GameSoundSystem::StartPendingSounds()
 		return;
 	}
 
-	// Started once ready; given up after a few seconds (the file couldn't be read).
 	constexpr auto GiveUp = std::chrono::seconds(3);
 	const auto now = std::chrono::steady_clock::now();
 	std::vector<PendingStart> pendingStarts = std::move(m_PendingStarts);
@@ -729,8 +718,6 @@ void GameSoundSystem::StartPendingSounds()
 
 bool GameSoundSystem::IsReady(const PendingStart& start, bool request)
 {
-	// As played: a sound at its pitch with the engine's mixing; a word at the sentence's pitch with its own added
-	// (SentencesSystem::SetSentenceWord).
 	const auto ready = [&](SoundIndex index, int pitch)
 	{
 		const int neededPitch = m_VanillaMix && pitch != PITCH_NORM ? pitch : PITCH_NORM;
@@ -856,13 +843,13 @@ void GameSoundSystem::BuildDeviceAttributes(std::vector<ALCint>& attribs)
 {
 	attribs.clear();
 
-	// johnhalflife: 2, the second for the engine's room echo (jhl_snd_vanilla); the SDK's rooms only need 1.
+	// johnhalflife
 	attribs.insert(attribs.end(), {ALC_MAX_AUXILIARY_SENDS, 2});
 
-	// johnhalflife: every sound playing takes a source, and OpenAL Soft allows 256 unless asked for more.
+	// johnhalflife
 	attribs.insert(attribs.end(), {ALC_MONO_SOURCES, RequestedMonoSources, ALC_STEREO_SOURCES, RequestedStereoSources});
 
-	// johnhalflife: the engine mixes at 22050 Hz, in plain stereo, clipping (CLIP16) where OpenAL would limit.
+	// johnhalflife
 	attribs.insert(attribs.end(), {ALC_FREQUENCY, m_VanillaMix ? VanillaMixFrequency : m_DefaultFrequency});
 
 	if (m_SupportsOutputMode)
@@ -885,8 +872,7 @@ void GameSoundSystem::BuildDeviceAttributes(std::vector<ALCint>& attribs)
 
 void GameSoundSystem::UpdateDeviceRate()
 {
-	// johnhalflife: the rate the device really mixes at (OpenAL may not give the one asked for), for sounds at the
-	// engine's rate to be converted to.
+	// johnhalflife
 	ALCint frequency = 0;
 	alcGetIntegerv(m_Device.get(), ALC_FREQUENCY, 1, &frequency);
 
@@ -918,7 +904,7 @@ void GameSoundSystem::ResetDevice()
 
 void GameSoundSystem::AddHRTFAttributes(std::vector<ALCint>& attribs)
 {
-	// johnhalflife: never with the engine's mixing, which has none (and HRTF needs 44.1 or 48 kHz).
+	// johnhalflife
 	const bool enabled = m_CachedHRTFEnabled && !m_VanillaMix;
 
 	ALCint numHRTF;
@@ -1001,13 +987,11 @@ Channel* GameSoundSystem::CreateChannel()
 {
 	Channel channel;
 
-	// Clear errors left by earlier calls so a failure here is this one's.
 	alGetError();
 
 	channel.Source = OpenALSource::Create();
 
-	// johnhalflife: out of sources, the sound played on no source at all and was silent, and so was every sound after
-	// it until enough of those playing ended. As the engine did with its channels full, one about to end is taken over.
+	// johnhalflife
 	if (alGetError() != AL_NO_ERROR || !channel.Source.IsValid())
 	{
 		channel.Source = OpenALSource{};
@@ -1016,7 +1000,7 @@ Channel* GameSoundSystem::CreateChannel()
 
 	UpdateSourceEffect(channel);
 
-	// johnhalflife: its resampler now; its spatialization as it's set up.
+	// johnhalflife: its resampler now
 	if (m_SupportsResampler)
 	{
 		alSourcei(channel.Source.Id, AL_SOURCE_RESAMPLER_SOFT,
@@ -1028,9 +1012,7 @@ Channel* GameSoundSystem::CreateChannel()
 	return &m_Channels.back();
 }
 
-// johnhalflife: OpenAL Soft 1.22's stereo panning (plain stereo, ALC_STEREO_BASIC_SOFT), measured by rendering a mono
-// source on a loopback device: for a source 0-60 degrees to one side, its near and far ear's gain (past 60, all near).
-// Inverted, it plays the engine's own ear volumes exactly.
+// johnhalflife: openAL Soft 1
 constexpr float StereoPanGains[61][2] = {
 	{0.59566f, 0.59566f}, {0.60872f, 0.58254f}, {0.62170f, 0.56936f}, {0.63460f, 0.55614f}, {0.64740f, 0.54287f},
 	{0.66011f, 0.52958f}, {0.67270f, 0.51627f}, {0.68518f, 0.50294f}, {0.69753f, 0.48962f}, {0.70974f, 0.47630f},
@@ -1079,7 +1061,6 @@ void GameSoundSystem::GetVanillaEarVolumes(const Channel& channel, float& left, 
 	left = channel.Volume;
 	right = channel.Volume;
 
-	// Its own sounds, and sounds without attenuation (both played relative), full in both ears.
 	if (!channel.Relative)
 	{
 		const Vector toSound = LoadVector(channel.Origin) - LoadVector(m_ListenerOrigin);
@@ -1109,8 +1090,6 @@ void GameSoundSystem::ApplyVanillaSpatialization(Channel& channel)
 
 	if (nearEar > 0)
 	{
-		// The angle whose far to near ear ratio is this one's (falling from 1 at 0 to 0 at 60), then the gain for the
-		// near ear's volume.
 		const float ratio = farEar / nearEar;
 		int i = 0;
 
@@ -1136,8 +1115,6 @@ void GameSoundSystem::ApplyVanillaSpatialization(Channel& channel)
 	alSourcef(channel.Source.Id, AL_MAX_GAIN, 4);
 	alSourcef(channel.Source.Id, AL_GAIN, gain);
 
-	// The engine's rooms take its mix in mono, (left + right) / 2, whatever the panning; the effect send carries the
-	// source's gain, which the panning has raised (a sound to one side, up to twice what goes into the engine's room).
 	const float sendGain = gain > 0 ? std::min((left + right) / 2 / gain, 1.f) : 0.f;
 
 	if (std::abs(sendGain - channel.SendGain) > 0.001f)
@@ -1217,8 +1194,7 @@ float GameSoundSystem::GetChannelTimeLeft(const Channel& channel) const
 
 Channel* GameSoundSystem::StealChannel()
 {
-	// johnhalflife: of the one-shot sounds playing (never a sentence, nor a looping sound: nothing would start it again),
-	// one that can't be heard, else the one closest to ending.
+	// johnhalflife
 	Channel* best = nullptr;
 	bool bestSilent = false;
 	float bestTimeLeft = 0;
@@ -1242,7 +1218,6 @@ Channel* GameSoundSystem::StealChannel()
 		}
 	}
 
-	// Said at most every few seconds, with what's playing, so a log shows what filled them.
 	++m_StolenSinceWarning;
 
 	if (const float now = gEngfuncs.GetClientTime(); now >= m_NextStealWarning || now < m_NextStealWarning - 10)
@@ -1337,7 +1312,7 @@ void GameSoundSystem::PrintChannels()
 		static_cast<int>(m_Channels.size()), looping, silent, monoSources + stereoSources);
 	Con_Printf("%s\n", DescribeChannels(m_Channels.size()).c_str());
 
-	// johnhalflife: how the device is really mixing, and what the loudest sounds are given.
+	// johnhalflife
 	ALCint frequency = 0, outputMode = 0, limiter = -1, hrtf = 0;
 	alcGetIntegerv(m_Device.get(), ALC_FREQUENCY, 1, &frequency);
 	if (m_SupportsOutputMode)
@@ -1498,7 +1473,7 @@ bool GameSoundSystem::SetupChannel(Channel& channel, int entityIndex, int channe
 	alSourcei(channel.Source.Id, AL_SOURCE_RELATIVE, isRelative ? AL_TRUE : AL_FALSE);
 	alSourcei(channel.Source.Id, AL_LOOPING, AL_FALSE);
 
-	// johnhalflife: for the engine's spatialization (a sentence sets its own word's volume next).
+	// johnhalflife
 	StoreVector(origin, channel.Origin);
 	channel.Volume = volume;
 	channel.Attenuation = attenuation;
@@ -1515,8 +1490,7 @@ bool GameSoundSystem::SetupChannel(Channel& channel, int entityIndex, int channe
 			{
 				auto& soundData = *m_SoundCache->GetSound(sound);
 
-				// johnhalflife (jhl_snd_vanilla): off its own pitch, the sound pitched as the engine pitches it, played
-				// at that pitch's own rate.
+				// johnhalflife
 				channel.BufferPitch = PITCH_NORM;
 				ALuint buffer = soundData.Buffer.Id;
 
@@ -1585,7 +1559,7 @@ bool GameSoundSystem::SetupChannel(Channel& channel, int entityIndex, int channe
 
 				// if (offset == 0)
 				{
-					// johnhalflife: the buffer it plays, which with the engine's mixing may be a pitched version.
+					// johnhalflife
 					ALint otherBuffer = static_cast<ALint>(soundData.Buffer.Id);
 					alGetSourcei(otherChannel.Source.Id, AL_BUFFER, &otherBuffer);
 
@@ -1658,7 +1632,7 @@ bool GameSoundSystem::AlterChannel(int entityIndex, int channelIndex, const Soun
 	if ((flags & SND_CHANGE_PITCH) != 0)
 	{
 		channelToAlter.Pitch = pitch;
-		// johnhalflife: relative to the pitch its buffer was made at (jhl_snd_vanilla), cleanly from there.
+		// johnhalflife
 		alSourcef(channelToAlter.Source.Id, AL_PITCH, pitch / static_cast<float>(channelToAlter.BufferPitch));
 	}
 
@@ -1689,7 +1663,7 @@ void GameSoundSystem::UpdateRoomEffect()
 			roomType = 0;
 		}
 
-		// johnhalflife: the engine's water rooms lowpass the whole mix, its effects too (jhl_snd_vanilla).
+		// johnhalflife
 		float hfGain = isUnderwater ? UnderwaterLowPassHFGain : NormalLowPassHFGain;
 
 		if (m_VanillaRoomsWork && m_VanillaCvar->value != 0 && VanillaLowpass(roomType))
@@ -1706,7 +1680,7 @@ void GameSoundSystem::UpdateRoomEffect()
 			m_PreviousHFGain = -1;
 		}
 
-		// johnhalflife: the engine's rooms or the SDK's, switched as the cvar changes.
+		// johnhalflife
 		const bool vanilla = m_VanillaRoomsWork && m_VanillaCvar->value != 0;
 
 		if (m_PreviousVanilla != vanilla)
@@ -1722,8 +1696,7 @@ void GameSoundSystem::UpdateRoomEffect()
 
 			m_PreviousRoomType = roomType;
 
-			// johnhalflife: the engine's room exactly, all on the first send (the last room's tail cut off, as the engine
-			// cut its delay lines off changing room).
+			// johnhalflife
 			bool convolution = vanilla && m_ConvolutionEffect != 0;
 
 			if (convolution && !ReplaceRoomSlot(GetVanillaResponse(roomType)))
@@ -1799,8 +1772,7 @@ void GameSoundSystem::SetDirectLowpass(bool lowpass)
 
 void GameSoundSystem::UpdateSourceEffect(Channel& channel)
 {
-	// johnhalflife: on the engine's exact rooms, each sound in at its share of the engine's mono mix (a filter's
-	// settings are copied as it's attached).
+	// johnhalflife
 	alFilterf(m_Filter, AL_LOWPASS_GAIN, m_ConvolutionRoom ? channel.SendGain : 1.f);
 
 	alSource3i(channel.Source.Id, AL_AUXILIARY_SEND_FILTER, static_cast<ALint>(m_AuxiliaryEffectSlot), 0, m_Filter);
@@ -1827,7 +1799,6 @@ bool GameSoundSystem::ReplaceRoomSlot(ALuint response)
 
 	if (response != 0)
 	{
-		// The response first: 1.22 refuses one on a slot already playing its effect.
 		alAuxiliaryEffectSloti(slot, AL_BUFFER, static_cast<ALint>(response));
 		alAuxiliaryEffectSloti(slot, AL_EFFECTSLOT_EFFECT, static_cast<ALint>(m_ConvolutionEffect));
 	}
@@ -1892,9 +1863,6 @@ ALuint GameSoundSystem::GetVanillaResponse(int roomType)
 			return 0;
 		}
 
-		// At the device's rate (OpenAL converting it takes a tenth of a second for the longest, each time it's set),
-		// scaled so the effect gives the engine's: a filter's response at the device's rate is 22050 / rate of it at
-		// 22050, and the effect pans its mono output to the front centre, at the gain a source there plays at.
 		m_SoundCache->SetDeviceRate(rate);
 		response = m_SoundCache->ToDeviceRate(response, 1, -1, -1);
 
@@ -2000,7 +1968,7 @@ void GameSoundSystem::Spatialize(Channel& channel, int messagenum)
 		}
 	}
 
-	// johnhalflife: the engine's spatialization follows the listener too, every frame.
+	// johnhalflife
 	if (m_VanillaMix)
 	{
 		ApplyVanillaSpatialization(channel);

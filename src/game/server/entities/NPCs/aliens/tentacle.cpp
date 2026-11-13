@@ -64,10 +64,6 @@ public:
 
 	void HitTouch(CBaseEntity* pOther);
 
-	/**
-	 *	@brief johnhalflife (jhl_fx_particlesystem): a strike's effects at @p position: 0 a light tap, 1 a slam, 2 its
-	 *	killing swing's.
-	 */
 	void JhlTentacleImpact(const Vector& position, int strength);
 
 	float HearingSensitivity() override { return 2.0; }
@@ -146,8 +142,6 @@ const char* CTentacle::pHitDirt[] =
 		"player/pl_dirt4.wav",
 };
 
-// johnhalflife: its strikes on dirt (vanilla's were the player's dirt footsteps): concrete breaking, pitched a little
-// down to sound duller, earthier.
 const char* CTentacle::pJhlSlamDirt[] =
 	{
 		"debris/concrete1.wav",
@@ -884,8 +878,6 @@ void CTentacle::HandleAnimEvent(MonsterEvent_t* pEvent)
 		}
 		gpGlobals->force_retouch++;
 
-		// johnhalflife: the slam's weight: what it hits thrown up (sparks off metal, dust and clods off dirt; the
-		// client's, by the floor's material), a crater where it lands, a shake, harder for its killing swing.
 		JhlTentacleImpact(vecSrc, m_iHitDmg >= 200 ? 2 : 1);
 	}
 	break;
@@ -920,7 +912,6 @@ void CTentacle::HandleAnimEvent(MonsterEvent_t* pEvent)
 		case TE_NONE:
 			break;
 		case TE_DIRT:
-			// johnhalflife: as its slams, quieter (as the silo's taps are its strikes, quieter), a touch higher.
 			if (UTIL_JhlParticleSystem())
 				EmitAmbientSound(vecSrc, RANDOM_SOUND_ARRAY(pJhlSlamDirt), flVol, ATTN_NORM, 0, RANDOM_LONG(88, 96));
 			else
@@ -1017,7 +1008,6 @@ void CTentacle::JhlTentacleImpact(const Vector& position, int strength)
 	WRITE_BYTE(strength);
 	MESSAGE_END();
 
-	// Taps only sound and puff: they come every second or two as it searches.
 	if (strength == 0)
 		return;
 

@@ -35,9 +35,7 @@ public:
 
 	void Spawn() override;
 
-	// johnhalflife: neither carried to the next map nor saved. The grapple doesn't save which tip is its own, so one
-	// carried or loaded was left behind, flying or latched on for good, the client's tongue drawn to it
-	// (jhl_grapple.cpp) from the gun until the game was restarted.
+	// johnhalflife
 	int ObjectCaps() override { return (CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION) | FCAP_DONT_SAVE; }
 
 	void FlyThink();
@@ -48,7 +46,7 @@ public:
 
 	TargetClass ClassifyTarget(CBaseEntity* pTarget);
 
-	// johnhalflife: its player's grapple isn't out or isn't firing it (a save made before ObjectCaps above).
+	// johnhalflife
 	bool IsOrphaned();
 
 	void SetPosition(const Vector& vecOrigin, const Vector& vecAngles, CBaseEntity* pOwner);

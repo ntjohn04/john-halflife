@@ -19,24 +19,21 @@
 #include <unordered_map>
 #include <vector>
 
-// johnhalflife: the map being played, read from its BSP file (version 30, Blue Shift's too) for what the engine doesn't
-// hand the client: its faces as polygons, their texture mapping and texture names, its models and entity keys.
-
 struct JhlBspTexinfo
 {
-	float Vecs[2][4]; // s and t: dot(point, Vecs[i]) + Vecs[i][3], in texels.
+	float Vecs[2][4];
 	int Miptex;
 	int Flags;
 };
 
 struct JhlBspFace
 {
-	Vector Normal; // Facing out of the face's front, in its model's coordinates.
+	Vector Normal;
 	float Dist = 0;
 	int Texinfo = -1;
-	std::vector<Vector> Points; // Its polygon, in its model's coordinates; empty if the face was unreadable.
-	unsigned char Styles[4]{255, 255, 255, 255}; // Its light styles, 255 none; its lightmaps one after another.
-	int LightOffset = -1;						  // Its first lightmap in Lighting, -1 none.
+	std::vector<Vector> Points;
+	unsigned char Styles[4]{255, 255, 255, 255};
+	int LightOffset = -1;
 };
 
 struct JhlBspModel
@@ -51,23 +48,13 @@ struct JhlBsp
 	std::vector<JhlBspFace> Faces;
 	std::vector<JhlBspTexinfo> Texinfo;
 	std::vector<std::string> TextureNames; // By miptex.
-	std::vector<unsigned char> Lighting;  // The lightmaps: red, green, blue, a sample each 16 texels.
+	std::vector<unsigned char> Lighting;
 	std::vector<JhlBspModel> Models;	   // 0 is the world, then *1 ...
 	std::vector<std::unordered_map<std::string, std::string>> Entities;
 
-	/**
-	 *	@brief The name of a face's texture ("" if unknown).
-	 */
 	const std::string& TextureName(const JhlBspFace& face) const;
 };
 
-/**
- *	@brief The map (as gEngfuncs.pfnGetLevelName names it), read once and kept until another is asked for; null if it
- *	can't be read.
- */
 const JhlBsp* JhlBsp_Get(const char* mapName);
 
-/**
- *	@brief Three numbers from an entity key ("origin", "angles").
- */
 Vector JhlBsp_ParseVector(const std::string& text);

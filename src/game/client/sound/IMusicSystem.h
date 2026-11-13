@@ -19,15 +19,13 @@
 
 namespace sound
 {
-/**
- *	@brief johnhalflife: what's playing, for saving it with the game (jhl_music.cpp).
- */
+// johnhalflife: @brief johnhalflife
 struct MusicState
 {
 	std::string FileName; // Empty: nothing playing.
 	bool Looping = false;
-	bool Paused = false; // By the map (music pause), not the game being paused.
-	float Position = 0;	 // Seconds into the track, as heard.
+	bool Paused = false;
+	float Position = 0;
 	float FadeRemaining = 0;
 	float FadeDuration = 0;
 };
@@ -46,9 +44,7 @@ struct IMusicSystem
 
 	virtual MusicState GetState() = 0;
 
-	/**
-	 *	@brief johnhalflife: plays a track from a point, as it was saved (restarting it even if it's already playing).
-	 */
+	// johnhalflife: @brief johnhalflife
 	virtual void PlayFrom(const MusicState& state) = 0;
 };
 }

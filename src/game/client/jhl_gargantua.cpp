@@ -37,9 +37,6 @@ float Random(float low, float high)
 	return gEngfuncs.pfnRandomFloat(low, high);
 }
 
-// Its flames: lit as the RPG rocket's motor is (RocketGlow), flickering a frame at a time, on each hand (its
-// attachments 1 and 2, the flames' ends) and, dimmer, where each lands; kept while the flames last (they're sent every
-// tenth of a second; a little longer than that, they've gone).
 constexpr int FlameLightKey = 24576; // + its index * 4 + which.
 constexpr float FlameHandRadius = 180;
 constexpr float FlameHitRadius = 150;
@@ -47,15 +44,11 @@ constexpr float FlameFlicker = 0.2f;
 constexpr color24 FlameLightColor{255, 150, 60};
 constexpr float FlameKept = 0.2f;
 
-// And a hot core down the middle of each (its flames are two layers of xbeam3, 24 units wide): the same sprite, the
-// same length, from its hand to where it lands, much thinner and paler, faint (additive: it adds up fast), scrolling
-// faster.
 constexpr float FlameCoreWidth = 9;
 constexpr float FlameCoreBrightness = 0.4f;
 constexpr float FlameCoreSpeed = 3.5f;
 constexpr float FlameCoreColor[3] = {1, 0.88f, 0.7f};
 
-// Where they land: a few embers each time (rising and falling, orange), and now and then a little dark heat smoke.
 constexpr int FlameEmbersMin = 1;
 constexpr int FlameEmbersMax = 3;
 constexpr float FlameSmokeChance = 0.4f;
@@ -64,7 +57,7 @@ struct Flames
 {
 	int Index = 0;
 	float Last = -100;
-	Vector Hands[2]; // Where its flames start (its hands), as the server last had them.
+	Vector Hands[2];
 	Vector Hits[2];
 	bool Hit[2]{};
 	BEAM* Cores[2]{};
@@ -72,8 +65,6 @@ struct Flames
 
 std::vector<Flames> g_Flames;
 
-// Its eye's glow (gargeye1, red, (214,33,33) at its brightest; kept on its head, its attachment 0, brightening as it
-// attacks): lit the same, by how bright it is, a little flickering.
 constexpr int EyeLightKey = 36864; // + its index.
 constexpr float EyeLightRadiusMin = 70;
 constexpr float EyeLightRadiusMax = 200;
@@ -89,8 +80,6 @@ struct Eye
 
 std::vector<Eye> g_Eyes;
 
-// Its stomp: each stretch it covered between the server's moves, gone along smoothly over that time; a light low over
-// the floor at its head (red, as its glow), and the ground torn up every StompKickSpacing along it.
 constexpr int StompLightKey = 32768; // + its index.
 constexpr float StompLightRadius = 200;
 constexpr float StompLightFlicker = 0.15f;
@@ -233,7 +222,6 @@ void JhlGargantua_Track(cl_entity_t* ent, const char* modelname)
 
 	const float now = gEngfuncs.GetClientTime();
 
-	// Its eye's glow, following its gargantua: how bright it is (hidden when out, so not added).
 	if (modelname && 0 == std::strcmp(modelname, "sprites/gargeye1.spr") && ent->curstate.rendermode == kRenderGlow &&
 		ent->curstate.aiment > 0)
 	{
@@ -254,8 +242,6 @@ void JhlGargantua_Track(cl_entity_t* ent, const char* modelname)
 	if (g_Flames.empty())
 		return;
 
-	// Gone out (or a new map's clock); their cores die by themselves (kept on a frame at a time; by now they may have
-	// been freed and used again, so they're left alone).
 	std::erase_if(g_Flames, [&](const Flames& f)
 		{ return now - f.Last > FlameKept || now < f.Last; });
 
@@ -267,7 +253,6 @@ void JhlGargantua_Track(cl_entity_t* ent, const char* modelname)
 
 	for (int i = 0; i < 2; ++i)
 	{
-		// Its hands where the server last had them; moved onto them as drawn once it's drawn (JhlGargantua_Drawn).
 		Vector hand = it->Hands[i];
 		FlameLight(FlameLightKey + ent->index * 4 + i, hand, FlameHandRadius);
 
@@ -287,7 +272,6 @@ void JhlGargantua_Track(cl_entity_t* ent, const char* modelname)
 
 		if (core)
 		{
-			// As its flames are drawn: from where it lands to its hand, fading in from nothing there (BEAM_FSHADEIN).
 			core->source = it->Hits[i];
 			core->target = hand;
 			core->flags |= FBEAM_SHADEIN;
@@ -305,7 +289,6 @@ void JhlGargantua_Drawn(cl_entity_t* ent)
 
 	const float now = gEngfuncs.GetClientTime();
 
-	// Its eye's light, on its head as just drawn, while its glow's shown (lately added; or a new map's clock).
 	std::erase_if(g_Eyes, [&](const Eye& e)
 		{ return now - e.Last > 0.2f || now < e.Last; });
 
@@ -336,8 +319,6 @@ void JhlGargantua_Drawn(cl_entity_t* ent)
 
 	for (int i = 0; i < 2; ++i)
 	{
-		// Its hands as just drawn (its flames' ends, attachments 1 and 2, which its flames follow, its arms blending up
-		// into the attack over a moment while the server's are already up), if anywhere near where the server had them.
 		const Vector& hand = ent->attachment[i + 1];
 
 		if (hand == g_vecZero || (hand - it->Hands[i]).Length() > 200)
@@ -353,16 +334,12 @@ void JhlGargantua_Drawn(cl_entity_t* ent)
 	}
 }
 
-// The pit worm's eye (its attachment 0; pit_worm_up.mdl): lit its beam's green, dim while open (skin 0), out as it
-// blinks (skins 1-5), blazing while it fires (the server marks its renderamt 1: COFPitWormUp::ShootBeam), flickering:
-// a light on the pit around it (its eye hangs in the open middle of it: a small one lit nothing), and one on models,
-// so its own head glows (as vanilla's while it fires, TE_ELIGHT).
 constexpr int PitWormEyeKey = 40960; // + its index.
 constexpr float PitWormEyeDim = 220;
 constexpr float PitWormEyeBlazing = 480;
-constexpr float PitWormEyeModelDim = 50;		// Small, so it lights its face, not its body below.
+constexpr float PitWormEyeModelDim = 50;
 constexpr float PitWormEyeModelBlazing = 90;
-constexpr float PitWormEyeAhead = 24;		// A little ahead of its eye, out of its head.
+constexpr float PitWormEyeAhead = 24;
 constexpr float PitWormEyeFlicker = 0.1f;
 constexpr color24 PitWormEyeColor{90, 255, 110};
 
@@ -399,8 +376,6 @@ void JhlPitWorm_Drawn(cl_entity_t* ent)
 	}
 }
 
-// The gene worm's eyes (geneworm.mdl: its attachments 3, its left, and 2, its right): lit yellow, each out once shot
-// out (its skin: 1 its left, 2 its right, 3 both), a light on the cavern around them and a small one on its face.
 constexpr int GeneWormEyeKey = 45056; // + its index * 2 + which.
 constexpr float GeneWormEyeRadius = 260;
 constexpr float GeneWormEyeModelRadius = 70;
@@ -448,9 +423,6 @@ void JhlGeneWorm_Drawn(cl_entity_t* ent)
 	}
 }
 
-// The Gonarch's spit (bigmomma.cpp's CBMortar, mommaspit.spr): white droplets falling away from it as it flies, as a
-// flying gib's blood drips (client_gibs.cpp's EmitBloodTrail), every GonarchDropSpacing along its path (the engine's
-// palette's white, 254, and a white a little grey, 15), on top of its own sprays.
 constexpr float GonarchDropSpacing = 8;
 constexpr int GonarchDropsMostAFrame = 6;
 constexpr int GonarchDropColors[] = {254, 254, 15};
@@ -541,7 +513,6 @@ void JhlGargantua_ParseStomp(BufferReader& reader)
 		return;
 	}
 
-	// On from where its head had got to (it may not have reached the last stretch's end yet).
 	it->From = from;
 	it->To = to;
 	it->Start = now;
@@ -619,9 +590,6 @@ void JhlGargantua_Reset()
 	g_Stomps.clear();
 }
 
-// johnhalflife: a voltigore's charge: the bolt it holds between its arms as it charges (COFChargedBolt,
-// blueflare2.spr, tagged renderamt 254 until it's thrown) lit, its beams' purple, already sizable as it starts (the
-// charge is short) and growing quickly, easing, to VoltigoreLightMax over VoltigoreGrowTime, flickering a little.
 constexpr int VoltigoreLightKey = 61440; // + its index.
 constexpr float VoltigoreLightMin = 90;
 constexpr float VoltigoreLightMax = 150;

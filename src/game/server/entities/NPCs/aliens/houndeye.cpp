@@ -83,8 +83,6 @@ public:
 
 	bool HasAlienGibs() override { return true; }
 
-	// johnhalflife: its corpse gibs from 60 bullet damage: a point-blank double shotgun blast, 8 9mm rounds, 2 from the
-	// .357.
 	float JhlCorpseGibDamage() override { return 60; }
 
 	bool CanRecruit(CSquadMonster* recruit) override
@@ -569,7 +567,6 @@ void CHoundeye::SonicAttack()
 	WRITE_BYTE(0);	 // speed
 	MESSAGE_END();
 
-	// johnhalflife: a strand on each blast circle, a light in its color, and a light shake for those in reach.
 	if (UTIL_JhlParticleSystem())
 	{
 		const Vector center = pev->origin + Vector(0, 0, 16);
@@ -1262,8 +1259,6 @@ public:
 
 	bool HasAlienGibs() override { return true; }
 
-	// johnhalflife: its corpse gibs from 60 bullet damage: a point-blank double shotgun blast, 8 9mm rounds, 2 from the
-	// .357.
 	float JhlCorpseGibDamage() override { return 60; }
 
 	bool KeyValue(KeyValueData* pkvd) override;

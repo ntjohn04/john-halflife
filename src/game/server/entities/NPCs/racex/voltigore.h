@@ -151,7 +151,7 @@ public:
 	EHANDLE m_pBeam[VOLTIGORE_BEAM_COUNT];
 	int m_iBeams;
 
-	// johnhalflife: a strand on each charging beam (UTIL_JhlBeamStrand). Not saved: beams are temporary.
+	// johnhalflife
 	EHANDLE m_pStrands[VOLTIGORE_BEAM_COUNT];
 
 	float m_flNextBeamAttackCheck;

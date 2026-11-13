@@ -90,7 +90,7 @@ void CRpgRocket::Precache()
 	PrecacheModel("models/rpgrocket.mdl");
 	m_iTrail = PrecacheModel("sprites/smoke.spr");
 
-	// johnhalflife: its motor's glow, drawn by the client (RocketGlow).
+	// johnhalflife
 	PrecacheModel("sprites/hotglow.spr");
 	PrecacheModel("sprites/glow02.spr");
 	PrecacheSound("weapons/rocket1.wav");
@@ -102,9 +102,6 @@ void CRpgRocket::IgniteThink()
 
 	pev->movetype = MOVETYPE_FLY;
 
-	// johnhalflife: its motor's glow and light drawn by the client instead of the engine's (EF_LIGHT, a big flat white
-	// flare and light, gone at once at burnout): tagged renderamt 1 while it burns, 2 once it's burnt out (RocketGlow;
-	// renderamt does nothing for a model drawn normally).
 	const bool jhl = UTIL_JhlParticleSystem();
 
 	if (jhl)
@@ -116,8 +113,6 @@ void CRpgRocket::IgniteThink()
 	EmitSound(CHAN_VOICE, "weapons/rocket1.wav", 1, 0.5);
 
 	// rocket trail
-	// johnhalflife: the client lays smoke along its path instead (RocketGlow): a follow beam only adds light, and drawn in
-	// straight pieces it showed seams and bright overlaps where it turned.
 	if (!jhl)
 	{
 		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
@@ -132,7 +127,7 @@ void CRpgRocket::IgniteThink()
 		WRITE_BYTE(255);		 // r, g, b
 		WRITE_BYTE(255);		 // brightness
 
-		MESSAGE_END(); // move PHS/PVS data sending into here (SEND_ALL, SEND_PVS, SEND_PHS)
+		MESSAGE_END();
 	}
 
 	m_flIgniteTime = gpGlobals->time;

@@ -219,7 +219,6 @@ void CMonsterMaker::MakeMonster()
 
 	for (int i = 0; i < found; ++i)
 	{
-		// johnhalflife (jhl_fx_keepcorpses): a corpse kept that vanilla would have faded makes way.
 		if (auto monster = pList[i]->MyMonsterPointer(); !monster || !monster->JhlMakeRoom())
 		{
 			++count;

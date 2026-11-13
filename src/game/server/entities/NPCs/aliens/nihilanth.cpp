@@ -39,17 +39,10 @@ public:
 	void TeleportInit(CNihilanth* pOwner, CBaseEntity* pEnemy, CBaseEntity* pTarget, CBaseEntity* pTouch);
 	void GreenBallInit();
 
-	/**
-	 *	@brief johnhalflife: plays a green ball's exit1.spr (25 frames) at 10 fps, as the teleport balls do (vanilla's
-	 *	stay on the first frame).
-	 */
+	// johnhalflife: @brief johnhalflife
 	void GreenBallThink();
 
-	/**
-	 *	@brief johnhalflife: where a zap ball's zap hit or it burst: a big blue-violet light shrinking away over 1.5 s,
-	 *	and sparks by what it hit (a player whose suit lost charge to it 2-3 showers, a player it went straight into
-	 *	or a creature none, a wall one half the time).
-	 */
+	// johnhalflife: @brief johnhalflife
 	void ZapImpactEffects(const Vector& position, CBaseEntity* hit, float armorBefore);
 	void ZapInit(CBaseEntity* pEnemy);
 
@@ -178,11 +171,9 @@ public:
 	float m_flMinZ;
 	float m_flMaxZ;
 
-	// johnhalflife: when it reached the top dying, for the rumble building after (DyingThink). Not saved: 0 again on a
-	// load just restarts the build.
 	float m_flJhlDeadTime = 0;
-	float m_flJhlNextFlash = 0; // The next of the finale's extra flashes.
-	static constexpr float JhlFinaleTime = 4; // How long its finale's flashes and rain go on.
+	float m_flJhlNextFlash = 0;
+	static constexpr float JhlFinaleTime = 4;
 
 	Vector m_vecGoal;
 
@@ -379,8 +370,8 @@ void CNihilanth::Precache()
 	PRECACHE_SOUND_ARRAY(pPainSounds);
 	PRECACHE_SOUND_ARRAY(pDeathSounds);
 	PrecacheSound("debris/beamstart7.wav");
-	PrecacheModel("sprites/Fexplo1.spr"); // johnhalflife: its finale's extra flashes.
-	PrecacheSound("weapons/electro4.wav"); // johnhalflife: crackles where its death bolts land.
+	PrecacheModel("sprites/Fexplo1.spr"); // johnhalflife
+	PrecacheSound("weapons/electro4.wav"); // johnhalflife
 	PrecacheSound("weapons/electro5.wav");
 	PrecacheSound("weapons/electro6.wav");
 }
@@ -585,8 +576,6 @@ void CNihilanth::DyingThink()
 	WRITE_BYTE(10);	 // speed
 	MESSAGE_END();
 
-	// johnhalflife (kept reserved: one of these every 0.1 s): a thin, wild, dim strand on the bolt; where it lands, a
-	// light, and one time in three each: sparks, a small scorch, a crackle.
 	if (UTIL_JhlParticleSystem() && tr.flFraction < 1.0)
 	{
 		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
@@ -623,8 +612,6 @@ void CNihilanth::DyingThink()
 		}
 	}
 
-	// johnhalflife: a rumble, faint while it rises, building over the 3 seconds after it reaches the top (when the
-	// map's ending starts).
 	if (UTIL_JhlParticleSystem())
 	{
 		if (pev->deadflag == DEAD_DEAD && m_flJhlDeadTime == 0)
@@ -633,8 +620,6 @@ void CNihilanth::DyingThink()
 		const float build = m_flJhlDeadTime == 0 ? 0 : std::min(1.f, (gpGlobals->time - m_flJhlDeadTime) / 3);
 		UTIL_ScreenShake(pev->origin, 1 + 5 * build, 40, 0.3f, 0);
 
-		// The finale, for its first seconds as the map's ending plays: more of the map's big flashes around its head,
-		// and a rain of long spark showers. (A rain of ember specks too used up the engine's particles.)
 		if (m_flJhlDeadTime != 0 && gpGlobals->time - m_flJhlDeadTime < JhlFinaleTime)
 		{
 			Vector head, angles;
@@ -656,7 +641,6 @@ void CNihilanth::DyingThink()
 			{
 				m_flJhlNextFlash = gpGlobals->time + RANDOM_FLOAT(0.15f, 0.4f);
 
-				// As the map's end_tele_flashes (Fexplo1 at scale 15), sized 12-18.
 				const Vector flash = aroundHead();
 				MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
 				WRITE_BYTE(TE_SPRITE);
@@ -667,11 +651,6 @@ void CNihilanth::DyingThink()
 				MESSAGE_END();
 			}
 
-			// Two every think (0.1 s), from around and outside its head (it's some 600 units across), thrown outward to
-			// rain down the chamber, living 3 times an explosion's showers to fall all the way. Each with big, bright
-			// flashes (temp entities, 2-4, white at full brightness) and few streaks (particles, 1-3 a burst; more
-			// showers with full streaks ran the engine out of particles): about 80 showers, 600 particles, 170 of the 500
-			// temp entities at a time.
 			for (int i = 0; i < 2; ++i)
 			{
 				const float angle = RANDOM_FLOAT(0, 6.2831853f);
@@ -1620,7 +1599,6 @@ void CNihilanthHVR::ZapThink()
 		WRITE_BYTE(10);	 // speed
 		MESSAGE_END();
 
-		// johnhalflife: a thin, wild, dim strand (as the vortigaunt's), and the impact's light and sparks.
 		if (UTIL_JhlParticleSystem())
 		{
 			MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
@@ -1732,7 +1710,6 @@ void CNihilanthHVR::GreenBallInit()
 
 	SetTouch(&CNihilanthHVR::RemoveTouch);
 
-	// johnhalflife: animated, with a faint green glow trailing it.
 	if (UTIL_JhlParticleSystem())
 	{
 		SetThink(&CNihilanthHVR::GreenBallThink);
@@ -1816,7 +1793,6 @@ void CNihilanthHVR::TeleportThink()
 	WRITE_COORD(256); // decay
 	MESSAGE_END();
 
-	// johnhalflife: all of exit1.spr's 25 frames (vanilla stops at 20).
 	pev->frame = (int)(pev->frame + 1) % (UTIL_JhlParticleSystem() ? 25 : 20);
 }
 

@@ -43,15 +43,10 @@ public:
 	// Set up model bone positions
 	virtual void StudioSetupBones();
 
-	// johnhalflife: a view model's casing thrown out as a shell (JhlViewModelCasings): only its bone drawn.
 	void JhlSetupCasingBones();
 
-	// johnhalflife: the first-person body's lab coat Gordon in a pose his model hasn't (jhl_body.cpp): the player model's.
 	void JhlSetupBorrowedBones();
 
-	// johnhalflife: the first-person body's hands drawn as another model's (JhlBody_HandsModel), on its wrists: Barney's
-	// shirt's model's low, pale hands as his vest's. Before it's drawn, keeps its wrists and hides its own hands; after,
-	// draws the other's.
 	void JhlKeepWrists();
 	void JhlDrawBorrowedHands(alight_t* lighting);
 

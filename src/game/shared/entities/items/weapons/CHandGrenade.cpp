@@ -31,7 +31,6 @@ void CHandGrenade::OnCreate()
 	m_WorldModel = pev->model = MAKE_STRING("models/w_grenade.mdl");
 }
 
-// Played when the pin comes out: frame 13 of the 45 fps pinpull animation.
 constexpr const char* GrenadePinPullSound = "weapons/grenade_pinpull.wav";
 constexpr float GrenadePinPullSoundDelay = 13 / 45.f;
 

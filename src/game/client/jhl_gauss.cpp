@@ -30,26 +30,19 @@
 
 namespace
 {
-// The gun's own sprites: hotglow (orange, as its balls and glows) and smoke (its beams).
 constexpr const char* GlowSprite = "sprites/hotglow.spr";
 constexpr const char* ArcSprite = "sprites/smoke.spr";
 
-// The stages, by charge (0-1): the glow from the start, arcs from ArcsFrom, unstable at full charge.
 constexpr float ArcsFrom = 0.33f;
 
-// The charge's light at the muzzle (one, keyed; it becomes the muzzle flash when it fires).
 constexpr int LightKey = 8192 + 4096 + 16;
 constexpr float LightRadiusMin = 30;
 constexpr float LightRadiusMax = 110;
 
-// Overcharge: the gun zaps its holder 10 s after the charge started (CGauss); full charge is 4 s in.
 constexpr float OverchargeTime = 10;
 
-// The charge counts as stopped if it hears nothing for this long (a missed stop).
 constexpr float SpinTimeout = 0.5f;
 
-// A charged shot's afterimage (JhlGauss_Afterimage): a beam along a stretch of its path, worked out every frame as it
-// dissipates.
 struct Afterimage
 {
 	BEAM* Beam;
@@ -61,17 +54,12 @@ struct Afterimage
 	float NoiseTo;
 };
 
-// As it goes: it spreads this much wider, and its brightness eases out (lingering, then thinning away).
 constexpr float AfterimageSpread = 0.8f;
 constexpr float AfterimageFadePower = 1.6f;
 constexpr std::size_t MaxAfterimages = 40;
 
-// Its swirl grows at the same rate whatever the charge (noise a second), so they all dissipate alike and a longer one
-// just gets further: a tap's barely starts to swirl, a full charge's reaches 0.4.
 constexpr float AfterimageSwirlRate = 0.103f;
 
-// Shorter stretches aren't drawn: a beam passes through creatures, tracing on from just past each hit and finding the
-// same one again, leaving a cluster of tiny stretches that would make a star of noise.
 constexpr float AfterimageMinLength = 16;
 
 std::vector<Afterimage> g_Afterimages;
@@ -80,7 +68,7 @@ float g_AfterimageTime = 0;
 bool g_Charging = false;
 float g_Charge = 0;		   // 0-1.
 float g_ChargeStart = 0;   // When it started.
-float g_FullSince = -1;	   // When it reached full charge, or -1.
+float g_FullSince = -1;
 float g_LastSpin = 0;
 TEMPENTITY* g_Glow = nullptr;
 float g_NextArc = 0;
@@ -97,7 +85,6 @@ Vector RandomDirection()
 	return direction.Length() > 0.01f ? direction.Normalize() : Vector{0, 0, 1};
 }
 
-// The muzzle: the view model's in first person; in third person the player model's, if it's set.
 bool FindMuzzle(Vector& muzzle)
 {
 	if (0 == CL_IsThirdPerson())
@@ -157,8 +144,6 @@ void Arc(const Vector& muzzle, bool unstable)
 		Random(0.5f, 0.8f), 0, 0, 0, 1, 0.75f, 0.4f);
 }
 
-// A spark of it spitting out of the muzzle, falling and fading (the gun's orange glow, small); @p burst throws it
-// harder, as a full charge lets go.
 void Spit(const Vector& muzzle, bool burst = false)
 {
 	const int sprite = gEngfuncs.pEventAPI->EV_FindModelIndex(GlowSprite);
@@ -171,7 +156,6 @@ void Spit(const Vector& muzzle, bool burst = false)
 
 	const float spread = burst ? 110.f : 60.f;
 	Vector position = muzzle;
-	// Thrown off the gun, moving with it (the player's velocity), as a hornet's spit and the shells are.
 	Vector velocity = forward * (burst ? Random(80, 200) : Random(30, 90)) + right * Random(-spread, spread) + up * Random(10, burst ? 110 : 60) + v_sim_vel;
 	const float life = Random(0.6f, 1);
 
@@ -208,7 +192,6 @@ void JhlGauss_Spin(int pitch)
 
 void JhlGauss_Fire(bool primary, float damage)
 {
-	// How much it held, from the spin events (the predicted shot's damage can come in far over what was held).
 	const float held = primary ? 0.f : g_Charge;
 	const bool full = !primary && g_FullSince >= 0;
 
@@ -217,16 +200,12 @@ void JhlGauss_Fire(bool primary, float damage)
 	if (!JhlParticleSystemEnabled())
 		return;
 
-	// A lesser charge letting go: a few of its sparks thrown out of the muzzle, more the more it held (2 for the least,
-	// 7 just short of full).
 	if (Vector muzzle; !primary && !full && FindMuzzle(muzzle))
 	{
 		for (int i = 0, count = static_cast<int>(std::lround(2 + 5 * held)); i < count; ++i)
 			Spit(muzzle, true);
 	}
 
-	// A full charge letting go: the unstable charge's sparks thrown out of the muzzle, and a few of the gun's own
-	// bouncing orbs (its spent-energy balls, as at its impacts), a little bigger.
 	if (Vector muzzle; full && FindMuzzle(muzzle))
 	{
 		for (int i = 0, count = gEngfuncs.pfnRandomLong(8, 12); i < count; ++i)
@@ -243,8 +222,6 @@ void JhlGauss_Fire(bool primary, float damage)
 		}
 	}
 
-	// The muzzle flash's light (as the guns' muzzle light), the charge's light becoming it: bigger and whiter the more
-	// it was charged.
 	if (Vector muzzle; FindMuzzle(muzzle))
 	{
 		const float radius = (primary ? 140 : 140 + 120 * held) * 1.15f;
@@ -265,7 +242,6 @@ void JhlGauss_ReflectLight(const Vector& position)
 	if (!JhlParticleSystemEnabled())
 		return;
 
-	// As faint as the small beams' lights, in the gun's orange, fading over 0.4 s.
 	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)
 	{
 		light->origin = position;
@@ -281,7 +257,6 @@ void JhlGauss_ImpactLight(const Vector& position)
 	if (!JhlParticleSystemEnabled())
 		return;
 
-	// A little bigger and brighter than a reflection's, fading over 0.5 s.
 	if (dlight_t* light = gEngfuncs.pEfxAPI->CL_AllocDlight(0); light)
 	{
 		light->origin = position;
@@ -299,8 +274,6 @@ void JhlGauss_Afterimage(const Vector& from, const Vector& to, int sprite, float
 
 	const float c = std::clamp(charge, 0.f, 1.f);
 
-	// A full charge's lasts far longer than a tap's (which is gone before the next can be fired): 0.81-3.3 s, weighted
-	// to the top; and it's brighter and wider.
 	const float life = 0.81f + 2.49f * std::pow(c, 1.3f);
 	const float noiseFrom = 0.03f + 0.03f * c;
 
@@ -323,8 +296,6 @@ void JhlGauss_Update(double time)
 {
 	const float now = static_cast<float>(time);
 
-	// The afterimages dissipate: dimming (easing out), spreading wider and swirling more (the sine noise turns by
-	// itself), until gone.
 	if (now < g_AfterimageTime)
 		g_Afterimages.clear();
 
@@ -368,12 +339,10 @@ void JhlGauss_Update(double time)
 		return;
 	}
 
-	// Unstable at full charge, more so on its way to the overcharge.
 	const bool unstable = g_FullSince >= 0;
 	const float instability = unstable ? std::clamp((now - g_FullSince) / std::max(1.f, OverchargeTime - (g_FullSince - g_ChargeStart)), 0.f, 1.f) : 0;
 	const float flicker = unstable ? Random(1 - 0.35f * (0.5f + instability), 1 + 0.2f) : 1;
 
-	// a) A glow on the muzzle, growing with the charge, and its light on the hands and around.
 	const int glowSprite = gEngfuncs.pEventAPI->EV_FindModelIndex(GlowSprite);
 
 	if (!g_Glow && glowSprite != 0)
@@ -392,7 +361,6 @@ void JhlGauss_Update(double time)
 
 	Light(muzzle, (LightRadiusMin + (LightRadiusMax - LightRadiusMin) * g_Charge) * flicker, {255, 140, 40}, 0.1f, 0);
 
-	// b) Arcs crackling off the muzzle, more often as it charges; twice as often, and wilder, when unstable.
 	if (g_Charge >= ArcsFrom && now >= g_NextArc)
 	{
 		const float stage = (g_Charge - ArcsFrom) / (1 - ArcsFrom);
@@ -401,7 +369,6 @@ void JhlGauss_Update(double time)
 		g_NextArc = now + Random(0.5f, 1.5f) / rate;
 	}
 
-	// c) Unstable: sparks spitting out of the muzzle, more as the overcharge nears.
 	if (unstable && now >= g_NextSpit)
 	{
 		Spit(muzzle);

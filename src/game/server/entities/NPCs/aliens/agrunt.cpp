@@ -395,7 +395,6 @@ void CAGrunt::HandleAnimEvent(MonsterEvent_t* pEvent)
 			vecDirToEnemy = gpGlobals->v_forward;
 		}
 
-		// johnhalflife: its own light (below), not the engine's for a gun (EF_MUZZLEFLASH: orange-white, as a grunt's).
 		pev->effects = UTIL_JhlParticleSystem() ? 0 : EF_MUZZLEFLASH;
 
 		// make angles +-180
@@ -418,8 +417,6 @@ void CAGrunt::HandleAnimEvent(MonsterEvent_t* pEvent)
 		WRITE_BYTE(128);				 // brightness
 		MESSAGE_END();
 
-		// johnhalflife: its flash's light, the purple of its flash (muz4) and its hornets, as big as the engine's for a
-		// gun (200), as short.
 		if (UTIL_JhlParticleSystem())
 			UTIL_JhlDynamicLight(vecArmPos, 200, 170, 70, 255, 0.1f, 1600);
 

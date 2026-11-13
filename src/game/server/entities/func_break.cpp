@@ -305,7 +305,7 @@ void CBreakable::Precache()
 
 	m_idShard = PrecacheModel(pGibName);
 
-	// johnhalflife: crates whose gibs are their contents (mil_, med_, tech_crategibs) also throw wood (Die).
+	// johnhalflife
 	m_idCrateWood = 0;
 
 	if (m_Material == matWood && !FStringNull(m_iszGibModel))
@@ -659,19 +659,15 @@ void CBreakable::Die()
 
 	vecSpot = pev->origin + (pev->mins + pev->maxs) * 0.5;
 
-	// The engine's shard count for this size (its surface area over 432).
 	const float engineShards = (pev->size.x * pev->size.y + pev->size.y * pev->size.z + pev->size.z * pev->size.x) / 432;
 
-	// johnhalflife: explosive breakables throw 2.5 times the engine's shards (by size; a barrel about 20), at most 40,
-	// flying far more every way, lasting like gibs (jhl_debris.cpp).
+	// johnhalflife: explosive breakables throw 2
 	if (ExplodesWhenBroken())
 	{
 		const int shards = std::clamp(static_cast<int>(engineShards * 2.5f), 1, 40);
 
 		UTIL_JhlBreakModel(vecSpot, pev->size, vecVelocity + Vector(0, 0, 150), 35, m_idShard, shards, 25, cFlag);
 	}
-	// Glass: 1.5 times the shards, at most 60; everything else as many, and for crates whose gibs are their contents,
-	// half as many wood pieces again (4-16); all lasting like gibs.
 	else if (UTIL_JhlParticleSystem() && m_Material == matGlass)
 	{
 		const int shards = std::clamp(static_cast<int>(engineShards * 1.5f), 1, 60);
@@ -724,7 +720,6 @@ void CBreakable::Die()
 		MESSAGE_END();
 	}
 
-	// johnhalflife: computers short out in a few spark showers.
 	if (UTIL_JhlParticleSystem() && m_Material == matComputer)
 		UTIL_JhlSparkShowers(vecSpot, RANDOM_LONG(2, 3));
 
@@ -753,9 +748,6 @@ void CBreakable::Die()
 		}
 	}
 
-	// johnhalflife (jhl_fx_particlesystem): the sheet above misses what rests on it but isn't on its top (sunk into it,
-	// or lying beyond the sheet), which was left in the air, held by nothing (c4a2b's Gonarch's legs, sack and shell, as
-	// the floor under it goes). Also woken: everything whose ground is this, and loose things (not monsters, players) resting anywhere in it.
 	if (UTIL_JhlParticleSystem())
 	{
 		const Vector volumeMins = pev->absmin;
@@ -773,7 +765,6 @@ void CBreakable::Die()
 								volumeMins.z <= other->v.absmax.z && volumeMaxs.x >= other->v.absmin.x &&
 								volumeMaxs.y >= other->v.absmin.y && volumeMaxs.z >= other->v.absmin.z;
 
-			// Monsters and players beside it (touching its sides) aren't on it: they keep their footing.
 			if (other->v.groundentity == edict() || (inside && (other->v.flags & (FL_MONSTER | FL_CLIENT)) == 0))
 			{
 				ClearBits(other->v.flags, FL_ONGROUND);
@@ -801,11 +792,8 @@ void CBreakable::Die()
 	}
 }
 
-// triggers.cpp: the targets a multi_manager fires (none for anything else).
 std::span<const string_t> MultiManagerTargets(CBaseEntity* entity);
 
-// The env_explosions firing a target name sets off, directly or through relays (multi_manager, trigger_relay; c2a5's
-// barrels go through a multi_manager), up to a few relays deep.
 static void FindExplosions(string_t targetName, int relays, std::vector<CBaseEntity*>& explosions)
 {
 	if (FStringNull(targetName))
@@ -1005,7 +993,7 @@ void CPushable::Move(CBaseEntity* pOther, bool push)
 	// Is entity standing on this pushable ?
 	if (FBitSet(pOther->pev->flags, FL_ONGROUND) && pOther->GetGroundEntity() == this)
 	{
-		// Only push if floating (johnhalflife, jhl_physics_fpsfix: every frame, so as much a second as at 72 fps)
+		// johnhalflife
 		if (pev->waterlevel > WaterLevel::Dry)
 			pev->velocity.z += pOther->pev->velocity.z * 0.1 * (UTIL_JhlFpsFix() ? std::min(1.0f, JhlReferenceFrames(gpGlobals->frametime)) : 1.0f);
 
@@ -1037,9 +1025,6 @@ void CPushable::Move(CBaseEntity* pOther, bool push)
 	else
 		factor = 0.25;
 
-	// johnhalflife (jhl_physics_fpsfix): this runs every frame something pushes it or the player pulls it (+use), so
-	// it adds as much a second as at 72 fps; and it's pulled no faster than it's pushed (pulling had no limit, and the
-	// player is given its speed back each frame, so it ran away).
 	const bool fpsFix = UTIL_JhlFpsFix();
 
 	if (fpsFix)

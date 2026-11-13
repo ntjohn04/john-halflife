@@ -131,7 +131,6 @@ void CHudHealth::MsgFunc_Battery(const char* pszName, BufferReader& reader)
 
 	int x = reader.ReadShort();
 
-	// johnhalflife: Barney's vest drawn while he has armor (jhl_body.cpp).
 	JhlBody_Armor(x);
 
 	if (x != m_iBat)

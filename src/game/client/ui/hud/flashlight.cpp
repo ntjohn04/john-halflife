@@ -110,9 +110,7 @@ bool CHudFlashlight::Draw(float flTime)
 
 	int a = m_fOn ? 225 : MIN_ALPHA;
 
-	// johnhalflife (jhl_hud_minimal): off and fully charged it has nothing to say, so after a moment it fades away;
-	// on, or charging, it's back at once. 99 counts as full: a new player starts on 99 (vanilla's Spawn), which
-	// brought it up at the start of a new game.
+	// johnhalflife
 	constexpr float IdleHold = 1.5f;
 	constexpr float IdleFade = 1.0f;
 
@@ -125,8 +123,6 @@ bool CHudFlashlight::Draw(float flTime)
 		}
 		else if (m_flIdleSince > flTime)
 		{
-			// The clock restarted (a map change or a load): faded before, it stays so. (This going negative, early in
-			// a map, once read as not idle, bringing it back for 2.5 s.)
 			m_flIdleSince = flTime - IdleHold - IdleFade;
 		}
 

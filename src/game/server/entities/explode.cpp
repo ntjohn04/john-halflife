@@ -89,7 +89,7 @@ void CShower::Think()
 
 void CShower::Touch(CBaseEntity* pOther)
 {
-	// johnhalflife (jhl_physics_fpsfix): on the ground it's touched every frame, so taken off as at 72 fps.
+	// johnhalflife
 	if ((pev->flags & FL_ONGROUND) != 0)
 		pev->velocity = pev->velocity * (UTIL_JhlFpsFix() ? JhlReferenceDecay(0.1f, gpGlobals->frametime) : 0.1f);
 	else
@@ -113,8 +113,7 @@ public:
 	int m_iMagnitude;  // how large is the fireball? how much damage?
 	int m_spriteScale; // what's the exact fireball sprite scale?
 
-	// johnhalflife: an explosive breakable's (ExplosionCreate, or fired by one), drawn bigger. Not saved: it's set as
-	// it explodes and only matters for the smoke 0.3 s later.
+	// johnhalflife
 	bool m_Breakable = false;
 };
 
@@ -171,7 +170,7 @@ void CEnvExplosion::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE 
 {
 	TraceResult tr;
 
-	// johnhalflife: fired by a breakable as it breaks (how most of Half-Life's barrels explode).
+	// johnhalflife
 	if (pCaller && (pCaller->ClassnameIs("func_breakable") || pCaller->ClassnameIs("func_pushable")))
 		m_Breakable = true;
 
@@ -194,7 +193,6 @@ void CEnvExplosion::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE 
 		pev->origin = pev->origin;
 	}
 
-	// johnhalflife: as big as the client draws it (explosive breakables bigger).
 	const float jhlScale = m_spriteScale * 0.1f * (m_Breakable ? JhlBreakableExplosionScale : 1);
 
 	if (UTIL_JhlParticleSystem() && (pev->spawnflags & SF_ENVEXPLOSION_NOFIREBALL) == 0)
@@ -215,7 +213,6 @@ void CEnvExplosion::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE 
 		}
 	}
 
-	// johnhalflife: the client throws the spark showers (jhl_explosions.cpp), with the fireball.
 	const bool clientSparks = UTIL_JhlParticleSystem() && (pev->spawnflags & SF_ENVEXPLOSION_NOSPARKS) == 0 &&
 							  (pev->spawnflags & SF_ENVEXPLOSION_NOFIREBALL) == 0;
 

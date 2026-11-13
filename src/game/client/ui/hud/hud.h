@@ -162,8 +162,8 @@ private:
 	Crosshair m_AutoaimCrosshair;
 
 	cvar_t* m_pCvarCrosshairScale = nullptr;
-	cvar_t* m_pCvarHolster = nullptr; // johnhalflife: jhl_weapons_holster.
-	cvar_t* m_pCvarCampaignCrosshair = nullptr; // johnhalflife: jhl_hud_campaigncrosshair.
+	cvar_t* m_pCvarHolster = nullptr; // johnhalflife
+	cvar_t* m_pCvarCampaignCrosshair = nullptr; // johnhalflife
 };
 
 
@@ -396,7 +396,7 @@ private:
 	int m_iBat;
 	bool m_fOn;
 	float m_fFade;
-	// johnhalflife: whether, and since when, it's been off and fully charged (jhl_hud_minimal).
+	// johnhalflife
 	bool m_bIdle = false;
 	float m_flIdleSince = 0;
 };
@@ -851,34 +851,18 @@ public:
 	// Screen information
 	SCREENINFO m_scrinfo;
 
-	/**
-	 *	@brief Screen information in HUD units: m_scrinfo divided by m_flHudScale (see cl_util.h).
-	 */
 	SCREENINFO m_HudScreenInfo;
 
-	/**
-	 *	@brief Current HUD scale; 1 draws the HUD at native sprite size.
-	 */
 	float m_flHudScale = 1;
 
-	/**
-	 *	@brief johnhalflife: the half-size HUD (vanilla's "320" sprites), below 640 wide as vanilla, or with a
-	 *	jhl_hud_scale below 1 (0.5); decided as sprites load (VidInit), drawn at scale 1.
-	 */
+	// johnhalflife: @brief johnhalflife
 	bool m_bHalfSizeHud = false;
 
-	/**
-	 *	@brief A HUD layout file, its half-size version (name_320.json, scripts/make_half_hud.py) when the half-size
-	 *	HUD is on and there is one.
-	 */
 	std::string HudConfigFile(const std::string& fileName) const;
 
 	cvar_t* m_pCvarHudScale = nullptr;
 
-	/**
-	 *	@brief johnhalflife (jhl_hud_minimal): the weapon menu without its ammo bars, and the flashlight icon fading away
-	 *	while it's off and fully charged.
-	 */
+	// johnhalflife
 	cvar_t* m_pCvarHudMinimal = nullptr;
 
 	std::uint64_t m_iWeaponBits = 0;
@@ -915,9 +899,6 @@ public:
 
 inline CHud gHUD;
 
-/**
- *	@brief Turns the HUD scale off while in scope, for HUD code that lays itself out in real pixels.
- */
 class UnscaledHudScope
 {
 public:

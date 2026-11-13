@@ -624,7 +624,6 @@ bool COFSquadTalkMonster::TakeDamage(CBaseEntity* inflictor, CBaseEntity* attack
 	}
 
 	// If this attack deals enough damage to instakill me...
-	// No attacker: damage from a projectile whose owner has been removed (see CSquadMonster::TakeDamage).
 	if (attacker && pev->deadflag == DEAD_NO && flDamage >= pev->max_health)
 	{
 		// Tell my squad mates...

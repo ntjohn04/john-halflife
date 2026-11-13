@@ -239,12 +239,7 @@ void PlaySoundByNameAtLocation(const char* szSound, float volume, const Vector& 
 	// gEngfuncs.pfnPlaySoundByNameAtLocation(szSound, 1.0, entity->attachment[0]);
 }
 
-// johnhalflife: bounce sounds thinned out (jhl_fx_particlesystem). Debris lives longer, falls slower and comes in
-// greater numbers than vanilla's (whose only thinning was a shell's slow bounces, 3 in 4 silent), so a broken crate or a
-// few explosions stacked the same clatter dozens of times over within a moment. A bounce is silent if the same sound
-// played close by just now (one standing for the cluster); debris and gibs share a budget of sounds a moment; and their
-// slow, settling bounces play half the time, as a shell's do. Shells only keep apart, closer and sooner, brass raining
-// as it should.
+// johnhalflife
 namespace
 {
 struct RecentBounce
@@ -262,9 +257,9 @@ constexpr float DebrisApart = 64; // The same sound this close,
 constexpr float DebrisSoon = 0.1f; // this soon: silent.
 constexpr float ShellApart = 48;
 constexpr float ShellSoon = 0.06f;
-constexpr int DebrisBudget = 6; // Debris and gib sounds at most in DebrisBudgetTime.
+constexpr int DebrisBudget = 6;
 constexpr float DebrisBudgetTime = 0.25f;
-constexpr int DebrisSlowBounce = 150; // Slower bounces (units a second, down) play half the time.
+constexpr int DebrisSlowBounce = 150;
 } // namespace
 
 static bool JhlBounceSoundAllowed(TEMPENTITY* pTemp, bool isShell, int bounceSpeed)
@@ -473,7 +468,6 @@ constexpr const char* ExplosionSounds[] =
 
 void R_Explosion(const Vector& pos, int model, float scale, float framerate, int flags)
 {
-	// johnhalflife's explosions draw their own specks and lights with their fireballs.
 	const bool jhlFireballs = scale != 0 && JhlExplosion_Fireballs(pos, model, scale, framerate, flags);
 
 	if (scale != 0 && !jhlFireballs)

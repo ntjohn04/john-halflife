@@ -25,7 +25,6 @@
 
 namespace
 {
-// BSP version 30, as the engine reads it (Blue Shift's maps swap the first two lumps).
 constexpr int BspVersion = 30;
 
 enum BspLump
@@ -176,7 +175,6 @@ std::unique_ptr<JhlBsp> Load(const char* mapName)
 		return nullptr;
 	}
 
-	// The lightmaps (none in a map compiled without light: faces then point past the end).
 	ReadLump(data, lumps, LumpLighting, bsp->Lighting);
 
 	// Texture names, from the texture lump's headers.

@@ -94,18 +94,10 @@ public:
 
 	int m_iBeams;
 
-	/**
-	 *	@brief johnhalflife (jhl_fx_particlesystem): beams layered on the vanilla ones, a copy with its own width, noise
-	 *	and brightness (or, for the charging arm beams, brightness times the vanilla ramp's, BeamGlow). Kept apart
-	 *	from m_pBeam so its count still sets the eye glow and the charging pitch. Not saved: beams are temporary.
-	 */
+	// johnhalflife
 	void LayerBeam(CBeam* beam, int width, int noise, int brightness, float glow = 0);
 
-	/**
-	 *	@brief johnhalflife: where the zap hit, once its damage is done: a green light, and sparks, by what it hit: a
-	 *	player whose suit took charge from it, a burst and 2-3 showers; a player it went straight into, or a
-	 *	creature, a burst; a wall, a burst and a shower half the time.
-	 */
+	// johnhalflife: @brief johnhalflife
 	void ZapHitEffects();
 
 	struct ZapHit
@@ -705,9 +697,6 @@ void CISlave::ArmBeam(int side)
 	m_pBeam[m_iBeams]->SetNoise(80);
 	m_pBeam[m_iBeams]->pev->spawnflags |= SF_BEAM_TEMPORARY; // Flag these to be destroyed on save/restore or level transition
 
-	// johnhalflife: a little smoother, with a thin, wild strand at 80% of its brightness, brightening with it as it
-	// charges (BeamGlow).
-	// And a faint light where it touches, so the surface shows even in the dark.
 	if (UTIL_JhlParticleSystem())
 	{
 		m_pBeam[m_iBeams]->SetNoise(60);
@@ -755,7 +744,6 @@ void CISlave::ZapHitEffects()
 
 		UTIL_JhlSparkShowers(hit.Position, showers);
 
-		// Twice the vanilla charging light's size, shrinking away over 1.5 s.
 		UTIL_JhlDynamicLight(hit.Position, 200, 120, 255, 64, 1.5f, 200 / 1.5f);
 	}
 
@@ -773,7 +761,7 @@ void CISlave::LayerBeam(CBeam* beam, int width, int noise, int brightness, float
 		return;
 
 	layer->PointEntInit(beam->GetStartPos(), entindex());
-	layer->SetEndAttachment((beam->pev->skin >> 12) & 0xF); // As CBeam::SetEndAttachment packs it.
+	layer->SetEndAttachment((beam->pev->skin >> 12) & 0xF);
 	layer->SetColor(static_cast<int>(beam->pev->rendercolor.x), static_cast<int>(beam->pev->rendercolor.y),
 		static_cast<int>(beam->pev->rendercolor.z));
 	layer->SetBrightness(brightness);
@@ -804,7 +792,7 @@ void CISlave::WackBeam(int side, CBaseEntity* pEntity)
 	m_pBeam[m_iBeams]->SetNoise(80);
 	m_pBeam[m_iBeams]->pev->spawnflags |= SF_BEAM_TEMPORARY; // Flag these to be destroyed on save/restore or level transition
 
-	// johnhalflife: as the zap, a thin, wild, dimmer strand around it.
+	// johnhalflife
 	LayerBeam(m_pBeam[m_iBeams], 12, 210, 102);
 
 	m_iBeams++;
@@ -843,8 +831,6 @@ void CISlave::ZapBeam(int side)
 
 	pEntity = CBaseEntity::Instance(tr.pHit);
 
-	// Where it hits gets sparks and a light once the damage is done (ZapHitEffects), knowing whether a player's suit
-	// took it: their armor now, before it is.
 	if (UTIL_JhlParticleSystem() && tr.flFraction < 1.0 && m_iZapHits < static_cast<int>(std::size(m_ZapHits)))
 	{
 		ZapHit& hit = m_ZapHits[m_iZapHits++];

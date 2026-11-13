@@ -59,8 +59,7 @@ int PrecacheList::Add(const char* str)
 	// Only call into the engine if it's not at its maximum capacity.
 	// TODO: need to handle running out of precaches gracefully.
 	// TODO: This will cause problems when an invalid index or unprecached asset is used.
-	// johnhalflife: past the engine's limit (512 models: a map's brush entities count, op4ctf_crash's 359 took it over)
-	// nothing says so, and the first use ends the map ("Host_Error: no precache"): said here, naming it.
+	// johnhalflife
 	if (m_EnginePrecacheFunction && m_MaxEnginePrecaches > 0 && static_cast<unsigned int>(index) >= m_MaxEnginePrecaches)
 	{
 		m_Logger->error("The engine's limit of {} {}s is reached: \"{}\" isn't precached, and using it will end the map",

@@ -69,9 +69,8 @@ public:
 	void Think() override;
 	static CStomp* StompCreate(const Vector& origin, const Vector& end, float speed);
 
-	float m_flLastThinkTime; // Unused (Half-Life Updated's stomp timing): kept for saves.
+	float m_flLastThinkTime;
 
-	// johnhalflife: how far it's gone since it last scorched the floor (not saved: it lasts a second or two).
 	float m_JhlSinceMark = 0;
 
 private:
@@ -121,11 +120,6 @@ void CStomp::Think()
 
 	pev->nextthink = gpGlobals->time + 0.1;
 
-	// johnhalflife (jhl_fx_particlesystem): readable as a wave tearing along the ground at its target, down a narrow
-	// lane (its damage: whatever's in its path, at full damage, no falloff): the stretch it covers each move sent to the
-	// client (CStomp; jhl_gargantua.cpp: its head's light low over the floor, the ground kicked up along it), the floor
-	// scorched along its lane every JhlMarkSpacing, a rumble for those it passes close to, and its glow's sparks a little
-	// fewer and calmer (vanilla's spat two a step, up to 200 every way: 4 in 5 of them, up to 150).
 	const bool jhl = UTIL_JhlParticleSystem();
 	const Vector jhlFrom = pev->origin;
 	constexpr float JhlMarkSpacing = 40;
@@ -208,7 +202,7 @@ void CStomp::Think()
 		WRITE_SHORT(entindex());
 		WRITE_COORD_VECTOR(jhlFrom);
 		WRITE_COORD_VECTOR(pev->origin);
-		WRITE_BYTE(10); // Till its next move, hundredths.
+		WRITE_BYTE(10);
 		MESSAGE_END();
 
 		UTIL_ScreenShake(pev->origin, 5.0, 60.0, 0.4, 240);
@@ -525,7 +519,6 @@ void CGargantua::StompAttack()
 	if (trace.flFraction < 1.0)
 		UTIL_DecalTrace(&trace, DECAL_GARGSTOMP1);
 
-	// johnhalflife: a big cloud of dust off the floor where its foot comes down, 2.5 times a houndeye's blast's.
 	UTIL_JhlGroundDust(trace.flFraction < 1.0 ? trace.vecEndPos : pev->origin, 16, 25);
 }
 
@@ -594,9 +587,6 @@ void CGargantua::FlameUpdate()
 	Vector vecStart, angleGun;
 	bool streaks = false;
 
-	// johnhalflife (jhl_fx_particlesystem): where each hand's flame lands, to the client (jhl_gargantua.cpp:
-	// flickering orange lights on its hands and there, as the RPG rocket's motor; embers and heat smoke where they hit),
-	// in place of the white flash on its hands.
 	const bool jhl = UTIL_JhlParticleSystem();
 	bool jhlHit[2]{};
 	Vector jhlStart[2], jhlEnd[2], jhlNormal[2];
@@ -750,7 +740,6 @@ void CGargantua::FlameDestroy()
 
 	EmitSound(CHAN_WEAPON, pBeamAttackSounds[0], 1.0, ATTN_NORM);
 
-	// johnhalflife: its flames' lights and cores go with them, at once (jhl_gargantua.cpp).
 	if (m_pFlame[0] && UTIL_JhlParticleSystem())
 	{
 		MESSAGE_BEGIN(MSG_PVS, gmsgTempEntity, pev->origin);
@@ -842,7 +831,7 @@ void CGargantua::Precache()
 	gStompSprite = PrecacheModel(GARG_STOMP_SPRITE_NAME);
 	gGargGibModel = PrecacheModel(GARG_GIB_MODEL);
 
-	// johnhalflife: its flames' embers (jhl_gargantua.cpp; the client only finds what's precached).
+	// johnhalflife
 	PrecacheModel("sprites/hotglow.spr");
 	PrecacheSound(GARG_STOMP_BUZZ_SOUND);
 
@@ -1133,8 +1122,6 @@ void CGargantua::RunTask(const Task_t* pTask)
 			int i;
 			int parts = MODEL_FRAMES(gGargGibModel);
 
-			// johnhalflife (jhl_fx_particlesystem): more of its plates, any of them (vanilla took one by its own body,
-			// 0: always the smallest, a scrap of beam), each lying a while, as debris is, for its own time.
 			const bool jhl = UTIL_JhlParticleSystem();
 			const int plates = jhl ? 16 : 10;
 
@@ -1156,12 +1143,10 @@ void CGargantua::RunTask(const Task_t* pTask)
 				pGib->pev->nextthink = gpGlobals->time + (jhl ? RANDOM_FLOAT(35, 60) : 1.25);
 				pGib->SetThink(&CGib::SUB_FadeOut);
 			}
-			// johnhalflife: its 50 shards in three lots fading at their own times (vanilla's all went at about 3 s), so
-			// they thin out and its plates are what's left (the engine's own shards, as vanilla's, not lasting debris).
 			if (jhl)
 			{
 				constexpr int Shards[3] = {17, 17, 16};
-				constexpr int Lives[3] = {25, 50, 80}; // Tenths of a second, and up to another second.
+				constexpr int Lives[3] = {25, 50, 80};
 
 				for (int lot = 0; lot < 3; ++lot)
 				{

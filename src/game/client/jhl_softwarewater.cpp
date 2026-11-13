@@ -38,107 +38,78 @@
 
 namespace
 {
-// The ripple field: 128 x 128 heights (16 bit, wrapping as the software renderer's do).
 constexpr int FieldSize = 128;
 constexpr int FieldMask = FieldSize - 1;
 constexpr int FieldCells = FieldSize * FieldSize;
 
-// It steps once 0.05 s have passed since the last: every 4th frame at 72 fps (jhl_framerate.h), 18 times a second; a
-// drop lands once more than 0.1 s have passed since the last, every other step.
 constexpr float StepTime = 4.0f / 72.0f;
 constexpr float DropTime = 0.1f;
-constexpr int MostStepsAFrame = 4; // After a pause or hitch, catch up no further.
+constexpr int MostStepsAFrame = 4;
 
-// Texels a unit, and the tile's size (s and t, in texels, over this).
 constexpr float TileSize = FieldSize;
 
-// Pulled toward the view a little where drawn over the engine's water (its polygons are cut differently, so the same
-// plane isn't quite the same depth), as decals are.
 constexpr float OverdrawOffsetFactor = -1;
 constexpr float OverdrawOffsetUnits = -2;
 
-// Render modes (const.h's kRender*) its entities are drawn in here.
 constexpr int RenderNormal = 0;
 constexpr int RenderTransTexture = 2;
 constexpr int RenderTransAdd = 5;
 
-// jhl_visuals_waterlight: the map has no light on water (its compiler gives water no lightmap; both renderers draw it
-// full bright), so a pitch-black corner's water stood out of the dark. Here it takes the light of what's around it, as
-// seen from just above it (LightAbove): the walls level with it (LightRays traces out to LightReach) and the floor
-// under it, each where its trace hits it as the map's lightmaps have it there (the map's own light, its first style),
-// the nearer counting more (LightFalloff); with none hit, the engine's LightAtPoint (the lightmap below, averaged
-// LightSpread around, leaving out any in a wall, further out if all are: LightRings). As bright as ever from LitLight
-// up, darkening smoothly below that to DarkestWater; under the open sky (straight up, SkyReach), always as bright. On a grid (LightGrid units, the faces cut up for it; EngineGrid over the engine's waved water), by where a
-// point is alone, so faces in the same place (a water entity's brushes' tops and bottoms) are lit alike, not fighting.
-// Taken once a map, no more than LightTime a frame (a face not yet taken drawn as bright as ever), again where
-// a water entity has moved (as slowly, its old light kept meanwhile); lights switched later aren't followed, nor the
-// flashlight and flashes.
 constexpr float LitLight = 96;
 constexpr float DarkestWater = 0.2f;
 constexpr float SkyReach = 8192;
 constexpr float LightAbove = 12;
 constexpr int LightRays = 16;
 constexpr float LightReach = 192;
-constexpr int FloorRays = 8;	  // Down to the floor on a ring 45 degrees out (FloorRays), none straight down.
+constexpr int FloorRays = 8;
 constexpr float LightDepth = 512; // The floor's furthest under it.
 constexpr float LightFalloff = 48;
 constexpr float LightSpread = 24;
 constexpr float LightGrid = 32;
-// Where it's drawn over the engine's water as the engine waves it, on the engine's own cut instead (hw.dll's
-// GL_SubdivideSurface, the same rule at 64 units): its pieces vertex for vertex, so its waves exactly.
 constexpr float EngineGrid = 64;
 constexpr float LightRings[] = {48, 80};
-constexpr std::chrono::microseconds LightTime{1500}; // Its share of a frame: hitch-free with the engine's slowest.
-constexpr float SurfaceCell = 128; // The world's lit faces kept by cells this size (IndexSurfaces).
-std::chrono::steady_clock::duration g_LightSpent{}; // Taking light this frame so far.
+constexpr std::chrono::microseconds LightTime{1500};
+constexpr float SurfaceCell = 128;
+std::chrono::steady_clock::duration g_LightSpent{};
 
 JhlGL& gl = g_JhlGL;
 cvar_t* g_SoftwareWater = nullptr;
 cvar_t* g_WaterSides = nullptr;
 cvar_t* g_WaterLight = nullptr;
 
-// jhl_visuals_wateropacity (default 0.85): below 1, solid water entities (func_water...) drawn here
-// see-through at that opacity, in the see-through pass; water already see-through as it was. Not the world's water:
-// the map's visibility treats it as a wall, so what's under it isn't drawn from above (c2a5's dam: holes). Neither
-// 1998 renderer showed through water.
 cvar_t* g_WaterOpacity = nullptr;
-bool g_SeeThrough = false; // This frame's water drawn see-through.
+bool g_SeeThrough = false;
 
 using Field = std::array<std::int16_t, FieldCells>;
 Field g_Fields[2]{};
-int g_Newest = 0; // The field last stepped to, the one drawn; the other is the one before it.
+int g_Newest = 0;
 float g_LastStep = -1;
 float g_LastDrop = 0;
 bool g_Stepped = false;
 
-// A water texture: the engine's, read back, and the tile drawn from it.
 struct WaterTexture
 {
 	std::string Name;
 	int Width = 0;
 	int Height = 0;
-	std::vector<std::uint32_t> Source; // RGBA, as the engine uploaded it.
+	std::vector<std::uint32_t> Source;
 	GLuint Tile = 0;
 	bool Mipmapped = false;
-	int Fog[4]{}; // Its fog under water: colour and density, from its palette (see EngineTexture).
+	int Fog[4]{};
 	bool HasFog = false;
-	// The darkest it gets (jhl_visuals_waterlight; DarkestWater for most): never darkened, Xen's fluids (!fluid...),
-	// murky and alien already, and the toxic goo (!toxicgrn...), neon green, usually with its own lights; barely,
-	// On A Rail's own water (!gwater3); softly, the hazard courses' and On A Rail's others (!bwater2, !gwater2: also
-	// c3a1, lambda_bunker), dim tunnels whose water was too dark.
 	float Darkest = DarkestWater;
-	float Full = LitLight; // Full bright from this light up: Blue Shift's glowing coolant (!coolant5) sooner, glowing
+	float Full = LitLight;
 						   // full bright but where it ends in a dark corner.
-	bool Smoothed = false; // Its light averaged over SmoothReach first (the coolant: its steeper curve showed each
+	bool Smoothed = false;
 						   // point's own unevenness as patches).
 };
 
 // A model's water faces, by texture.
 struct WaterModel
 {
-	std::vector<std::vector<int>> FacesByTexture; // Index: g_Textures; values: face indices in the map.
+	std::vector<std::vector<int>> FacesByTexture;
 	bool HasWater = false;
-	bool AllWater = false; // Every face drawn is water: it can be drawn here instead of by the engine.
+	bool AllWater = false;
 };
 
 // An entity whose water is drawn here this frame.
@@ -151,27 +122,24 @@ struct WaterEntity
 	float Alpha = 1;
 	bool Hidden = false; // The engine isn't drawing it.
 	float Distance = 0;
-	float Bottom = 0; // Its lowest point as the engine reckons it (see DrawModel).
-	float Waves = 0;  // Its waves' height (curstate.scale: the map's WaveHeight / 8), as OpenGL draws them (WaveHeight).
+	float Bottom = 0;
+	float Waves = 0;
 };
 
-// A water face cut up on the light's grid, and the light under each of its points.
 struct LitFace
 {
-	std::vector<Vector> Points;		  // Every piece's, one after another.
+	std::vector<Vector> Points;
 	std::vector<int> Counts;		  // Each piece's number of points.
-	std::vector<float> Light;		  // Each point's light (SeenLight), its brightness by its texture's curve (Brightness).
-	std::size_t Next = 0;			  // The next point to take (a face taken over several frames).
-	bool HasTwin = false;			  // Its model has the same surface facing the other way (a water brush's top, seen from under it).
+	std::vector<float> Light;
+	std::size_t Next = 0;
+	bool HasTwin = false;
 	Vector SampledOrigin;
 	Vector SampledAngles;
 	float SampledTime = -1;
-	bool Indexed = false;			  // Its light put in g_LightCells (once, taken in full the first time).
-	std::vector<float> Smooth;		  // Its light averaged around each point (Smoothed textures), as of SmoothVersion.
+	bool Indexed = false;
+	std::vector<float> Smooth;
 	int SmoothVersion = -1;
-	float SmoothTime = -1;			  // When it was last averaged (again no more than SmoothEvery).
-	// Moving water (MovingWater): how far its light has gone to the even brightness, 0 none, 1 all; its light not where
-	// it now is (moved since taken), and where it was when last drawn.
+	float SmoothTime = -1;
 	float Blend = 0;
 	bool Stale = false;
 	bool Drawn = false;
@@ -182,7 +150,6 @@ struct LitFace
 
 std::string g_MapName;
 bool g_MapReady = false;
-// Taken light by cell (LightGrid units, a model's own coordinates), for averaging it around a point (Smoothed textures).
 struct LightCell
 {
 	float Sum = 0;
@@ -191,14 +158,11 @@ struct LightCell
 
 constexpr float SmoothReach = 128;
 
-// A water entity moving: its light (taken where it was) fades to an even brightness over MovingFade, nothing taken
-// while it moves; stopped, taken again where it is (within LightTime as ever) and faded back to it. Its baked light no
-// longer slides along with it (c1a1b's tunnel water, a train).
 constexpr float MovingWater = 0.85f;
 constexpr float MovingFade = 0.75f;
 constexpr float SmoothEvery = 0.25f;
 std::unordered_map<std::int64_t, LightCell> g_LightCells;
-int g_LightCellsVersion = 0; // Raised whenever a face's light is added.
+int g_LightCellsVersion = 0;
 
 std::int64_t LightCellKey(int model, int x, int y, int z)
 {
@@ -211,7 +175,6 @@ int LightCellOf(float value)
 	return static_cast<int>(std::floor(value / LightGrid));
 }
 
-// The light averaged around a point of a model (cells within SmoothReach, nearer counting more); its own if none.
 float SmoothedLight(int model, const Vector& point, float own)
 {
 	const int cx = LightCellOf(point.x);
@@ -250,11 +213,9 @@ float SmoothedLight(int model, const Vector& point, float own)
 	return weight > 0 ? total / weight : own;
 }
 
-std::vector<LitFace> g_LitFaces;	 // By face in the map; only water faces filled.
-std::vector<LitFace> g_EngineFaces; // The same on the engine's cut (EngineGrid), lit likewise.
+std::vector<LitFace> g_LitFaces;
+std::vector<LitFace> g_EngineFaces;
 
-// A world face with a lightmap of the map's own light (its first style 0): where its samples start, in 16 texels, and
-// how many across and down.
 struct LitSurface
 {
 	int Face = 0;
@@ -265,17 +226,14 @@ struct LitSurface
 };
 
 std::vector<LitSurface> g_Surfaces;
-std::unordered_map<std::int64_t, std::vector<int>> g_SurfaceCells; // By cell (SurfaceCell), into g_Surfaces.
+std::unordered_map<std::int64_t, std::vector<int>> g_SurfaceCells;
 std::vector<WaterTexture> g_Textures;
 std::vector<WaterModel> g_Models;
-std::vector<WaterEntity> g_Entities; // This frame's, until the see-through ones are drawn.
+std::vector<WaterEntity> g_Entities;
 
-// The fog of the water drawn last, and when (the engine takes its fog from the water it drew last).
 int g_LastFog[4]{};
 float g_LastFogTime = -1;
 
-// The engine's rule for water (Mod_LoadTextures): names starting with '!', "laser" or "water". Sky and scrolling
-// textures aren't.
 bool IsWaterName(const std::string& name)
 {
 	if (name.empty() || 0 == std::strncmp(name.c_str(), "sky", 3) || 0 == std::strncmp(name.c_str(), "scroll", 6))
@@ -304,9 +262,6 @@ void FreeTextures()
 	g_Textures.clear();
 }
 
-// The engine's GL texture for a map texture, from the world model's texture list: texture_t as the OpenGL renderer has
-// it, its GL texture number after its name and size (R_RenderBrushPoly binds texture + 0x18). Only if the list is the
-// map's, name for name.
 int EngineTexture(const model_t* world, const JhlBsp& bsp, int miptex, std::string& why, WaterTexture& water)
 {
 	if (!world || world->numtextures != static_cast<int>(bsp.TextureNames.size()) || !world->textures ||
@@ -328,8 +283,6 @@ int EngineTexture(const model_t* world, const JhlBsp& bsp, int miptex, std::stri
 	int number = 0;
 	std::memcpy(&number, reinterpret_cast<const std::byte*>(texture) + 0x18, sizeof(number));
 
-	// Its fog under water, as both renderers take it when they draw it (EmitWaterPolys, and sw.dll's turbulence):
-	// the palette (texture + 0x44) entry 3's colour, and entry 4's red for its density.
 	const std::uint8_t* palette = nullptr;
 	std::memcpy(&palette, reinterpret_cast<const std::byte*>(texture) + 0x44, sizeof(palette));
 
@@ -345,7 +298,6 @@ int EngineTexture(const model_t* world, const JhlBsp& bsp, int miptex, std::stri
 	return number;
 }
 
-// Reads back a texture the engine uploaded, and makes its tile with the same filtering.
 bool LoadTexture(WaterTexture& water, int engineTexture, std::string& why)
 {
 	if (!why.empty())
@@ -397,8 +349,6 @@ bool LoadTexture(WaterTexture& water, int engineTexture, std::string& why)
 	return ok;
 }
 
-// A convex polygon cut on the light's grid (as Quake's GL_SubdivideSurface cuts water: across its middle, at a grid
-// line, while it's longer than a cell along an axis; no sliver under 8 units).
 void CutOnGrid(const std::vector<Vector>& polygon, std::vector<std::vector<Vector>>& pieces, float grid, int depth = 0)
 {
 	Vector mins = polygon[0];
@@ -471,12 +421,11 @@ void LightFace(const JhlBspFace& face, LitFace& lit, float grid)
 		}
 	}
 
-	lit.Light.assign(lit.Points.size(), LitLight); // Not yet taken: as bright as ever.
+	lit.Light.assign(lit.Points.size(), LitLight);
 }
 
 void IndexSurfaces(const JhlBsp& bsp);
 
-// The map's water: its textures (read from the engine's) and every model's water faces.
 void LoadMap(const char* mapName)
 {
 	FreeTextures();
@@ -568,8 +517,6 @@ void LoadMap(const char* mapName)
 
 		model.AllWater = model.AllWater && model.HasWater;
 
-		// Each surface's twin facing the other way, if it has one: of the two only the one facing the view is drawn (both
-		// drawn, flat they were the same; waved, cut into triangles differently, they fought).
 		for (const auto& faces : model.FacesByTexture)
 		{
 			for (const int a : faces)
@@ -590,7 +537,7 @@ void LoadMap(const char* mapName)
 	}
 
 	g_MapReady = true;
-	g_Stepped = true; // Tiles drawn before they're first used.
+	g_Stepped = true;
 }
 
 bool Ready()
@@ -616,8 +563,6 @@ bool Ready()
 	return g_MapReady && !g_Textures.empty();
 }
 
-// One step of the ripples (sw.dll's, as it is): a drop now and then on the newer field, then the older one becomes the
-// next.
 void Step(float time)
 {
 	auto& from = g_Fields[g_Newest];
@@ -643,7 +588,6 @@ void Step(float time)
 		add(row - 1, column, size >> 2);
 	}
 
-	// Neighbours along the field as a row of cells, wrapping (so a row's ends touch the next and last rows' ends).
 	for (int i = 0; i < FieldCells; ++i)
 	{
 		const int sum = from[(i - FieldSize) & (FieldCells - 1)] + from[(i - 1) & (FieldCells - 1)] +
@@ -680,7 +624,6 @@ void Advance()
 	}
 }
 
-// Each tile drawn again from its texture, displaced by the newest field (sw.dll's: right by height / 16, up by it).
 void UpdateTiles()
 {
 	if (!g_Stepped)
@@ -727,7 +670,6 @@ void UpdateTiles()
 	gl.BindTexture(GL_TEXTURE_2D, previous);
 }
 
-// A point turned about an axis (0 x, 1 y, 2 z) by degrees, as glRotatef turns it.
 Vector Turn(const Vector& point, int axis, float degrees)
 {
 	const float radians = degrees * static_cast<float>(std::numbers::pi / 180);
@@ -741,8 +683,6 @@ Vector Turn(const Vector& point, int axis, float degrees)
 	return turned;
 }
 
-// The light under a point (the brightest of its colours), averaged with the light around it (LightSpread), any in a
-// wall left out; -1 if all are.
 float LightUnder(const Vector& point)
 {
 	static constexpr float Taps[][2] = {{0, 0}, {LightSpread, 0}, {-LightSpread, 0}, {0, LightSpread}, {0, -LightSpread}};
@@ -767,8 +707,6 @@ float LightUnder(const Vector& point)
 	return count > 0 ? total / count : -1;
 }
 
-// The light at a point in the world (LightUnder), all in a wall: further out around it, the nearest ring with any;
-// none: as bright as ever.
 float LightAt(const Vector& point)
 {
 	float light = LightUnder(point);
@@ -805,8 +743,6 @@ float LightAt(const Vector& point)
 	return light < 0 ? LitLight : light;
 }
 
-// The water's brightness for the light under it (jhl_visuals_waterlight): 1 from full up, eased down below it to
-// darkest (most water: LitLight, DarkestWater; some textures their own, WaterTexture).
 float Brightness(float light, float full = LitLight, float darkest = DarkestWater)
 {
 	const float x = std::clamp(light / full, 0.0f, 1.0f);
@@ -823,7 +759,6 @@ int CellOf(float value)
 	return static_cast<int>(std::floor(value / SurfaceCell));
 }
 
-// The world's faces with the map's own light, by the cells they're in.
 void IndexSurfaces(const JhlBsp& bsp)
 {
 	g_Surfaces.clear();
@@ -896,8 +831,6 @@ void IndexSurfaces(const JhlBsp& bsp)
 	}
 }
 
-// The map's own light (the brightest of its colours) of the world's face at a point a trace hit, facing back along it
-// (normal); -1 if none there has it.
 float SurfaceLight(const JhlBsp& bsp, const Vector& hit, const Vector& normal)
 {
 	const auto found = g_SurfaceCells.find(CellKey(CellOf(hit.x), CellOf(hit.y), CellOf(hit.z)));
@@ -917,7 +850,6 @@ float SurfaceLight(const JhlBsp& bsp, const Vector& hit, const Vector& normal)
 			continue;
 		}
 
-		// Within its polygon (a unit's leeway), whichever way it winds.
 		bool front = true;
 		bool back = true;
 
@@ -960,8 +892,6 @@ float SurfaceLight(const JhlBsp& bsp, const Vector& hit, const Vector& normal)
 	return -1;
 }
 
-// A point trace against the world alone: not entities, which the client only has near the player (a brush fence over
-// c2a5's water blocked the sky or not, by where the player was when its light was taken).
 pmtrace_t WorldTrace(const Vector& start, const Vector& end)
 {
 	pmtrace_t trace;
@@ -970,7 +900,6 @@ pmtrace_t WorldTrace(const Vector& start, const Vector& end)
 	return trace;
 }
 
-// The light of what's around a point on the water as seen from just above it (see LitLight).
 float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 {
 	Vector start = point + Vector(0, 0, LightAbove);
@@ -987,8 +916,6 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 		start = point + Vector(std::cos(angle) * LightSpread, std::sin(angle) * LightSpread, LightAbove);
 	}
 
-	// Under the open sky (straight up or tilted 45 degrees four ways, the first thing there is the sky: a fence or a rail
-	// overhead blocks one, a roof all): outdoors, as bright as ever, whatever's around.
 	static constexpr float Tilt = 0.7071f;
 	static const Vector SkyDirections[] = {{0, 0, 1}, {Tilt, 0, Tilt}, {-Tilt, 0, Tilt}, {0, Tilt, Tilt}, {0, -Tilt, Tilt}};
 
@@ -1002,8 +929,6 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 			continue;
 		}
 
-		// A point trace passes through the sky (not solid to it) to the void beyond: in the sky just short of where it
-		// stopped, or just past it.
 		Vector before = Vector(trace.endpos) - direction * 2;
 		Vector beyond = Vector(trace.endpos) + direction * 2;
 
@@ -1018,9 +943,6 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 		}
 	}
 
-	// Level out to LightReach, and down to the floor on a ring 45 degrees out (none straight down: the deeper the floor,
-	// the further out it's taken, so something far down, ba_power2's grated pit, doesn't print itself on the surface;
-	// in shallow water, close by).
 	float total = 0;
 	float weight = 0;
 
@@ -1067,7 +989,6 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 	return weight > 0 ? total / weight : LightAt(point);
 }
 
-// A face's light, taken the first time it's drawn (budget allowing) and again if its entity has moved (see LitLight).
 void Relight(const JhlBsp& bsp, LitFace& lit, const Vector& origin, const Vector& angles, int model)
 {
 	const float now = gEngfuncs.GetClientTime();
@@ -1085,10 +1006,8 @@ void Relight(const JhlBsp& bsp, LitFace& lit, const Vector& origin, const Vector
 		lit.Stale = true;
 	}
 
-	// Its light not where it is: faded to the even brightness; taken again: faded back.
 	lit.Blend = lit.Stale ? std::min(lit.Blend + step, 1.0f) : std::max(lit.Blend - step, 0.0f);
 
-	// Nothing taken while it moves (started again once it stops, where it is then).
 	if (moving)
 	{
 		if (lit.Stale)
@@ -1110,7 +1029,6 @@ void Relight(const JhlBsp& bsp, LitFace& lit, const Vector& origin, const Vector
 		lit.Next = 0;
 	}
 
-	// Placed as the engine places its model (DrawModel), a unit above the water.
 	const auto place = [&](Vector point)
 	{
 		if (angles != g_vecZero)
@@ -1136,7 +1054,6 @@ void Relight(const JhlBsp& bsp, LitFace& lit, const Vector& origin, const Vector
 		return;
 	}
 
-	// Taken in full the first time: its light in the cells, for averaging (moved again later, its first light stays there).
 	if (!lit.Indexed)
 	{
 		for (std::size_t i = 0; i < lit.Points.size(); ++i)
@@ -1156,10 +1073,6 @@ void Relight(const JhlBsp& bsp, LitFace& lit, const Vector& origin, const Vector
 	lit.Stale = false;
 }
 
-// The water's waves where OpenGL drew them (hw.dll's EmitWaterPolys): a water entity's surface raised at each point by
-// two waves from its turbulence table (8 sin(2 pi i / 256)), times its scale (the map's WaveHeight / 8), lowered seen
-// from under it; in its model's coordinates at the client's time. The software renderer drew none: here both, its
-// ripples on OpenGL's waves.
 float WaveHeight(float x, float y, double time)
 {
 	static const auto turbulence = []
@@ -1177,11 +1090,6 @@ float WaveHeight(float x, float y, double time)
 	return static_cast<float>((turbulence[along] + 8.0) * 0.8 + (turbulence[across] + 8.0));
 }
 
-// Draws a model's water faces, placed as the engine places a brush model (R_RotateForEntity: moved to its origin,
-// turned by yaw about z, pitch (negated) about y, roll about x). The world's: those that face the view. An entity's: as
-// the engine's R_DrawBrushModel (hw.dll) has them, only its level ones (any, gl_watersides 1) higher than a unit above
-// its bottom (the entity's origin and its model's lowest point; turned, its origin less its radius), from either side:
-// its top, seen from above and from under it, not its sides and floor.
 void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Vector& angles, float bottom = 0, float waves = 0,
 	const std::array<float, 4>& color = {1, 1, 1, 1}, bool overEngine = false)
 {
@@ -1190,7 +1098,6 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 	const bool turned = angles != g_vecZero;
 	const bool lit = g_WaterLight && g_WaterLight->value != 0;
 
-	// The view in the model's own coordinates, to tell which faces face it.
 	Vector view = v_origin - origin;
 
 	if (turned)
@@ -1248,7 +1155,6 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 			}
 
 			const auto& texinfo = bsp.Texinfo[face.Texinfo];
-			// Over the engine's waved water: on its cut. Else the finer one (the light's gradients smoother).
 			auto& litFace = overEngine && waves != 0 ? g_EngineFaces[index] : g_LitFaces[index];
 
 			const float darkest = g_Textures[t].Darkest;
@@ -1259,7 +1165,6 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 			{
 				Relight(bsp, litFace, origin, angles, modelIndex);
 
-				// Averaged around each point, again whenever more light has been taken.
 				const float now = gEngfuncs.GetClientTime();
 
 				if (g_Textures[t].Smoothed && litFace.Indexed && litFace.SmoothVersion != g_LightCellsVersion &&
@@ -1277,7 +1182,6 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 
 			const bool smooth = faceLit && g_Textures[t].Smoothed && litFace.SmoothVersion >= 0;
 
-			// Waves lowered seen from under the face (the view no higher than its first point, as the engine compares them).
 			const float waveScale = waves != 0 && v_origin.z <= face.Points[0].z ? -waves : waves;
 			std::size_t next = 0;
 
@@ -1319,7 +1223,6 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 	gl.PopMatrix();
 }
 
-// What all the drawing here needs, kept apart from the engine's state.
 struct WaterDrawState
 {
 	GLint Program = 0;
@@ -1335,7 +1238,6 @@ struct WaterDrawState
 
 		gl.UseProgram(0);
 
-		// Only the first texture unit (the engine's lightmaps use the second).
 		gl.ActiveTexture(GL_TEXTURE1);
 		gl.Disable(GL_TEXTURE_2D);
 		gl.ActiveTexture(GL_TEXTURE0);
@@ -1343,9 +1245,8 @@ struct WaterDrawState
 		gl.Enable(GL_TEXTURE_2D);
 		gl.TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-		gl.Disable(GL_CULL_FACE); // Faces facing away are left out above.
+		gl.Disable(GL_CULL_FACE);
 
-		// Fogged under water as the engine fogs the world (it turns its fog off around the client's drawing).
 		if (const int contents = gEngfuncs.PM_PointContents(v_origin, nullptr); contents <= CONTENTS_WATER && contents != CONTENTS_TRANSLUCENT)
 		{
 			gl.Enable(GL_FOG);
@@ -1386,7 +1287,6 @@ void JhlSoftwareWater_Initialize()
 	g_WaterLight = gEngfuncs.pfnRegisterVariable("jhl_visuals_waterlight", "1", FCVAR_ARCHIVE);
 	g_WaterOpacity = gEngfuncs.pfnRegisterVariable("jhl_visuals_wateropacity", "0.85", FCVAR_ARCHIVE);
 
-	// The light under the player's eyes and the water's brightness for it there, for tuning the curve (LitLight).
 	gEngfuncs.pfnAddCommand("jhl_debug_waterlight", []
 		{
 			const JhlBsp* bsp = JhlBsp_Get(g_MapName.c_str());
@@ -1466,11 +1366,9 @@ void JhlSoftwareWater_DrawOpaque()
 	gl.Color4f(1, 1, 1, 1);
 	gl.Disable(GL_BLEND);
 
-	// Over the engine's: the world's water, and opaque entities it draws with water on them.
 	gl.DepthMask(GL_FALSE);
 	gl.Enable(GL_POLYGON_OFFSET_FILL);
 	gl.PolygonOffset(OverdrawOffsetFactor, OverdrawOffsetUnits);
-	// The world's waves: its scale (worldspawn's WaveHeight / 8, Blue Shift's maps have them), as the engine waves it.
 	const cl_entity_t* world = gEngfuncs.GetEntityByIndex(0);
 	DrawModel(*bsp, 0, g_vecZero, g_vecZero, 0, world ? world->curstate.scale : 0, {1, 1, 1, 1}, true);
 
@@ -1515,7 +1413,6 @@ void JhlSoftwareWater_DrawTransparent()
 		return;
 	}
 
-	// See-through water entities, far to near, as the engine draws them.
 	std::vector<const WaterEntity*> seeThrough;
 
 	for (const auto& water : g_Entities)
@@ -1538,7 +1435,6 @@ void JhlSoftwareWater_DrawTransparent()
 	gl.DepthMask(GL_FALSE);
 	gl.Enable(GL_BLEND);
 
-	// See-through (jhl_visuals_wateropacity): the solid water entities, at that opacity.
 	if (g_SeeThrough)
 	{
 		const float opacity = std::clamp(g_WaterOpacity->value, 0.0f, 1.0f);

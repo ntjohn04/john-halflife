@@ -167,10 +167,6 @@ public:
 	CBeam* m_pBeam;
 	CSprite* m_pSprite;
 
-	/**
-	 *	@brief johnhalflife (jhl_fx_particlesystem): its beam's hot core (not saved: a temporary beam, gone on save and
-	 *	restore, as its beam's strands are), and the beam's effects where it burns: a light and a scorch.
-	 */
 	EHANDLE m_hJhlCore;
 	void JhlBeamBurn(const TraceResult& tr);
 	void JhlBeamOff();
@@ -830,9 +826,6 @@ void COFPitWormUp::ShootBeam()
 
 			m_pBeam->DoSparks(vecEyePos, vecEyePos);
 
-			// johnhalflife: a hot core down the middle of it (the same sprite, thinner, paler, fainter), and its eye
-			// marked as blazing for the client (its renderamt: drawn normally, it's unused; jhl_gargantua.cpp's
-			// JhlPitWorm_Drawn lights it).
 			if (UTIL_JhlParticleSystem())
 			{
 				if (CBeam* core = CBeam::BeamCreate("sprites/laserbeam.spr", 10); core)
@@ -1387,7 +1380,6 @@ void COFPitWormUp::HandleAnimEvent(MonsterEvent_t* pEvent)
 
 void COFPitWormUp::JhlBeamBurn(const TraceResult& tr)
 {
-	// A scorch where it burns (vanilla's were bullet holes), and a light its green there, a moment at a time.
 	UTIL_DecalTrace(const_cast<TraceResult*>(&tr), DECAL_SMALLSCORCH1 + RANDOM_LONG(0, 2));
 
 	MESSAGE_BEGIN(MSG_PVS, SVC_TEMPENTITY, tr.vecEndPos);

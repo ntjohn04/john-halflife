@@ -54,8 +54,7 @@ public:
 	EntityHandle<CBeam> m_pBeam[VOLTIGORE_BEAM_COUNT];
 	int m_iBeams;
 
-	// johnhalflife: a strand on each beam (UTIL_JhlBeamStrand), and which of its beam re-aims lights where they touch
-	// (every other). Not saved: beams are temporary.
+	// johnhalflife
 	EntityHandle<CBeam> m_pStrands[VOLTIGORE_BEAM_COUNT];
 	int m_iArmBeamCount = 0;
 	CBaseAnimating* m_pAttachEnt;
@@ -160,7 +159,7 @@ void COFChargedBolt::LaunchChargedBolt(const Vector& vecAim, CBaseEntity* owner,
 	SetOwner(owner);
 	pev->velocity = vecAim * nSpeed;
 
-	// johnhalflife: thrown, no longer charging (its charge light, jhl_gargantua.cpp's JhlVoltigore_Track).
+	// johnhalflife
 	pev->renderamt = 255;
 
 	pev->speed = nSpeed;
@@ -242,8 +241,6 @@ void COFChargedBolt::ArmBeam(int side)
 		pBeam->SetNoise(80);
 	}
 
-	// johnhalflife: as the vortigaunt's beams, a thin, wild, dimmer strand, and every other re-aim a faint purple
-	// light where it touches (it re-aims 40 times a second).
 	if (UTIL_JhlParticleSystem())
 	{
 		m_pStrands[m_iBeams] = UTIL_JhlBeamStrand(m_pStrands[m_iBeams], pBeam, 12, pBeam->GetNoise() > 40 ? 210 : 100, 102);
@@ -278,8 +275,7 @@ void COFChargedBolt::ChargedBoltTouch(CBaseEntity* pOther)
 	SetTouch(nullptr);
 	SetThink(nullptr);
 
-	// johnhalflife: where it hits, a little back along its flight; and the armor of what it hit, to tell after the
-	// damage whether a player's suit took it.
+	// johnhalflife
 	const Vector impact = pev->origin - pev->velocity.Normalize() * 4;
 	const float armorBefore = pOther->pev->armorvalue;
 
@@ -309,9 +305,6 @@ void COFChargedBolt::ChargedBoltTouch(CBaseEntity* pOther)
 
 	RadiusDamage(pev->origin, this, pevOwner, GetSkillFloat("voltigore_dmg_beam"sv), 128.0, DMG_ALWAYSGIB | DMG_SHOCK);
 
-	// johnhalflife: as the vortigaunt's zap where it hits: a big purple light shrinking away over 1.5 s, sparks (a
-	// player whose suit lost charge 2-3 showers, a player it went straight into or a creature none, a wall one half
-	// the time), and a heavy electric crack (vanilla: silent).
 	if (UTIL_JhlParticleSystem())
 	{
 		int showers = 0;
@@ -895,7 +888,6 @@ void COFVoltigore::StartTask(const Task_t* pTask)
 			pBeam->SetBrightness(255);
 			pBeam->SetNoise(20);
 
-			// johnhalflife: as the vortigaunt's zap, a thin, wild, dimmer strand.
 			if (UTIL_JhlParticleSystem())
 				m_pStrands[m_iBeams] = UTIL_JhlBeamStrand(nullptr, pBeam, 20, 100, 102);
 
@@ -908,8 +900,6 @@ void COFVoltigore::StartTask(const Task_t* pTask)
 
 			m_pChargedBolt->SetOrigin(vecConverge);
 
-			// johnhalflife: tagged renderamt 254 while it's held, charging, for the client's light growing on it
-			// (jhl_gargantua.cpp's JhlVoltigore_Track; an additive sprite's 254 looks as its 255).
 			if (UTIL_JhlParticleSystem())
 				m_pChargedBolt->pev->renderamt = 254;
 		}
@@ -1125,10 +1115,7 @@ void COFVoltigore::CallDeathGibThink()
 	DeathGibThink();
 }
 
-// johnhalflife: its death lit, for the dark tunnels it lives in: a light in its body as its charge, growing through its
-// death throes with the animation (DeathLightMin to DeathLightMax, its charge's purple, flickering), then as it bursts
-// a bigger flash its bolts' impact's color, fading out over DeathFlashTime as their impact does (GibMonster). Gibbed
-// outright, without the throes, a smaller flash (GibbedFlashRadius, over GibbedFlashTime).
+// johnhalflife
 constexpr float DeathLightMin = 100;
 constexpr float DeathLightMax = 240;
 constexpr float DeathFlashRadius = 300;
@@ -1213,7 +1200,6 @@ void COFVoltigore::DeathGibThink()
 			pBeam->SetThink(&CBaseEntity::SUB_Remove);
 			pBeam->pev->nextthink = gpGlobals->time + 0.6;
 
-			// johnhalflife: a strand, gone with it, and a faint purple light where it touches.
 			if (UTIL_JhlParticleSystem())
 			{
 				if (CBeam* strand = UTIL_JhlBeamStrand(nullptr, pBeam, 12, 210, 102); strand)
@@ -1234,7 +1220,6 @@ void COFVoltigore::DeathGibThink()
 
 void COFVoltigore::GibMonster()
 {
-	// johnhalflife: its burst lit (DeathGibThink): after its death throes, or gibbed outright.
 	if (UTIL_JhlParticleSystem())
 	{
 		const bool throes = m_pfnThink == static_cast<void (CBaseEntity::*)()>(&COFVoltigore::CallDeathGibThink);

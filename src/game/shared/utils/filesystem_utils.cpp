@@ -281,9 +281,7 @@ std::vector<std::byte> FileSystem_LoadFileIntoBuffer(const char* fileName, FileC
 
 	FSFile file{fileName, "rb", pathID};
 
-	// GAMECONFIG is only the mod's own directory. A mod that borrows content from another through liblist.gam's
-	// fallback_dir (johnhalflife's expansions) finds that directory's files under GAME_FALLBACK, which like
-	// GAMECONFIG excludes downloaded content.
+	// johnhalflife
 	if (!file && pathID && 0 == strcmp(pathID, "GAMECONFIG"))
 	{
 		file.Open(fileName, "rb", "GAME_FALLBACK");

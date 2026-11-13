@@ -26,7 +26,6 @@
 
 #include "CGrapple.h"
 
-// johnhalflife's particle system changes (jhl_fx_particlesystem): the server's and the client's view of it.
 static bool JhlGrappleEffects()
 {
 #ifndef CLIENT_DLL
@@ -92,10 +91,7 @@ void CGrapple::Holster()
 	}
 }
 
-// johnhalflife: its fire state told to the client, as the gluon gun's (CEgon::GetWeaponData): its latching, missing and
-// letting go are the server's alone, so the client's prediction otherwise goes on thinking it's firing after the
-// server's stopped, and their two views of its animation flip it for a frame (ClientPredictionSystem forces the
-// server's).
+// johnhalflife
 void CGrapple::GetWeaponData(weapon_data_t& data)
 {
 	if (JhlGrappleEffects())
@@ -186,7 +182,6 @@ void CGrapple::PrimaryAttack()
 					pTarget->EmitSoundDyn(CHAN_STATIC, "weapons/bgrapple_impact.wav", 0.98, ATTN_NORM, 0, 125);
 				}
 
-				// johnhalflife: its bite draws a little blood (as a hornet's sting).
 				if (UTIL_JhlParticleSystem() && pTarget->BloodColor() != DONT_BLEED)
 					SpawnBlood(m_pTip->pev->origin, pTarget->BloodColor(), 10);
 
@@ -497,8 +492,6 @@ void CGrapple::CreateEffect()
 		gpGlobals->v_right * 8.0 +
 		gpGlobals->v_up * -8.0;
 
-	// johnhalflife: aimed at the crosshair (UTIL_JhlAimAtCrosshair; Valve's flew parallel to the aim, landing 8 units
-	// right of it and 8 below at any range).
 	Vector vecAngles = UTIL_JhlAimAtCrosshair(m_pPlayer, vecOrigin, m_pPlayer->pev->v_angle);
 
 	vecAngles.x = -vecAngles.x;
@@ -519,7 +512,6 @@ void CGrapple::CreateEffect()
 
 		m_pBeam->pev->spawnflags |= SF_BEAM_TEMPORARY;
 
-		// johnhalflife: the client draws the tongue instead (jhl_grapple.cpp): slack flying out, taut once latched on.
 		if (UTIL_JhlParticleSystem())
 			m_pBeam->pev->effects |= EF_NODRAW;
 	}

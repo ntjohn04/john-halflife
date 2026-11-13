@@ -221,9 +221,6 @@ enum class WeaponState
 
 void Weapon_RegisterWeaponData();
 
-/**
- *	@brief Sound played when switching to the weapon that uses a view model.
- */
 struct WeaponDeploySound
 {
 	std::string_view ViewModel;
@@ -232,9 +229,6 @@ struct WeaponDeploySound
 
 std::span<const WeaponDeploySound> GetWeaponDeploySounds();
 
-/**
- *	@return The switch sound for a view model, or null if it has none.
- */
 const char* GetWeaponDeploySound(std::string_view viewModel);
 
 constexpr int RefillAllAmmoAmount = -1;
@@ -355,10 +349,7 @@ public:
 	 */
 	virtual void ItemPostFrame();
 
-	/**
-	 *	@brief johnhalflife: called each frame by player PostThink even when ItemPostFrame isn't (the player busy
-	 *	reloading or switching, or on a mounted gun), for sounds timed to an animation.
-	 */
+	// johnhalflife: @brief johnhalflife
 	virtual void ItemAlwaysFrame() {}
 
 	// called by CBasePlayerWeapons ItemPostFrame()
@@ -438,51 +429,24 @@ public:
 	 */
 	float GetNextAttackDelay(float delay);
 
-	/**
-	 *	@brief Accuracy bloom: spread grows with each shot and recovers once the weapon has been ready to fire for a moment.
-	 *	Spread values are the same as the bullet cone values passed to FireBulletsPlayer.
-	 */
 	struct SpreadSettings
 	{
-		float Min;			//!< Spread once fully recovered.
-		float Max;			//!< Spread cap while firing continuously.
+		float Min;
+		float Max;
 		float PerShot;		//!< Spread added by each shot.
-		float RecoveryRate; //!< Spread removed per second while recovering.
+		float RecoveryRate;
 	};
 
-	/**
-	 *	@brief Spread the next shot would be fired with.
-	 */
 	float GetCurrentSpread(const SpreadSettings& settings) const;
 
-	/**
-	 *	@brief Returns the spread to fire this shot with and grows it for the next one.
-	 *	Must be called before the next attack time is updated for this shot.
-	 */
 	float FireSpread(const SpreadSettings& settings);
 
-	/**
-	 *	@brief Kicks the local player's view with a smooth punch, predicted on the client only (no network traffic).
-	 *	Does nothing on the server, or with jhl_weapons_smoothrecoil 0.
-	 *	@param kick Pitch (positive is up), yaw and roll, in degrees.
-	 */
 	void WeaponKick(const Vector& kick, float spring, float damping);
 
-	/**
-	 *	@brief Camera motion for a melee swing (@p hit false, on every first swing) or for connecting with something
-	 *	(@p hit true, a short sharp jolt that also settles the swing faster, since hits recover sooner).
-	 *	@param strength 1 for the crowbar; smaller for lighter weapons, larger for heavier ones.
-	 */
 	void MeleeKick(float strength, bool hit);
 
-	/**
-	 *	@brief Camera motion for throwing or dropping something. @p strength 1 is a grenade throw.
-	 */
 	void ThrowKick(float strength);
 
-	/**
-	 *	@brief Time between scope toggles, shared by the crossbow and the sniper rifle (originally 1 and 0.5 seconds).
-	 */
 	static constexpr float ScopeToggleDelay = 0.3f;
 
 	void SetWeaponModels(const char* viewModel, const char* weaponModel);
@@ -536,7 +500,7 @@ public:
 	float m_flTimeWeaponIdle;		 //!< soonest time ItemPostFrame will call WeaponIdle
 	int m_iPrimaryAmmoType = -1;	 //!< "primary" ammo index into players m_rgAmmo[]
 	int m_iSecondaryAmmoType = -1;	 //!< "secondary" ammo index into players m_rgAmmo[]
-	float m_flSpread = 0;			 //!< spread after the last shot (see SpreadSettings), predicted through weapon_data_t::fuser4
+	float m_flSpread = 0;
 	int m_iClip;					 //!< number of shots left in the primary weapon clip, -1 it not used
 	int m_iClientClip;				 //!< the last version of m_iClip sent to hud dll
 	WeaponState m_ClientWeaponState; //!< the last version of the weapon state sent to hud dll (is current weapon, is on target)
@@ -628,20 +592,10 @@ void AddMultiDamage(CBaseEntity* inflictor, CBaseEntity* pEntity, float flDamage
 
 void DecalGunshot(TraceResult* pTrace, int iBulletType);
 
-/**
- *	@brief Server only: a melee weapon's strike on a wall (where its decal goes) sparks now and then on metal.
- */
 void MeleeImpactSpark(TraceResult* pTrace, float puffChance, bool knife = false);
 
-/**
- *	@brief Server only: tells nearby clients to draw a splash if a bullet fired from @p start to @p end entered water.
- */
 void SendBulletWaterSplash(const Vector& start, const Vector& end);
 
-/**
- *	@brief Server only: one of the four stock gun pickup sounds, picked at random.
- *	Vanilla only ever plays the second one.
- */
 const char* RandomWeaponPickupSound();
 void SpawnBlood(Vector vecSpot, int bloodColor, float flDamage);
 int DamageDecal(CBaseEntity* pEntity, int bitsDamageType);

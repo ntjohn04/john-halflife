@@ -79,9 +79,6 @@ void CRopeSegment::Touch(CBaseEntity* pOther)
 	// Electrified wires deal damage.
 	if (m_bCauseDamage)
 	{
-		// johnhalflife (jhl_physics_fpsfix): vanilla's 1 a touch, every frame, is 72 a second at 72 fps; dealt half a
-		// second's worth at a time, as trigger_hurt does (Half-Life Updated had it as at 30 fps, 30 a second). Off,
-		// vanilla's.
 		if (!UTIL_JhlFpsFix())
 		{
 			pOther->TakeDamage(this, this, 1, DMG_SHOCK);

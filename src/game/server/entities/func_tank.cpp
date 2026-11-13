@@ -57,19 +57,10 @@ public:
 	 */
 	virtual void Fire(const Vector& barrelEnd, const Vector& forward, CBaseEntity* attacker);
 
-	/**
-	 *	@brief johnhalflife: a laser's beam's color, for its shot's light (CFuncTankLaser's).
-	 */
 	virtual Vector JhlLaserColor() { return g_vecZero; }
 
-	/**
-	 *	@brief johnhalflife: whether it's a real laser (laserbeam.spr), for its shot's flash (CFuncTankLaser's).
-	 */
 	virtual bool JhlIsRealLaser() { return false; }
 
-	/**
-	 *	@brief johnhalflife: stops anything it's still firing (a laser's beam), as it's let go (StopControl).
-	 */
 	virtual void JhlStopFiring() {}
 	virtual Vector UpdateTargetPosition(CBaseEntity* pTarget)
 	{
@@ -175,7 +166,6 @@ protected:
 	int m_TargetLaserWidth = 1;
 	Vector m_TargetLaserColor{255, 0, 0};
 
-	// johnhalflife: this shot's, for its effects (CFuncTank::Fire; not saved): how many rounds, and where a laser's hit.
 	int m_JhlShots = 1;
 	Vector m_JhlEnd;
 };
@@ -452,8 +442,6 @@ void CFuncTank::StopControl()
 	WRITE_BYTE(0);
 	MESSAGE_END();
 
-	// johnhalflife: what it was firing stops with it (a laser's beam: it stops thinking now, and only its think turned
-	// the beam off, so a beam on as it was let go stayed on for good; likelier now its beams last longer).
 	JhlStopFiring();
 
 	pev->nextthink = 0;
@@ -554,8 +542,7 @@ CBaseEntity* CFuncTank::FindTarget(CBaseEntity* pvsPlayer)
 	if (!pPlayerTarget)
 		return pPlayerTarget;
 
-	// johnhalflife: Half-Life's and Blue Shift's tanks target only the player, as in vanilla; Opposing Force's
-	// also target the player's allies (set in cfg/skill_opposingforce.json).
+	// johnhalflife
 	if (0 == g_Skill.GetValue("func_tank_target_allies"))
 		return pPlayerTarget;
 
@@ -908,10 +895,7 @@ void CFuncTank::Fire(const Vector& barrelEnd, const Vector& forward, CBaseEntity
 {
 	if (m_fireLast != 0)
 	{
-		// johnhalflife: by kind: 0 a machine gun, 1 a rocket launcher, 2 a cannon (func_tankmortar), 3 a laser. A machine
-		// gun firing no bullets (bullet 0) fires nothing in vanilla but its sprites, if it has any: the Opposing Force
-		// boot camp's security cameras are func_tanks that track the player, "firing" a round a second. Nothing of
-		// johnhalflife's for those.
+		// johnhalflife: by kind
 		const int kind = ClassnameIs("func_tankrocket") ? 1 : ClassnameIs("func_tankmortar") ? 2 : ClassnameIs("func_tanklaser") ? 3 : 0;
 		const bool jhlShot = UTIL_JhlParticleSystem() && (kind != 0 || m_bulletType != TANK_BULLET_NONE);
 
@@ -923,9 +907,6 @@ void CFuncTank::Fire(const Vector& barrelEnd, const Vector& forward, CBaseEntity
 			pSprite->pev->velocity.z = RANDOM_FLOAT(40, 80);
 			pSprite->SetScale(m_spriteScale);
 		}
-		// johnhalflife: its flash drawn by the client instead (JhlTank_ParseFire), flickering a frame and a turn at a time:
-		// a server sprite stays at least a tenth of a second, the same way round, so a fast gun's piled up into one still
-		// blob.
 		if (!FStringNull(m_iszSpriteFlash) && !jhlShot)
 		{
 			CSprite* pSprite = CSprite::SpriteCreate(STRING(m_iszSpriteFlash), barrelEnd, true);
@@ -937,8 +918,6 @@ void CFuncTank::Fire(const Vector& barrelEnd, const Vector& forward, CBaseEntity
 			pSprite->pev->nextthink += 0.1;
 		}
 
-		// johnhalflife (jhl_fx_particlesystem): its shot's effects at its muzzle, by kind (the client's,
-		// weapon_effects.cpp's JhlTank_ParseFire), by kind (a laser's color, where it hit).
 		if (jhlShot)
 		{
 			const Vector laserColor = kind == 3 ? JhlLaserColor() : g_vecZero;
@@ -962,8 +941,6 @@ void CFuncTank::Fire(const Vector& barrelEnd, const Vector& forward, CBaseEntity
 
 		m_JhlShots = 1;
 
-		// johnhalflife (jhl_fx_particlesystem): a kick to whoever's manning it, by its kind (a machine gun's light, it
-		// fires fast; a cannon's hardest).
 		if (jhlShot && m_pController)
 		{
 			constexpr float Kick[4] = {0.3f, 2.0f, 3.0f, 1.5f};
@@ -1078,9 +1055,6 @@ private:
 	Vector JhlLaserColor() override { return m_pLaser ? m_pLaser->pev->rendercolor : g_vecZero; }
 	float m_laserTime;
 
-	// johnhalflife (jhl_fx_particlesystem): a real laser's (laserbeam.spr: the gene worm's mounted guns, Forget About
-	// Freeman's alien turret; not Xen's lightning crystals) hot core, a temporary beam (gone on save and restore; not
-	// saved).
 	EHANDLE m_hJhlCore;
 
 public:
@@ -1153,8 +1127,6 @@ CLaser* CFuncTankLaser::GetLaser()
 
 void CFuncTankLaser::Think()
 {
-	// johnhalflife (jhl_fx_particlesystem): while its beam's on (longer than vanilla's), its start (and its core's) kept
-	// on its barrel as it turns; where it hit stays.
 	if (m_pLaser && UTIL_JhlParticleSystem() && gpGlobals->time <= m_laserTime)
 	{
 		const Vector barrel = BarrelPosition();
@@ -1202,8 +1174,6 @@ void CFuncTankLaser::Fire(const Vector& barrelEnd, const Vector& forward, CBaseE
 				m_pLaser->pev->nextthink = 0;
 				m_JhlEnd = tr.vecEndPos;
 
-				// johnhalflife (jhl_fx_particlesystem): each shot's beam stays a little longer and is 40% wider (once:
-				// marked in its laser's iuser1, saved with it); a real laser gets a hot core, paler, thinner, its length.
 				if (UTIL_JhlParticleSystem())
 				{
 					m_laserTime = gpGlobals->time + 0.15f;
@@ -1312,10 +1282,6 @@ void CFuncTankMortar::Fire(const Vector& barrelEnd, const Vector& forward, CBase
 
 			TankTrace(barrelEnd, forward, gTankSpread[m_spread], tr);
 
-			// johnhalflife (jhl_fx_particlesystem): a tank shell's look: its explosion shown 2.5 times its magnitude, at
-			// least 180, at most 260 (the Abrams' is 60: 180, the Bradley's cannon 100: 250); a howitzer's (150 and up:
-			// c2a5e's and c2a5f's are 200) at 0.91 its own, 182 (more spilled out of the buildings it's fired into).
-			// Its damage as it was, by an unseen, silent one at its own.
 			if (UTIL_JhlParticleSystem())
 			{
 				const int shown = pev->impulse >= 150 ? pev->impulse * 91 / 100 : std::clamp(pev->impulse * 5 / 2, 180, 260);

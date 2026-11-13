@@ -95,7 +95,6 @@ public:
 
 	bool HasAlienGibs() override { return true; }
 
-	// johnhalflife: its corpse gibs from 48 bullet damage: 6 9mm rounds, 2 from the .357, a double shotgun blast.
 	float JhlCorpseGibDamage() override { return 48; }
 
 	virtual float GetDamageAmount() { return GetSkillFloat("headcrab_dmg_bite"sv); }

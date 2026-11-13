@@ -18,11 +18,6 @@
 #include "hud.h"
 #include "event_api.h"
 
-/**
- *	@brief A sprite or model only johnhalflife's client effects use. The server precaches them last, only while the map
- *	has room (W_Precache: the engine's 512 models a map are shared with its brush entities), and the client can't load
- *	one the server didn't (CL_LoadModel gives -1). 0 where it isn't precached: the effect is left out.
- */
 inline int JhlEffectModel(const char* name)
 {
 	return gEngfuncs.pEventAPI->EV_FindModelIndex(name);

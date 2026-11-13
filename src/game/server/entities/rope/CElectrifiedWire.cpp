@@ -232,7 +232,6 @@ void CElectrifiedWire::DoLightning()
 		pSegment2 = GetSegments()[uiSegment2];
 	}
 
-	// johnhalflife: and the vortigaunt's strand on the arc (thin, wild, dimmer).
 	const int passes = UTIL_JhlParticleSystem() ? 2 : 1;
 
 	for (int i = 0; i < passes; ++i)

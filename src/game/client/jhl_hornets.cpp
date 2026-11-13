@@ -26,19 +26,13 @@
 
 namespace
 {
-// The trail: this many pieces, each this long in time (the tail is their product), for up to MaxHornets at once, to
-// keep within the engine's beams; any more get the engine's own follow trail in their colour (never none).
 constexpr int Pieces = 8;
 constexpr float PieceTime = 0.0375f;
 constexpr std::size_t MaxHornets = 10;
 
-// About as the engine's trail draws (the server's TE_BEAMFOLLOW, width 2 at 128).
 constexpr float Width = 1.2f;
 constexpr float Brightness = 0.5f;
 
-// The twirl while it hunts, a small corkscrew around its path laid down where it flew (a buzzing bee's): a turn every
-// TwirlPeriod seconds, TwirlRadius units out, both drifting smoothly at random (now tighter coils, now looser, now
-// nearly a wave); none once it commits, so it unwinds into its dive.
 constexpr float TwirlPeriod = 0.24f;
 constexpr float TwirlRadius = 2.42f;
 constexpr float TwirlSpeedDrift = 0.33f;  // ± of its turning speed,
@@ -47,26 +41,18 @@ constexpr float TwirlRadiusDrift = 0.42f; // ± of its radius,
 constexpr float TwirlRadiusCycleA = 0.7f; // over two cycles out of step.
 constexpr float TwirlRadiusCycleB = 1.3f;
 
-// Now and then a flourish: for FlourishTime it swells in and out of a showier twirl (loops FlourishRadius times as big,
-// turning FlourishSpeed times as fast at its height): the first FlourishFirstMin-Max seconds into its flight (most
-// hornets live under 2 s), then one every FlourishEveryMin-Max seconds.
 constexpr float FlourishTime = 0.45f;
 constexpr float FlourishRadius = 2;
-constexpr float FlourishSpeed = 1.25f; // Faster loops get too few of the trail's points a turn and alias into a zigzag.
+constexpr float FlourishSpeed = 1.25f;
 constexpr float FlourishFirstMin = 0.3f;
 constexpr float FlourishFirstMax = 1.5f;
 constexpr float FlourishEveryMin = 0.8f;
 constexpr float FlourishEveryMax = 1.8f;
 
-// And now and then a calm spell, the other way: for CalmTime it eases into a lazier twirl (loops CalmRadius as big,
-// turning CalmSpeed as fast: the low end of the ranges above and 15% calmer), on the same kind of schedule.
 constexpr float CalmTime = 0.6f;
 constexpr float CalmRadius = 0.5f;
 constexpr float CalmSpeed = 0.58f;
 
-// A third of hornets leave the gun calm, a third as they are, a third in a flourish.
-
-// A hornet not seen for this long is gone: its trail fades out over what's left.
 constexpr float LostAfter = 0.15f;
 
 struct Sample
@@ -95,7 +81,6 @@ struct Hornet
 
 std::vector<Hornet> g_Hornets;
 
-// Hornets past MaxHornets given the engine's follow trail (it dies with them), and when each was last seen.
 struct Overflow
 {
 	int Index;
@@ -115,9 +100,6 @@ void Kill(BEAM*& beam)
 	}
 }
 
-// How far into its spells (flourishes or calms, each @p duration long) it is at @p when, 0-1 (a smooth swell in and
-// out), and the integral of that swell so far (for its extra turning, so a point's angle is the same whenever it's
-// worked out).
 void Spells(const std::vector<float>& starts, float duration, float when, float& swell, float& turned)
 {
 	constexpr float Pi = 3.14159265f;
@@ -201,7 +183,6 @@ void JhlHornets_Track(cl_entity_t* entity, const char* modelname)
 	{
 		if (g_Hornets.size() >= MaxHornets)
 		{
-			// Too many to draw: the engine's follow trail, in its colour (once; it lasts as long as it does).
 			for (auto& overflow : g_Overflow)
 			{
 				if (overflow.Index == entity->index)
@@ -293,7 +274,6 @@ void JhlHornets_Update(double time)
 			continue;
 		}
 
-		// The trail's points, newest first, from where it is (or was last seen) back, each twirled around its path.
 		const float head = std::min(now, hornet.LastSeen);
 		Vector points[Pieces + 1];
 		bool known[Pieces + 1];
@@ -326,8 +306,6 @@ void JhlHornets_Update(double time)
 
 			side = side.Normalize();
 			const Vector over = CrossProduct(side, along);
-			// Its angle: turning at a speed drifting by a sine, so the angle is that speed's integral (the same for any
-			// point whenever it's worked out, so the trail holds still).
 			constexpr float Tau = 6.2831853f;
 			const float speedRate = Tau / TwirlSpeedCycle;
 			float swell, turned, calm, calmed;
