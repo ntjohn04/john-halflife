@@ -14,7 +14,7 @@
  ****/
 
 // jhl_fx_test: plays effects where the player is aiming, for designing particle effects
-// (see docs/effects_test.md). Client side only: nothing is sent to the server, and only the local
+// (see docs/README.md#debug-commands). Client side only: nothing is sent to the server, and only the local
 // player sees the result. Presets reproduce what the game does for an event with the original values; primitives
 // play one building block with any parameters.
 
@@ -1235,7 +1235,7 @@ void FxTestCommand()
 {
 	if (gEngfuncs.Cmd_Argc() < 2)
 	{
-		gEngfuncs.Con_Printf("Usage: jhl_fx_test <effect> [key=value ...]  (plays where you aim; see docs/effects_test.md)\n");
+		gEngfuncs.Con_Printf("Usage: jhl_fx_test <effect> [key=value ...]  (plays where you aim; see docs/README.md#debug-commands)\n");
 		gEngfuncs.Con_Printf("Presets (the game's own effects, original values):\n");
 
 		for (const auto& command : Commands())

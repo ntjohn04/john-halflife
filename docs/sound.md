@@ -1,63 +1,33 @@
 # Sound
 
-The Unified SDK replaces the engine's audio with its own OpenAL sound system (`src/game/client/sound/`).
-It is cleaner than Steam Half-Life's software mixer and sounds noticeably different: purer, more spatial,
-with reverb from long-retired EAX hardware presets. johnhalflife plays it the way the engine does.
+The Unified SDK replaces the engine's audio with OpenAL (`client/sound/`). It sounds cleaner and different from
+vanilla. John Half-Life plays it the way the engine did.
 
-## `jhl_snd_vanilla` (default 1)
+## Vanilla sound (`jhl_snd_vanilla`)
 
-One setting, in John Settings as "Sound: Half-Life's own mixing and room effects"; 0 gives the SDK's
-OpenAL sound back. Each part below was checked against loopback recordings of vanilla.
+Each part checked against loopback recordings of vanilla. 0 gives the SDK's OpenAL sound back.
 
-| Part | What it does | Where |
-|---|---|---|
-| Mixing rate | Sounds are brought to the engine's 22050 Hz as they load, interpolating linearly, then converted to the device's rate as the system converts the engine's output: flat to 10.5 kHz, nothing above 11 kHz (a 64-tap windowed sinc; OpenAL's own resamplers roll off from 6 kHz, which muffled 22 kHz sounds such as the guns). OpenAL then plays them as they are. A scientist's 29 s speech stalled the frame it first played in for some 60 ms, and as long again at a new pitch: sounds a second or longer are now converted on several threads (up to 8), a mono sound's taps 4 at a time (SSE; within a millionth), and a map's sound files of 64 KB or more (about 3 s) are loaded and converted while it loads, with `jhl_perf_preloadsounds` (default 0) all its precached ones, as the engine loads them (`Preload`). A sound or a sentence's words not ready when it starts (not loaded, such as a scripted speech, or not yet at that pitch) are read and converted on another thread and starts when that's done, a frame or a few later, instead of the frame waiting for it (a speech's first play took 20-30 ms); the game itself doesn't wait (`SoundCache::Request`, `GameSoundSystem::StartPendingSounds`). | `SoundCache::LoadSound`, `ToDeviceRate` |
-| Pitch | Off a sound's own pitch (nearly everything: voices 100-103 a line, guns 98-102), it is pitched as the engine pitches it: stepped through at its own rate without interpolating, then brought to 22050 Hz. The uneven steps are the faint grain of vanilla's sound. Made once per sound and pitch; dialogue words too. | `SoundCache::GetPitched`, `SentencesSystem::SetSentenceWord` |
-| Ear volumes | The engine's spatialization: each ear `(1 - distance × attenuation / 1000) × (1 ∓ side)`, the player's own sounds and sounds without attenuation full in both ears. Played through OpenAL's stereo panning inverted (measured on a loopback device), so each ear gets exactly that. | `ApplyVanillaSpatialization`, `StereoPanGains` |
-| Output | Plain stereo, no limiter (loud overlaps clip, as the engine's), no HRTF. | `BuildDeviceAttributes` |
-| Room types | The engine's software DSP rooms (as in Xash3D's `s_dsp.c`, which matches the rooms measured in vanilla) in place of the EAX ones, played exactly: each room's whole response to a click, its two reverb lines and its echo with its recursive lowpass (at 22050 Hz, the echo loses about 3 dB at 1 kHz and 7 at 2 kHz each time round, so the tunnels' rings go dull within a tenth of a second), worked out at the device's rate and played through OpenAL Soft's convolution effect (experimental in 1.22, `AL_SOFTX_convolution_reverb`; checked on a loopback device against the engine's processing: the same to -36 dB). Up to 6 s of it, to where it's 60 dB down. Each sound goes into the room as into the engine's mono mix, `(left + right) / 2` of its ear volumes: OpenAL's send carries the source's gain, which the panning raises, up to twice for a sound to one side. The water rooms (14-16; 14 under water) muffle the whole mix. Without the convolution effect, an approximation: a reverb and an echo per room on two sends, levels set by measurement (`VanillaReverbTrim`, `VanillaEchoTrim`). | `HalfLifeSoundEffects.cpp` (`VanillaRoomResponse`), `GameSoundSystem::ReplaceRoomSlot` |
+* **22 kHz:** sounds converted to the engine's 22050 Hz on load, then to the device's rate (flat to 10.5 kHz).
+* **Pitch:** pitched the engine's way, without interpolating: vanilla's faint grain.
+* **Ear volumes:** the engine's formula, `(1 - distance × attenuation / 1000) × (1 ∓ side)`.
+* **Output:** plain stereo, no limiter, no HRTF.
+* **Rooms:** the engine's software DSP rooms, played exactly through OpenAL's convolution reverb
+  (`HalfLifeSoundEffects.cpp`). Water rooms muffle the mix.
+* **No hitches:** long sounds converted on several threads; big ones loaded with the map; a sound not ready yet
+  starts a frame or two later instead of stalling.
+* Not reproduced: the left channel delay, room 26's modulation, the engine's rounding.
 
-Switching it live resets the audio device; sounds already loaded keep how they were loaded until the next
-map load.
-
-**Not reproduced:**
-* The engine's left channel delay (2-40 ms in many rooms): an effect send can't delay the dry sound.
-* Room 26's loudness modulation.
-* The engine's integer rounding, which cuts its quietest tails off.
-* Changing room cuts the last room's tail off, as the engine reset its delay lines.
+`jhl_perf_preloadsounds` (default 0) loads every precached sound with the map.
 
 ## Sound sources
 
-Every sound playing holds an OpenAL source. OpenAL Soft allows 256 unless asked, and the SDK neither asked
-nor checked, so past that new sounds (gunfire, explosions) played silently until enough ended. Not gated:
-it only acts where a sound would otherwise be silent.
+* OpenAL allowed 256 sounds; past that, new sounds went silent.
+* Now 1024 mono and 64 stereo. With none left, a one-shot out of earshot (or the one nearest its end) is taken over.
+* `cl_snd_channels` prints every sound playing and the device's settings.
 
-* 1024 mono and 64 stereo sources are asked for.
-* With none left, a one-shot sound out of earshot, else the one closest to ending, is taken over, as the
-  engine did with its channels full. Loops and sentences are never taken.
-* When that happens, a console warning (at most every 5 s) lists the sounds playing most.
+## Music in saves (`jhl_snd_musicsaves`)
 
-`cl_snd_channels` prints every sound playing, the device's real settings (rate, output mode, limiter,
-HRTF, resampler) and, for the loudest sounds, each ear's volume and what OpenAL was given.
-
-## Music in saves
-
-`jhl_snd_musicsaves` (default 1; 0: loading a save stops the music, as vanilla).
-
-Saves keep the music: loading one plays the track that was playing when it was saved, from that point, paused if
-the map had paused it and still fading out if it was fading. In vanilla, loading a save stopped the music. The
-Unified SDK already keeps music playing across level changes. Single player only (saves are).
-
-* **Saving:** the client is in the server's process in single player, so the server asks the client's music system
-  directly as it saves the player (`DispatchSave` → `JhlMusic_BeforeSave`, the client's exported `JhlMusic_GetState`,
-  `jhl_musicstate.h`). What's saved is exact at that moment: the position is where the source is in the track
-  (`MusicSystem::UpdatePosition`: OpenAL's offset in its queue, the buffers queued mirrored with where each starts in
-  the track), and the game pausing pauses the music, so a save from the menu holds the second it was paused at.
-* **Loading:** it's in the player's data (`CBasePlayer::m_JhlMusic*`, added to its data map: older saves load, with
-  no music). The `JhlMusic` message sends it each time the player's HUD starts. Loading a save resets the
-  connection, which stops the music (`ClientLibrary::RunFrame`); only then does the client play what was sent
-  (`jhl_music.cpp`, `MusicSystem::PlayFrom`). A level change doesn't reset it, and the music plays on as it was.
-* A track the map paused (`music pause`) stays paused when the game unpauses: the game's pause and the map's are
-  kept apart (`MusicSystem::m_PausedByCommand`). Before, unpausing the game resumed it.
-* The server finds the client library by name (`client.dll`, or `cl_dlls/client.so` on Linux, only if already
-  loaded). If it can't, the player's music is saved as it was last.
+* Loading a save plays the track that was playing, from that point, paused or fading as it was.
+* Vanilla stopped the music on load.
+* Saved in the player's data (`CBasePlayer::m_JhlMusic*`); sent by the `JhlMusic` message.
+* A track the map paused stays paused when the game unpauses.

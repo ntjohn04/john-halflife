@@ -13,7 +13,7 @@
  *
  ****/
 
-// Recommended settings for johnhalflife (see docs/README.md#settings).
+// Recommended settings for johnhalflife (see docs/README.md#john-settings).
 // Vanilla settings are saved in config.cfg, so their defaults can't simply be changed without overriding what the
 // player chose. Instead the recommended values are applied once, the first time a version of them is seen.
 

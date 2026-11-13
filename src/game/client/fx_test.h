@@ -17,7 +17,7 @@
 
 /**
  *	@brief Registers jhl_fx_test, which plays effects where the player is aiming for designing particle effects
- *	(see docs/effects_test.md).
+ *	(see docs/README.md#debug-commands).
  */
 void FxTest_Initialize();
 

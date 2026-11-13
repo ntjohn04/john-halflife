@@ -1,7 +1,7 @@
 #!/bin/bash
 # Builds and installs John Half-Life's Linux game code in Ubuntu 22.04 (WSL or a real one), for the release: the source
 # is the checkout this script is in, the build and its staging install are in ~/jhl-build-linux (BUILD=... for another). Needs the
-# packages in docs/johnhalflife/release.md#linux-build and CMake 3.23 or newer (CMAKE=... to use another). The installed
+# packages in docs/release.md#linux-build and CMake 3.23 or newer (CMAKE=... to use another). The installed
 # libraries are stripped of debug symbols (they would be most of their size).
 set -e
 SRC=$(cd "$(dirname "$0")/../.." && pwd)

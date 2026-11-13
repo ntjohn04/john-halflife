@@ -241,7 +241,7 @@ install(FILES
 	${CMAKE_BINARY_DIR}/liblist.gam
 	DESTINATION .)
 
-# johnhalflife's settings dialog and menu text (docs/README.md#settings).
+# johnhalflife's settings dialog and menu text (docs/README.md#john-settings).
 install(DIRECTORY config/mod/ DESTINATION .)
 
 # Credits and the licences of everything shipped (the game folder only: the expansions' are the same game).
@@ -278,7 +278,7 @@ endif()
 install(FILES $<TARGET_FILE:OpenAL::OpenAL> DESTINATION cl_dlls)
 
 # John Half-Life's expansions: thin mod folders next to the base one that borrow all its content through
-# fallback_dir, each with its own name, main menu and saves (docs/README.md#expansions).
+# fallback_dir, each with its own name, main menu and saves (docs/README.md#game-folders).
 function(jhl_install_expansion name)
 	set(dir ../johnhalflife_${name})
 
