@@ -285,12 +285,38 @@ constexpr std::size_t NameCopyCallByte = 13; // The call's E8.
 constexpr int CacheFree[] = {0x55, 0x8B, 0xEC, 0x56, 0x57, 0x8B, 0x7D, 0x08, 0x8B, 0x37, 0x85, 0xF6, 0x75, 0x0F, 0x68, -1, -1,
 	-1, -1, 0xE8, -1, -1, -1, -1, 0x8B, 0x37, 0x83, 0xC4, 0x04, 0x8B, 0x4E, 0xF0, 0x8B, 0x46, 0xF4, 0x89, 0x41, 0x4C};
 
+// R_DrawWorld drawing the world's water (the list the world's walk put it on, solid, whatever r_wateralpha), cdecl:
+//   push [eax+18h]			; its texture
+//   call GL_Bind
+//   push 0
+//   push esi				; the surface
+//   call EmitWaterPolys	; left out while JhlEngineFixes_DrawWorldWater(false): the pushes and add esp stay
+//   mov esi, [esi+28h]		; the next
+//   add esp, 0Ch
+constexpr int WorldWaterCall[] = {0xFF, 0x70, 0x18, 0xE8, -1, -1, -1, -1, 0x6A, 0x00, 0x56, 0xE8, -1, -1, -1, -1, 0x8B, 0x76, 0x28,
+	0x83, 0xC4, 0x0C};
+constexpr std::size_t WorldWaterCallByte = 11; // The call's E8.
+
+std::uint8_t* g_WorldWaterCall = nullptr;
+std::uint8_t g_WorldWaterBytes[5]{};
+bool g_WorldWaterDrawn = true;
+
 void PatchEngine()
 {
 	const HMODULE gl = GetModuleHandleA("hw.dll");
 
 	if (gl)
 	{
+		std::uint8_t* waters[MaxFound];
+
+		if (FindAll(gl, WorldWaterCall, std::size(WorldWaterCall), waters) == 1)
+		{
+			g_WorldWaterCall = waters[0] + WorldWaterCallByte;
+			std::memcpy(g_WorldWaterBytes, g_WorldWaterCall, sizeof(g_WorldWaterBytes));
+		}
+		else
+			gEngfuncs.Con_DPrintf("jhl_enginefixes: R_DrawWorld's water not as expected, see-through water unavailable\n");
+
 		std::uint8_t* found[MaxFound];
 		const std::size_t count = FindAll(gl, LightmapTest, std::size(LightmapTest), found);
 
@@ -539,4 +565,26 @@ void PatchEngine()
 void JhlEngineFixes_Initialize()
 {
 	PatchEngine();
+}
+
+bool JhlEngineFixes_DrawWorldWater(bool drawn)
+{
+#ifdef _WIN32
+	if (!g_WorldWaterCall)
+		return false;
+
+	if (drawn != g_WorldWaterDrawn)
+	{
+		static constexpr std::uint8_t Nothing[5]{0x90, 0x90, 0x90, 0x90, 0x90};
+
+		if (!WriteCode(g_WorldWaterCall, drawn ? g_WorldWaterBytes : Nothing, sizeof(Nothing)))
+			return false;
+
+		g_WorldWaterDrawn = drawn;
+	}
+
+	return true;
+#else
+	return drawn;
+#endif
 }
