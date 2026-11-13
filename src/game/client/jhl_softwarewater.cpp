@@ -127,7 +127,8 @@ struct WaterTexture
 	// On A Rail's own water (!gwater3); softly, the hazard courses' and On A Rail's others (!bwater2, !gwater2: also
 	// c3a1, lambda_bunker), dim tunnels whose water was too dark.
 	float Darkest = DarkestWater;
-	float Lift = 0; // Brighter by this everywhere, up to full, the gradient as steep: Blue Shift's glowing coolant.
+	float Full = LitLight; // Full bright from this light up: Blue Shift's glowing coolant (!coolant5) sooner, and darker
+						   // at the darkest, its gradient stronger (ba_power2's pools: bright middles, dark corners).
 };
 
 // A model's water faces, by texture.
@@ -157,7 +158,7 @@ struct LitFace
 {
 	std::vector<Vector> Points;		  // Every piece's, one after another.
 	std::vector<int> Counts;		  // Each piece's number of points.
-	std::vector<float> Light;		  // Each point's brightness, 0 to 1 (Brightness).
+	std::vector<float> Light;		  // Each point's light (SeenLight), its brightness by its texture's curve (Brightness).
 	std::size_t Next = 0;			  // The next point to take (a face taken over several frames).
 	bool HasTwin = false;			  // Its model has the same surface facing the other way (a water brush's top, seen from under it).
 	Vector SampledOrigin;
@@ -388,7 +389,7 @@ void LightFace(const JhlBspFace& face, LitFace& lit, float grid)
 		}
 	}
 
-	lit.Light.assign(lit.Points.size(), 1.0f);
+	lit.Light.assign(lit.Points.size(), LitLight); // Not yet taken: as bright as ever.
 }
 
 void IndexSurfaces(const JhlBsp& bsp);
@@ -428,7 +429,10 @@ void LoadMap(const char* mapName)
 		else if (0 == stricmp(water.Name.c_str(), "!bwater2") || 0 == stricmp(water.Name.c_str(), "!gwater2"))
 			water.Darkest = 0.6f;
 		else if (0 == stricmp(water.Name.c_str(), "!coolant5"))
-			water.Lift = 0.15f;
+		{
+			water.Full = 56;
+			water.Darkest = 0.1f;
+		}
 		std::string why;
 
 		if (LoadTexture(water, EngineTexture(worldEntity->model, *bsp, static_cast<int>(miptex), why, water), why))
@@ -716,11 +720,12 @@ float LightAt(const Vector& point)
 	return light < 0 ? LitLight : light;
 }
 
-// The water's brightness for the light under it (jhl_visuals_waterlight): 1 from LitLight up, eased down below it.
-float Brightness(float light)
+// The water's brightness for the light under it (jhl_visuals_waterlight): 1 from full up, eased down below it to
+// darkest (most water: LitLight, DarkestWater; some textures their own, WaterTexture).
+float Brightness(float light, float full = LitLight, float darkest = DarkestWater)
 {
-	const float x = std::clamp(light / LitLight, 0.0f, 1.0f);
-	return DarkestWater + (1 - DarkestWater) * x * x * (3 - 2 * x);
+	const float x = std::clamp(light / full, 0.0f, 1.0f);
+	return darkest + (1 - darkest) * x * x * (3 - 2 * x);
 }
 
 std::int64_t CellKey(int x, int y, int z)
@@ -1011,7 +1016,7 @@ void Relight(const JhlBsp& bsp, LitFace& lit, const Vector& origin, const Vector
 
 	for (; lit.Next < lit.Points.size() && spent + (std::chrono::steady_clock::now() - began) < LightTime; ++lit.Next)
 	{
-		lit.Light[lit.Next] = Brightness(SeenLight(bsp, place(lit.Points[lit.Next])));
+		lit.Light[lit.Next] = SeenLight(bsp, place(lit.Points[lit.Next]));
 	}
 
 	g_LightSpent = spent + (std::chrono::steady_clock::now() - began);
@@ -1122,7 +1127,7 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 			auto& litFace = overEngine && waves != 0 ? g_EngineFaces[index] : g_LitFaces[index];
 
 			const float darkest = g_Textures[t].Darkest;
-			const float lift = g_Textures[t].Lift;
+			const float full = g_Textures[t].Full;
 			const bool faceLit = lit && darkest < 1;
 
 			if (faceLit)
@@ -1141,7 +1146,7 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 				for (int i = 0; i < count; ++i, ++next)
 				{
 					const Vector& point = litFace.Points[next];
-					const float light = faceLit ? std::min(darkest + (1 - darkest) * (litFace.Light[next] - DarkestWater) / (1 - DarkestWater) + lift, 1.0f) : 1.0f;
+					const float light = faceLit ? Brightness(litFace.Light[next], full, darkest) : 1.0f;
 					const float s = DotProduct(point, Vector(texinfo.Vecs[0][0], texinfo.Vecs[0][1], texinfo.Vecs[0][2])) + texinfo.Vecs[0][3];
 					const float t2 = DotProduct(point, Vector(texinfo.Vecs[1][0], texinfo.Vecs[1][1], texinfo.Vecs[1][2])) + texinfo.Vecs[1][3];
 					gl.Color4f(color[0] * light, color[1] * light, color[2] * light, color[3]);
