@@ -125,7 +125,7 @@ struct WaterTexture
 	// The darkest it gets (jhl_visuals_waterlight; DarkestWater for most): never darkened, Xen's fluids (!fluid...),
 	// murky and alien already, and the toxic goo (!toxicgrn...), neon green, usually with its own lights; barely,
 	// On A Rail's own water (!gwater3); softly, the hazard courses' and On A Rail's others (!bwater2, !gwater2: also
-	// c3a1, lambda_bunker), dim tunnels whose water was too dark.
+	// c3a1, lambda_bunker), dim tunnels whose water was too dark; lifted, Blue Shift's glowing coolant (!coolant5).
 	float Darkest = DarkestWater;
 };
 
@@ -426,6 +426,8 @@ void LoadMap(const char* mapName)
 			water.Darkest = 0.8f;
 		else if (0 == stricmp(water.Name.c_str(), "!bwater2") || 0 == stricmp(water.Name.c_str(), "!gwater2"))
 			water.Darkest = 0.6f;
+		else if (0 == stricmp(water.Name.c_str(), "!coolant5"))
+			water.Darkest = 0.5f;
 		std::string why;
 
 		if (LoadTexture(water, EngineTexture(worldEntity->model, *bsp, static_cast<int>(miptex), why, water), why))
