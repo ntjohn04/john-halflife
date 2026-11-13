@@ -150,7 +150,7 @@ ships Opposing Force and Blue Shift on top of Half-Life.
 
 ## Versions
 
-The latest is `v0.29.0-alpha`. Every version and what it brought: [changelog](docs/CHANGELOG.md).
+The latest is `v0.29.1-alpha`. Every version and what it brought: [changelog](docs/CHANGELOG.md).
 
 ## Building from source
 
