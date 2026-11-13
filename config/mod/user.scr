@@ -139,6 +139,13 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"jhl_visuals_wateropacity"
+	{
+		"JHL | Visuals: water entities' opacity (1 solid; with the software water)"
+		{ NUMBER 0.000000 1.000000 }
+		{ "0.960000" }
+	}
+
 	"jhl_visuals_renderfixes"
 	{
 		"JHL | Visuals: models, sky and textures lit and sampled as the world is"

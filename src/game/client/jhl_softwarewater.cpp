@@ -95,7 +95,7 @@ cvar_t* g_SoftwareWater = nullptr;
 cvar_t* g_WaterSides = nullptr;
 cvar_t* g_WaterLight = nullptr;
 
-// jhl_visuals_wateropacity (default 1, an experiment): below 1, solid water entities (func_water...) drawn here
+// jhl_visuals_wateropacity (default 0.96): below 1, solid water entities (func_water...) drawn here
 // see-through at that opacity, in the see-through pass; water already see-through as it was. Not the world's water:
 // the map's visibility treats it as a wall, so what's under it isn't drawn from above (c2a5's dam: holes). Neither
 // 1998 renderer showed through water.
@@ -1197,7 +1197,7 @@ void JhlSoftwareWater_Initialize()
 	g_SoftwareWater = gEngfuncs.pfnRegisterVariable("jhl_visuals_softwarewater", "1", FCVAR_ARCHIVE);
 	g_WaterSides = gEngfuncs.pfnGetCvarPointer("gl_watersides");
 	g_WaterLight = gEngfuncs.pfnRegisterVariable("jhl_visuals_waterlight", "1", FCVAR_ARCHIVE);
-	g_WaterOpacity = gEngfuncs.pfnRegisterVariable("jhl_visuals_wateropacity", "1", FCVAR_ARCHIVE);
+	g_WaterOpacity = gEngfuncs.pfnRegisterVariable("jhl_visuals_wateropacity", "0.96", FCVAR_ARCHIVE);
 
 	// The light under the player's eyes and the water's brightness for it there, for tuning the curve (LitLight).
 	gEngfuncs.pfnAddCommand("jhl_debug_waterlight", []

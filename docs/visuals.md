@@ -227,6 +227,14 @@ moves (as gradually, its old light kept meanwhile); lights switched later aren't
 flashes. `jhl_debug_waterlight` prints the light around the view, how many of the 9 traces found a lit surface (-1: open sky above), and
 the water's brightness for it. With the software water off (or `-soft`) water is the engine's, full bright as ever.
 
+### See-through water entities (`jhl_visuals_wateropacity`, default 0.96)
+
+With the software water on, solid water entities (a `func_water`, a `func_door` of water... render mode normal, all
+water) are drawn at this opacity instead of solid, with the see-through things. Only those: water a map already made
+see-through (render mode texture or additive, such as c1a1b's tunnel at 120 and c2a4's pools at 128 and 210) keeps
+the map's value, and the world's own water (c2a5's dam, ba_canal2's slime) stays solid: the map's visibility treats it
+as a wall, so what's under it isn't drawn from above. 1 is solid, as in 1998 (neither renderer showed through water).
+
 For the display (the stretch to the desktop, anti-aliasing), see the [front page](../README.md#recommended-launch-options-and-display).
 
 ## Known engine quirks, left as they are
