@@ -1,77 +1,64 @@
 John Half-Life
 ==============
 
-Half-Life, Opposing Force and Blue Shift as they played in 1998-2001, on a modern base: the original look, sound
-and feel, with long-standing bugs fixed and some optional effects. https://github.com/ntjohn04/john-halflife
+Made by John. Free, not for sale (Half-Life-SDK.txt). https://github.com/ntjohn04/john-halflife
 
-Made by John. Free; not for sale (see Half-Life-SDK.txt).
-
-John Half-Life's own sounds and art (its weapon sounds, the hornet splats and the other sprites and textures it makes
-or ships) are licensed under Creative Commons Attribution 4.0 (CC BY 4.0,
-https://creativecommons.org/licenses/by/4.0/): use them as you like, crediting John Half-Life.
+John Half-Life's own sounds and art: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+Use them freely, crediting John Half-Life.
 
 
 Built on
 --------
 
-* Half-Life (Valve), Half-Life: Opposing Force and Half-Life: Blue Shift (Gearbox Software). You need Half-Life on
-  Steam to play; Opposing Force's and Blue Shift's campaigns need those games too. None of their files are shipped
-  that your own games already have: the first start takes them from your install.
-* The Half-Life Unified SDK, by Sam Vanheer (Solokiller) and its contributors: https://github.com/twhl-community/halflife-unified-sdk
-* Half-Life Updated, Opposing Force Updated and Blue Shift Updated, by the TWHL community and their contributors:
-  https://github.com/twhl-community
-* The Half-Life SDK, by Valve, under its licence (Half-Life-SDK.txt).
-
-Xash3D FWGS's engine source was a reference for how the engine's sound effects work; none of its code is used.
+* Half-Life (Valve); Opposing Force and Blue Shift (Gearbox Software). Needs Half-Life on Steam. Files your own
+  games have aren't shipped: the first start takes them from your install.
+* Half-Life Unified SDK: Sam Vanheer (Solokiller) and contributors.
+  https://github.com/twhl-community/halflife-unified-sdk
+* Half-Life Updated, Opposing Force Updated, Blue Shift Updated: the TWHL community. https://github.com/twhl-community
+* Half-Life SDK: Valve, under its licence (Half-Life-SDK.txt).
+* Xash3D FWGS's engine source: reference only for the engine's sound effects. None of its code is used.
 
 
 Community content
 -----------------
 
-* Rosenberg's low-definition head (models/rosenberg.mdl): "Custom LD Rosenberg", from Improved LD Scientists +
-  Civilians by Paynamia (https://gamebanana.com/mods/238622), from Valve's and Gearbox's models and textures. Licensed
-  under Creative Commons Attribution-NonCommercial 4.0 (CC BY-NC 4.0,
-  https://creativecommons.org/licenses/by-nc/4.0/). Changed: the head put on the Unified SDK's low-definition
-  scientist in place of Blue Shift's Rosenberg head, otherwise as made.
-* Blue Shift's armour vest (models/barney_vest.mdl): "Fixed LD Vest" by Evy Houstuvk
-  (https://gamebanana.com/mods/238591), built from Valve's low-definition Barney (and Gearbox's animations). Licensed
-  under Creative Commons Attribution-NonCommercial-NoDerivs 4.0 (CC BY-NC-ND 4.0,
-  https://creativecommons.org/licenses/by-nc-nd/4.0/). Unchanged.
-* Blue Shift's helmet (models/barney_helmet.mdl): "Low-Def Helmet" by Paynamia (https://gamebanana.com/mods/238646),
-  from Valve's model (and Gearbox's animations). Licensed under Creative Commons Attribution-NonCommercial-ShareAlike
-  4.0 (CC BY-NC-SA 4.0, https://creativecommons.org/licenses/by-nc-sa/4.0/). Unchanged.
-* Blue Shift's chair (models/chair.mdl): from "Low-Def Props" by Evy Houstuvk (https://gamebanana.com/mods/238647),
-  the chair of Valve's prefab Blue Shift's brush-built chairs are made from. Licensed under Creative Commons
-  Attribution-NonCommercial-NoDerivs 4.0 (CC BY-NC-ND 4.0, https://creativecommons.org/licenses/by-nc-nd/4.0/). Unchanged.
-* Opposing Force's and Blue Shift's main menu backgrounds (resource/background/jhl_21_9_*.tga): the WON versions' art,
-  by Gearbox Software, from "Opposing Force CD WON/Pre-Steam background" (https://gamebanana.com/mods/27967) and "Blue
-  Shift CD WON/Pre-Steam background" (https://gamebanana.com/mods/27344), both by Ghost1432802. Changed: widened to
-  21:9 with FLUX.1 [dev] Fill (Black Forest Labs) and upscaled with 4xNomos8kDAT by Philip Hofmann (CC BY 4.0), the
-  original picture unchanged in the middle.
+* Rosenberg's head (models/rosenberg.mdl): "Custom LD Rosenberg" from Improved LD Scientists + Civilians, by
+  Paynamia. https://gamebanana.com/mods/238622. CC BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/).
+  Changed: put on the Unified SDK's low-definition scientist.
+* Blue Shift vest (models/barney_vest.mdl): "Fixed LD Vest" by Evy Houstuvk. https://gamebanana.com/mods/238591.
+  CC BY-NC-ND 4.0 (https://creativecommons.org/licenses/by-nc-nd/4.0/). Unchanged.
+* Blue Shift helmet (models/barney_helmet.mdl): "Low-Def Helmet" by Paynamia. https://gamebanana.com/mods/238646.
+  CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/). Unchanged.
+* Blue Shift chair (models/chair.mdl): from "Low-Def Props" by Evy Houstuvk. https://gamebanana.com/mods/238647.
+  CC BY-NC-ND 4.0 (https://creativecommons.org/licenses/by-nc-nd/4.0/). Unchanged.
+* Opposing Force and Blue Shift menu backgrounds (resource/background/jhl_21_9_*.tga): Gearbox's WON art, from
+  "Opposing Force CD WON/Pre-Steam background" (https://gamebanana.com/mods/27967) and "Blue Shift CD WON/Pre-Steam
+  background" (https://gamebanana.com/mods/27344), by Ghost1432802. Changed: widened to 21:9 with FLUX.1 [dev] Fill
+  (Black Forest Labs), upscaled with 4xNomos8kDAT by Philip Hofmann (CC BY 4.0). The original picture is unchanged in
+  the middle.
 
 
 Libraries
 ---------
 
-Each one's licence is in this folder.
+Each licence is in this folder.
 
-* OpenAL Soft 1.22.2 (sound), by Chris Robinson and contributors: GNU Library General Public License, version 2
-  (OpenAL-Soft.txt). It's its own library, cl_dlls/openal-hlu.dll (libopenal-hlu.so.1 on Linux), which you may
-  replace with your own build. Its source: https://github.com/kcat/openal-soft (tag 1.22.2). The only change is its
-  library's name, by the patch in this game's source, vcpkg_config/registry/ports/openal-soft.
-* fmt (fmt.txt), spdlog (spdlog.txt), nlohmann/json (nlohmann-json.txt), JSON schema validator
-  (json-schema-validator.txt): MIT License.
-* EASTL and EABase, by Electronic Arts: BSD 3-Clause License (EASTL.txt, EABase.txt).
-* AngelScript, by Andreas Jonsson: zlib License (AngelScript.txt).
-* libnyquist, by Dimitri Diakopoulos: BSD 2-Clause License (libnyquist.txt), with the codecs it builds in: FLAC,
-  Opus, Musepack, libogg, libvorbis, WavPack (BSD licences) and minimp3 (public domain) (libnyquist-codecs.txt).
+* OpenAL Soft 1.22.2 (sound): Chris Robinson and contributors. GNU LGPL 2 (OpenAL-Soft.txt). A separate library,
+  cl_dlls/openal-hlu.dll (libopenal-hlu.so.1 on Linux), which you may replace. Source:
+  https://github.com/kcat/openal-soft (tag 1.22.2). Only its library name is changed
+  (vcpkg_config/registry/ports/openal-soft in this game's source).
+* fmt, spdlog, nlohmann/json, JSON schema validator: MIT (fmt.txt, spdlog.txt, nlohmann-json.txt,
+  json-schema-validator.txt).
+* EASTL, EABase: Electronic Arts. BSD 3-Clause (EASTL.txt, EABase.txt).
+* AngelScript: Andreas Jonsson. zlib (AngelScript.txt).
+* libnyquist: Dimitri Diakopoulos. BSD 2-Clause (libnyquist.txt). Its codecs: FLAC, Opus, Musepack, libogg,
+  libvorbis, WavPack (BSD) and minimp3 (public domain) (libnyquist-codecs.txt).
 
 
 Fonts
 -----
 
-Opposing Force's and Blue Shift's main menu buttons, unchanged, under the SIL Open Font License 1.1 (in this folder):
+Menu buttons, unchanged, SIL Open Font License 1.1:
 
-* Stardos Stencil Bold, by Vernon Adams (Opposing Force: johnhalflife_op4/resource/fonts): StardosStencil-OFL.txt.
-* Courier Prime Bold, by the Courier Prime Project Authors (Blue Shift: johnhalflife_bs/resource/fonts):
-  CourierPrime-OFL.txt.
+* Stardos Stencil Bold, by Vernon Adams (johnhalflife_op4/resource/fonts): StardosStencil-OFL.txt.
+* Courier Prime Bold, by the Courier Prime Project Authors (johnhalflife_bs/resource/fonts): CourierPrime-OFL.txt.

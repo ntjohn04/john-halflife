@@ -244,8 +244,9 @@ install(FILES
 # johnhalflife's settings dialog and menu text (docs/README.md#john-settings).
 install(DIRECTORY config/mod/ DESTINATION .)
 
-# Credits and the licences of everything shipped (the game folder only: the expansions' are the same game).
+# Credits, licences and the player's readme (the game folder only).
 install(DIRECTORY config/licenses/ DESTINATION licenses)
+install(FILES config/readme.txt DESTINATION .)
 
 # The half-size HUD's layouts (scripts/make_half_hud.py), the game folder only: the expansions find them there.
 install(DIRECTORY config/halfhud/ DESTINATION .)
