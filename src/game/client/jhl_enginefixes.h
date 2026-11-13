@@ -37,9 +37,3 @@
 // slot first.
 
 void JhlEngineFixes_Initialize();
-
-/**
- *	@brief Whether the engine draws the world's water itself (R_DrawWorld), for see-through water drawn instead
- *	(jhl_visuals_wateropacity). False if it can't be left out (not found, or not on Windows yet).
- */
-bool JhlEngineFixes_DrawWorldWater(bool drawn);

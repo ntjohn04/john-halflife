@@ -32,7 +32,6 @@
 #include "triangleapi.h"
 #include "view.h"
 #include "jhl_bsp.h"
-#include "jhl_enginefixes.h"
 #include "jhl_gl.h"
 #include "jhl_softwarewater.h"
 
@@ -96,9 +95,10 @@ cvar_t* g_SoftwareWater = nullptr;
 cvar_t* g_WaterSides = nullptr;
 cvar_t* g_WaterLight = nullptr;
 
-// jhl_visuals_wateropacity (default 1, an experiment): below 1, the world's water and solid water entities drawn here
-// see-through at that opacity, in the see-through pass, the engine's own world water left out
-// (JhlEngineFixes_DrawWorldWater); water already see-through as it was. Neither 1998 renderer showed through water.
+// jhl_visuals_wateropacity (default 1, an experiment): below 1, solid water entities (func_water...) drawn here
+// see-through at that opacity, in the see-through pass; water already see-through as it was. Not the world's water:
+// the map's visibility treats it as a wall, so what's under it isn't drawn from above (c2a5's dam: holes). Neither
+// 1998 renderer showed through water.
 cvar_t* g_WaterOpacity = nullptr;
 bool g_SeeThrough = false; // This frame's water drawn see-through.
 
@@ -1256,15 +1256,8 @@ bool JhlSoftwareWater_Add(cl_entity_t* ent)
 
 void JhlSoftwareWater_DrawOpaque()
 {
-	// See-through only with the engine's world water left out; the engine's back whenever it isn't.
 	const bool ready = Ready();
-	const bool wanted = ready && g_WaterOpacity->value < 1;
-	g_SeeThrough = JhlEngineFixes_DrawWorldWater(!wanted) && wanted;
-
-	if (!wanted)
-	{
-		JhlEngineFixes_DrawWorldWater(true);
-	}
+	g_SeeThrough = ready && g_WaterOpacity->value < 1;
 
 	if (!ready)
 	{
@@ -1286,18 +1279,13 @@ void JhlSoftwareWater_DrawOpaque()
 	gl.Color4f(1, 1, 1, 1);
 	gl.Disable(GL_BLEND);
 
-	// Over the engine's: the world's water, and opaque entities it draws with water on them. See-through, the world's
-	// water is drawn with the see-through things instead (DrawTransparent).
+	// Over the engine's: the world's water, and opaque entities it draws with water on them.
 	gl.DepthMask(GL_FALSE);
 	gl.Enable(GL_POLYGON_OFFSET_FILL);
 	gl.PolygonOffset(OverdrawOffsetFactor, OverdrawOffsetUnits);
-
-	if (!g_SeeThrough)
-	{
-		// The world's waves: its scale (worldspawn's WaveHeight / 8, Blue Shift's maps have them), as the engine waves it.
-		const cl_entity_t* world = gEngfuncs.GetEntityByIndex(0);
-		DrawModel(*bsp, 0, g_vecZero, g_vecZero, 0, world ? world->curstate.scale : 0, {1, 1, 1, 1}, true);
-	}
+	// The world's waves: its scale (worldspawn's WaveHeight / 8, Blue Shift's maps have them), as the engine waves it.
+	const cl_entity_t* world = gEngfuncs.GetEntityByIndex(0);
+	DrawModel(*bsp, 0, g_vecZero, g_vecZero, 0, world ? world->curstate.scale : 0, {1, 1, 1, 1}, true);
 
 	for (const auto& water : g_Entities)
 	{
@@ -1363,14 +1351,11 @@ void JhlSoftwareWater_DrawTransparent()
 	gl.DepthMask(GL_FALSE);
 	gl.Enable(GL_BLEND);
 
-	// See-through (jhl_visuals_wateropacity): the world's water and the solid water entities, at that opacity, the
-	// engine's own world water left out; on the finer grid (nothing of the engine's under it to match).
+	// See-through (jhl_visuals_wateropacity): the solid water entities, at that opacity.
 	if (g_SeeThrough)
 	{
 		const float opacity = std::clamp(g_WaterOpacity->value, 0.0f, 1.0f);
 		gl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		const cl_entity_t* world = gEngfuncs.GetEntityByIndex(0);
-		DrawModel(*bsp, 0, g_vecZero, g_vecZero, 0, world ? world->curstate.scale : 0, {1, 1, 1, opacity});
 
 		for (const auto& water : g_Entities)
 		{
