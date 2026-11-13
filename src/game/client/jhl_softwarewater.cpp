@@ -122,8 +122,11 @@ struct WaterTexture
 	bool Mipmapped = false;
 	int Fog[4]{}; // Its fog under water: colour and density, from its palette (see EngineTexture).
 	bool HasFog = false;
-	bool Unlit = false; // Never darkened (jhl_visuals_waterlight): Xen's fluids (!fluid...), murky and alien already, and
-						// the toxic goo (!toxicgrn...), neon green, usually with its own lights.
+	// The darkest it gets (jhl_visuals_waterlight; DarkestWater for most): never darkened, Xen's fluids (!fluid...),
+	// murky and alien already, and the toxic goo (!toxicgrn...), neon green, usually with its own lights; barely,
+	// On A Rail's own water (!gwater3); softly, the hazard courses' and On A Rail's others (!bwater2, !gwater2: also
+	// c3a1, lambda_bunker), dim tunnels whose water was too dark.
+	float Darkest = DarkestWater;
 };
 
 // A model's water faces, by texture.
@@ -417,7 +420,12 @@ void LoadMap(const char* mapName)
 
 		WaterTexture water;
 		water.Name = bsp->TextureNames[miptex];
-		water.Unlit = 0 == strnicmp(water.Name.c_str(), "!fluid", 6) || 0 == strnicmp(water.Name.c_str(), "!toxicgrn", 9);
+		if (0 == strnicmp(water.Name.c_str(), "!fluid", 6) || 0 == strnicmp(water.Name.c_str(), "!toxicgrn", 9))
+			water.Darkest = 1;
+		else if (0 == stricmp(water.Name.c_str(), "!gwater3"))
+			water.Darkest = 0.8f;
+		else if (0 == stricmp(water.Name.c_str(), "!bwater2") || 0 == stricmp(water.Name.c_str(), "!gwater2"))
+			water.Darkest = 0.6f;
 		std::string why;
 
 		if (LoadTexture(water, EngineTexture(worldEntity->model, *bsp, static_cast<int>(miptex), why, water), why))
@@ -1110,7 +1118,8 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 			// Over the engine's waved water: on its cut. Else the finer one (the light's gradients smoother).
 			auto& litFace = overEngine && waves != 0 ? g_EngineFaces[index] : g_LitFaces[index];
 
-			const bool faceLit = lit && !g_Textures[t].Unlit;
+			const float darkest = g_Textures[t].Darkest;
+			const bool faceLit = lit && darkest < 1;
 
 			if (faceLit)
 			{
@@ -1128,7 +1137,7 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 				for (int i = 0; i < count; ++i, ++next)
 				{
 					const Vector& point = litFace.Points[next];
-					const float light = faceLit ? litFace.Light[next] : 1.0f;
+					const float light = faceLit ? darkest + (1 - darkest) * (litFace.Light[next] - DarkestWater) / (1 - DarkestWater) : 1.0f;
 					const float s = DotProduct(point, Vector(texinfo.Vecs[0][0], texinfo.Vecs[0][1], texinfo.Vecs[0][2])) + texinfo.Vecs[0][3];
 					const float t2 = DotProduct(point, Vector(texinfo.Vecs[1][0], texinfo.Vecs[1][1], texinfo.Vecs[1][2])) + texinfo.Vecs[1][3];
 					gl.Color4f(color[0] * light, color[1] * light, color[2] * light, color[3]);
