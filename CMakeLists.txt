@@ -10,7 +10,7 @@ set(VCPKG_OVERLAY_TRIPLETS ${CMAKE_SOURCE_DIR}/vcpkg_config/triplets)
 
 project(HalfLifeMod
 	# John Half-Life's own version: milestones raise the minor version, fixes the patch (docs/README.md#versioning).
-	VERSION 0.29.1
+	VERSION 0.29.2
 	DESCRIPTION "Half-Life CMake Mod Template"
 	LANGUAGES CXX)
 
