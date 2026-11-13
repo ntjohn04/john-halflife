@@ -77,9 +77,10 @@ constexpr float LitLight = 96;
 constexpr float DarkestWater = 0.2f;
 constexpr float SkyReach = 8192;
 constexpr float LightAbove = 12;
-constexpr int LightRays = 8;
-constexpr float LightReach = 192;
-constexpr float LightDepth = 512; // The floor's furthest under it.
+constexpr int LightRays = 16;
+constexpr float LightReach = 384;
+constexpr float LightDepth = 512; // The floor's furthest under it (straight down; the tilted ones as far down).
+constexpr float DarkestSeen = 4;  // Nothing seen brighter: all dark around, the water as bright as ever.
 constexpr float LightFalloff = 48;
 constexpr float LightSpread = 24;
 constexpr float LightGrid = 32;
@@ -96,7 +97,7 @@ cvar_t* g_SoftwareWater = nullptr;
 cvar_t* g_WaterSides = nullptr;
 cvar_t* g_WaterLight = nullptr;
 
-// jhl_visuals_wateropacity (default 0.96): below 1, solid water entities (func_water...) drawn here
+// jhl_visuals_wateropacity (default 0.85): below 1, solid water entities (func_water...) drawn here
 // see-through at that opacity, in the see-through pass; water already see-through as it was. Not the world's water:
 // the map's visibility treats it as a wall, so what's under it isn't drawn from above (c2a5's dam: holes). Neither
 // 1998 renderer showed through water.
@@ -913,16 +914,21 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 		}
 	}
 
+	// Level out to LightReach, and down to the floor through a cone (straight down and four ways 45 degrees: the deeper
+	// the floor, the wider it's taken, so a patch of it far down doesn't print itself on the surface).
+	static const Vector Down[] = {{0, 0, -1}, {Tilt, 0, -Tilt}, {-Tilt, 0, -Tilt}, {0, Tilt, -Tilt}, {0, -Tilt, -Tilt}};
+
 	float total = 0;
 	float weight = 0;
+	float brightest = 0;
 
-	for (int i = 0; i <= LightRays; ++i)
+	for (int i = 0; i < LightRays + static_cast<int>(std::size(Down)); ++i)
 	{
 		Vector end;
 
-		if (i == LightRays)
+		if (i >= LightRays)
 		{
-			end = point - Vector(0, 0, LightDepth);
+			end = point + Down[i - LightRays] * (LightDepth / -Down[i - LightRays].z);
 		}
 		else
 		{
@@ -948,6 +954,7 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 		const float share = 1 / (1 + distance / LightFalloff);
 		total += light * share;
 		weight += share;
+		brightest = std::max(brightest, light);
 
 		if (hits)
 		{
@@ -955,7 +962,19 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 		}
 	}
 
-	return weight > 0 ? total / weight : LightAt(point);
+	if (weight <= 0)
+	{
+		return LightAt(point);
+	}
+
+	// Dark against the brightest it sees: with anything around at LitLight or more, as it is; all dimmer (a chamber lit
+	// low, a dim tunnel), scaled as if that were LitLight, so only water darker than its own surroundings darkens.
+	if (brightest < DarkestSeen)
+	{
+		return LitLight;
+	}
+
+	return total / weight * LitLight / std::min(brightest, LitLight);
 }
 
 // A face's light, taken the first time it's drawn (budget allowing) and again if its entity has moved (see LitLight).
@@ -1208,7 +1227,7 @@ void JhlSoftwareWater_Initialize()
 	g_SoftwareWater = gEngfuncs.pfnRegisterVariable("jhl_visuals_softwarewater", "1", FCVAR_ARCHIVE);
 	g_WaterSides = gEngfuncs.pfnGetCvarPointer("gl_watersides");
 	g_WaterLight = gEngfuncs.pfnRegisterVariable("jhl_visuals_waterlight", "1", FCVAR_ARCHIVE);
-	g_WaterOpacity = gEngfuncs.pfnRegisterVariable("jhl_visuals_wateropacity", "0.96", FCVAR_ARCHIVE);
+	g_WaterOpacity = gEngfuncs.pfnRegisterVariable("jhl_visuals_wateropacity", "0.85", FCVAR_ARCHIVE);
 
 	// The light under the player's eyes and the water's brightness for it there, for tuning the curve (LitLight).
 	gEngfuncs.pfnAddCommand("jhl_debug_waterlight", []
@@ -1216,8 +1235,8 @@ void JhlSoftwareWater_Initialize()
 			const JhlBsp* bsp = JhlBsp_Get(g_MapName.c_str());
 			int hits = 0;
 			const float light = bsp ? SeenLight(*bsp, v_origin - Vector(0, 0, LightAbove), &hits) : LightAt(v_origin);
-			gEngfuncs.Con_Printf("jhl_debug_waterlight: light %.0f around the view (%d of %d surfaces seen; 0: the floor below instead, -1: open sky above), water %.2f (full from %.0f, %.2f at the darkest)\n",
-				light, hits, LightRays + 1, Brightness(light), LitLight, DarkestWater);
+			gEngfuncs.Con_Printf("jhl_debug_waterlight: light %.0f around the view, against the brightest it sees (%d of %d surfaces seen; 0: the floor below instead, -1: open sky above), water %.2f (full from %.0f, %.2f at the darkest)\n",
+				light, hits, LightRays + 5, Brightness(light), LitLight, DarkestWater);
 		});
 }
 
