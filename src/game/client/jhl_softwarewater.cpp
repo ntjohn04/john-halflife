@@ -125,8 +125,9 @@ struct WaterTexture
 	// The darkest it gets (jhl_visuals_waterlight; DarkestWater for most): never darkened, Xen's fluids (!fluid...),
 	// murky and alien already, and the toxic goo (!toxicgrn...), neon green, usually with its own lights; barely,
 	// On A Rail's own water (!gwater3); softly, the hazard courses' and On A Rail's others (!bwater2, !gwater2: also
-	// c3a1, lambda_bunker), dim tunnels whose water was too dark; lifted, Blue Shift's glowing coolant (!coolant5).
+	// c3a1, lambda_bunker), dim tunnels whose water was too dark.
 	float Darkest = DarkestWater;
+	float Lift = 0; // Brighter by this everywhere, up to full, the gradient as steep: Blue Shift's glowing coolant.
 };
 
 // A model's water faces, by texture.
@@ -427,7 +428,7 @@ void LoadMap(const char* mapName)
 		else if (0 == stricmp(water.Name.c_str(), "!bwater2") || 0 == stricmp(water.Name.c_str(), "!gwater2"))
 			water.Darkest = 0.6f;
 		else if (0 == stricmp(water.Name.c_str(), "!coolant5"))
-			water.Darkest = 0.5f;
+			water.Lift = 0.15f;
 		std::string why;
 
 		if (LoadTexture(water, EngineTexture(worldEntity->model, *bsp, static_cast<int>(miptex), why, water), why))
@@ -1121,6 +1122,7 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 			auto& litFace = overEngine && waves != 0 ? g_EngineFaces[index] : g_LitFaces[index];
 
 			const float darkest = g_Textures[t].Darkest;
+			const float lift = g_Textures[t].Lift;
 			const bool faceLit = lit && darkest < 1;
 
 			if (faceLit)
@@ -1139,7 +1141,7 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 				for (int i = 0; i < count; ++i, ++next)
 				{
 					const Vector& point = litFace.Points[next];
-					const float light = faceLit ? darkest + (1 - darkest) * (litFace.Light[next] - DarkestWater) / (1 - DarkestWater) : 1.0f;
+					const float light = faceLit ? std::min(darkest + (1 - darkest) * (litFace.Light[next] - DarkestWater) / (1 - DarkestWater) + lift, 1.0f) : 1.0f;
 					const float s = DotProduct(point, Vector(texinfo.Vecs[0][0], texinfo.Vecs[0][1], texinfo.Vecs[0][2])) + texinfo.Vecs[0][3];
 					const float t2 = DotProduct(point, Vector(texinfo.Vecs[1][0], texinfo.Vecs[1][1], texinfo.Vecs[1][2])) + texinfo.Vecs[1][3];
 					gl.Color4f(color[0] * light, color[1] * light, color[2] * light, color[3]);
