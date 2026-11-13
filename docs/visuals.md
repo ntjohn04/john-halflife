@@ -229,8 +229,10 @@ fence entity over the water darkened it or not by where the player stood). The l
 depends only on where a point is, so surfaces in the same place (a water entity's stacked brushes) are lit alike. From
 a light of 96 up it's exactly as before (c1a1b's lit tunnel is about 94; the engine draws a wall at light × texture ÷
 192, so a wall at 45 already shows dark); below that it darkens smoothly, to 0.2 with no light. The light is taken
-once a map, at most 1.5 ms a frame (water not yet taken is as bright as ever), and again where a water entity
-moves (as gradually, its old light kept meanwhile); lights switched later aren't followed, nor the flashlight and
+once a map, at most 1.5 ms a frame (water not yet taken is as bright as ever), and, where a water entity
+moves, its light fades to an even 0.85 over three quarters of a second while it moves (nothing taken meanwhile: its
+baked light no longer slides along with it, c1a1b's train of water), then is taken again where it stops and fades
+back; lights switched later aren't followed, nor the flashlight and
 flashes. `jhl_debug_waterlight` prints the light around the view, how many of the 9 traces found a lit surface (-1: open sky above), and
 the water's brightness for it. With the software water off (or `-soft`) water is the engine's, full bright as ever.
 
