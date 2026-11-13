@@ -212,14 +212,12 @@ so gamma and filtering match). Water is what the engine treats as water: names s
 
 The map compiler gives water no lightmap, so both renderers draw it full bright: in a pitch-black corner (c1a1b's
 tunnel) the water stood out of the dark. With the software water on, the water drawn here takes the light of what's
-around it, on a 32-unit grid: from 12 units above each point, 16 level traces out to 384 units and 5 down to the
-floor (straight down and four ways at 45°, so the deeper the floor the wider it's taken: a patch far down doesn't
-print itself on the surface), each surface hit read from the map's own lightmaps where it was hit (the map's base light, its first style),
+around it, on a 32-unit grid: from 12 units above each point, 16 level traces out to 192 units and 8 down to the
+floor on a ring at 45°, none straight down (the deeper the floor, the further out it's taken, so something far down,
+ba_power2's grated pit, doesn't print itself on the surface; in shallow water, close by), each surface hit read from the map's own lightmaps where it was hit (the map's base light, its first style),
 nearer ones counting more (weight 1 / (1 + distance / 48)). So water by dark walls darkens and water by lit walls stays
-bright, whatever the floor under it. It's dark against the brightest surface it sees: with anything around at 96
-or more, as described; where everything is dimmer (c4a3's chamber, On A Rail's tunnels) it's judged as if that
-brightest were 96, so only water darker than its own surroundings darkens, and with nothing lit around at all it
-stays full bright. Water under the open sky (straight up or tilted 45° four ways, the first thing there is the sky; a fence overhead
+bright, whatever the floor under it. Xen's fluids (`!fluid...`, c4a3's chamber) are never darkened: murky and alien
+already. Water under the open sky (straight up or tilted 45° four ways, the first thing there is the sky; a fence overhead
 blocks one, a roof all) is
 outdoors and stays full bright. With nothing hit (open water, or only entities), the engine's `LightAtPoint`
 under it instead. A point inside a wall (water brushes run into the walls) looks from just beside it. The traces see the world alone, not entities (the client only has those near the player, so a

@@ -78,9 +78,9 @@ constexpr float DarkestWater = 0.2f;
 constexpr float SkyReach = 8192;
 constexpr float LightAbove = 12;
 constexpr int LightRays = 16;
-constexpr float LightReach = 384;
-constexpr float LightDepth = 512; // The floor's furthest under it (straight down; the tilted ones as far down).
-constexpr float DarkestSeen = 4;  // Nothing seen brighter: all dark around, the water as bright as ever.
+constexpr float LightReach = 192;
+constexpr int FloorRays = 8;	  // Down to the floor on a ring 45 degrees out (FloorRays), none straight down.
+constexpr float LightDepth = 512; // The floor's furthest under it.
 constexpr float LightFalloff = 48;
 constexpr float LightSpread = 24;
 constexpr float LightGrid = 32;
@@ -122,6 +122,7 @@ struct WaterTexture
 	bool Mipmapped = false;
 	int Fog[4]{}; // Its fog under water: colour and density, from its palette (see EngineTexture).
 	bool HasFog = false;
+	bool Unlit = false; // Never darkened (jhl_visuals_waterlight): Xen's fluids (!fluid...), murky and alien already.
 };
 
 // A model's water faces, by texture.
@@ -415,6 +416,7 @@ void LoadMap(const char* mapName)
 
 		WaterTexture water;
 		water.Name = bsp->TextureNames[miptex];
+		water.Unlit = 0 == strnicmp(water.Name.c_str(), "!fluid", 6);
 		std::string why;
 
 		if (LoadTexture(water, EngineTexture(worldEntity->model, *bsp, static_cast<int>(miptex), why, water), why))
@@ -914,21 +916,20 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 		}
 	}
 
-	// Level out to LightReach, and down to the floor through a cone (straight down and four ways 45 degrees: the deeper
-	// the floor, the wider it's taken, so a patch of it far down doesn't print itself on the surface).
-	static const Vector Down[] = {{0, 0, -1}, {Tilt, 0, -Tilt}, {-Tilt, 0, -Tilt}, {0, Tilt, -Tilt}, {0, -Tilt, -Tilt}};
-
+	// Level out to LightReach, and down to the floor on a ring 45 degrees out (none straight down: the deeper the floor,
+	// the further out it's taken, so something far down, ba_power2's grated pit, doesn't print itself on the surface;
+	// in shallow water, close by).
 	float total = 0;
 	float weight = 0;
-	float brightest = 0;
 
-	for (int i = 0; i < LightRays + static_cast<int>(std::size(Down)); ++i)
+	for (int i = 0; i < LightRays + FloorRays; ++i)
 	{
 		Vector end;
 
 		if (i >= LightRays)
 		{
-			end = point + Down[i - LightRays] * (LightDepth / -Down[i - LightRays].z);
+			const float angle = (i - LightRays + 0.5f) * 2 * static_cast<float>(std::numbers::pi) / FloorRays;
+			end = point + Vector(std::cos(angle) * LightDepth, std::sin(angle) * LightDepth, -LightDepth);
 		}
 		else
 		{
@@ -954,7 +955,6 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 		const float share = 1 / (1 + distance / LightFalloff);
 		total += light * share;
 		weight += share;
-		brightest = std::max(brightest, light);
 
 		if (hits)
 		{
@@ -962,19 +962,7 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 		}
 	}
 
-	if (weight <= 0)
-	{
-		return LightAt(point);
-	}
-
-	// Dark against the brightest it sees: with anything around at LitLight or more, as it is; all dimmer (a chamber lit
-	// low, a dim tunnel), scaled as if that were LitLight, so only water darker than its own surroundings darkens.
-	if (brightest < DarkestSeen)
-	{
-		return LitLight;
-	}
-
-	return total / weight * LitLight / std::min(brightest, LitLight);
+	return weight > 0 ? total / weight : LightAt(point);
 }
 
 // A face's light, taken the first time it's drawn (budget allowing) and again if its entity has moved (see LitLight).
@@ -1121,7 +1109,9 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 			// Over the engine's waved water: on its cut. Else the finer one (the light's gradients smoother).
 			auto& litFace = overEngine && waves != 0 ? g_EngineFaces[index] : g_LitFaces[index];
 
-			if (lit)
+			const bool faceLit = lit && !g_Textures[t].Unlit;
+
+			if (faceLit)
 			{
 				Relight(bsp, litFace, origin, angles);
 			}
@@ -1137,7 +1127,7 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 				for (int i = 0; i < count; ++i, ++next)
 				{
 					const Vector& point = litFace.Points[next];
-					const float light = lit ? litFace.Light[next] : 1.0f;
+					const float light = faceLit ? litFace.Light[next] : 1.0f;
 					const float s = DotProduct(point, Vector(texinfo.Vecs[0][0], texinfo.Vecs[0][1], texinfo.Vecs[0][2])) + texinfo.Vecs[0][3];
 					const float t2 = DotProduct(point, Vector(texinfo.Vecs[1][0], texinfo.Vecs[1][1], texinfo.Vecs[1][2])) + texinfo.Vecs[1][3];
 					gl.Color4f(color[0] * light, color[1] * light, color[2] * light, color[3]);
@@ -1235,8 +1225,8 @@ void JhlSoftwareWater_Initialize()
 			const JhlBsp* bsp = JhlBsp_Get(g_MapName.c_str());
 			int hits = 0;
 			const float light = bsp ? SeenLight(*bsp, v_origin - Vector(0, 0, LightAbove), &hits) : LightAt(v_origin);
-			gEngfuncs.Con_Printf("jhl_debug_waterlight: light %.0f around the view, against the brightest it sees (%d of %d surfaces seen; 0: the floor below instead, -1: open sky above), water %.2f (full from %.0f, %.2f at the darkest)\n",
-				light, hits, LightRays + 5, Brightness(light), LitLight, DarkestWater);
+			gEngfuncs.Con_Printf("jhl_debug_waterlight: light %.0f around the view (%d of %d surfaces seen; 0: the floor below instead, -1: open sky above), water %.2f (full from %.0f, %.2f at the darkest)\n",
+				light, hits, LightRays + FloorRays, Brightness(light), LitLight, DarkestWater);
 		});
 }
 
