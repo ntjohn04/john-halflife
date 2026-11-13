@@ -127,8 +127,8 @@ struct WaterTexture
 	// On A Rail's own water (!gwater3); softly, the hazard courses' and On A Rail's others (!bwater2, !gwater2: also
 	// c3a1, lambda_bunker), dim tunnels whose water was too dark.
 	float Darkest = DarkestWater;
-	float Full = LitLight; // Full bright from this light up: Blue Shift's glowing coolant (!coolant5) sooner, and darker
-						   // at the darkest, its gradient stronger (ba_power2's pools: bright middles, dark corners).
+	float Full = LitLight; // Full bright from this light up: Blue Shift's glowing coolant (!coolant5) sooner, glowing
+						   // full bright but where it ends in a dark corner.
 	bool Smoothed = false; // Its light averaged over SmoothReach first (the coolant: its steeper curve showed each
 						   // point's own unevenness as patches).
 };
@@ -181,7 +181,7 @@ struct LightCell
 	int Count = 0;
 };
 
-constexpr float SmoothReach = 64;
+constexpr float SmoothReach = 128;
 constexpr float SmoothEvery = 0.25f;
 std::unordered_map<std::int64_t, LightCell> g_LightCells;
 int g_LightCellsVersion = 0; // Raised whenever a face's light is added.
@@ -500,8 +500,8 @@ void LoadMap(const char* mapName)
 			water.Darkest = 0.6f;
 		else if (0 == stricmp(water.Name.c_str(), "!coolant5"))
 		{
-			water.Full = 65;
-			water.Darkest = 0.15f;
+			water.Full = 48;
+			water.Darkest = 0.2f;
 			water.Smoothed = true;
 		}
 		std::string why;
