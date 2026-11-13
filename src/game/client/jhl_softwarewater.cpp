@@ -170,6 +170,14 @@ struct LitFace
 	std::vector<float> Smooth;		  // Its light averaged around each point (Smoothed textures), as of SmoothVersion.
 	int SmoothVersion = -1;
 	float SmoothTime = -1;			  // When it was last averaged (again no more than SmoothEvery).
+	// Moving water (MovingWater): how far its light has gone to the even brightness, 0 none, 1 all; its light not where
+	// it now is (moved since taken), and where it was when last drawn.
+	float Blend = 0;
+	bool Stale = false;
+	bool Drawn = false;
+	Vector LastOrigin;
+	Vector LastAngles;
+	float FadeTime = 0;
 };
 
 std::string g_MapName;
@@ -182,6 +190,12 @@ struct LightCell
 };
 
 constexpr float SmoothReach = 128;
+
+// A water entity moving: its light (taken where it was) fades to an even brightness over MovingFade, nothing taken
+// while it moves; stopped, taken again where it is (within LightTime as ever) and faded back to it. Its baked light no
+// longer slides along with it (c1a1b's tunnel water, a train).
+constexpr float MovingWater = 0.85f;
+constexpr float MovingFade = 0.75f;
 constexpr float SmoothEvery = 0.25f;
 std::unordered_map<std::int64_t, LightCell> g_LightCells;
 int g_LightCellsVersion = 0; // Raised whenever a face's light is added.
@@ -1056,16 +1070,41 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 // A face's light, taken the first time it's drawn (budget allowing) and again if its entity has moved (see LitLight).
 void Relight(const JhlBsp& bsp, LitFace& lit, const Vector& origin, const Vector& angles, int model)
 {
-	const bool taken = lit.SampledTime >= 0;
-	const bool moved = taken && ((lit.SampledOrigin - origin).Length() > 0.5f || (lit.SampledAngles - angles).Length() > 0.5f);
+	const float now = gEngfuncs.GetClientTime();
+	const float step = std::clamp(now - lit.FadeTime, 0.0f, 0.1f) / MovingFade;
+	lit.FadeTime = now;
 
-	if ((taken && !moved) || g_LightSpent >= LightTime)
+	const bool taken = lit.SampledTime >= 0;
+	const bool moving = lit.Drawn && ((lit.LastOrigin - origin).Length() > 0.01f || (lit.LastAngles - angles).Length() > 0.01f);
+	lit.LastOrigin = origin;
+	lit.LastAngles = angles;
+	lit.Drawn = true;
+
+	if (taken && ((lit.SampledOrigin - origin).Length() > 0.5f || (lit.SampledAngles - angles).Length() > 0.5f))
+	{
+		lit.Stale = true;
+	}
+
+	// Its light not where it is: faded to the even brightness; taken again: faded back.
+	lit.Blend = lit.Stale ? std::min(lit.Blend + step, 1.0f) : std::max(lit.Blend - step, 0.0f);
+
+	// Nothing taken while it moves (started again once it stops, where it is then).
+	if (moving)
+	{
+		if (lit.Stale)
+		{
+			lit.Next = 0;
+		}
+
+		return;
+	}
+
+	if ((taken && !lit.Stale) || g_LightSpent >= LightTime)
 	{
 		return;
 	}
 
-	// Moved: taken again within the budget as any face is, its old light kept meanwhile (a little behind while it moves).
-	if (moved)
+	if (taken)
 	{
 		lit.SampledTime = -1;
 		lit.Next = 0;
@@ -1114,6 +1153,7 @@ void Relight(const JhlBsp& bsp, LitFace& lit, const Vector& origin, const Vector
 	lit.SampledTime = gEngfuncs.GetClientTime();
 	lit.SampledOrigin = origin;
 	lit.SampledAngles = angles;
+	lit.Stale = false;
 }
 
 // The water's waves where OpenGL drew them (hw.dll's EmitWaterPolys): a water entity's surface raised at each point by
@@ -1248,7 +1288,13 @@ void DrawModel(const JhlBsp& bsp, int modelIndex, const Vector& origin, const Ve
 				for (int i = 0; i < count; ++i, ++next)
 				{
 					const Vector& point = litFace.Points[next];
-					const float light = faceLit ? Brightness(smooth ? litFace.Smooth[next] : litFace.Light[next], full, darkest) : 1.0f;
+					float light = faceLit ? Brightness(smooth ? litFace.Smooth[next] : litFace.Light[next], full, darkest) : 1.0f;
+
+					if (faceLit && litFace.Blend > 0)
+					{
+						light += (std::max(MovingWater, darkest) - light) * litFace.Blend;
+					}
+
 					const float s = DotProduct(point, Vector(texinfo.Vecs[0][0], texinfo.Vecs[0][1], texinfo.Vecs[0][2])) + texinfo.Vecs[0][3];
 					const float t2 = DotProduct(point, Vector(texinfo.Vecs[1][0], texinfo.Vecs[1][1], texinfo.Vecs[1][2])) + texinfo.Vecs[1][3];
 					gl.Color4f(color[0] * light, color[1] * light, color[2] * light, color[3]);
