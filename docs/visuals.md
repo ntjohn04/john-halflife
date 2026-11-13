@@ -218,7 +218,8 @@ nearer ones counting more (weight 1 / (1 + distance / 48)). So water by dark wal
 bright, whatever the floor under it. Water under the open sky (straight up or tilted 45° four ways, the first thing there is the sky; a fence overhead
 blocks one, a roof all) is
 outdoors and stays full bright. With nothing hit (open water, or only entities), the engine's `LightAtPoint`
-under it instead. A point inside a wall (water brushes run into the walls) looks from just beside it. The light
+under it instead. A point inside a wall (water brushes run into the walls) looks from just beside it. The traces see the world alone, not entities (the client only has those near the player, so a
+fence entity over the water darkened it or not by where the player stood). The light
 depends only on where a point is, so surfaces in the same place (a water entity's stacked brushes) are lit alike. From
 a light of 96 up it's exactly as before (c1a1b's lit tunnel is about 94; the engine draws a wall at light × texture ÷
 192, so a wall at 45 already shows dark); below that it darkens smoothly, to 0.2 with no light. The light is taken

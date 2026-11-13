@@ -27,6 +27,7 @@
 
 #include "hud.h"
 #include "com_model.h"
+#include "event_api.h"
 #include "pm_defs.h"
 #include "pmtrace.h"
 #include "triangleapi.h"
@@ -854,6 +855,16 @@ float SurfaceLight(const JhlBsp& bsp, const Vector& hit, const Vector& normal)
 	return -1;
 }
 
+// A point trace against the world alone: not entities, which the client only has near the player (a brush fence over
+// c2a5's water blocked the sky or not, by where the player was when its light was taken).
+pmtrace_t WorldTrace(const Vector& start, const Vector& end)
+{
+	pmtrace_t trace;
+	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
+	gEngfuncs.pEventAPI->EV_PlayerTrace(start, end, PM_WORLD_ONLY, -1, &trace);
+	return trace;
+}
+
 // The light of what's around a point on the water as seen from just above it (see LitLight).
 float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 {
@@ -879,7 +890,7 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 	for (const auto& direction : SkyDirections)
 	{
 		const Vector up = start + direction * SkyReach;
-		const pmtrace_t trace = *gEngfuncs.PM_TraceLine(start, up, PM_TRACELINE_PHYSENTSONLY, 2, -1);
+		const pmtrace_t trace = WorldTrace(start, up);
 
 		if (trace.startsolid || trace.fraction >= 1)
 		{
@@ -919,7 +930,7 @@ float SeenLight(const JhlBsp& bsp, const Vector& point, int* hits = nullptr)
 			end = start + Vector(std::cos(angle) * LightReach, std::sin(angle) * LightReach, 0);
 		}
 
-		const pmtrace_t trace = *gEngfuncs.PM_TraceLine(start, end, PM_TRACELINE_PHYSENTSONLY, 2, -1);
+		const pmtrace_t trace = WorldTrace(start, end);
 
 		if (trace.startsolid || trace.allsolid || trace.fraction >= 1)
 		{
