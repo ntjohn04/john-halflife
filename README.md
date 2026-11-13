@@ -95,6 +95,11 @@ Options → Multiplayer → **John Settings...** lists them all, with a reset to
 * [docs/](docs/README.md): how each system works, building, releasing.
 * [docs/unified-sdk/](docs/unified-sdk/UNIFIED_SDK.md): the Unified SDK's own documentation.
 
+## AI use
+
+Most of the code, reverse engineering and documentation was written with AI (Anthropic's Claude), directed,
+reviewed and play-tested by John.
+
 ## Credits and licences
 
 Made by John, on Valve's Half-Life, Gearbox's Opposing Force and Blue Shift, the Half-Life Unified SDK and
