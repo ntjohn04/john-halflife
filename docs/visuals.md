@@ -222,7 +222,7 @@ under it instead. A point inside a wall (water brushes run into the walls) looks
 depends only on where a point is, so surfaces in the same place (a water entity's stacked brushes) are lit alike. From
 a light of 96 up it's exactly as before (c1a1b's lit tunnel is about 94; the engine draws a wall at light × texture ÷
 192, so a wall at 45 already shows dark); below that it darkens smoothly, to 0.2 with no light. The light is taken
-once a map, at most 100 points a frame (water not yet taken is as bright as ever), and again where a water entity
+once a map, at most 1.5 ms a frame (water not yet taken is as bright as ever), and again where a water entity
 moves (as gradually, its old light kept meanwhile); lights switched later aren't followed, nor the flashlight and
 flashes. `jhl_debug_waterlight` prints the light around the view, how many of the 9 traces found a lit surface (-1: open sky above), and
 the water's brightness for it. With the software water off (or `-soft`) water is the engine's, full bright as ever.

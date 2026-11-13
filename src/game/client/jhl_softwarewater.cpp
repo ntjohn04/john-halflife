@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <numbers>
 #include <cstdint>
@@ -68,7 +69,7 @@ constexpr int RenderTransAdd = 5;
 // LightSpread around, leaving out any in a wall, further out if all are: LightRings). As bright as ever from LitLight
 // up, darkening smoothly below that to DarkestWater; under the open sky (straight up, SkyReach), always as bright. On a grid (LightGrid units, the faces cut up for it; EngineGrid over the engine's waved water), by where a
 // point is alone, so faces in the same place (a water entity's brushes' tops and bottoms) are lit alike, not fighting.
-// Taken once a map, no more than LightBudget points a frame (a face not yet taken drawn as bright as ever), again where
+// Taken once a map, no more than LightTime a frame (a face not yet taken drawn as bright as ever), again where
 // a water entity has moved (as slowly, its old light kept meanwhile); lights switched later aren't followed, nor the
 // flashlight and flashes.
 constexpr float LitLight = 96;
@@ -85,9 +86,9 @@ constexpr float LightGrid = 32;
 // GL_SubdivideSurface, the same rule at 64 units): its pieces vertex for vertex, so its waves exactly.
 constexpr float EngineGrid = 64;
 constexpr float LightRings[] = {48, 80};
-constexpr int LightBudget = 100;
+constexpr std::chrono::microseconds LightTime{1500}; // Its share of a frame: hitch-free with the engine's slowest.
 constexpr float SurfaceCell = 128; // The world's lit faces kept by cells this size (IndexSurfaces).
-int g_LightBudget = 0; // Points still to be taken this frame.
+std::chrono::steady_clock::duration g_LightSpent{}; // Taking light this frame so far.
 
 JhlGL& gl = g_JhlGL;
 cvar_t* g_SoftwareWater = nullptr;
@@ -945,7 +946,7 @@ void Relight(const JhlBsp& bsp, LitFace& lit, const Vector& origin, const Vector
 	const bool taken = lit.SampledTime >= 0;
 	const bool moved = taken && ((lit.SampledOrigin - origin).Length() > 0.5f || (lit.SampledAngles - angles).Length() > 0.5f);
 
-	if ((taken && !moved) || g_LightBudget <= 0)
+	if ((taken && !moved) || g_LightSpent >= LightTime)
 	{
 		return;
 	}
@@ -968,10 +969,15 @@ void Relight(const JhlBsp& bsp, LitFace& lit, const Vector& origin, const Vector
 		return point + origin + Vector(0, 0, 1);
 	};
 
-	for (; lit.Next < lit.Points.size() && g_LightBudget > 0; ++lit.Next, --g_LightBudget)
+	const auto began = std::chrono::steady_clock::now();
+	const auto spent = g_LightSpent;
+
+	for (; lit.Next < lit.Points.size() && spent + (std::chrono::steady_clock::now() - began) < LightTime; ++lit.Next)
 	{
 		lit.Light[lit.Next] = Brightness(SeenLight(bsp, place(lit.Points[lit.Next])));
 	}
+
+	g_LightSpent = spent + (std::chrono::steady_clock::now() - began);
 
 	if (lit.Next < lit.Points.size())
 	{
@@ -1256,7 +1262,7 @@ void JhlSoftwareWater_DrawOpaque()
 
 	Advance();
 	UpdateTiles();
-	g_LightBudget = LightBudget;
+	g_LightSpent = {};
 
 	WaterDrawState state;
 	gl.Color4f(1, 1, 1, 1);
