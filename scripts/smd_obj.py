@@ -1,18 +1,3 @@
-"""Round trip between SMD reference meshes and Wavefront OBJ, for editing a model's mesh in Blender (File > Import >
-Wavefront (.obj), and File > Export > Wavefront (.obj), both with their default settings).
-
-  python smd_obj.py export <out folder> <name> <edit.smd> [<reference.smd> ...] [--textures <dir> ...]
-      Writes <name>.obj and <name>.mtl, and each texture the meshes use as a PNG in textures/. The first SMD is the
-      object to edit (named "edit"); the others come along as objects named "reference_..." to see it against (the
-      body under a head, say), left out on the way back. Texture search directories: --textures, in order.
-  python smd_obj.py import <edited.obj> <original edit.smd> <out.smd> [--textures-out <dir>]
-      The "edit" object back as an SMD on the original's skeleton: each vertex on the bone of the original's vertex
-      nearest it (Blender keeps no bones in an OBJ). Faces with more than three corners are split into triangles.
-      With --textures-out, each texture PNG next to the OBJ that differs from what was exported is written there as
-      the 8-bit BMP studiomdl takes (its own palette when its colours fit, else a new one).
-
-OBJ is Y-up and Blender converts on both import and export: GoldSrc (x, y, z) is written (x, z, -y).
-"""
 import hashlib, math, os, sys
 from collections import defaultdict
 
@@ -53,7 +38,6 @@ def export(argv):
     os.makedirs(os.path.join(out, 'textures'), exist_ok=True)
     obj = [f'mtllib {name}.mtl']
     used = set()
-    # Shared by place (and texture coordinates and normals by value), so Blender sees one connected mesh per object.
     vindex, tindex, nindex = {}, {}, {}
     count = {'v': 0, 'vt': 0, 'vn': 0}
     def ref(table, prefix, value):
@@ -70,7 +54,7 @@ def export(argv):
         faces = []
         for tex, verts in tris:
             idx = []
-            for bone, p, nrm, uv in verts:  # both wind counter-clockwise seen from outside
+            for bone, p, nrm, uv in verts:
                 vi = ref(vindex, 'v', (round(p[0], 6), round(p[2], 6), round(-p[1], 6)))
                 ti = ref(tindex, 'vt', (round(uv[0], 6), round(uv[1], 6)))
                 ni = ref(nindex, 'vn', (round(nrm[0], 6), round(nrm[2], 6), round(-nrm[1], 6)))
@@ -82,7 +66,6 @@ def export(argv):
                 current = tex
                 used.add(tex)
             obj.append('f ' + ' '.join(idx))
-        # The next object's vertices aren't shared with this one's (OBJ numbers them across the file).
         vindex.clear()
     open(os.path.join(out, f'{name}.obj'), 'w', newline='\n').write('\n'.join(obj) + '\n')
     mtl = []
@@ -97,7 +80,6 @@ def export(argv):
         else:
             print(f'smd_obj: texture {tex} not found')
     open(os.path.join(out, f'{name}.mtl'), 'w', newline='\n').write('\n'.join(mtl))
-    # What was exported, so the way back knows which textures were edited.
     open(os.path.join(out, 'textures', 'exported.txt'), 'w', newline='\n').write(
         '\n'.join(f'{k}\t{v}' for k, v in sorted(sums.items())) + '\n')
     print(f'smd_obj: {os.path.join(out, name)}.obj, {len(used)} textures')
@@ -145,7 +127,6 @@ def import_(argv):
                 faces.append((mat, (corners[0], corners[k], corners[k + 1])))
     if not faces:
         raise SystemExit('smd_obj: no faces in an object named edit')
-    # Blender names materials as they came, possibly with a .001 suffix; the texture is the name before that.
     def texname(m):
         base = m.split('.bmp')[0] + '.bmp' if '.bmp' in m.lower() else m
         return base

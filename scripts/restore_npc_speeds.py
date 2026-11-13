@@ -1,15 +1,5 @@
 """Gives John Half-Life's models (the Unified SDK's) their vanilla movement speeds back.
 
-A sequence's ground speed (how fast an NPC walks or runs with it) is its linear movement times its frame rate over its
-frame count less one (server animation.cpp GetSequenceInfo). The Unified SDK's models were recompiled from decompiled
-sources, which works the linear movement out over one frame fewer: it comes out (frames - 1) / frames of vanilla's, so
-every NPC moved 2 to 6% slower than in vanilla (a running grunt 287 units/s in place of 304).
-
-npc_speeds.txt lists each such sequence with the vanilla linear movement (numbers, nothing of Valve's), so this needs no
-Half-Life install: it's run by the build on the installed mod folder and by the release packager. A sequence is only
-changed if it still has the shortfall (or has the vanilla value already), so a model the Unified SDK changes since is
-left alone; running it again changes nothing.
-
 Usage:
   python restore_npc_speeds.py <mod folder>
   python restore_npc_speeds.py --make-table <Half-Life folder> <Unified SDK release zip>
@@ -26,9 +16,6 @@ FPS = 32
 NUMFRAMES = 56
 LINEAR = 76
 TABLE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "npc_speeds.txt")
-# Models with no vanilla one of their name, compiled from another's animations: compared with that one's vanilla model.
-# Rosenberg was a head on Blue Shift's scientist; the Unified SDK's is its own model, on Half-Life's scientist animations.
-# Harold (John Half-Life's own, assets/models/harold) likewise.
 SAME_ANIMATIONS = {"models/rosenberg.mdl": "models/scientist.mdl", "models/harold.mdl": "models/scientist.mdl"}
 
 
@@ -60,8 +47,6 @@ def make_table(half_life, release_zip):
             name = name.split("/", 1)[1] if name.lower().startswith("hlu/") else name
             if not name.lower().startswith("models/") or not name.lower().endswith(".mdl"):
                 continue
-            # A model in models/op4 or models/bshift is that game's; one in models/ is Half-Life's, or an expansion's
-            # if Half-Life has none of that name.
             parts = SAME_ANIMATIONS.get(name, name).split("/")
             if len(parts) == 3 and parts[1] in ("op4", "bshift"):
                 games = ("gearbox",) if parts[1] == "op4" else ("bshift",)
@@ -96,7 +81,6 @@ def restore(mod):
             continue
         name, label, values = line.rstrip("\n").split("\t")
         table.setdefault(name, {})[label] = tuple(struct.unpack("<3f", struct.pack("<3f", *map(float, values.split()))))
-    # A model on another's animations that isn't in the Unified SDK's release (John Half-Life's own): that one's rows.
     for name, source in SAME_ANIMATIONS.items():
         if name not in table and source in table:
             table[name] = table[source]

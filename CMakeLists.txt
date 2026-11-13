@@ -9,7 +9,7 @@ endif()
 set(VCPKG_OVERLAY_TRIPLETS ${CMAKE_SOURCE_DIR}/vcpkg_config/triplets)
 
 project(HalfLifeMod
-	# John Half-Life's own version: milestones raise the minor version, fixes the patch (docs/README.md#versioning).
+	# John Half-Life's version (docs/README.md#versioning).
 	VERSION 0.29.2
 	DESCRIPTION "Half-Life CMake Mod Template"
 	LANGUAGES CXX)
@@ -40,7 +40,7 @@ cmake_path(GET CMAKE_INSTALL_PREFIX STEM MOD_NAME)
 # All Half-Life specific commands are prefixed with HalfLife so they show up in the same group in the CMake GUI
 set(HalfLife_HLDS_DIRECTORY "" CACHE PATH "Path to the Half-Life Dedicated Server directory. Must be specified to automatically set up dedicated server debugging settings and to copy libraries")
 
-# Default to Alpha (the community releases; Release for v1.0.0). The documentation explains how to use this, so check that first!
+# Alpha until v1.0.0.
 set(RELEASE_TYPE "Pre-Alpha" "Alpha" "Beta" "Release")
 set(HalfLife_RELEASE_TYPE "Alpha" CACHE STRING "What type of release you're building")
 set_property(CACHE HalfLife_RELEASE_TYPE PROPERTY STRINGS ${RELEASE_TYPE})
@@ -155,8 +155,7 @@ endfunction()
 add_subdirectory(src/game/client)
 add_subdirectory(src/game/server)
 
-# Checks the first start's map conversion against the Unified SDK's ContentInstaller (see the source); not part of
-# the build: cmake --build . --config Release --target mapconvert_check
+# Map conversion check, not part of the build: --target mapconvert_check
 add_executable(mapconvert_check EXCLUDE_FROM_ALL scripts/mapconvert_check.cpp src/game/client/jhl_mapconvert.cpp)
 target_include_directories(mapconvert_check PRIVATE src/game/client)
 target_compile_features(mapconvert_check PRIVATE cxx_std_20)
@@ -241,18 +240,17 @@ install(FILES
 	${CMAKE_BINARY_DIR}/liblist.gam
 	DESTINATION .)
 
-# johnhalflife's settings dialog and menu text (docs/README.md#john-settings).
+# Settings dialog and menu text.
 install(DIRECTORY config/mod/ DESTINATION .)
 
-# Credits, licences and the player's readme (the game folder only).
+# Credits, licences, readme.
 install(DIRECTORY config/licenses/ DESTINATION licenses)
 install(FILES config/readme.txt DESTINATION .)
 
-# The half-size HUD's layouts (scripts/make_half_hud.py), the game folder only: the expansions find them there.
+# Half-size HUD layouts.
 install(DIRECTORY config/halfhud/ DESTINATION .)
 
-# johnhalflife's hornet dart splats, added to the installed decals.wad (made from the player's own games when the
-# Unified SDK's assets were installed; see the script). Without Python they're left out and darts don't splat.
+# Hornet dart splats in decals.wad (needs Python).
 find_package(Python3 COMPONENTS Interpreter)
 
 if (Python3_Interpreter_FOUND)
@@ -261,16 +259,14 @@ else()
 	message(WARNING "Python 3 wasn't found: the hornet gun's dart splats won't be added to decals.wad")
 endif()
 
-# The vanilla walking and running speeds, back in the Unified SDK's recompiled models (see the script).
+# Vanilla NPC speeds in the Unified SDK's models.
 if (Python3_Interpreter_FOUND)
 	install(CODE "execute_process(COMMAND \"${Python3_EXECUTABLE}\" -I \"${CMAKE_CURRENT_SOURCE_DIR}/scripts/restore_npc_speeds.py\" \"\${CMAKE_INSTALL_PREFIX}\")")
 else()
 	message(WARNING "Python 3 wasn't found: NPCs will walk and run slightly slower than in vanilla")
 endif()
 
-# Valve's files the mod folders need (the menu art, Opposing Force's and Blue Shift's files, Half-Life's shell, each
-# game's own versions of shared files) are put in place by the game itself on the first start, from the player's own
-# games (client jhl_setup.cpp, docs/release.md#first-start).
+# Valve's files come from the player's games at the first start (jhl_setup.cpp).
 
 # CMake doesn't currently support installing imported libraries of type UNKNOWN.
 # See https://gitlab.kitware.com/cmake/cmake/-/issues/22406
@@ -278,8 +274,7 @@ endif()
 #	RUNTIME DESTINATION cl_dlls)
 install(FILES $<TARGET_FILE:OpenAL::OpenAL> DESTINATION cl_dlls)
 
-# John Half-Life's expansions: thin mod folders next to the base one that borrow all its content through
-# fallback_dir, each with its own name, main menu and saves (docs/README.md#game-folders).
+# Expansion folders: fallback_dir to the base folder.
 function(jhl_install_expansion name)
 	set(dir ../johnhalflife_${name})
 
@@ -296,8 +291,7 @@ function(jhl_install_expansion name)
 	install(FILES $<TARGET_FILE:OpenAL::OpenAL> DESTINATION ${dir}/cl_dlls)
 	install(FILES config/network/delta.lst DESTINATION ${dir})
 
-	# The game's own files (config/expansions/<name>) in place of config/mod's of the same name, whose are left out:
-	# installed one over the other, whichever CMake took for up to date (by its time stamp) would be kept.
+	# The expansion's own files replace config/mod's of the same name.
 	file(GLOB_RECURSE own_files CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/config/expansions/${name}"
 		"${CMAKE_CURRENT_SOURCE_DIR}/config/expansions/${name}/*")
 	set(own_excludes)
@@ -317,7 +311,6 @@ jhl_install_expansion(uplink)
 
 if (UNIX)
 	# Create a symbolic link to the OpenAL library so the dependency can be located at runtime
-	# (johnhalflife: in each game folder, whose client needs it as much).
 	foreach(folder . ../johnhalflife_op4 ../johnhalflife_bs ../johnhalflife_uplink)
 		INSTALL(CODE "execute_process( \
 			COMMAND ${CMAKE_COMMAND} -E create_symlink \

@@ -1,15 +1,3 @@
-"""Lengthens a head SMD's neck down to where another head's ended: a strip of triangles from the head's open bottom
-edge to the reference head's, all the way round, added to the head. For a head made for a body whose neck hole was
-changed to meet it, put on a body that another head (the reference) is known to sit right on: the reference's neck
-reaches into the body's collar and covers its openings (the body's hole isn't a simple ring, and isn't welded shut by
-a head either; it's covered).
-
-Each strip vertex on the head's edge is that head vertex as it is (bone, texture coordinates); each on the reference's
-edge takes the reference vertex's place and bone, the nearest head edge vertex's texture coordinates (the neck's last
-row of skin, stretched down), and faces out from the neck.
-
-  python smd_neck_bridge.py <head.smd> <reference head.smd> <out.smd>
-"""
 import math, sys
 from collections import Counter, defaultdict
 
@@ -39,8 +27,6 @@ def key(p):
 
 
 def bottom_loop(tris):
-    """A head's open bottom edge (its neck: a head's only opening, besides any open bits higher up), in order. Points
-    closer than 0.02 are one (a mesh splits its vertices along texture seams); each is given as one of its own."""
     reps = []
     def weld(p):
         for r in reps:
@@ -61,7 +47,6 @@ def bottom_loop(tris):
         if a[2] < low + 4 and b[2] < low + 4:
             adj[a].add(b)
             adj[b].add(a)
-    # Only the ring with the lowest point (a mouth's opening can come within that height).
     start = min(adj, key=lambda p: p[2])
     comp, stack = set(), [start]
     while stack:
@@ -104,8 +89,6 @@ def main():
     def angle(p):
         return math.atan2(p[1] - cy, p[0] - cx) % (2 * math.pi)
 
-    # Both rings in their own order, the same way round, from their point at the smallest angle; each must go
-    # round the neck steadily for the zip to follow it.
     def arrange(ring):
         a = [angle(p) for p in ring]
         turn = sum(((a[(i + 1) % len(a)] - a[i] + math.pi) % (2 * math.pi)) - math.pi for i in range(len(a)))

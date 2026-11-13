@@ -1,17 +1,4 @@
-"""Writes Opposing Force's and Blue Shift's animated main menu titles: Half-Life's 25th anniversary title (liblist.gam's
-animated_title "1", drawn and animated by GameUI.dll from resource/logo*.tga) remade with each game's name, in the
-font of its menu buttons and its colours, into config/expansions/<game>/resource, installed over config/mod's.
-
-Half-Life's ten pictures, matched picture for picture (measured from Valve's):
-  logo.tga                800x86, the name in white, its letters spread from x 13 to 787, 45 tall from y 19;
-  logo_blip.tga           the same blurred (sigma 4.75) and 1.67 times as opaque, a flash over it;
-  logo_blip2.tga          the same thickened 5 pixels and blurred (sigma 2.75), a stronger flash;
-  logo_big_blurred_N.tga  the name about twice as big and bolder, blurred, at most 53% opaque, drifting
-                          behind it: one 1800x270 strip in four pieces the engine lays side by side from 320 pixels
-                          left of the title (each piece flashes on its own, so each cut falls between letters);
-  logo_big_blurred_blip_N the same pieces at most 97% opaque, their flashes.
-Every picture is one colour with only its opacity varying, as Valve's are white.
-(The big name's letters line up with the small one's, so both need as many letters.)
+"""Writes Opposing Force's and Blue Shift's animated main menu titles.
 
 Usage:
   python make_menu_titles.py
@@ -23,30 +10,25 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Each game's name (as its logo writes it) and the big one behind it, the font, their colours and how opaque the
-# big one is at the most against Valve's.
 TITLES = {
     # Its logo's gold, the big name behind it greyer and fainter.
     "op4": ("OPPOSING FORCE", "OPPOSING FORCE", "resource/fonts/StardosStencil-Bold.ttf", (255, 222, 150),
             (214, 196, 166), 0.85),
-    # Its logo's lower case in its neon blue, the big name behind it in capitals, a pale blue.
     "bs": ("blue shift", "BLUE SHIFT", "resource/fonts/CourierPrime-Bold.ttf", (90, 160, 255), (180, 200, 230), 1.0),
 }
 
 SMALL = (800, 86)
-SMALL_SPAN = (13, 787)      # the name's first and last pixels
+SMALL_SPAN = (13, 787)
 SMALL_CAP = (19, 64)        # its capitals' top and baseline
 BIG = (1800, 270)
-BIG_SCALE, BIG_OFFSET = 2.05, 100   # the big name's letters where the small one's are, times 2.05, plus 100
+BIG_SCALE, BIG_OFFSET = 2.05, 100
 BIG_CAP = (90, 177)
-BIG_BOLDER = 3              # pixels each side: Valve's big letters are bolder than the small ones
-PIECES = (466, 394, 507, 433)       # Valve's widths: the cuts are moved to the nearest gap
+BIG_BOLDER = 3
+PIECES = (466, 394, 507, 433)
 OVERSAMPLE = 4
 
 
 def spread(text, font, left, right):
-    """Each letter's centre (in OVERSAMPLE pixels), spread evenly so the ink runs from left to right, a space a gap
-    wider."""
     o = OVERSAMPLE
     glyphs = [c for c in text if c != " "]
     inks = [font.getbbox(c)[2] - font.getbbox(c)[0] for c in glyphs]
@@ -63,9 +45,6 @@ def spread(text, font, left, right):
 
 
 def letters(text, font_file, cap_top, baseline, size, centres=None):
-    """The name's opacity at capitals from cap_top to baseline, rendered OVERSAMPLE times larger and reduced: its
-    letters spread across SMALL_SPAN, or centred on the given centres (OVERSAMPLE pixels). Returns it and the
-    centres."""
     o = OVERSAMPLE
     probe = ImageFont.truetype(font_file, 400)
     cap = probe.getbbox("H")[3] - probe.getbbox("H")[1]
@@ -111,11 +90,8 @@ def write(game, text, big_text, font_file, color, big_color, big_opacity):
     save(os.path.join(resource, "logo_blip.tga"), color, blur(small, 4.75, 1.67))
     save(os.path.join(resource, "logo_blip2.tga"), color, blur(small, 2.75, 1.02, grow=5))
 
-    # The big name: each letter where the small one's is, scaled, at the big capitals' height, then made bolder.
     big, _ = letters(big_text, font_file, *BIG_CAP, BIG, [c * BIG_SCALE + BIG_OFFSET * OVERSAMPLE for c in centres])
     big = big.filter(ImageFilter.MaxFilter(2 * BIG_BOLDER + 1))
-    # Blurred more than Valve's (sigma about 6.5 on letters with thinner strokes) to look as soft, and as opaque at
-    # the most as Valve's (136, its flashes 248), times big_opacity.
     soft = big.filter(ImageFilter.GaussianBlur(9))
     peak = soft.getextrema()[1] / big_opacity
     blurred = soft.point(lambda v: round(v * 136 / peak))

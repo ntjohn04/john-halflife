@@ -1,15 +1,4 @@
-"""Adds the hornet gun's dart splats to an installed John Half-Life's decals.wad (johnhalflife, server hornet.cpp):
-Half-Life's bullsquid spit splats ({spit1, {spit2) in each hornet trail's colour, muted and darker (organic, not
-paint), and smaller (the shape at 75% in the middle of its 32x32: hornets are small), as {hspit_red1, {hspit_red2, and
-so on for pur(ple-red), org (orange), yel(low) and brn (light brown); and wet, a dull neutral grey, the barnacle
-grapple's mark where its tongue latches onto a surface (server CGrappleTip.cpp).
-
-A decal's pixels are alpha (0 clear) and its colour is the palette's last entry, so each recolour is a copy with a new
-name, that one entry changed and its pixels shrunk (its smaller mip levels made again from them).
-
-The engine reads one decals.wad, so the new decals go into the installed one (the Unified SDK's, made from the
-player's own games when installing its assets). Its original is kept once as decals_unified.wad and every run starts
-from that, so running it again changes nothing; nothing of Valve's is committed to the repository.
+"""Adds the hornet gun's dart splats to an installed John Half-Life's decals.wad (johnhalflife, server hornet.cpp).
 
 Usage: python make_hornet_decals.py <mod folder>
 """
@@ -121,7 +110,6 @@ def recolour(lump, name, color):
             level = downsample(level, w, h)
             w, h = w // 2, h // 2
 
-    # After the four mip levels: a short colour count, then the palette.
     palette = offsets[3] + (width // 8) * (height // 8) + 2
     last = palette + 255 * 3
     data[last:last + 3] = bytes(color)

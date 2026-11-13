@@ -1,11 +1,4 @@
-"""Builds John Half-Life's own models, each assets/models/<folder>/<name>.qc, into config/mod/models (installed over
-the Unified SDK's): each with the Unified SDK's studiomdl and its shared model sources (meshes, animations,
-textures), from a checkout of its assets repository (https://github.com/twhl-community/halflife-unified-sdk-assets).
-Each folder is built in a temporary folder beside the shared sources, removed afterwards, then the models are given
-their NPCs' vanilla speeds (restore_npc_speeds.py; the release packager restores the Unified SDK's models before ours
-go over them).
-
-The built models are committed, so neither the build nor the packager needs the assets repository.
+"""Builds John Half-Life's own models, each assets/models/<folder>/<name>.qc, into config/mod/models (installed over the Unified SDK's).
 
 Usage:
   python build_models.py <halflife-unified-sdk-assets folder> [folder ...]

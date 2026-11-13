@@ -1,13 +1,4 @@
-"""Writes the main menu's text as the WON versions had it into John Half-Life's GameUI strings: config/mod's (Half-Life,
-and Uplink, which take it) in place, and Opposing Force's and Blue Shift's from it (config/expansions/<game>, installed
-over config/mod's). Running it again changes nothing.
-
-As WON had it: the menu's labels in Title Case in Half-Life and in capitals in Opposing Force and Blue Shift
-(Options kept, more readable than WON's Configuration), a hint beside each button (the first start keeps Half-Life's
-GameMenu.res's hints, jhl_setup.cpp), and Hazard Course for the Training Room. Opposing Force's drill sergeant: its
-hints, its quit question and its Boot Camp. From the community's restorations of the WON
-menus (GameBanana's "Opposing Force WON Menu restored", "More Accurate WON Menu", "Blue Shift WON Menu Restored!") and
-PCGamingWiki's menu text corrections, which agree. Labels for buttons John Half-Life's menu doesn't have stay as they are.
+"""Writes the main menu's text as the WON versions had it into John Half-Life's GameUI strings.
 
 Usage:
   python make_menu_strings.py
@@ -44,10 +35,6 @@ ALL = {
     "GameUI_MainMenu_Hint_Configuration": "Change game settings, configure controls.",
 }
 
-# The menu draws each hint beside its button, unwrapped, so a long one can run off the screen at 640x480, the smallest
-# mode and the one to check: FIND SERVERS with Half-Life's own hint ("Search for online multiplayer servers.") and WON's
-# ("View a list of Half-Life game servers and join the one of your choice.") did, so Half-Life's and Blue Shift's
-# server hints are short; Opposing Force's, and every other, fit.
 GAMES = {
     # Half-Life (config/mod).
     None: {
@@ -62,8 +49,6 @@ GAMES = {
         "GameUI_QuitConfirmationText": "You going AWOL on me, son?",
         "GameUI_MainMenu_Hint_NewGame": "Begin a new mission, soldier.",
         "GameUI_MainMenu_Hint_LoadGame": "Load a saved mission.",
-        # Not WON's: its main menu had no such buttons (Multiplayer led to Internet and LAN games, its manual says), so
-        # in the drill sergeant's voice as the rest.
         "GameUI_MainMenu_Hint_FindServer": "Prepare for combat. This is not an exercise!",
         "GameUI_MainMenu_Hint_CreateServer": "Start your own adventure with your buddies.",
         "GameUI_MainMenu_Hint_ChangeGame": "Select a custom game, maggot.",
@@ -92,10 +77,9 @@ def apply(text, values):
 def write(path, text):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "wb") as f:
-        f.write(text.encode("utf-16"))  # little-endian with its byte order mark, as GameUI's files
+        f.write(text.encode("utf-16"))
 
 
-# The expansions' labels in capitals (their buttons in their own fonts, jhl_setup.cpp).
 CAPITALS = {key: value.upper() for key, value in ALL.items() if key.startswith("GameUI_GameMenu_")}
 
 

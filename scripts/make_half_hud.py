@@ -1,22 +1,4 @@
-"""John Half-Life's half-size HUD (jhl_hud_scale 0.5, and below 640 wide as vanilla): the Unified SDK's HUD layouts
-(sprites/*.json, sprites/op4/*.json) only have the full-size ("640") set; vanilla had a half-size ("320") one too.
-
-  layouts <Half-Life folder>: writes config/halfhud/sprites[/op4]/<name>_320.json (installed in the game folder only;
-      the expansions find them there) from the installed Unified SDK layouts.
-      Each icon gets, in order:
-      1. Valve's half-size one, where the Unified SDK's icon is pixel for pixel one of the games' full-size icons of the
-         same name (the Unified SDK moved many between sheets);
-      2. else the game's own half-size one of that name (Opposing Force's folder: Opposing Force's, else Half-Life's
-         layout drawn from Opposing Force's sprites, as vanilla Opposing Force did; Half-Life's folder: Half-Life's or
-         Blue Shift's), never another game's style;
-      3. else its sprite halved (sprites/half/<name>.spr, made by `sprites` from the Unified SDK's own sprite), if that
-         sprite is the Unified SDK's own (shipped in the zip);
-      4. else as it is, full size.
-      Crosshairs keep their own size (crosshair_scale). Valve's sprites in valve/ are found by the engine; Opposing
-      Force's that differ are copied at first start to sprites/op4/ (make_setup_files.py's list).
-  sprites <mod folder>: makes the sprites/half/*.spr the layouts name, from the folder's sprites, each frame halved (a
-      2x2 block a pixel: transparent if two or more are, else their average in the sprite's own palette).
-  list: prints the Opposing Force sprites the layouts need copied (for make_setup_files.py).
+"""John Half-Life's half-size HUD (jhl_hud_scale 0.5, and below 640 wide as vanilla).
 
 Usage: python make_half_hud.py layouts <Half-Life folder> | sprites <mod folder> | list
 """
@@ -32,10 +14,8 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 CONFIG = os.path.join(HERE, "..", "config", "halfhud", "sprites")
 UNIFIED_FILES = os.path.join(HERE, "release_unified_files.txt")
-# Opposing Force's half-size sprites that differ from Half-Life's and are copied at first start to sprites/op4/
-# (make_setup_files.py); a half-size icon needing another of Opposing Force's own sprites isn't used.
 OP4_COPIES = ("320_pain", "320_train", "320hud2", "320hud3", "320hudof01")
-TRANSPARENT = 255  # Index 255 is transparent in HUD sprites (alpha tested).
+TRANSPARENT = 255
 
 
 def load_json(path):
@@ -107,12 +87,12 @@ def layouts(half_life):
         """A vanilla half-size sprite of game's, as a name the game folder finds."""
         own = md5(f"{half_life}/{game}/sprites/{name}.spr")
         if not own:
-            return None  # Named in the game's layout but never shipped (Opposing Force's "320hudof1").
+            return None
         if game == "valve" or own == md5(f"{half_life}/valve/sprites/{name}.spr"):
             return name
         if game == "gearbox":
             return f"op4/{name}" if name in OP4_COPIES else None
-        return name  # Blue Shift's own (bs_hud) is in the mod folder already.
+        return name
 
     report = {"pixels": 0, "name": 0, "halved": 0, "full": 0, "crosshair": 0}
     copies = set()
@@ -137,7 +117,6 @@ def layouts(half_life):
                     result = dict(e)
                     report["crosshair"] += 1
                 elif sprite in ("hud_pain", "op4/hud_pain", "hud_train", "op4/hud_train"):
-                    # Whole sprites (pain arrows, train controls): each game's own half-size one.
                     game = "gearbox" if sprite.startswith("op4/") else "valve"
                     name = "320_pain" if "pain" in sprite else "320_train"
                     vanilla = read_sprite(f"{half_life}/{game}/sprites/{name}.spr")

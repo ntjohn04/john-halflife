@@ -1,12 +1,4 @@
-"""Makes config/mod/sprites/xspark4_round.spr, Half-Life's sprites/xspark4.spr with its haze faded out outside a
-circle, for the controller's head ball (src/game/server/entities/NPCs/aliens/controller.cpp). The sprite is additive,
-so black is transparent; at the head ball's scale of 2 the haze, which fills the 32 px frames to their edges, showed
-as a faint square.
-
-Every pixel's color is scaled by a soft circular falloff (full inside FULL_RADIUS, nothing past EDGE_RADIUS, from the
-frame's center) and mapped to the nearest color of the sprite's own palette. The palette has no black: its darkest
-colors, which the frames' background is (7,0,0), are lifted a lot by the engine's texture gamma, so the whole square
-showed faintly. Its last color (4,0,0) becomes black, and every pixel darker than BLACK_BELOW goes to it.
+"""Makes config/mod/sprites/xspark4_round.spr, Half-Life's sprites/xspark4.spr with its haze faded out outside a circle, for the controller's head ball (src/game/server/entities/NPCs/aliens/controller.cpp).
 
 Usage: python scripts/make_round_xspark4.py <path to Half-Life>/valve/sprites/xspark4.spr [preview.png]
 """

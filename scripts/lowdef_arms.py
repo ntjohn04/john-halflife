@@ -1,14 +1,4 @@
-"""Gives John Half-Life's Blue Shift viewmodels (the Unified SDK's models/bshift/v_*.mdl) Barney's arms at low
-definition, as the rest of them: Gearbox gave every one of its low-definition viewmodels high-definition arm textures
-(barney_hand 260x247, sleeve 256x254), and its high-definition ones low-definition arms (68x62, 64x64). The same art,
-laid out alike; the small pair is taken from the Unified SDK's own high-definition Blue Shift handgun (its release's
-hlu_hd, which John Half-Life doesn't ship otherwise).
-
-A model's texture data is the last thing in it, so the two textures are put in place there; the texture coordinates of
-the meshes using them, kept in texture pixels, are scaled to the new size. A model whose arms are already small is
-left alone, so running it again changes nothing.
-
-Run by the release packager on the Unified SDK's files.
+"""Gives John Half-Life's Blue Shift viewmodels (the Unified SDK's models/bshift/v_*.mdl) Barney's arms at low definition, as the rest of them.
 
 Usage:
   python lowdef_arms.py <mod folder> <Unified SDK release zip>
@@ -20,7 +10,6 @@ import sys
 import zipfile
 
 SOURCE = "hlu_hd/models/bshift/v_9mmhandgun.mdl"
-# Each big arm texture, by name, and its small counterpart's name in the source.
 ARMS = {"barney_hand.bmp": "barney_hand_hd.bmp", "sleeve.bmp": "sleeve_hd.bmp"}
 TEXTURE_SIZE = 80
 MODEL_SIZE = 112
@@ -59,7 +48,6 @@ def patch(path, small):
     if not new:
         return False
 
-    # The texture coordinates of the meshes drawn with them, scaled.
     skinref_count, _, skin_index = struct.unpack_from("<3i", data, 192)
     skins = [struct.unpack_from("<h", data, skin_index + 2 * k)[0] for k in range(skinref_count)]
     bodypart_count, bodypart_index = struct.unpack_from("<2i", data, 204)
@@ -85,7 +73,6 @@ def patch(path, small):
                         struct.pack_into("<2h", data, o + 4, round(s * sx), round(t * sy))
                         o += 8
 
-    # The texture data, last in the file, written again with the two in place.
     data_index = struct.unpack_from("<i", data, 188)[0]
     block = bytearray()
     for i, t in enumerate(texs):

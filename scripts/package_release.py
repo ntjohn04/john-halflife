@@ -1,17 +1,4 @@
-"""Makes John Half-Life's release zip (docs/release.md): one zip for Windows and Linux, extracted into the
-Half-Life folder.
-
-It holds:
-* johnhalflife's files, from each platform's staging install (cmake --install into a folder of your choosing; on
-  Linux scripts/linux/build.sh): the game code, settings, menu files, the four game folders. From the Linux one only
-  its libraries (.so), the rest being the same.
-* The Unified SDK's files in release_unified_files.txt, from its release zip: its own work (configs, scripts, HUD
-  sprites, its models), and the Opposing Force and Blue Shift models and sprites the game code names (they must be
-  there for Half-Life to load a map without the expansions; the rest of theirs comes from the player's own games on
-  the first start, client jhl_setup.cpp). With the vanilla NPC speeds put back in its models
-  (restore_npc_speeds.py), the hornet dart splats added to its decals.wad (make_hornet_decals.py), and Barney's arms at
-  low definition in its Blue Shift viewmodels (lowdef_arms.py).
-Nothing else of Valve's: the first start copies and converts that from the player's games.
+"""Makes John Half-Life's release zip (docs/release.md).
 
 Usage:
   python package_release.py --windows <staging folder> --linux <staging folder> --unified <release zip> [--out dist]
@@ -40,12 +27,6 @@ LIST = os.path.join(HERE, "release_unified_files.txt")
 SETUP_FILES = os.path.join(REPO, "config", "mod", "jhl_setup_files.txt")
 FOLDERS = ("johnhalflife", "johnhalflife_op4", "johnhalflife_bs", "johnhalflife_uplink")
 
-# The Unified SDK's release files never shipped: its tools and installer, developer files, its test maps (and the TFC
-# textures only zoo_npcs uses), the Visual C++ installer, its readme, files johnhalflife has its own of (the icon is
-# Half-Life's, from the first start; its default_config.cfg is its author's own config, the first start writes key
-# bindings instead). Its node graphs of Valve's maps are shipped: without them the game builds each the first time its
-# map loads, a hitch vanilla (which has its own) doesn't have; the first start keeps them newer than the maps it
-# writes, or the game would take them for out of date.
 DROP = [r"^tools/", r"^installer/", r"^redist/", r"^halflife-unified\.fgd$", r"^README\.txt$",
         r"^maps/(test_|zoo_|hlu_technology_demonstration)", r"^maps/graphs/(test_|zoo_|hlu_technology_demonstration)",
         r"^cfg/maps/(test_|zoo_)",
@@ -72,9 +53,6 @@ def release_files(release_zip):
 
 
 def from_half_life():
-    """The johnhalflife files the first start copies from Half-Life itself (every player has it): never shipped, or
-    installing over a set-up folder would put the Unified SDK's back over Half-Life's (its shell.mdl is Opposing
-    Force's) with nothing to set them right, the first start having run."""
     names = set()
     for line in open(SETUP_FILES, encoding="utf-8"):
         parts = line.rstrip("\n").split("\t")
@@ -107,7 +85,6 @@ def make_list(half_life, release_zip):
                 found.append(game)
         return found
 
-    # The game code's names, for the expansions' models and sprites it uses.
     code = []
     for dp, _, fs in os.walk(os.path.join(REPO, "src", "game")):
         for f in fs:
@@ -169,7 +146,6 @@ def package(windows, linux, release_zip, out, install=None):
         if os.path.exists(unified_decals):
             os.remove(unified_decals)
 
-        # 2. johnhalflife's files, Windows' then Linux's libraries, over them.
         for folder in FOLDERS:
             source = os.path.join(windows, folder)
             if not os.path.isdir(source):
@@ -193,8 +169,6 @@ def package(windows, linux, release_zip, out, install=None):
                     if ".so" not in f:
                         continue
                     rel = os.path.relpath(os.path.join(dp, f), source)
-                    # The OpenAL library (libopenal-hlu.so.1.22.2, linked as .so.1) as a file under the name the client
-                    # asks for: links don't zip, nor read reliably from Windows through \\wsl.localhost.
                     if f.startswith("libopenal-hlu.so"):
                         if not re.search(r"\.so\.\d+\.\d+\.\d+$", f):
                             continue

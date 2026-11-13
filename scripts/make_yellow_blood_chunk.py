@@ -1,8 +1,4 @@
-"""Makes config/mod/sprites/blood_chnk_yellow.spr, a yellow (alien blood) version of Opposing Force's
-sprites/blood_chnk.spr, for the gib splash (src/game/client/client_gibs.cpp).
-
-Only the sprite's palette changes: each color keeps its brightness relative to the brightest one and takes the mustard
-hue of the game's yellow blood. The frames, and the last palette entry (transparency), are untouched.
+"""Makes config/mod/sprites/blood_chnk_yellow.spr, a yellow (alien blood) version of Opposing Force's sprites/blood_chnk.spr, for the gib splash (src/game/client/client_gibs.cpp).
 
 Usage: python scripts/make_yellow_blood_chunk.py <path to Half-Life>/gearbox/sprites/blood_chnk.spr
 """
@@ -11,11 +7,9 @@ import struct
 import sys
 from pathlib import Path
 
-# The brightest yellow: between the yellow hit puffs (palette 198: 155,131,7) and the yellow blood decal tint
-# (204,184,97).
 YELLOW = (160, 135, 40)
 
-PALETTE_COUNT_OFFSET = 40  # After the 40-byte sprite header.
+PALETTE_COUNT_OFFSET = 40
 
 
 def luminance(color):
@@ -31,7 +25,6 @@ def main():
     start = PALETTE_COUNT_OFFSET + 2
     palette = [tuple(data[start + i * 3:start + i * 3 + 3]) for i in range(count)]
 
-    # The last entry is the transparent color in an alphatest sprite.
     brightest = max(luminance(color) for color in palette[:-1])
 
     for i, color in enumerate(palette[:-1]):

@@ -1,7 +1,4 @@
-// Checks johnhalflife's map conversion (src/game/client/jhl_mapconvert.cpp) against the Unified SDK's ContentInstaller:
-// each map in config/mod/jhl_setup_maps.txt converted from the player's games must have the same entities, byte for
-// byte, as the one the ContentInstaller wrote in the mod folder, and the same other lumps as Valve's.
-// Build: cmake --build <build folder> --config Release --target mapconvert_check
+// Checks jhl_mapconvert.cpp's maps against the ContentInstaller's.
 // Usage: mapconvert_check <Half-Life folder> <jhl_setup_maps.txt>
 
 #include <cstdint>
@@ -79,7 +76,6 @@ int main(int argc, char** argv)
 			continue;
 		}
 
-		// The other lumps: ours must be Valve's (in Half-Life's order).
 		bool lumpsSame = true;
 		{
 			std::int32_t v[30], o[30];

@@ -1,10 +1,3 @@
-"""Extracts one submodel of a compiled GoldSrc model as an SMD reference mesh on another model's skeleton (a reference
-SMD's nodes and skeleton), each vertex kept where it is relative to its bone, matched by name. Also writes the
-textures it uses as 8-bit BMPs.
-
-  python mdl2smd.py <model.mdl> <submodel name> <skeleton.smd> <out.smd> <texture dir> [bone map: src=dst ...]
-  python mdl2smd.py --list <model.mdl>
-"""
 import math, os, struct, sys
 
 
@@ -121,8 +114,6 @@ def main():
         return
     src, subname, skel, out, texdir = sys.argv[1:6]
     args = sys.argv[6:]
-    # --offset x y z: placed where it is on its own skeleton, moved by that, instead of kept relative to its bones (as
-    # the Unified SDK moved Blue Shift's heads onto its low-definition body).
     offset = None
     if args and args[0] == '--offset':
         offset = [float(x) for x in args[1:4]]
@@ -139,7 +130,6 @@ def main():
         name = bonemap.get(srcbone, srcbone)
         if name.lower() in dindex:
             return dindex[name.lower()]
-        # Bip01 Head -> Bip02 Head: the same biped, numbered differently.
         parts = name.split(' ', 1)
         for k, i in dindex.items():
             if len(parts) == 2 and k.split(' ', 1)[-1] == parts[1].lower() and ' ' in k:
@@ -197,7 +187,6 @@ def main():
     lines = list(header) + ['triangles']
     for tex, tri in tris:
         lines.append(tex['name'])
-        # Strips and fans as studiomdl writes them wind the other way from the SMD's.
         for vi, ni, s, t in reversed(tri):
             b, p, n = place(vi, ni)
             u = s / tex['w']

@@ -15,9 +15,7 @@ find_package(OpenGL REQUIRED)
 if (WIN32)
 	add_library(vgui SHARED IMPORTED)
 else()
-	# johnhalflife: vgui.so has no SONAME, so linked by its path the client records that path (with Ninja,
-	# src/game/client/vgui.so, which the game can't find). Linked as -l:vgui.so, found in the folder below, it
-	# records vgui.so.
+	# johnhalflife: vgui.so has no SONAME
 	add_library(vgui INTERFACE IMPORTED)
 	set_target_properties(vgui PROPERTIES INTERFACE_LINK_LIBRARIES "-l:vgui${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif()
