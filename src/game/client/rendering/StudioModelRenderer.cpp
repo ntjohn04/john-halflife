@@ -837,6 +837,19 @@ StudioSetupBones
 
 ====================
 */
+// The engine moves an entity light onto the entity whose index is its key: the view model's muzzle flash is key 0,
+// so it lit every temporary entity (index 0) anywhere.
+static void JhlStudioEntityLight(cl_entity_t* ent, alight_t* lighting)
+{
+	const int index = ent->index;
+
+	if (0 == index && ent != gEngfuncs.GetViewModel())
+		ent->index = -1;
+
+	IEngineStudio.StudioEntityLight(lighting);
+	ent->index = index;
+}
+
 static float g_JhlViewModelBlendTime = 0.2f;
 
 static model_t* g_JhlViewModel = nullptr;
@@ -1820,7 +1833,7 @@ void CStudioModelRenderer::JhlDrawBorrowedHands(alight_t* lighting)
 		}
 	}
 
-	IEngineStudio.StudioEntityLight(lighting);
+	JhlStudioEntityLight(m_pCurrentEntity, lighting);
 	IEngineStudio.StudioSetupLighting(lighting);
 	(*m_pStudioModelCount)++;
 	StudioRenderModel();
@@ -2108,7 +2121,7 @@ bool CStudioModelRenderer::StudioDrawModel(int flags)
 		lighting.plightvec = dir;
 		IEngineStudio.StudioDynamicLight(m_pCurrentEntity, &lighting);
 
-		IEngineStudio.StudioEntityLight(&lighting);
+		JhlStudioEntityLight(m_pCurrentEntity, &lighting);
 
 		// model and frame independant
 		IEngineStudio.StudioSetupLighting(&lighting);
@@ -2412,7 +2425,7 @@ bool CStudioModelRenderer::StudioDrawPlayer(int flags, entity_state_t* pplayer)
 		lighting.plightvec = dir;
 		IEngineStudio.StudioDynamicLight(m_pCurrentEntity, &lighting);
 
-		IEngineStudio.StudioEntityLight(&lighting);
+		JhlStudioEntityLight(m_pCurrentEntity, &lighting);
 
 		// model and frame independant
 		IEngineStudio.StudioSetupLighting(&lighting);
