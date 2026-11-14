@@ -126,6 +126,18 @@ std::string Lower(std::string text)
 	return text;
 }
 
+// A list with Windows line ends keeps the  on Linux.
+bool GetLine(std::istream& stream, std::string& line)
+{
+	if (!std::getline(stream, line))
+		return false;
+
+	if (line.ends_with(''))
+		line.pop_back();
+
+	return true;
+}
+
 class Plan
 {
 public:
@@ -173,7 +185,7 @@ void PlanGameFiles(const fs::path& root, Plan& plan, SetupStats& stats)
 
 	std::string line;
 
-	while (std::getline(list, line))
+	while (GetLine(list, line))
 	{
 		if (line.empty() || line.starts_with("//"))
 		{
@@ -440,7 +452,7 @@ void ConvertMaps(const fs::path& root, SetupStats& stats)
 
 	std::vector<std::string> lines;
 
-	for (std::string line; std::getline(list, line);)
+	for (std::string line; GetLine(list, line);)
 	{
 		if (!line.starts_with("//") && line.find('\t') != std::string::npos)
 			lines.push_back(line);

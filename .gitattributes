@@ -10,3 +10,14 @@
 Makefile text eol=lf
 Makefile.* text eol=lf
 *.sh text eol=lf
+
+# johnhalflife: game files ship as checked in, whatever the clone's line ends.
+config/** -text
+config/**/*.txt text eol=lf
+config/**/*.json text eol=lf
+config/**/*.gam text eol=lf
+config/**/*.res text eol=lf
+config/**/*.scr text eol=lf
+config/**/*.lst text eol=lf
+config/**/*.cfg text eol=lf
+config/**/*.in text eol=lf
