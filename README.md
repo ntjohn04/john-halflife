@@ -2,7 +2,7 @@
 
 A mod for Half-Life, Opposing Force and Blue Shift, built on the [Half-Life Unified SDK](https://github.com/twhl-community/halflife-unified-sdk).
 
-John Half-Life preserves the original look of Half-Life faithfully, and adds careful changes to how the game feels. 
+It keeps Half-Life's original look and makes careful changes to how the game feels.
 Every change has its own setting and can be turned off.
 
 ## What it changes
@@ -11,11 +11,11 @@ Every change has its own setting and can be turned off.
 * **Weapons:** smoother recoil, new weapon draw sounds, and a new holster-weapon slot.
 * **Effects:** bullet impacts, muzzle light and smoke, tracers, explosions, gibs, blood, sparks, and beams.
 * **First-person body:** your own body and arms when you look down.
-* **Water:** combines software renderer's ripples with OpenGL's waves.
+* **Water:** the software renderer's ripples with OpenGL's waves, darker in dark corners.
 * **Rendering:** 1998 software look on OpenGL (16-bit color, model lighting, skybox filtering, etc.).
-* **Sound:** Half-Life's original sound mixing and room effects implemented in OpenAL; music is save-persistent.
-* **Physics:** decouples physics from fps; movement speed-boost bugs fixed.
-* **Fixes:** vanilla bugs like z-fighting, broken sprites, engine crashes, etc. are fixed.
+* **Sound:** Half-Life's original mixing and room effects in OpenAL; saves keep the music.
+* **Physics:** decoupled from fps; movement speed-boost bugs fixed.
+* **Fixes:** vanilla bugs like z-fighting, broken sprites and engine crashes.
 
 ## Install
 
@@ -26,7 +26,7 @@ Opposing Force and Blue Shift appear if you own them.
 
 ## Principles
 
-* Faithful to original WON experience.
+* Faithful to the original WON experience.
 * Modernize subtly and cohesively.
 * Every change can be turned off.
 
@@ -64,12 +64,12 @@ Options → Multiplayer → **John Settings...** lists them all, with a reset to
 | `jhl_visuals_weaponwallpush` | Weapon pulls back near walls |
 | `jhl_visuals_firstpersonbody` | Your own body when you look down |
 | `jhl_visuals_flushfaces` | Fixes vanilla brush z-fighting |
-| `jhl_visuals_16bitcolor` | Software renderer styled 16-bit color |
-| `jhl_visuals_softwarewater` | Software renderer styled water |
+| `jhl_visuals_16bitcolor` | Software renderer's 16-bit color |
+| `jhl_visuals_softwarewater` | Software renderer's water |
 | `jhl_visuals_waterlight` | Water darker in dark corners |
 | `jhl_visuals_wateropacity` | Makes solid water entities slightly transparent |
-| `jhl_visuals_renderfixes` | Model lighting fix; Skybox texture fix |
-| `jhl_physics_fpsfix` | Decouples physics systems from fps |
+| `jhl_visuals_renderfixes` | Model lighting and sky texture fixes |
+| `jhl_physics_fpsfix` | Decouples physics from fps |
 | `jhl_physics_wallfix` | Prevents extra speed on walls and ladders |
 | `jhl_input_walkfix` | Walking diagonally no faster |
 | `jhl_input_walktoggle` | Walk key toggles |
@@ -94,12 +94,13 @@ Options → Multiplayer → **John Settings...** lists them all, with a reset to
 
 ## AI Usage Disclaimer
 
-Most code, reverse engineering, and documentation written with AI assistance (Anthropic's Clauude).
-Directed, reviewed, tested, etc. by John.
+Most code, reverse engineering and documentation written with AI assistance (Anthropic's Claude).
+Directed, reviewed and tested by John.
 
 ## Credits and licences
 
 Made by John, on Valve's Half-Life, Gearbox's Opposing Force and Blue Shift, the Half-Life Unified SDK and
 Half-Life Updated.
-Free, not for sale, under the [Half-Life SDK licence](LICENSE). John Half-Life's own sounds and art: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). 
+Free, not for sale, under the [Half-Life SDK licence](LICENSE). John Half-Life's own sounds and art:
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 Full credits and licences: [config/licenses](config/licenses/CREDITS.txt) (in the game: `johnhalflife/licenses`).

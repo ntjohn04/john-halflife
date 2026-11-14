@@ -2,9 +2,8 @@
 
 ## Same at any frame rate (`jhl_physics_fpsfix`)
 
-Some game code applies a fixed change once a frame. Each fix makes it act as at **72 fps**, Half-Life's 1998 `fps_max`.
-
-Helpers in `shared/jhl_framerate.h`: `JhlReferenceDecay`, `JhlReferenceSettlingDecay`, `JhlReferenceFrames`.
+Some game code applies a fixed change once a frame. Each fix makes it act as at **72 fps**, Half-Life's 1998
+`fps_max`. Helpers: `shared/jhl_framerate.h`.
 
 | What | Problem | Where |
 |---|---|---|
@@ -22,5 +21,6 @@ Helpers in `shared/jhl_framerate.h`: `JhlReferenceDecay`, `JhlReferenceSettlingD
 
 ## No extra speed along walls (`jhl_physics_wallfix`)
 
-* Walking at an angle into a wall, or using multiple keys on ladders gave speed 1.4x.
-* `PM_WalkMove`, `PM_LadderMove`, through the `jwf` physics key. 0 restores vanilla.
+* Walking into a wall at an angle, or holding two keys on a ladder, no longer builds speed up to 1.4×.
+* Bunny hopping and air strafing unchanged.
+* `PM_WalkMove`, `PM_LadderMove`, through the `jwf` physics key.
