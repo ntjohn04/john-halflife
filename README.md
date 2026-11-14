@@ -4,6 +4,7 @@ A mod for Half-Life, Opposing Force and Blue Shift, built on the [Half-Life Unif
 
 It keeps Half-Life's original look and makes careful changes to how the game feels.
 Every change has its own setting and can be turned off.
+Multiplayer included but not fully supported.
 
 ## What it changes
 
