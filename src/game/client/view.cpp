@@ -1942,8 +1942,6 @@ void V_SmoothPunch(const Vector& kick, float spring, float damping)
 
 void V_WeaponKick(const Vector& kick, float spring, float damping)
 {
-	gEngfuncs.Con_DPrintf("V_WeaponKick: %.2f %.2f %.2f, spring %.0f, damping %.0f\n", kick[PITCH], kick[YAW], kick[ROLL], spring, damping);
-
 	if (0 == jhl_weapons_smoothrecoil->value)
 		return;
 
