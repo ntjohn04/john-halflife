@@ -13,6 +13,12 @@ The Unified SDK's own docs: [unified-sdk/](unified-sdk/README.md).
 * [Release](release.md)
 * [Changelog](CHANGELOG.md)
 
+## Where our code is
+
+* `jhl_*` files are ours. In Unified SDK files, `// johnhalflife` marks our edits.
+* `config/`, `assets/`, `scripts/`: almost all ours.
+* Everything changed from the Unified SDK: `git diff --stat 3dea394b dev`.
+
 ## Debug commands
 
 None changes anything in play.
