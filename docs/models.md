@@ -2,7 +2,7 @@
 
 ## Changes to the Unified SDK's models
 
-The Unified SDK's models keep vanilla's textures and sequences and add some (headshot hitboxes kept).
+The Unified SDK's models keep vanilla's textures and sequences and add some.
 
 * **NPC speeds:** its recompiled models walked 2-6% slow. `scripts/restore_npc_speeds.py` puts vanilla's back.
 * **Rosenberg:** a low-definition head instead of Blue Shift's high-definition one (Paynamia, CC BY-NC 4.0).
@@ -12,13 +12,12 @@ The Unified SDK's models keep vanilla's textures and sequences and add some (hea
 * **Blue Shift viewmodel arms:** the small arm textures swapped in (`scripts/lowdef_arms.py`).
 * **Glass shards:** the chrome flag set (its texture was misnamed `chome_glass`).
 * **Shells:** Half-Life's own `shell.mdl` restored over Opposing Force's.
-* Left as is: Blue Shift's scientists use Half-Life's model and speeds.
 
 Credits: `config/licenses/CREDITS.txt`.
 
 ## Model sources (`assets/models/`)
 
-Built by `scripts/build_models.py` into `config/mod/models` (committed). Needs the Unified SDK's assets repository:
+Built by `scripts/build_models.py` into `config/mod/models`. Needs the Unified SDK's assets repository:
 
 ```
 python scripts/build_models.py ../halflife-unified-sdk-assets [folder ...]
@@ -34,4 +33,4 @@ python scripts/build_models.py ../halflife-unified-sdk-assets [folder ...]
 * `icons/<folder>.png` (256×256 or more), written by `scripts/make_icons.py` as `game.ico`, `game.tga`,
   `game_big.tga`.
 * Optional hand-made small versions: `<folder>_16.png`, `<folder>_32.png`.
-* The four must differ (Steam skips duplicates). Source: `icons/johnhalflife_icons.pdn`.
+* Source: `icons/johnhalflife_icons.pdn`.

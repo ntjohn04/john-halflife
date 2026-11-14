@@ -1,12 +1,11 @@
 # Changelog
-
-Newest first. Each version is a tag on GitHub.
+Each version is a tag on GitHub.
 
 | Version | Changes |
 |---|---|
 | `v0.29.2-alpha` | Moving water fades to an even brightness, relights where it stops |
 | `v0.29.1-alpha` | Blue Shift coolant: full bright but in dark corners, smoothed |
-| `v0.29.0-alpha` | Water entities slightly see-through (`jhl_visuals_wateropacity`); water light reworked (floor ring, world-only traces, sky check, per-texture limits) |
+| `v0.29.0-alpha` | Water entities slightly see-through (`jhl_visuals_wateropacity`); water light reworked |
 | `v0.28.0-alpha` | Water light (`jhl_visuals_waterlight`); OpenGL's waves kept on the software water |
 | `v0.27.0-alpha` | First-person body: vestless Barney, boot camp recruit clothes |
 | `v0.26.0-alpha` | Engine fixes: "AllocBlock: full" and a hang in long sessions, white sprites by color brushes |

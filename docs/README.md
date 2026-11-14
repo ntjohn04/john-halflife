@@ -6,11 +6,11 @@ The Unified SDK's own docs: [unified-sdk/](unified-sdk/README.md).
 * [Camera and movement](camera_movement.md)
 * [Weapons](weapons.md)
 * [Effects](effects.md)
-* [Visuals](visuals.md): first-person body, flush faces, software look, water, engine fixes
+* [Visuals](visuals.md)
 * [Physics](physics.md)
 * [Sound](sound.md)
-* [Models](models.md): model changes and model sources
-* [Release](release.md): building, the first start, making a release
+* [Models](models.md)
+* [Release](release.md)
 * [Changelog](CHANGELOG.md)
 
 ## Debug commands
@@ -18,25 +18,20 @@ The Unified SDK's own docs: [unified-sdk/](unified-sdk/README.md).
 None changes anything in play.
 
 * `jhl_debug_hitch <ms>`: reports every frame longer than that, to the console and `jhl_hitches.txt`.
-  Says whose code took the time (ours, the engine's, the driver's) and the slowest parts.
-* `jhl_debug_muzzle`: why the muzzle light and smoke aren't showing.
+* `jhl_debug_muzzle`: diagnoses any problems with muzzle effects (unconfirmed issue).
 * `jhl_debug_blocked`: what blocks lifts, doors and trains.
-* `jhl_debug_npcdraw 1`: NPC heights and animation, for telling real bounces from drawn ones.
+* `jhl_debug_npcdraw`: NPC heights and animation, for telling real bounces from drawn ones.
 * `jhl_debug_damage`: every hit an NPC takes.
 * `jhl_debug_precache [list]`: model slots used on this map.
 * `jhl_debug_waterlight`: the water light around the view.
 * `jhl_texture [material]`: the texture under the crosshair and its impact material; logs to `jhl_textures.txt`.
-* `jhl_fx_test <effect> [key=value ...]`: plays an effect where you aim, on your screen only
-  (`fx_test.cpp`). Alone, it lists every effect and parameter. Each run prints the full line to copy and edit.
-
-Handy for testing: `sv_cheats 1`, `god`, `notarget`, `impulse 101`, `npc_create <classname>`.
+* `jhl_fx_test <effect> [key=value ...]`: plays an effect where you aim.
 
 ## John Settings
 
 * Options → Multiplayer → **John Settings...**, from `config/mod/user.scr`.
-* Menu files in `config/mod/resource/`: copies of the 25th anniversary layouts. Rebase them if Valve changes them.
-* Never use `LIST` entries unless the values are 0, 1, 2... in order: GameUI stores the index, which corrupts other
-  values. Use `BOOL` or `NUMBER`.
+* Menu files in `config/mod/resource/`: copies of the 25th anniversary layouts.
+* Never use `LIST` entries unless the values are 0, 1, 2... in order: GameUI stores the index.
 * `jhl_gore` stands in for the content lock's four `violence_*` settings.
 * Recommended settings (`jhl_settings.cpp`): the dialog's defaults, applied on first launch and by
   `jhl_recommended`. Raise `RecommendedSettingsVersion` to apply a changed list once more.
@@ -49,7 +44,6 @@ Handy for testing: `sv_cheats 1`, `god`, `notarget`, `impulse 101`, `npc_create 
 * Sources: `config/mod/` and `config/expansions/{op4,bs,uplink}/`.
 * Each has its own name, icon (`scripts/make_icons.py`), WON-style menu text (`scripts/make_menu_strings.py`),
   intro video, background and animated title.
-* Opposing Force: Stardos Stencil buttons, gold. Blue Shift: Courier Prime buttons, ice blue.
 * Each game's own skill values load after `skill.json`: `cfg/skill_blueshift.json`, `cfg/skill_opposingforce.json`.
 * The Unified SDK reads configs from the mod folder only; John Half-Life also tries `GAME_FALLBACK`, so the
   expansions find the base folder's.
@@ -79,12 +73,6 @@ New user messages (names must be 11 characters or fewer, or sending them is fata
 
 ## Model slots
 
-* The engine allows 512 models a map, brush entities included (of4a4 uses 330 itself).
+* The engine allows 512 models a map, brush entities included.
 * John Half-Life's effect sprites and models are precached last in `W_Precache`, only while there's room.
 * The client asks for them with `JhlEffectModel` (0 if not precached). Effects then draw their vanilla part only.
-* Anything new precached on every map: check `jhl_debug_precache` on of4a4.
-
-## Saves
-
-* Never add a data map to an entity class that had none: older saves stop restoring it (and crashed once).
-* Keep transient timers out of save data instead (as `CHandGrenade::ItemPostFrame` does).

@@ -36,7 +36,7 @@ Valve's weapon models are kept. Client effects: `client/weapon_effects.cpp`. Sha
 * **RPG:** backblast (light, flame, smoke billowing forward), a flickering motor glow, a smoke trail, a laser stub
   from its housing, a lit laser dot.
 * **Casings:** revolver and sniper casings become real shells. Desert Eagle and M249 shells come from the gun, not
-  behind the head. Half-Life's own brass restored. Shells linger 6-10 s, shotgun shells eject on the pump.
+  behind the head. Half-Life's own brass restored. Shells linger 6-10s, shotgun shells eject on the pump.
 * **Hand grenade:** tumbles and rolls realistically (looks only; its path is unchanged).
 * **Snark:** a small blood burst when it pops.
 * **Tripmine:** lights the wall in its laser's color.

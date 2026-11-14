@@ -5,7 +5,7 @@ vanilla. John Half-Life plays it the way the engine did.
 
 ## Vanilla sound (`jhl_snd_vanilla`)
 
-Each part checked against loopback recordings of vanilla. 0 gives the SDK's OpenAL sound back.
+0 gives the SDK's OpenAL sound back.
 
 * **22 kHz:** sounds converted to the engine's 22050 Hz on load, then to the device's rate (flat to 10.5 kHz).
 * **Pitch:** pitched the engine's way, without interpolating: vanilla's faint grain.
@@ -15,7 +15,7 @@ Each part checked against loopback recordings of vanilla. 0 gives the SDK's Open
   (`HalfLifeSoundEffects.cpp`). Water rooms muffle the mix.
 * **No hitches:** long sounds converted on several threads; big ones loaded with the map; a sound not ready yet
   starts a frame or two later instead of stalling.
-* Not reproduced: the left channel delay, room 26's modulation, the engine's rounding.
+* Not reproduced: the left channel delay.
 
 `jhl_perf_preloadsounds` (default 0) loads every precached sound with the map.
 

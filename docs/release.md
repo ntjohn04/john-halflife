@@ -3,7 +3,6 @@
 ## Targets
 
 1. **Zip:** extract into the Half-Life folder, restart Steam. Nothing else to install.
-2. **Steam:** someday, with Valve's approval. Nothing rules it out.
 
 Nothing of Valve's is shipped that the player already has. What's made from Valve's files is made on the player's
 computer at the first start.
@@ -12,9 +11,8 @@ computer at the first start.
 
 * Ours: game code, settings, menus, expansion folders, our models and sprites.
 * The Unified SDK's: configs, HUD, its recompiled models, node graphs.
-* The models and sprites the game code needs from Opposing Force (a missing one is fatal).
-* Uplink's maps (a free demo, not in the player's install).
-* Never: Valve copies the engine finds anyway, the Unified SDK's tools, test maps and redistributable.
+* The models and sprites the game code needs from Opposing Force.
+* Uplink's maps.
 
 ## First start
 

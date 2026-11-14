@@ -4,23 +4,25 @@
 
 Your own body when you look down. Drawn only: nothing changes in play. Code: `client/jhl_body.cpp`.
 
-* **Model:** the map's player model (Gordon, Barney, Adrian), with three stand-ins:
-  * Gordon before the suit: Blue Shift's lab coat Gordon.
-  * Barney with no armor: his vestless guard model, with the vested model's hands. A vest pickup puts the vest on.
-  * Adrian in boot camp before his suit: the recruits' training clothes. At ease at ofboot0's start until he moves.
-* **Placement:** 14 units behind the eyes (18 crouched), on your feet, so it only shows looking well down.
+* **Model:** the map's player model:
+  * Gordon with labcoat
+  * Gordon with HEV
+  * Adrian with boot camp clothes
+  * Adrian with PCV
+  * Barney with no vest
+  * Barney with vest
 * **Poses:** standing, walking, running, crouching, jumping, ladders, treading water. Picked from your movement at
   once, legs facing the way you move.
 * **Arms:** hidden while a weapon is out (the view model's arms are yours). With no weapon, drawn in the lab coat
   Gordon's poses. One-handed weapons show the free arm.
 * **Jumping:** drawn upright, without the jump animation's arc.
 * **Water:** the hazard course hologram's treading pose.
-* **Hidden:** the head, and anything cut off is shrunk to a point (no stretched polygons).
+* **Hidden:** the head, and anything cut off is shrunk to a point.
 * Extra models are precached last, only with room in the map.
 
 ## Flush faces (`jhl_visuals_flushfaces`)
 
-* About 2,700 signs, panels and rails are brush entities built flat against a wall, on the same plane.
+* About 2,700 signs, panels and rails in the games are brush entities built flat against a wall, on the same plane.
 * They flickered in OpenGL and vanished in software, since 1998.
 * Now each is drawn moved just off the wall (0.1 to 2 units, by distance), only while at rest, and put back after
   drawing so nothing else sees it moved. Code: `client/jhl_flushfaces.cpp`.
@@ -34,8 +36,7 @@ software look to OpenGL. OpenGL only: they do nothing with `-soft`.
 * **16-bit color** (`jhl_visuals_16bitcolor`): every frame cut to 565 color, as software drew.
 * **Model lighting** (`jhl_visuals_renderfixes`): models lit up to 4/3 brightness, like the world. OpenGL capped
   them at 1, so they looked dull.
-* **Texture sampling** (`jhl_visuals_renderfixes`): with filtering off, textures point sampled with mipmaps (no
-  sparkle), and the sky pixelated like the world.
+* **Texture sampling** (`jhl_visuals_renderfixes`): with filtering off, textures point sampled with mipmaps, and the sky pixelated like the world.
 * **Under water** (`jhl_visuals_softwarewater`): software's 320×200 view and its fog by depth.
 
 ## Water (`jhl_visuals_softwarewater`)
@@ -91,7 +92,3 @@ expected. Windows finds the code by pattern, Linux by symbol name. `-dev` prints
   lightmap blocks. The lightmap loops now only take brush models.
 * **Hang on a map change late in a long session:** the same reused slot freed the wrong cache block. A reused slot
   now starts clean.
-
-## Known quirks, left alone
-
-* c3a2a/c3a2b: a strip of water surface at the coolant tunnels' mouth. The map's geometry, drawn correctly.

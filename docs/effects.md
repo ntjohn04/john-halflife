@@ -10,9 +10,9 @@ Everything here is behind `jhl_fx_particlesystem` unless noted. Vanilla sprites 
 Code: `client/client_gibs.cpp`.
 
 * About 7× as many gibs (each piece used at most 3 times), lasting 60 s.
-* Per-monster profiles (`GibProfiles`): bigger for large aliens, fewer and smaller for crabs and rats.
+* Per-monster profiles (`GibProfiles`): bigger for large aliens, fewer and smaller for headcrabs and rats.
 * Size and speed varied, spread wider. Bounce sounds capped.
-* Some corpses gib from added-up bullet damage: headcrabs, houndeyes, pit drones, bullsquids, controllers.
+* Some small corpses gib from added-up bullet damage.
 * A gibbed body leaves a splash of blood puffs and chunks, and a blood pool on the floor.
 * Gibs leave blood trails for a second.
 
@@ -51,7 +51,7 @@ Code: `client/jhl_explosions.cpp`.
 
 ## Beams
 
-The vortigaunt's pattern: a thin, wild, dimmer strand on each beam (`UTIL_JhlBeamStrand`), a faint light where
+Most beams' pattern: a thin, wild, dimmer strand on each beam (`UTIL_JhlBeamStrand`), a faint light where
 small beams touch, and where an attack hits a light shrinking away with sparks.
 
 * Vortigaunts, voltigores, the displacer, shock rifle, controllers, the Nihilanth, the Gene Worm, electrified wires.
