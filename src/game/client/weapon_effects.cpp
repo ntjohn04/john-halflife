@@ -64,7 +64,8 @@ static bool MuzzleEffectsEnabled()
 
 static bool IsZoomed()
 {
-	return gHUD.m_iFOV != 0 && gHUD.m_iFOV < static_cast<int>(CVAR_GET_FLOAT("default_fov"));
+	// Scopes zoom to 40 or less; a cheat fov above that isn't a zoom.
+	return gHUD.m_iFOV != 0 && gHUD.m_iFOV <= 40;
 }
 
 static void MuzzleEffectsAt(const Vector& position, float wispChance, float wispScale = 1, float wispAlpha = 0.1f, int rolls = 1,

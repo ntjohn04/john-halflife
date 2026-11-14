@@ -379,7 +379,8 @@ static bool IsSemiAutoTracer(int bulletType)
 
 static bool IsViewZoomed()
 {
-	return gHUD.m_iFOV != 0 && gHUD.m_iFOV < static_cast<int>(CVAR_GET_FLOAT("default_fov"));
+	// Scopes zoom to 40 or less; a cheat fov above that isn't a zoom.
+	return gHUD.m_iFOV != 0 && gHUD.m_iFOV <= 40;
 }
 
 static int g_ShotgunTracers = 0;
