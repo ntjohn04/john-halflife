@@ -3,6 +3,7 @@ Each version is a tag on GitHub.
 
 | Version | Changes |
 |---|---|
+| `v0.29.3-alpha` | Fixes: water vanishing on level changes, muzzle effects off after `fov`, gibs lit by the muzzle flash everywhere; hitch log new each launch |
 | `v0.29.2-alpha` | Moving water fades to an even brightness, relights where it stops |
 | `v0.29.1-alpha` | Blue Shift coolant: full bright but in dark corners, smoothed |
 | `v0.29.0-alpha` | Water entities slightly see-through (`jhl_visuals_wateropacity`); water light reworked |
