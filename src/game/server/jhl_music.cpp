@@ -33,7 +33,7 @@ JhlMusicGetStateFn FindGetState()
 	HMODULE client = GetModuleHandleA("client.dll");
 	return client ? reinterpret_cast<JhlMusicGetStateFn>(GetProcAddress(client, JhlMusicGetStateName)) : nullptr;
 #else
-	const std::string path = FileSystem_GetGameDirectory() + "/cl_dlls/client.so";
+	const std::string path = FileSystem_GetGameDirectory() + "/" + FileSystem_GetModDirectoryName() + "/cl_dlls/client.so";
 	void* client = dlopen(path.c_str(), RTLD_NOW | RTLD_NOLOAD);
 
 	if (!client)

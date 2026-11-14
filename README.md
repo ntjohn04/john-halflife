@@ -20,10 +20,10 @@ Multiplayer included but not fully supported.
 
 ## Install
 
+Requires Half-Life, Opposing Force and Blue Shift on Steam.
+
 1. Extract the zip into your Half-Life folder.
 2. Restart Steam.
-
-Opposing Force and Blue Shift appear if you own them.
 
 ## Principles
 
