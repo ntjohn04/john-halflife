@@ -113,6 +113,7 @@ struct Shared
 	Timeline Frame;
 	void (*Summarize)(Summary* summary);
 	std::int64_t ClientDrove;
+	bool LogStarted;
 };
 
 struct Part
@@ -231,7 +232,8 @@ Shared g_Shared{
 	sizeof(Shared),
 	{},
 	&Summarize,
-	0};
+	0,
+	false};
 
 Timeline* g_Frame = &g_Shared.Frame;
 #else
@@ -437,11 +439,19 @@ void Report(double frameMs, const std::string& where, const Summary* client, con
 		Con_Printf("%s", text.substr(start, 900).c_str());
 	}
 
-	if (std::ofstream log{FileSystem_GetGameDirectory() + "/" + FileSystem_GetModDirectoryName() + "/jhl_hitches.txt", std::ios::app}; log)
+	// One log per launch: the first write, client's or server's, starts it over.
+#ifndef CLIENT_DLL
+	bool& started = g_Shared.LogStarted;
+#else
+	bool& started = g_Linked ? g_Linked->LogStarted : g_LoggedSession;
+#endif
+	const auto mode = started ? std::ios::app : std::ios::trunc;
+
+	if (std::ofstream log{FileSystem_GetGameDirectory() + "/" + FileSystem_GetModDirectoryName() + "/jhl_hitches.txt", mode}; log)
 	{
-		if (!g_LoggedSession)
+		if (!started)
 		{
-			g_LoggedSession = true;
+			started = true;
 			log << fmt::format("--- {} {}: John Half-Life's hitch finder, frames over jhl_debug_hitch\n", date, time);
 		}
 
@@ -655,6 +665,7 @@ void JhlHitch_Link(cvar_t* (*find)(const char* name))
 		const std::int64_t skipUntil = std::max(g_Frame->SkipUntil, shared->Frame.SkipUntil);
 
 		g_Linked = shared;
+		g_Linked->LogStarted = g_Linked->LogStarted || g_LoggedSession;
 		g_Frame = &shared->Frame;
 		shared->Summarize(nullptr);
 		g_HaveFrame = false;
