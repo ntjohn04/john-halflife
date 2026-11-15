@@ -26,6 +26,7 @@ Games the player doesn't own are skipped.
 
 ## Making a release
 
+0. Empty both staging folders: an install never deletes files removed from the repo.
 1. Windows: build `INSTALL` (to `_stage_release/windows/johnhalflife`, never the game).
 2. Linux: `scripts/linux/build.sh` in Ubuntu 22.04 (or WSL), to `~/jhl-build-linux/install`.
 3. Package:
