@@ -32,8 +32,11 @@ ALL = {
     "GameUI_AdvancedNoEllipsis": "John Settings",
     # Vanilla tabs keep their settings; where we lean another way than the default, the label says so.
     "GameUI_VSync": "Wait for vertical sync (recommended: off)",
-    "GameUI_RawInput": "Raw mouse input (recommended: on)",
-    "GameUI_AutoAim": "Auto-Aim (recommended: off)",
+    # The mouse tab's are short: theirs go in the description beside them.
+    "GameUI_RawInput": "Raw mouse input",
+    "GameUI_AutoAim": "Auto-Aim",
+    "GameUI_RawInputLabel": "Directly access mouse data (recommended: on)",
+    "GameUI_AutoaimLabel": "Aims at enemies automatically (recommended: off)",
     "GameUI_TextureFiltering": "Enable texture filtering (recommended: off)",
     "GameUI_OriginalModels": "Enable original models (recommended: on)",
     # The content lock's button is hidden (OptionsSubAdvanced.res): jhl_gore does its job.
