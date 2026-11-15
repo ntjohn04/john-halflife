@@ -9,7 +9,7 @@ endif()
 set(VCPKG_OVERLAY_TRIPLETS ${CMAKE_SOURCE_DIR}/vcpkg_config/triplets)
 
 project(HalfLifeMod
-	# John Half-Life's version (docs/README.md#versioning).
+	# John's Half-Life's version (docs/README.md#versioning).
 	VERSION 0.29.4
 	DESCRIPTION "Half-Life CMake Mod Template"
 	LANGUAGES CXX)

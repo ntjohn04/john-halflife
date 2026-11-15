@@ -1630,7 +1630,7 @@ void BaTram2FixScientistSkinColor(Context& context)
 	}
 }
 
-// ---- John Half-Life's own ----
+// ---- John's Half-Life's own ----
 
 void Of3a1bRemoveChapterTitle(Context& context)
 {
@@ -1715,7 +1715,7 @@ constexpr Upgrade Upgrades[] = {
 	BaCanal1FixAlienSlaveSpawns,
 	BaTram1FixScientistHead,
 	BaTram2FixScientistSkinColor,
-	// John Half-Life's own.
+	// John's Half-Life's own.
 	Of3a1bRemoveChapterTitle,
 	BaYard3HaroldModel,
 };

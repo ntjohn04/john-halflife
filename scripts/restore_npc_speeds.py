@@ -1,4 +1,4 @@
-"""Gives John Half-Life's models (the Unified SDK's) their vanilla movement speeds back.
+"""Gives John's Half-Life's models (the Unified SDK's) their vanilla movement speeds back.
 
 Usage:
   python restore_npc_speeds.py <mod folder>

@@ -1,8 +1,8 @@
 // Valve Game Info file
 //  These are key/value pairs.  Certain mods will use different settings.
 //
-// John Half-Life: Uplink. Everything but the menu comes from johnhalflife through fallback_dir.
-game "John Half-Life: Uplink"
+// John's Half-Life: Uplink. Everything but the menu comes from johnhalflife through fallback_dir.
+game "John's Half-Life: Uplink"
 icon "game"
 startmap "hldemo1"
 trainmap "t0a0"

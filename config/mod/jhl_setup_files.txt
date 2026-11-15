@@ -1,4 +1,4 @@
-// Files John Half-Life's first start copies from the player's own games (client jhl_setup.cpp), made by
+// Files John's Half-Life's first start copies from the player's own games (client jhl_setup.cpp), made by
 // scripts/make_setup_files.py. Each line: the game folder, the file, then where to copy it from, in order
 // of preference; a file none of whose sources is installed is left out.
 johnhalflife	barney.wad	bshift/barney.wad

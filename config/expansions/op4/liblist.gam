@@ -1,8 +1,8 @@
 // Valve Game Info file
 //  These are key/value pairs.  Certain mods will use different settings.
 //
-// John Half-Life: Opposing Force. Everything but the menu comes from johnhalflife through fallback_dir.
-game "John Half-Life: Opposing Force"
+// John's Half-Life: Opposing Force. Everything but the menu comes from johnhalflife through fallback_dir.
+game "John's Half-Life: Opposing Force"
 icon "game"
 startmap "of0a0"
 trainmap "ofboot0"

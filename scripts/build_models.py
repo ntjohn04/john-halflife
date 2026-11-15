@@ -1,4 +1,4 @@
-"""Builds John Half-Life's own models, each assets/models/<folder>/<name>.qc, into config/mod/models (installed over the Unified SDK's).
+"""Builds John's Half-Life's own models, each assets/models/<folder>/<name>.qc, into config/mod/models (installed over the Unified SDK's).
 
 Usage:
   python build_models.py <halflife-unified-sdk-assets folder> [folder ...]

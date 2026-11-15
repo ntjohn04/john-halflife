@@ -1,4 +1,4 @@
-"""Gives John Half-Life's Blue Shift viewmodels (the Unified SDK's models/bshift/v_*.mdl) Barney's arms at low definition, as the rest of them.
+"""Gives John's Half-Life's Blue Shift viewmodels (the Unified SDK's models/bshift/v_*.mdl) Barney's arms at low definition, as the rest of them.
 
 Usage:
   python lowdef_arms.py <mod folder> <Unified SDK release zip>

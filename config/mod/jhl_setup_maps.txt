@@ -1,4 +1,4 @@
-// The maps John Half-Life's first start converts from the player's games (client jhl_mapconvert.cpp): each line the
+// The maps John's Half-Life's first start converts from the player's games (client jhl_mapconvert.cpp): each line the
 // game folder and the map, the Unified SDK's ContentInstaller's lists (HalfLife.UnifiedSdk.Utilities ValveGames.cs).
 valve	c0a0
 valve	c0a0a

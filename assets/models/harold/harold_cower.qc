@@ -1,4 +1,4 @@
-// John Half-Life's Harold dying (ba_yard3 swaps him for this for his death): the Unified SDK's scientist_cower (its
+// John's Half-Life's Harold dying (ba_yard3 swaps him for this for his death): the Unified SDK's scientist_cower (its
 // modelsrc/models/scientist/scientist_cower_ld.qc, its one sequence) with Harold's head. Built by
 // scripts/build_models.py.
 

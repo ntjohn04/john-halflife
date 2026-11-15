@@ -1,4 +1,4 @@
-"""John Half-Life's half-size HUD (jhl_hud_scale 0.5, and below 640 wide as vanilla).
+"""John's Half-Life's half-size HUD (jhl_hud_scale 0.5, and below 640 wide as vanilla).
 
 Usage: python make_half_hud.py layouts <Half-Life folder> | sprites <mod folder> | list
 """

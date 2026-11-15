@@ -1,4 +1,4 @@
-"""Writes config/mod/jhl_setup_files.txt, the list of files John Half-Life's first start copies from the player's own games (client jhl_setup.cpp).
+"""Writes config/mod/jhl_setup_files.txt, the list of files John's Half-Life's first start copies from the player's own games (client jhl_setup.cpp).
 
 Usage: python make_setup_files.py <Half-Life folder> <Unified SDK release zip> <output>
 """
@@ -101,7 +101,7 @@ for f in sorted(os.listdir(os.path.join(MOD, "media"))):
 entries += EXTRA
 
 with open(OUT, "w", encoding="utf-8", newline="\n") as o:
-    o.write("// Files John Half-Life's first start copies from the player's own games (client jhl_setup.cpp), made by\n"
+    o.write("// Files John's Half-Life's first start copies from the player's own games (client jhl_setup.cpp), made by\n"
             "// scripts/make_setup_files.py. Each line: the game folder, the file, then where to copy it from, in order\n"
             "// of preference; a file none of whose sources is installed is left out.\n")
     for folder, r, found in sorted(entries, key=lambda e: (e[0], e[1].lower())):

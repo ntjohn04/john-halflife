@@ -28,7 +28,7 @@ struct RecommendedSetting
 	const char* Value;
 };
 
-constexpr int RecommendedSettingsVersion = 8;
+constexpr int RecommendedSettingsVersion = 9;
 constexpr int LastFullRecommendedVersion = 6;
 
 constexpr RecommendedSetting DialogSettings[] = {
@@ -66,7 +66,7 @@ constexpr RecommendedSetting DialogSettings[] = {
 	{"jhl_perf_preloadsounds", "0"},
 	{"crosshair", "1"},
 	{"crosshair_scale", "0"},
-	{"default_fov", "100"},
+	{"default_fov", "96"},
 	{"gamma", "1.92"},
 	{"brightness", "0"},
 	{"sv_aim", "0"},
@@ -312,6 +312,11 @@ void JhlSettings_RunFrame()
 			if (g_RecommendedVersion->value < 8 && gEngfuncs.pfnGetCvarFloat("crosshair_scale") == 2)
 			{
 				gEngfuncs.Cvar_Set("crosshair_scale", "0");
+			}
+
+			if (g_RecommendedVersion->value < 9 && gEngfuncs.pfnGetCvarFloat("default_fov") == 100)
+			{
+				gEngfuncs.Cvar_Set("default_fov", "96");
 			}
 
 			gEngfuncs.Cvar_Set(g_RecommendedVersion->name, std::to_string(RecommendedSettingsVersion).c_str());

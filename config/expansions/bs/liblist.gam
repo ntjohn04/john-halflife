@@ -1,8 +1,8 @@
 // Valve Game Info file
 //  These are key/value pairs.  Certain mods will use different settings.
 //
-// John Half-Life: Blue Shift. Everything but the menu comes from johnhalflife through fallback_dir.
-game "John Half-Life: Blue Shift"
+// John's Half-Life: Blue Shift. Everything but the menu comes from johnhalflife through fallback_dir.
+game "John's Half-Life: Blue Shift"
 icon "game"
 startmap "ba_tram1"
 trainmap "ba_hazard1"

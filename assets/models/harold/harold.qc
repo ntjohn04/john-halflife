@@ -1,6 +1,6 @@
-// John Half-Life's Harold (Blue Shift's ba_yard3, the wounded scientist): the Unified SDK's low-definition scientist
+// John's Half-Life's Harold (Blue Shift's ba_yard3, the wounded scientist): the Unified SDK's low-definition scientist
 // (its modelsrc/models/scientist/scientist_ld.qc: body, needle, items, mouth, hitboxes, animations) with one head, the
-// glasses scientist's made bald and without his glasses (John Half-Life's own). Built by scripts/build_models.py.
+// glasses scientist's made bald and without his glasses (John's Half-Life's own). Built by scripts/build_models.py.
 
 $modelname "harold.mdl"
 $cd "./"

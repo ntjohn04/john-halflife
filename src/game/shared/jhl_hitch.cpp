@@ -352,7 +352,7 @@ void Report(double frameMs, const std::string& where, const Summary* client, con
 	if (server && server->SavedEntities > 0)
 	{
 		text += fmt::format("  verdict: a save (an autosave or a quick save): the engine writing it, as vanilla does, {:.1f} ms; "
-							"the {} entities' data from John Half-Life and the Unified SDK {:.1f} ms\n",
+							"the {} entities' data from John's Half-Life and the Unified SDK {:.1f} ms\n",
 			otherMs, server->SavedEntities, saveMs);
 	}
 	else if (codeMs - usualCode >= excess / 2 && codeMs >= 1)
@@ -376,24 +376,24 @@ void Report(double frameMs, const std::string& where, const Summary* client, con
 			}
 		}
 
-		text += fmt::format("  verdict: John Half-Life or the Unified SDK ({}), most in {} ({:.1f} ms)\n",
+		text += fmt::format("  verdict: John's Half-Life or the Unified SDK ({}), most in {} ({:.1f} ms)\n",
 			ours, top ? top->Name : "?", top ? top->Ms : 0.0);
 	}
 	else if (client && presentMs - usualPresent >= otherMs - usualOther)
 	{
-		text += fmt::format("  verdict: not John Half-Life or the Unified SDK ({}): the engine presenting the frame {:.1f} ms, "
+		text += fmt::format("  verdict: not John's Half-Life or the Unified SDK ({}): the engine presenting the frame {:.1f} ms, "
 							"usually {:.1f}: the driver, the GPU or Windows\n",
 			ours, presentMs, usualPresent);
 	}
 	else
 	{
-		text += fmt::format("  verdict: not John Half-Life or the Unified SDK ({}): the engine's own work {:.1f} ms, usually {:.1f}{}\n",
+		text += fmt::format("  verdict: not John's Half-Life or the Unified SDK ({}): the engine's own work {:.1f} ms, usually {:.1f}{}\n",
 			ours, otherMs, usualOther,
 			engineInCode >= 1 ? fmt::format(", {:.1f} of it drawing models (a model's first draw this map is named below)", engineInCode) : "");
 	}
 
 	// Where all of it went.
-	text += fmt::format("  time: John Half-Life and the Unified SDK {:.1f} ms (client {:.1f}, server {:.1f})", codeMs,
+	text += fmt::format("  time: John's Half-Life and the Unified SDK {:.1f} ms (client {:.1f}, server {:.1f})", codeMs,
 		frame.CodeMs[0] - frame.EngineMs[0], frame.CodeMs[1] - frame.EngineMs[1]);
 
 	if (client)
@@ -452,7 +452,7 @@ void Report(double frameMs, const std::string& where, const Summary* client, con
 		if (!started)
 		{
 			started = true;
-			log << fmt::format("--- {} {}: John Half-Life's hitch finder, frames over jhl_debug_hitch\n", date, time);
+			log << fmt::format("--- {} {}: John's Half-Life's hitch finder, frames over jhl_debug_hitch\n", date, time);
 		}
 
 		log << text;

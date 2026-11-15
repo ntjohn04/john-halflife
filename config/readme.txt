@@ -1,4 +1,4 @@
-John Half-Life
+John's Half-Life
 ==============
 
 Half-Life, Opposing Force and Blue Shift with Valve's look and small, careful changes to how they feel.

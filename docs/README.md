@@ -1,6 +1,6 @@
-# John Half-Life docs
+# John's Half-Life docs
 
-How John Half-Life works. Settings and install: [front page](../README.md).
+How John's Half-Life works. Settings and install: [front page](../README.md).
 The Unified SDK's own docs: [unified-sdk/](unified-sdk/README.md).
 
 * [Camera and movement](camera_movement.md)

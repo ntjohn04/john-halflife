@@ -113,7 +113,7 @@ void CHud::Init()
 
 	CVAR_CREATE("zoom_sensitivity_ratio", "1.2", 0);
 	CVAR_CREATE("cl_autowepswitch", "1", FCVAR_ARCHIVE | FCVAR_USERINFO);
-	default_fov = CVAR_CREATE("default_fov", "100", FCVAR_ARCHIVE); // johnhalflife
+	default_fov = CVAR_CREATE("default_fov", "96", FCVAR_ARCHIVE); // johnhalflife
 	m_pCvarHudScale = CVAR_CREATE("jhl_hud_scale", "0", FCVAR_ARCHIVE);
 	m_pCvarHudMinimal = CVAR_CREATE("jhl_hud_minimal", "1", FCVAR_ARCHIVE);
 	m_pCvarStealMouse = CVAR_CREATE("hud_capturemouse", "1", FCVAR_ARCHIVE);

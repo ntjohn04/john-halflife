@@ -1,4 +1,4 @@
-# John Half-Life
+# John's Half-Life
 
 A mod for Half-Life, Opposing Force and Blue Shift, built on the [Half-Life Unified SDK](https://github.com/twhl-community/halflife-unified-sdk).
 
@@ -35,10 +35,10 @@ Requires Half-Life, Opposing Force and Blue Shift on Steam.
 
 | Folder | Game |
 |---|---|
-| `johnhalflife` | John Half-Life |
-| `johnhalflife_op4` | John Half-Life: Opposing Force |
-| `johnhalflife_bs` | John Half-Life: Blue Shift |
-| `johnhalflife_uplink` | John Half-Life: Uplink |
+| `johnhalflife` | John's Half-Life |
+| `johnhalflife_op4` | John's Half-Life: Opposing Force |
+| `johnhalflife_bs` | John's Half-Life: Blue Shift |
+| `johnhalflife_uplink` | John's Half-Life: Uplink |
 
 ## Recommended launch options
 
@@ -102,6 +102,6 @@ Directed, reviewed and tested by John.
 
 Made by John, on Valve's Half-Life, Gearbox's Opposing Force and Blue Shift, the Half-Life Unified SDK and
 Half-Life Updated.
-Free, not for sale, under the [Half-Life SDK licence](LICENSE). John Half-Life's own sounds and art:
+Free, not for sale, under the [Half-Life SDK licence](LICENSE). John's Half-Life's own sounds and art:
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 Full credits and licences: [config/licenses](config/licenses/CREDITS.txt) (in the game: `johnhalflife/licenses`).

@@ -1,4 +1,4 @@
-// John Half-Life's Rosenberg: the Unified SDK's (its modelsrc/models/rosenberg/rosenberg_ld.qc: its low-definition
+// John's Half-Life's Rosenberg: the Unified SDK's (its modelsrc/models/rosenberg/rosenberg_ld.qc: its low-definition
 // scientist's body, needle, items, mouth, hitboxes and animations) with a low-definition head, Paynamia's "Custom LD
 // Rosenberg" (Improved LD Scientists + Civilians, https://gamebanana.com/mods/238622, CC BY-NC 4.0) in place of Blue
 // Shift's, whose face was twice the detail of any other low-definition head. Built by scripts/build_models.py, which

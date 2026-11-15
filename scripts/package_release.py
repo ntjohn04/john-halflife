@@ -1,4 +1,4 @@
-"""Makes John Half-Life's release zip (docs/release.md).
+"""Makes John's Half-Life's release zip (docs/release.md).
 
 Usage:
   python package_release.py --windows <staging folder> --linux <staging folder> --unified <release zip> [--out dist]
@@ -204,7 +204,7 @@ def main():
     if len(sys.argv) == 4 and sys.argv[1] == "--make-list":
         make_list(sys.argv[2], sys.argv[3])
         return
-    parser = argparse.ArgumentParser(description="Makes John Half-Life's release zip.")
+    parser = argparse.ArgumentParser(description="Makes John's Half-Life's release zip.")
     parser.add_argument("--windows", required=True, help="Windows staging install (holds johnhalflife, ...)")
     parser.add_argument("--linux", help="Linux staging install (holds johnhalflife, ...); without it, a Windows-only zip to test")
     parser.add_argument("--unified", required=True, help="the Unified SDK's release zip (HalfLifeUnified-V1.0.0.zip)")

@@ -1,4 +1,4 @@
-"""Adds the hornet gun's dart splats to an installed John Half-Life's decals.wad (johnhalflife, server hornet.cpp).
+"""Adds the hornet gun's dart splats to an installed John's Half-Life's decals.wad (johnhalflife, server hornet.cpp).
 
 Usage: python make_hornet_decals.py <mod folder>
 """

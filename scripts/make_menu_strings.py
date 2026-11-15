@@ -1,4 +1,4 @@
-"""Writes the main menu's text as the WON versions had it into John Half-Life's GameUI strings.
+"""Writes the main menu's text as the WON versions had it into John's Half-Life's GameUI strings.
 
 Usage:
   python make_menu_strings.py

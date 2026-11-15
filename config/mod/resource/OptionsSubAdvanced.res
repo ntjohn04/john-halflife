@@ -33,7 +33,7 @@
 		"visible"		"1"
 		"enabled"		"1"
 		"tabPosition"		"0"
-		"labelText"		"John Half-Life's own settings are under Multiplayer > John Settings..., including blood and gibs. The content lock isn't used."
+		"labelText"		"John's Half-Life's own settings are under Multiplayer > John Settings..., including blood and gibs. The content lock isn't used."
 		"textAlignment"		"west"
 		"dulltext"		"1"
 		"wrap"		"1"
