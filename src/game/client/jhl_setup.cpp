@@ -25,7 +25,7 @@ namespace fs = std::filesystem;
 
 namespace
 {
-constexpr int SetupVersion = 13;
+constexpr int SetupVersion = 14;
 
 constexpr const char* BaseFolder = "johnhalflife";
 constexpr const char* StampFile = "jhl_setup.txt";
@@ -301,6 +301,26 @@ bool MakeScheme(std::string& text, const MenuScheme& scheme)
 	return true;
 }
 
+// Drops the entry running a command from a GameMenu.res: its "<n>" line, through its closing brace.
+bool DropMenuEntry(std::string& text, std::string_view command)
+{
+	const auto found = text.find("\"" + std::string(command) + "\"");
+	const auto open = found == std::string::npos ? std::string::npos : text.rfind('{', found);
+	const auto close = found == std::string::npos ? std::string::npos : text.find('}', found);
+
+	if (open == std::string::npos || close == std::string::npos || 0 == open)
+		return false;
+
+	const auto keyLine = text.rfind('\n', text.rfind('\n', open - 1) - 1);
+	const auto end = text.find('\n', close);
+
+	if (keyLine == std::string::npos || end == std::string::npos)
+		return false;
+
+	text.erase(keyLine + 1, end - keyLine);
+	return true;
+}
+
 void PlanMenu(const fs::path& root, Plan& plan)
 {
 	const fs::path valve = root / "valve";
@@ -311,8 +331,14 @@ void PlanMenu(const fs::path& root, Plan& plan)
 		return;
 	}
 
-	const fs::path gameMenu = valve / "resource" / "GameMenu.res";
-	const bool haveGameMenu = IsFile(gameMenu);
+	// Half-Life's main menu, without its servers: we're singleplayer only.
+	std::string gameMenu;
+	const bool haveGameMenu = ReadFile(valve / "resource" / "GameMenu.res", gameMenu);
+
+	if (haveGameMenu && !(DropMenuEntry(gameMenu, "OpenServerBrowser") && DropMenuEntry(gameMenu, "OpenCreateMultiplayerGameDialog")))
+	{
+		Log("jhl_setup: Half-Life's GameMenu.res not as expected; the menu keeps its server buttons\n");
+	}
 
 	for (const auto& menu : MenuFolders)
 	{

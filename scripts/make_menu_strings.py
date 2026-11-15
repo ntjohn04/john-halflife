@@ -28,6 +28,8 @@ ALL = {
     "GameUI_GameMenu_Customize": "Customize",
     "GameUI_TrainingRoom": "Hazard Course",
     "GameUI_QuitConfirmationText": "Do you wish to stop playing now?",
+    # The options tab liblist's singleplayer_only puts user.scr in, in place of Multiplayer.
+    "GameUI_AdvancedNoEllipsis": "John Settings",
     # Half-Life's own where WON's isn't known.
     "GameUI_MainMenu_Hint_NewGame": "Start a new game.",
     "GameUI_MainMenu_Hint_LoadGame": "Load a previously saved game.",

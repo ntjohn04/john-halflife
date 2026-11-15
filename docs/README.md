@@ -34,7 +34,7 @@ None changes anything in play.
 
 ## John Settings
 
-* Options → Multiplayer → **John Settings...**, from `config/mod/user.scr`.
+* Options → **John Settings**, from `config/mod/user.scr`.
 * Menu files in `config/mod/resource/`: copies of the 25th anniversary layouts.
 * `LIST` entries only with values 0, 1, 2... in order: GameUI stores the index.
 * `jhl_gore` stands in for the content lock's four `violence_*` settings.

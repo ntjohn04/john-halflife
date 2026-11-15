@@ -4,7 +4,7 @@ A mod for Half-Life, Opposing Force and Blue Shift, built on the [Half-Life Unif
 
 It keeps Half-Life's original look and makes careful changes to how the game feels.
 Every change has its own setting and can be turned off.
-Multiplayer included but not fully supported.
+Singleplayer only.
 
 ## What it changes
 
@@ -53,7 +53,7 @@ For the rough 1998 look at low resolutions:
 
 ## Settings
 
-Options → Multiplayer → **John Settings...** lists them all, with a reset to recommended. All default to on.
+Options → **John Settings** lists them all, with a reset to recommended. All default to on.
 
 | Setting | What it does |
 |---|---|
