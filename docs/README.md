@@ -42,7 +42,7 @@ None changes anything in play.
   `RecommendedSettingsVersion` to apply a changed list again.
 * Engine options stored in the registry (renderer, HD models, addons) can't be John Settings.
 * Apply saves every tab, John Settings all its values: a setting in two tabs undoes the other. So a setting a vanilla
-  tab has stays there, labelled "(recommended: ...)" where we lean against its default. Only the look is set:
+  tab has stays there, labelled "(recommended)" or "(not recommended)" where we lean. Only the look is set:
   gamma, brightness, original models. The content lock's button is hidden for `jhl_gore`.
 * `type "singleplayer_only"` in liblist.gam puts user.scr in its own tab, in place of Multiplayer (needs a game name
   other than "Half-Life").

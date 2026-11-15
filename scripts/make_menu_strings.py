@@ -31,14 +31,20 @@ ALL = {
     # The options tab liblist's singleplayer_only puts user.scr in, in place of Multiplayer.
     "GameUI_AdvancedNoEllipsis": "John Settings",
     # Vanilla tabs keep their settings; where we lean another way than the default, the label says so.
-    "GameUI_VSync": "Wait for vertical sync (recommended: off)",
+    "GameUI_VSync": "Wait for vertical sync (not recommended)",
+    "GameUI_TextureFiltering": "Enable texture filtering (not recommended)",
+    "GameUI_WidescreenFOV": "Allow widescreen Field of View (recommended)",
+    "GameUI_UseShaders": "Use shaders (recommended)",
+    "GameUI_OriginalModels": "Enable original models (recommended)",
+    "GameUI_HDModels": "Enable HD models (not recommended)",
+    "GameUI_LowVideoDetail": "Low video quality (not recommended).\\nHelps with slower video cards.",
+    "GameUI_Software": "Software (not recommended)",
     # The mouse tab's are short: theirs go in the description beside them.
     "GameUI_RawInput": "Raw mouse input",
     "GameUI_AutoAim": "Auto-Aim",
-    "GameUI_RawInputLabel": "Directly access mouse data (recommended: on)",
-    "GameUI_AutoaimLabel": "Aims at enemies automatically (recommended: off)",
-    "GameUI_TextureFiltering": "Enable texture filtering (recommended: off)",
-    "GameUI_OriginalModels": "Enable original models (recommended: on)",
+    "GameUI_RawInputLabel": "Directly access mouse data (recommended)",
+    "GameUI_AutoaimLabel": "Aims at enemies automatically (not recommended)",
+    "GameUI_MouseFilterLabel": "Smooth out mouse movement (not recommended)",
     # The content lock's button is hidden (OptionsSubAdvanced.res): jhl_gore does its job.
     "GameUI_ContentLockLabel": "Blood and gibs: John Settings.",
     # Half-Life's own where WON's isn't known.
