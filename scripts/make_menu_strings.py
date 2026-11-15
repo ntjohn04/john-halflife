@@ -30,6 +30,14 @@ ALL = {
     "GameUI_QuitConfirmationText": "Do you wish to stop playing now?",
     # The options tab liblist's singleplayer_only puts user.scr in, in place of Multiplayer.
     "GameUI_AdvancedNoEllipsis": "John Settings",
+    # Vanilla tabs keep their settings; where we lean another way than the default, the label says so.
+    "GameUI_VSync": "Wait for vertical sync (recommended: off)",
+    "GameUI_RawInput": "Raw mouse input (recommended: on)",
+    "GameUI_AutoAim": "Auto-Aim (recommended: off)",
+    "GameUI_TextureFiltering": "Enable texture filtering (recommended: off)",
+    "GameUI_OriginalModels": "Enable original models (recommended: on)",
+    # The content lock's button is hidden (OptionsSubAdvanced.res): jhl_gore does its job.
+    "GameUI_ContentLockLabel": "Blood and gibs: John Settings.",
     # Half-Life's own where WON's isn't known.
     "GameUI_MainMenu_Hint_NewGame": "Start a new game.",
     "GameUI_MainMenu_Hint_LoadGame": "Load a previously saved game.",

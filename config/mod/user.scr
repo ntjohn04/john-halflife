@@ -293,27 +293,6 @@ DESCRIPTION INFO_OPTIONS
 		{ "96.000000" }
 	}
 
-	"gamma"
-	{
-		"Vanilla | Gamma (lower is darker, more contrast)"
-		{ NUMBER 1.800000 3.000000 }
-		{ "1.920000" }
-	}
-
-	"brightness"
-	{
-		"Vanilla | Brightness (lifts the darkest lighting)"
-		{ NUMBER 0.000000 2.000000 }
-		{ "0.000000" }
-	}
-
-	"sv_aim"
-	{
-		"Vanilla | Auto-aim"
-		{ BOOL }
-		{ "0" }
-	}
-
 	"fps_override"
 	{
 		"Vanilla | Allow frame rates above 100"
@@ -326,20 +305,6 @@ DESCRIPTION INFO_OPTIONS
 		"Vanilla | Maximum frame rate"
 		{ NUMBER 30.000000 1000.000000 }
 		{ "240.000000" }
-	}
-
-	"gl_vsync"
-	{
-		"Vanilla | Vertical sync"
-		{ BOOL }
-		{ "0" }
-	}
-
-	"m_rawinput"
-	{
-		"Vanilla | Raw mouse input"
-		{ BOOL }
-		{ "1" }
 	}
 
 	"jhl_gore"
