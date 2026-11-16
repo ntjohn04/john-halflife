@@ -6,7 +6,7 @@ It keeps Half-Life's original look and makes careful changes to how the game fee
 Every change has its own setting and can be turned off.
 Singleplayer only.
 
-## What it changes
+## Features
 
 * **Camera:** improved viewmodels and camera movement.
 * **Weapons:** smoother recoil, new weapon draw sounds, and a new holster-weapon slot.
@@ -96,7 +96,7 @@ Options → **John Settings** lists them all, with a reset to recommended. All d
 ## AI Usage Disclaimer
 
 Most code, reverse engineering and documentation written with AI assistance (Anthropic's Claude).
-Directed, reviewed and tested by John.
+Otherwise implemented by John. Credits below.
 
 ## Credits and licences
 
