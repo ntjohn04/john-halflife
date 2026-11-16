@@ -24,6 +24,8 @@ The Unified SDK's own docs: [unified-sdk/](unified-sdk/README.md).
 None changes anything in play.
 
 * `jhl_debug_hitch <ms>`: every frame longer than that, to the console and `jhl_hitches.txt` (new each launch).
+  `jhl_debug_hitch_suppresssave 1` leaves out saves and autosaves. (`jhl_debug_hitch_link` is internal: how the
+  client finds the server's timings.)
 * `jhl_debug_blocked`: what blocks lifts, doors and trains.
 * `jhl_debug_npcdraw`: NPC heights and animation, to tell real bounces from drawn ones.
 * `jhl_debug_damage`: every hit an NPC takes.

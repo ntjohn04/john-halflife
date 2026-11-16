@@ -1253,13 +1253,15 @@ void ParmsChangeLevel()
 static void JhlHitch_ServerFrame()
 {
 	static const cvar_t* threshold = nullptr;
+	static const cvar_t* skipSaves = nullptr;
 
 	if (!threshold)
 	{
 		threshold = CVAR_GET_POINTER("jhl_debug_hitch");
+		skipSaves = CVAR_GET_POINTER("jhl_debug_hitch_suppresssave");
 	}
 
-	JhlHitch_EndFrame(threshold ? threshold->value : 0, []
+	JhlHitch_EndFrame(threshold ? threshold->value : 0, skipSaves && skipSaves->value != 0, []
 		{
 			std::string where = STRING(gpGlobals->mapname);
 

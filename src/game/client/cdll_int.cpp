@@ -194,12 +194,14 @@ int DLLEXPORT HUD_VidInit()
 }
 
 static cvar_t* g_JhlDebugHitch;
+static cvar_t* g_JhlDebugHitchSuppressSave;
 
 static void JhlHitch_ClientFrame()
 {
 	JhlHitch_Link(gEngfuncs.pfnGetCvarPointer);
 
-	JhlHitch_EndFrame(g_JhlDebugHitch ? g_JhlDebugHitch->value : 0, []
+	JhlHitch_EndFrame(g_JhlDebugHitch ? g_JhlDebugHitch->value : 0,
+		g_JhlDebugHitchSuppressSave && g_JhlDebugHitchSuppressSave->value != 0, []
 		{
 			const char* level = gEngfuncs.pfnGetLevelName();
 			return fmt::format("{} at ({:.0f} {:.0f} {:.0f})", level ? level : "", v_origin.x, v_origin.y, v_origin.z);
@@ -216,6 +218,7 @@ void DLLEXPORT HUD_Init()
 	InitInput();
 	JhlSetup_Init();
 	g_JhlDebugHitch = gEngfuncs.pfnRegisterVariable("jhl_debug_hitch", "0", 0);
+	g_JhlDebugHitchSuppressSave = gEngfuncs.pfnRegisterVariable("jhl_debug_hitch_suppresssave", "0", 0);
 	gHUD.Init();
 	Scheme_Init();
 }

@@ -56,7 +56,7 @@ private:
 	bool m_On{false};
 };
 
-void JhlHitch_EndFrame(float thresholdMs, std::string (*where)());
+void JhlHitch_EndFrame(float thresholdMs, bool skipSaves, std::string (*where)());
 
 void JhlHitch_Skip();
 

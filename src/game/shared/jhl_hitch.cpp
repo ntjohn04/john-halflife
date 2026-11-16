@@ -524,7 +524,7 @@ void JhlHitchScope::End()
 	}
 }
 
-void JhlHitch_EndFrame(float thresholdMs, std::string (*where)())
+void JhlHitch_EndFrame(float thresholdMs, bool skipSaves, std::string (*where)())
 {
 	const std::int64_t now = Ticks(Clock::now());
 
@@ -577,7 +577,9 @@ void JhlHitch_EndFrame(float thresholdMs, std::string (*where)())
 		const Timeline& frame = *g_Frame;
 		const double codeMs = frame.CodeMs[0] + frame.CodeMs[1] - frame.EngineMs[0] - frame.EngineMs[1];
 
-		if (frameMs > thresholdMs && frameMs < PauseMs && moves <= MostMoves && now >= frame.SkipUntil)
+		const bool save = serverSummary && serverSummary->SavedEntities > 0;
+
+		if (frameMs > thresholdMs && frameMs < PauseMs && moves <= MostMoves && now >= frame.SkipUntil && !(skipSaves && save))
 		{
 			Report(frameMs, where(), clientSummary, serverSummary);
 			reported = true;
