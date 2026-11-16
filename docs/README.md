@@ -77,7 +77,7 @@ New user messages (names 11 characters or fewer, or sending them is fatal):
 ## Versioning
 
 * Version: `project(... VERSION ...)` in `CMakeLists.txt`. Release type: `HalfLife_RELEASE_TYPE`.
-* Features raise the minor version, fixes the patch. Each version gets a tag (`v<version>-<type>`) and a changelog
+* Features raise the minor version, fixes the patch. Each version gets a tag (`v<version>-<type>`, just `v<version>` for a release) and a changelog
   line.
 * `cl_projectinfo_show 1` shows the build info.
 

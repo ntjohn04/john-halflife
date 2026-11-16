@@ -115,7 +115,8 @@ def version():
     text = open(os.path.join(REPO, "CMakeLists.txt"), encoding="utf-8").read()
     number = re.search(r"project\(\s*HalfLifeMod.*?^\s*VERSION\s+([0-9.]+)", text, re.S | re.M).group(1)
     release_type = re.search(r'set\(HalfLife_RELEASE_TYPE\s+"?([A-Za-z-]+)', text)
-    return f"v{number}-" + (release_type.group(1).lower().replace("-", "") if release_type else "prealpha")
+    kind = release_type.group(1).lower().replace("-", "") if release_type else "prealpha"
+    return f"v{number}" + ("" if kind == "release" else f"-{kind}")
 
 
 def package(windows, linux, release_zip, out, install=None):

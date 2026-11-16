@@ -10,7 +10,7 @@ set(VCPKG_OVERLAY_TRIPLETS ${CMAKE_SOURCE_DIR}/vcpkg_config/triplets)
 
 project(HalfLifeMod
 	# John's Half-Life's version (docs/README.md#versioning).
-	VERSION 0.30.1
+	VERSION 1.0.0
 	DESCRIPTION "Half-Life CMake Mod Template"
 	LANGUAGES CXX)
 
@@ -42,7 +42,7 @@ set(HalfLife_HLDS_DIRECTORY "" CACHE PATH "Path to the Half-Life Dedicated Serve
 
 # Alpha until v1.0.0.
 set(RELEASE_TYPE "Pre-Alpha" "Alpha" "Beta" "Release")
-set(HalfLife_RELEASE_TYPE "Alpha" CACHE STRING "What type of release you're building")
+set(HalfLife_RELEASE_TYPE "Release" CACHE STRING "What type of release you're building")
 set_property(CACHE HalfLife_RELEASE_TYPE PROPERTY STRINGS ${RELEASE_TYPE})
 
 list(FIND RELEASE_TYPE "${HalfLife_RELEASE_TYPE}" RELEASE_TYPE_INDEX)

@@ -3,6 +3,7 @@ Each version is a tag on GitHub.
 
 | Version | Changes |
 |---|---|
+| `v1.0.0` | First release |
 | `v0.30.1-alpha` | Fixes: a lift no longer crushes the player stuck in a headcrab, `!radio` goo never darkened; `jhl_debug_hitch_suppresssave` |
 | `v0.30.0-alpha` | Renamed John's Half-Life; singleplayer only, John Settings its own options tab; vanilla tabs keep their settings, with recommended hints; fov 96 |
 | `v0.29.4-alpha` | Linux fixes: first start setup, music in saves; expansions required |
