@@ -58,7 +58,7 @@ Water has no lightmap, so it was full bright even in pitch-black corners.
 * Full bright from light 96, down to 0.2. Full bright under open sky (any of 5 upward rays).
 * Traces see the world only, not entities.
 * Per texture:
-  * `!fluid*` (Xen), `!toxicgrn*`: never darkened.
+  * `!fluid*` (Xen), `!toxicgrn*`, `!radio`: never darkened (they glow).
   * `!gwater3` (On A Rail): darkest 0.8.
   * `!bwater2`, `!gwater2` (hazard courses, On A Rail): darkest 0.6.
   * `!coolant5` (Blue Shift coolant): full from 48, smoothed over 128 units.

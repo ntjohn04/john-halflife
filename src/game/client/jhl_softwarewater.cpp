@@ -458,7 +458,8 @@ void LoadMap(const char* mapName)
 
 		WaterTexture water;
 		water.Name = bsp->TextureNames[miptex];
-		if (0 == strnicmp(water.Name.c_str(), "!fluid", 6) || 0 == strnicmp(water.Name.c_str(), "!toxicgrn", 9))
+		if (0 == strnicmp(water.Name.c_str(), "!fluid", 6) || 0 == strnicmp(water.Name.c_str(), "!toxicgrn", 9) ||
+			0 == stricmp(water.Name.c_str(), "!radio"))
 			water.Darkest = 1;
 		else if (0 == stricmp(water.Name.c_str(), "!gwater3"))
 			water.Darkest = 0.8f;
