@@ -1,7 +1,7 @@
 John's Half-Life
 ==============
 
-Made by John. Free, not for sale (Half-Life-SDK.txt). https://github.com/ntjohn04/john-halflife
+Made by John. Free, not for sale (Half-Life-SDK.txt). https://github.com/ntjohn04/johns-half-life
 
 John's Half-Life's own sounds and art: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 Use them freely, crediting John's Half-Life.

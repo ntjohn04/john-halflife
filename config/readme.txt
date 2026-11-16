@@ -10,4 +10,4 @@ The first start shows a black screen for a few seconds while it sets up.
 Settings: Options > John Settings. Every change can be turned off there.
 
 Credits and licences: the licenses folder.
-More: https://github.com/ntjohn04/john-halflife
+More: https://github.com/ntjohn04/johns-half-life
