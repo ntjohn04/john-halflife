@@ -366,10 +366,64 @@ bool JhlUnstickRider(CBaseEntity* rider, CBaseEntity* ground)
 
 	return false;
 }
+
+// A rider stuck only in an NPC (a headcrab that leapt into the player on a lift): the mover crushes the NPC, not the rider.
+CBaseEntity* JhlBlockingMonster(CBaseEntity* pusher, CBaseEntity* other)
+{
+	if (!UTIL_JhlFpsFix() || !other || !other->IsPlayer())
+		return nullptr;
+
+	TraceResult tr;
+	TRACE_MONSTER_HULL(other->edict(), other->pev->origin, other->pev->origin, dont_ignore_monsters, other->edict(), &tr);
+
+	if (0 == tr.fStartSolid || FNullEnt(tr.pHit) || tr.pHit == pusher->edict())
+		return nullptr;
+
+	CBaseEntity* monster = CBaseEntity::Instance(tr.pHit);
+
+	if (!monster || !monster->MyMonsterPointer() || monster->IsPlayer() || JhlStuck(other, other->pev->origin, monster))
+		return nullptr;
+
+	if (g_JhlDebugBlocked)
+		Con_Printf("jhl_debug_blocked:   %s stuck in %s (at %.1f %.1f %.1f, velocity z %.0f, movetype %d, %s, ground %s): crushing it instead\n",
+			STRING(other->pev->classname), STRING(monster->pev->classname), monster->pev->origin.x, monster->pev->origin.y,
+			monster->pev->origin.z, monster->pev->velocity.z, monster->pev->movetype,
+			(monster->pev->flags & FL_ONGROUND) != 0 ? "standing" : "in the air",
+			FNullEnt(monster->pev->groundentity) ? "none" : STRING(monster->pev->groundentity->v.classname));
+
+	return monster;
+}
 }
 
 void JhlRaiseRiders()
 {
+	// jhl_debug_blocked: NPCs falling at the engine's speed limit ("Got a velocity too low"), once a second each.
+	if (g_JhlDebugBlocked)
+	{
+		static float nextReport = 0;
+
+		if (gpGlobals->time >= nextReport || gpGlobals->time < nextReport - 1)
+		{
+			nextReport = gpGlobals->time + 1;
+
+			for (int i = 1; i < gpGlobals->maxEntities; ++i)
+			{
+				edict_t* edict = INDEXENT(i);
+
+				if (!edict || 0 != edict->free || edict->v.velocity.z > -1500 || !(edict->v.flags & FL_MONSTER))
+					continue;
+
+				TraceResult tr;
+				TRACE_MONSTER_HULL(edict, edict->v.origin, edict->v.origin, dont_ignore_monsters, edict, &tr);
+				Con_Printf("jhl_debug_blocked: %s falling (at %.1f %.1f %.1f, velocity z %.0f, movetype %d, %s, ground %s, %s%s)\n",
+					STRING(edict->v.classname), edict->v.origin.x, edict->v.origin.y, edict->v.origin.z, edict->v.velocity.z,
+					edict->v.movetype, (edict->v.flags & FL_ONGROUND) != 0 ? "standing" : "in the air",
+					FNullEnt(edict->v.groundentity) ? "none" : STRING(edict->v.groundentity->v.classname),
+					0 != tr.fStartSolid ? "stuck in " : "free", 0 != tr.fStartSolid && tr.pHit ? STRING(tr.pHit->v.classname) : "");
+			}
+		}
+	}
+
 	for (auto& riderRaise : g_JhlRiderRaises)
 	{
 		CBaseEntity* rider = riderRaise.Rider;
@@ -443,6 +497,12 @@ void DispatchBlocked(edict_t* pentBlocked, edict_t* pentOther)
 
 	if (pEntity && JhlRaiseRider(pEntity, pOther))
 		return;
+
+	if (CBaseEntity* monster = pEntity ? JhlBlockingMonster(pEntity, pOther) : nullptr; monster)
+	{
+		pEntity->Blocked(monster);
+		return;
+	}
 
 	if (pEntity)
 		pEntity->Blocked(pOther);
