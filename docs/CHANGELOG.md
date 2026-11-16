@@ -3,6 +3,7 @@ Each version is a tag on GitHub.
 
 | Version | Changes |
 |---|---|
+| `v0.30.0-alpha` | Renamed John's Half-Life; singleplayer only, John Settings its own options tab; vanilla tabs keep their settings, with recommended hints; fov 96 |
 | `v0.29.4-alpha` | Linux fixes: first start setup, music in saves; expansions required |
 | `v0.29.3-alpha` | Fixes: water vanishing on level changes, muzzle effects off after `fov`, gibs lit by the muzzle flash everywhere; hitch log new each launch |
 | `v0.29.2-alpha` | Moving water fades to an even brightness, relights where it stops |
