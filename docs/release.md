@@ -33,7 +33,7 @@ Games the player doesn't own are skipped.
    ```
    python scripts/package_release.py --windows <staging>/windows --linux <linux staging> --unified HalfLifeUnified-V1.0.0.zip
    ```
-   Writes `dist/johnhalflife-v<version>-<type>.zip`.
+   Writes `dist/johnshalflife-v<version>[-<type>].zip` (the game folders stay `johnhalflife*`).
 4. Licences: `config/licenses/` lists every shipped library; update it when one changes.
 5. Version, changelog line, tag ([versioning](README.md#versioning)).
 

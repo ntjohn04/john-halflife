@@ -180,7 +180,7 @@ def package(windows, linux, release_zip, out, install=None):
 
         # 3. The zip.
         os.makedirs(out, exist_ok=True)
-        zip_path = os.path.join(out, f"johnhalflife-{version()}" + ("" if linux else "-windows-test") + ".zip")
+        zip_path = os.path.join(out, f"johnshalflife-{version()}" + ("" if linux else "-windows-test") + ".zip")
         count = size = 0
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
             for dp, _, fs in sorted(os.walk(stage)):
